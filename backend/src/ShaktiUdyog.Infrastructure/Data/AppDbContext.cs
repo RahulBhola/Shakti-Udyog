@@ -13,10 +13,52 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     : IdentityDbContext<ApplicationUser, ApplicationRole, Guid>(options)
 {
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
+    public DbSet<UserCompany> UserCompanies => Set<UserCompany>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+
+        builder.Entity<RefreshToken>(entity =>
+        {
+            entity.ToTable("RefreshTokens");
+            entity.Property(t => t.TokenHash).HasMaxLength(88).IsRequired();
+            entity.Property(t => t.ReplacedByTokenHash).HasMaxLength(88);
+            entity.Property(t => t.CreatedByIp).HasMaxLength(64);
+            entity.Property(t => t.RevokedByIp).HasMaxLength(64);
+            entity.Property(t => t.RevocationReason).HasMaxLength(200);
+            entity.HasIndex(t => t.TokenHash).IsUnique();
+            entity.HasIndex(t => t.UserId);
+            entity.HasOne(t => t.User)
+                .WithMany()
+                .HasForeignKey(t => t.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<PasswordResetToken>(entity =>
+        {
+            entity.ToTable("PasswordResetTokens");
+            entity.Property(t => t.TokenHash).HasMaxLength(88).IsRequired();
+            entity.Property(t => t.RequestedByIp).HasMaxLength(64);
+            entity.HasIndex(t => t.TokenHash).IsUnique();
+            entity.HasIndex(t => t.UserId);
+            entity.HasOne(t => t.User)
+                .WithMany()
+                .HasForeignKey(t => t.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<UserCompany>(entity =>
+        {
+            entity.ToTable("UserCompanies");
+            entity.HasIndex(uc => new { uc.UserId, uc.CompanyId }).IsUnique();
+            entity.HasOne(uc => uc.User)
+                .WithMany()
+                .HasForeignKey(uc => uc.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
 
         builder.Entity<AuditLog>(entity =>
         {

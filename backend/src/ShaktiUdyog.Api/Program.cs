@@ -1,8 +1,18 @@
+using System.Text;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using ShaktiUdyog.Api.Authorization;
 using ShaktiUdyog.Api.Infrastructure;
+using ShaktiUdyog.Api.Services;
 using ShaktiUdyog.Domain.Constants;
 using ShaktiUdyog.Domain.Entities;
+using ShaktiUdyog.Infrastructure.Auditing;
+using ShaktiUdyog.Infrastructure.Auth;
 using ShaktiUdyog.Infrastructure.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,8 +30,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
         sql.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName)));
 
 // --- Identity ---------------------------------------------------------------
-// Identity core services only (user/role stores, secure password hashing).
-// JWT issuance, refresh-token rotation, and login endpoints are Milestone 2.
+// Secure password hashing, password policy, and lockout are provided by
+// ASP.NET Core Identity (requirements §16/§19).
 builder.Services
     .AddIdentityCore<ApplicationUser>(options =>
     {
@@ -31,21 +41,89 @@ builder.Services
         options.Password.RequireUppercase = true;
         options.Password.RequireNonAlphanumeric = true;
         options.User.RequireUniqueEmail = true;
+        options.Lockout.AllowedForNewUsers = true;
         options.Lockout.MaxFailedAccessAttempts = 5;
         options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
     })
     .AddRoles<ApplicationRole>()
-    .AddEntityFrameworkStores<AppDbContext>();
+    .AddEntityFrameworkStores<AppDbContext>()
+    .AddDefaultTokenProviders();
+
+// --- JWT --------------------------------------------------------------------
+// Signing key must come from env vars / user secrets (Jwt__SigningKey).
+builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
+var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();
+
+if (string.IsNullOrEmpty(jwtOptions.SigningKey) || Encoding.UTF8.GetByteCount(jwtOptions.SigningKey) < 32)
+{
+    throw new InvalidOperationException(
+        "Jwt:SigningKey is missing or shorter than 32 bytes. Set a strong random secret via "
+        + "user secrets or the Jwt__SigningKey environment variable. Example to generate one: "
+        + "dotnet run --project tools or `openssl rand -base64 48`.");
+}
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.MapInboundClaims = false; // keep raw claim names (sub, email, permission)
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = jwtOptions.Issuer,
+            ValidateAudience = true,
+            ValidAudience = jwtOptions.Audience,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SigningKey)),
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero,
+            RoleClaimType = System.Security.Claims.ClaimTypes.Role,
+            NameClaimType = "sub",
+        };
+    });
 
 // --- Authorization ----------------------------------------------------------
-// Backend-enforced role policies. Fine-grained permission policies are added
-// in Milestone 2; nothing relies on frontend-only checks.
+// Role policies plus dynamic "permission:<name>" policies. Authorization is
+// always enforced here in the backend, never only in the frontend.
+builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+builder.Services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy(AuthPolicies.RequireAdmin, p => p.RequireRole(Roles.Admin));
-    options.AddPolicy(AuthPolicies.RequireDataUpdater, p => p.RequireRole(Roles.DataUpdater, Roles.Admin));
-    options.AddPolicy(AuthPolicies.RequireCustomer, p => p.RequireRole(Roles.Customer));
+    void AddRolePolicy(string name, params string[] roles) =>
+        options.AddPolicy(name, p => p.RequireRole(roles));
+
+    AddRolePolicy(AuthPolicies.AdminOnly, Roles.Admin);
+    AddRolePolicy(AuthPolicies.DataUpdaterOnly, Roles.DataUpdater, Roles.Admin);
+    AddRolePolicy(AuthPolicies.CustomerOnly, Roles.Customer);
+
+    // Milestone 1 aliases.
+    AddRolePolicy(AuthPolicies.RequireAdmin, Roles.Admin);
+    AddRolePolicy(AuthPolicies.RequireDataUpdater, Roles.DataUpdater, Roles.Admin);
+    AddRolePolicy(AuthPolicies.RequireCustomer, Roles.Customer);
 });
+
+// --- Rate limiting ----------------------------------------------------------
+// Strict per-IP limits on authentication endpoints (requirements §16).
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("auth", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+            }));
+});
+
+// --- Application services ---------------------------------------------------
+builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
+builder.Services.AddScoped<IEmailSender, NoOpEmailSender>();
+builder.Services.AddScoped<IAuditWriter, AuditWriter>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 // --- API plumbing -----------------------------------------------------------
 builder.Services.AddControllers();
@@ -56,13 +134,15 @@ builder.Services.AddSwaggerDocumentation();
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<AppDbContext>("database");
 
-// CORS: allow only the configured frontend origin (no wildcard).
+// CORS: allow only the configured frontend origin; credentials enabled for
+// the HttpOnly refresh cookie.
 var frontendOrigin = builder.Configuration["Frontend:BaseUrl"] ?? "http://localhost:5173";
 builder.Services.AddCors(options =>
     options.AddPolicy("Frontend", policy => policy
         .WithOrigins(frontendOrigin)
         .AllowAnyHeader()
-        .AllowAnyMethod()));
+        .AllowAnyMethod()
+        .AllowCredentials()));
 
 var app = builder.Build();
 
@@ -84,13 +164,14 @@ else
 
 app.UseHttpsRedirection();
 app.UseCors("Frontend");
+app.UseRateLimiter();
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 app.MapHealthChecks("/health");
 
-// Seed fixed roles at startup (idempotent). Skipped when the database is not
-// reachable in Development so the API can still start for frontend work.
+// Seed fixed roles (idempotent) and, in Development only, a demo admin.
 using (var scope = app.Services.CreateScope())
 {
     var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("Startup");
@@ -101,16 +182,23 @@ using (var scope = app.Services.CreateScope())
         {
             var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
             await RoleSeeder.SeedAsync(roleManager);
-            logger.LogInformation("Role seeding completed.");
+
+            if (app.Environment.IsDevelopment())
+            {
+                var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+                await DevAdminSeeder.SeedAsync(userManager, app.Configuration["DevAdmin:Password"], logger);
+            }
+
+            logger.LogInformation("Startup seeding completed.");
         }
         else
         {
-            logger.LogWarning("Database not reachable; skipped role seeding. Apply migrations and restart.");
+            logger.LogWarning("Database not reachable; skipped seeding. Apply migrations and restart.");
         }
     }
     catch (Exception ex) when (app.Environment.IsDevelopment())
     {
-        logger.LogWarning(ex, "Role seeding failed in Development; continuing startup.");
+        logger.LogWarning(ex, "Startup seeding failed in Development; continuing startup.");
     }
 }
 

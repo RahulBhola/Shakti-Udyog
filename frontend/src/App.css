@@ -15,3 +15,26 @@
   color: #666;
   font-style: italic;
 }
+
+.nav-spacer {
+  flex: 1;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 22rem;
+}
+
+.auth-form input {
+  padding: 0.5rem;
+  border: 1px solid #999;
+  border-radius: 4px;
+}
+
+.auth-form button {
+  margin-top: 0.75rem;
+  padding: 0.6rem;
+  cursor: pointer;
+}
