@@ -1,0 +1,30 @@
+# Root .gitignore for the Shakti Udyog platform
+
+# --- Secrets / local environment (never commit) ---
+.env
+.env.local
+.env.*.local
+*.pfx
+*.key
+
+# --- .NET ---
+bin/
+obj/
+*.user
+.vs/
+
+# --- Node / Vite ---
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# --- IDE / OS ---
+.idea/
+*.suo
+.DS_Store
+Thumbs.db
+
+# --- Logs ---
+*.log
+logs/

@@ -1,0 +1,17 @@
+.main-nav {
+  display: flex;
+  gap: 1.5rem;
+  padding: 1rem 2rem;
+  border-bottom: 1px solid #ccc;
+}
+
+.page {
+  padding: 2rem;
+  max-width: 60rem;
+  margin: 0 auto;
+}
+
+.placeholder-note {
+  color: #666;
+  font-style: italic;
+}
