@@ -116,6 +116,19 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0,
             }));
+
+    // Public enquiry/RFQ submissions (requirements §16: rate-limit RFQ endpoints).
+    // Limit is configurable (RateLimits:PublicPerMinute) so tests can raise it.
+    var publicLimit = builder.Configuration.GetValue("RateLimits:PublicPerMinute", 5);
+    options.AddPolicy("public", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = publicLimit,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+            }));
 });
 
 // --- Application services ---------------------------------------------------
@@ -124,6 +137,8 @@ builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
 builder.Services.AddScoped<IEmailSender, NoOpEmailSender>();
 builder.Services.AddScoped<IAuditWriter, AuditWriter>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddSingleton<IPublicContentService, PublicContentService>();
+builder.Services.AddScoped<IPublicSubmissionService, PublicSubmissionService>();
 
 // --- API plumbing -----------------------------------------------------------
 builder.Services.AddControllers();

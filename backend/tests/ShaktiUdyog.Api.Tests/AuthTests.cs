@@ -17,6 +17,9 @@ public class AuthApiFactory : WebApplicationFactory<Program>
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Development");
+        // Tests fire many submissions in one window; keep the production
+        // default strict but lift it here.
+        builder.UseSetting("RateLimits:PublicPerMinute", "1000");
     }
 }
 

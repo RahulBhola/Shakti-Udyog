@@ -1,0 +1,69 @@
+/* ---------------------------------------------------------------------------
+   Shakti Udyog design tokens — industrial manufacturing theme.
+   Palette: iron charcoal + molten orange accent on warm neutrals.
+   All colors pass WCAG AA against their intended backgrounds.
+--------------------------------------------------------------------------- */
+:root {
+  /* Color */
+  --c-ink: #1c1f23;            /* near-black charcoal — body text */
+  --c-ink-soft: #43484f;       /* secondary text */
+  --c-ink-muted: #5f656d;      /* captions, meta (AA on white) */
+  --c-iron-900: #14171b;       /* darkest surfaces (footer, hero) */
+  --c-iron-800: #1e242b;
+  --c-iron-700: #2b333d;
+  --c-steel-100: #eef0f2;      /* light section backgrounds */
+  --c-steel-50: #f7f8f9;
+  --c-white: #ffffff;
+  --c-ember: #c2410c;          /* molten-orange accent (AA on white) */
+  --c-ember-strong: #9a3412;   /* hover / active */
+  --c-ember-soft: #fff1e7;     /* accent tint backgrounds */
+  --c-on-dark: #f4f5f6;        /* text on dark surfaces */
+  --c-on-dark-muted: #b7bcc2;  /* secondary text on dark (AA on iron-900) */
+  --c-line: #d8dbde;           /* borders */
+  --c-focus: #1d4ed8;          /* focus ring — distinct from accent */
+  --c-success: #166534;
+  --c-error: #b91c1c;
+
+  /* Typography — system stack: fast, no external requests */
+  --font-sans: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+  --fs-xs: 0.8125rem;
+  --fs-sm: 0.9375rem;
+  --fs-base: 1.0625rem;
+  --fs-lg: 1.1875rem;
+  --fs-xl: clamp(1.35rem, 1.1rem + 1vw, 1.75rem);
+  --fs-2xl: clamp(1.7rem, 1.3rem + 1.6vw, 2.4rem);
+  --fs-3xl: clamp(2.1rem, 1.5rem + 2.6vw, 3.4rem);
+  --lh-tight: 1.15;
+  --lh-body: 1.65;
+
+  /* Spacing — 4px base */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+  --sp-7: 3rem;
+  --sp-8: 4.5rem;
+  --sp-9: 6rem;
+
+  /* Layout */
+  --container: 72rem;
+  --radius: 6px;
+  --radius-lg: 10px;
+  --shadow-sm: 0 1px 3px rgb(20 23 27 / 0.08);
+  --shadow-md: 0 6px 24px rgb(20 23 27 / 0.10);
+
+  /* Motion */
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --dur: 200ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur: 0ms;
+  }
+  html {
+    scroll-behavior: auto !important;
+  }
+}

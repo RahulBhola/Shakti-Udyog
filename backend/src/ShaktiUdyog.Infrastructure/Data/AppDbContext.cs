@@ -16,6 +16,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
     public DbSet<UserCompany> UserCompanies => Set<UserCompany>();
+    public DbSet<Enquiry> Enquiries => Set<Enquiry>();
+    public DbSet<Rfq> Rfqs => Set<Rfq>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -58,6 +60,37 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
                 .WithMany()
                 .HasForeignKey(uc => uc.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<Enquiry>(entity =>
+        {
+            entity.ToTable("Enquiries");
+            entity.Property(e => e.FullName).HasMaxLength(150).IsRequired();
+            entity.Property(e => e.CompanyName).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.Email).HasMaxLength(254).IsRequired();
+            entity.Property(e => e.Phone).HasMaxLength(30).IsRequired();
+            entity.Property(e => e.City).HasMaxLength(150);
+            entity.Property(e => e.Message).HasMaxLength(4000).IsRequired();
+            entity.Property(e => e.Status).HasMaxLength(50);
+            entity.Property(e => e.SubmittedByIp).HasMaxLength(64);
+            entity.HasIndex(e => e.CreatedAtUtc);
+        });
+
+        builder.Entity<Rfq>(entity =>
+        {
+            entity.ToTable("Rfqs");
+            entity.Property(r => r.FullName).HasMaxLength(150).IsRequired();
+            entity.Property(r => r.CompanyName).HasMaxLength(200).IsRequired();
+            entity.Property(r => r.Email).HasMaxLength(254).IsRequired();
+            entity.Property(r => r.Phone).HasMaxLength(30).IsRequired();
+            entity.Property(r => r.ProductType).HasMaxLength(100).IsRequired();
+            entity.Property(r => r.MaterialGrade).HasMaxLength(200);
+            entity.Property(r => r.Quantity).HasMaxLength(100).IsRequired();
+            entity.Property(r => r.DeliveryLocation).HasMaxLength(300);
+            entity.Property(r => r.RequirementDetails).HasMaxLength(8000).IsRequired();
+            entity.Property(r => r.Status).HasMaxLength(50);
+            entity.Property(r => r.SubmittedByIp).HasMaxLength(64);
+            entity.HasIndex(r => r.CreatedAtUtc);
         });
 
         builder.Entity<AuditLog>(entity =>
