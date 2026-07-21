@@ -152,6 +152,7 @@ builder.Services.AddScoped<IQuotationAdminService, QuotationAdminService>();
 builder.Services.AddSingleton<IFileStorageService, LocalFileStorageService>();
 builder.Services.AddSingleton<IQuotationPdfService, PlaceholderQuotationPdfService>();
 builder.Services.AddScoped<IInvoiceWebhookService, InvoiceWebhookService>();
+builder.Services.AddScoped<IAdminContentService, AdminContentService>();
 builder.Services.AddScoped<IInvoiceAdminService, InvoiceAdminService>();
 builder.Services.AddSingleton<INotificationService, PlaceholderNotificationService>();
 builder.Services.AddScoped<IOrderUpdaterService, OrderUpdaterService>();

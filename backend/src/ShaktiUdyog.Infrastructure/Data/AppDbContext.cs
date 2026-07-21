@@ -40,6 +40,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<QuotationAttachment> QuotationAttachments => Set<QuotationAttachment>();
     public DbSet<QuotationStatusHistory> QuotationStatusHistories => Set<QuotationStatusHistory>();
     public DbSet<QuotationApproval> QuotationApprovals => Set<QuotationApproval>();
+    public DbSet<Product> Products => Set<Product>();
+    public DbSet<ProductMedia> ProductMedias => Set<ProductMedia>();
+    public DbSet<Category> Categories => Set<Category>();
+    public DbSet<Industry> Industries => Set<Industry>();
+    public DbSet<Resource> Resources => Set<Resource>();
+    public DbSet<Faq> Faqs => Set<Faq>();
+    public DbSet<GalleryItem> GalleryItems => Set<GalleryItem>();
     public DbSet<ShipmentTrackingEvent> ShipmentTrackingEvents => Set<ShipmentTrackingEvent>();
     public DbSet<OrderComment> OrderComments => Set<OrderComment>();
     public DbSet<OrderStatusHistory> OrderStatusHistories => Set<OrderStatusHistory>();
@@ -208,6 +215,87 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             entity.HasOne(a => a.Quotation).WithMany(q => q.Approvals)
                 .HasForeignKey(a => a.QuotationId).OnDelete(DeleteBehavior.Cascade);
             entity.HasQueryFilter(a => !a.Quotation.IsDeleted);
+        });
+
+        builder.Entity<Product>(entity =>
+        {
+            entity.ToTable("Products");
+            entity.Property(p => p.Title).HasMaxLength(255).IsRequired();
+            entity.Property(p => p.Slug).HasMaxLength(255).IsRequired();
+            entity.HasIndex(p => p.Slug).IsUnique();
+            entity.Property(p => p.Summary).HasMaxLength(500).IsRequired();
+            entity.Property(p => p.Description).HasMaxLength(4000);
+            entity.Property(p => p.TypicalApplications).HasMaxLength(2000);
+            entity.Property(p => p.CommonGrades).HasMaxLength(500);
+            entity.Property(p => p.CastingWeightRange).HasMaxLength(200);
+            entity.Property(p => p.AvailableFinish).HasMaxLength(500);
+            entity.Property(p => p.MaterialGrades).HasMaxLength(500);
+            entity.Property(p => p.SeoTitle).HasMaxLength(255);
+            entity.Property(p => p.SeoDescription).HasMaxLength(500);
+            entity.Property(p => p.RowVersion).IsRowVersion();
+        });
+
+        builder.Entity<ProductMedia>(entity =>
+        {
+            entity.ToTable("ProductMedias");
+            entity.Property(m => m.FileName).HasMaxLength(255).IsRequired();
+            entity.Property(m => m.ContentType).HasMaxLength(127).IsRequired();
+            entity.Property(m => m.StorageKey).HasMaxLength(200).IsRequired();
+            entity.Property(m => m.AltText).HasMaxLength(500);
+            entity.HasIndex(m => m.StorageKey).IsUnique();
+            entity.HasOne(m => m.Product).WithMany(p => p.Media)
+                .HasForeignKey(m => m.ProductId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<Category>(entity =>
+        {
+            entity.ToTable("Categories");
+            entity.Property(c => c.Name).HasMaxLength(200).IsRequired();
+            entity.Property(c => c.Slug).HasMaxLength(255);
+            entity.Property(c => c.Description).HasMaxLength(1000);
+            entity.HasOne(c => c.Parent).WithMany(c => c.Children)
+                .HasForeignKey(c => c.ParentId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<Industry>(entity =>
+        {
+            entity.ToTable("Industries");
+            entity.Property(i => i.Name).HasMaxLength(200).IsRequired();
+            entity.Property(i => i.Description).HasMaxLength(1000);
+            entity.Property(i => i.ExampleComponents).HasMaxLength(1000);
+        });
+
+        builder.Entity<Resource>(entity =>
+        {
+            entity.ToTable("Resources");
+            entity.Property(r => r.Title).HasMaxLength(255).IsRequired();
+            entity.Property(r => r.Slug).HasMaxLength(255).IsRequired();
+            entity.HasIndex(r => r.Slug).IsUnique();
+            entity.Property(r => r.Summary).HasMaxLength(500).IsRequired();
+            entity.Property(r => r.Body).HasColumnType("nvarchar(max)");
+            entity.Property(r => r.Category).HasMaxLength(50);
+            entity.Property(r => r.SeoTitle).HasMaxLength(255);
+            entity.Property(r => r.SeoDescription).HasMaxLength(500);
+        });
+
+        builder.Entity<Faq>(entity =>
+        {
+            entity.ToTable("Faqs");
+            entity.Property(f => f.Question).HasMaxLength(500).IsRequired();
+            entity.Property(f => f.Answer).HasMaxLength(4000).IsRequired();
+            entity.Property(f => f.Category).HasMaxLength(100);
+        });
+
+        builder.Entity<GalleryItem>(entity =>
+        {
+            entity.ToTable("GalleryItems");
+            entity.Property(g => g.FileName).HasMaxLength(255).IsRequired();
+            entity.Property(g => g.ContentType).HasMaxLength(127).IsRequired();
+            entity.Property(g => g.StorageKey).HasMaxLength(200).IsRequired();
+            entity.HasIndex(g => g.StorageKey).IsUnique();
+            entity.Property(g => g.Caption).HasMaxLength(500);
+            entity.Property(g => g.AltText).HasMaxLength(500);
+            entity.Property(g => g.Album).HasMaxLength(200);
         });
 
         builder.Entity<Order>(entity =>
