@@ -47,6 +47,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<Resource> Resources => Set<Resource>();
     public DbSet<Faq> Faqs => Set<Faq>();
     public DbSet<GalleryItem> GalleryItems => Set<GalleryItem>();
+    public DbSet<DocumentFolder> DocumentFolders => Set<DocumentFolder>();
+    public DbSet<DocumentVersion> DocumentVersions => Set<DocumentVersion>();
     public DbSet<ShipmentTrackingEvent> ShipmentTrackingEvents => Set<ShipmentTrackingEvent>();
     public DbSet<OrderComment> OrderComments => Set<OrderComment>();
     public DbSet<OrderStatusHistory> OrderStatusHistories => Set<OrderStatusHistory>();
@@ -418,10 +420,36 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             entity.Property(d => d.FileName).HasMaxLength(255).IsRequired();
             entity.Property(d => d.ContentType).HasMaxLength(127).IsRequired();
             entity.Property(d => d.StorageKey).HasMaxLength(200).IsRequired();
+            entity.Property(d => d.Status).HasMaxLength(30);
+            entity.Property(d => d.Tags).HasMaxLength(500);
             entity.HasIndex(d => d.StorageKey).IsUnique();
             entity.HasIndex(d => new { d.CompanyId, d.Category });
             entity.HasOne(d => d.Company).WithMany()
                 .HasForeignKey(d => d.CompanyId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(d => d.Folder).WithMany()
+                .HasForeignKey(d => d.FolderId).OnDelete(DeleteBehavior.SetNull);
+            entity.HasQueryFilter(d => !d.IsDeleted);
+        });
+
+        builder.Entity<DocumentFolder>(entity =>
+        {
+            entity.ToTable("DocumentFolders");
+            entity.Property(f => f.Name).HasMaxLength(200).IsRequired();
+            entity.HasOne(f => f.Parent).WithMany(f => f.Children)
+                .HasForeignKey(f => f.ParentId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<DocumentVersion>(entity =>
+        {
+            entity.ToTable("DocumentVersions");
+            entity.Property(v => v.FileName).HasMaxLength(255).IsRequired();
+            entity.Property(v => v.ContentType).HasMaxLength(127).IsRequired();
+            entity.Property(v => v.StorageKey).HasMaxLength(200).IsRequired();
+            entity.Property(v => v.Comment).HasMaxLength(500);
+            entity.HasIndex(v => v.StorageKey).IsUnique();
+            entity.HasOne(v => v.Document).WithMany(d => d.Versions)
+                .HasForeignKey(v => v.DocumentId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasQueryFilter(v => !v.Document.IsDeleted);
         });
 
         builder.Entity<Notification>(entity =>
