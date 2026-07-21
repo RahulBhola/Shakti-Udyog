@@ -1,10 +1,14 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using ShaktiUdyog.Api.Contracts.Auth;
 using ShaktiUdyog.Api.Contracts.Customer;
 using ShaktiUdyog.Api.Contracts.Updater;
 using ShaktiUdyog.Api.Services;
 using ShaktiUdyog.Domain.Constants;
+using ShaktiUdyog.Domain.Entities;
+using ShaktiUdyog.Infrastructure.Data;
 
 namespace ShaktiUdyog.Api.Controllers;
 
@@ -16,13 +20,65 @@ namespace ShaktiUdyog.Api.Controllers;
 [ApiController]
 [Route("api/v1/admin")]
 [Authorize(Policy = AuthPolicies.AdminOnly)]
-public class AdminController(IAdminService adminService) : ControllerBase
+public class AdminController(IAdminService adminService, AppDbContext db, UserManager<ApplicationUser> userManager) : ControllerBase
 {
     private string? ClientIp => HttpContext.Connection.RemoteIpAddress?.ToString();
 
     private Guid UserId => Guid.Parse(
         HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
         ?? throw new UnauthorizedAccessException());
+
+    // ---- Dashboard ---------------------------------------------------------
+
+    [HttpGet("dashboard")]
+    public async Task<IActionResult> GetDashboard()
+    {
+        var totalCustomers = await userManager.Users.CountAsync(u => u.IsActive);
+        var activeCustomers = await userManager.Users.CountAsync(u => u.IsActive);
+        var pendingRfqs = await db.Rfqs.CountAsync(r => r.Status == "Received");
+        var approvedRfqs = await db.Rfqs.CountAsync(r => r.Status == "Approved" || r.Status == "Quoted");
+        var pendingQuotations = await db.Quotations.CountAsync(q => q.Status == "Draft" || q.Status == "Pending Approval");
+        var ordersInProduction = await db.Orders.CountAsync(o => o.Status == "production" || o.Status == "quality_check");
+        var ordersDispatched = await db.Orders.CountAsync(o => o.Status == "dispatched");
+        var pendingPayments = await db.Invoices.CountAsync(i => i.Status == "Issued" || i.Status == "Partially Paid" || i.Status == "Overdue");
+        return Ok(new { totalCustomers, activeCustomers, pendingRfqs, approvedRfqs, pendingQuotations, ordersInProduction, ordersDispatched, pendingPayments, totalRevenue = 0m, outstandingBalance = 0m });
+    }
+
+    // ---- Users ---------------------------------------------------------------
+
+    [HttpGet("users")]
+    public async Task<IActionResult> GetUsers()
+    {
+        var users = await userManager.Users.OrderByDescending(u => u.CreatedAtUtc).Select(u => new { u.Id, u.Email, u.FullName, u.PhoneNumber, u.IsActive, u.CreatedAtUtc }).ToListAsync();
+        return Ok(users);
+    }
+
+    [HttpPatch("users/{id:guid}/toggle-active")]
+    public async Task<IActionResult> ToggleUserActive(Guid id)
+    {
+        var user = await userManager.FindByIdAsync(id.ToString());
+        if (user is null) return NotFound();
+        user.IsActive = !user.IsActive;
+        await userManager.UpdateAsync(user);
+        return Ok(new { message = user.IsActive ? "User activated." : "User deactivated." });
+    }
+
+    // ---- Companies -----------------------------------------------------------
+
+    [HttpGet("companies")]
+    public async Task<IActionResult> GetCompanies() => Ok(await db.Companies.OrderByDescending(c => c.CreatedAtUtc).ToListAsync());
+
+    // ---- Audit Logs ----------------------------------------------------------
+
+    [HttpGet("audit-logs")]
+    public async Task<IActionResult> GetAuditLogs([FromQuery] int page = 1, [FromQuery] int pageSize = 50)
+    {
+        page = Math.Max(1, page); pageSize = Math.Clamp(pageSize, 1, 200);
+        var query = db.AuditLogs.OrderByDescending(a => a.OccurredAtUtc);
+        var total = await query.CountAsync();
+        var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+        return Ok(new { items, page, pageSize, totalCount = total });
+    }
 
     // ---- RFQ list -----------------------------------------------------------
 
