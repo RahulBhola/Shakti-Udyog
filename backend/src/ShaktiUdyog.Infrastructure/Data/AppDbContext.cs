@@ -18,6 +18,31 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<UserCompany> UserCompanies => Set<UserCompany>();
     public DbSet<Enquiry> Enquiries => Set<Enquiry>();
     public DbSet<Rfq> Rfqs => Set<Rfq>();
+    public DbSet<Company> Companies => Set<Company>();
+    public DbSet<RfqFile> RfqFiles => Set<RfqFile>();
+    public DbSet<Quotation> Quotations => Set<Quotation>();
+    public DbSet<Order> Orders => Set<Order>();
+    public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+    public DbSet<OrderMilestone> OrderMilestones => Set<OrderMilestone>();
+    public DbSet<Shipment> Shipments => Set<Shipment>();
+    public DbSet<Invoice> Invoices => Set<Invoice>();
+    public DbSet<Payment> Payments => Set<Payment>();
+    public DbSet<Document> Documents => Set<Document>();
+    public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<SupportRequest> SupportRequests => Set<SupportRequest>();
+    public DbSet<RfqStatusHistory> RfqStatusHistories => Set<RfqStatusHistory>();
+    public DbSet<RfqComment> RfqComments => Set<RfqComment>();
+    public DbSet<RfqItem> RfqItems => Set<RfqItem>();
+    public DbSet<RfqAssignment> RfqAssignments => Set<RfqAssignment>();
+    public DbSet<QuotationItem> QuotationItems => Set<QuotationItem>();
+    public DbSet<QuotationRevision> QuotationRevisions => Set<QuotationRevision>();
+    public DbSet<QuotationComment> QuotationComments => Set<QuotationComment>();
+    public DbSet<QuotationAttachment> QuotationAttachments => Set<QuotationAttachment>();
+    public DbSet<QuotationStatusHistory> QuotationStatusHistories => Set<QuotationStatusHistory>();
+    public DbSet<QuotationApproval> QuotationApprovals => Set<QuotationApproval>();
+    public DbSet<ShipmentTrackingEvent> ShipmentTrackingEvents => Set<ShipmentTrackingEvent>();
+    public DbSet<OrderComment> OrderComments => Set<OrderComment>();
+    public DbSet<OrderStatusHistory> OrderStatusHistories => Set<OrderStatusHistory>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -60,6 +85,340 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
                 .WithMany()
                 .HasForeignKey(uc => uc.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<Company>(entity =>
+        {
+            entity.ToTable("Companies");
+            entity.Property(c => c.Name).HasMaxLength(200).IsRequired();
+            entity.Property(c => c.AddressLine1).HasMaxLength(300);
+            entity.Property(c => c.City).HasMaxLength(150);
+            entity.Property(c => c.State).HasMaxLength(150);
+            entity.Property(c => c.PostalCode).HasMaxLength(20);
+            entity.Property(c => c.Country).HasMaxLength(100);
+            entity.Property(c => c.GstNumber).HasMaxLength(30);
+            entity.Property(c => c.DeliveryAddresses).HasMaxLength(4000);
+        });
+
+        builder.Entity<RfqFile>(entity =>
+        {
+            entity.ToTable("RfqFiles");
+            entity.Property(f => f.FileName).HasMaxLength(255).IsRequired();
+            entity.Property(f => f.ContentType).HasMaxLength(127).IsRequired();
+            entity.Property(f => f.StorageKey).HasMaxLength(200).IsRequired();
+            entity.HasIndex(f => f.StorageKey).IsUnique();
+            entity.HasOne(f => f.Rfq).WithMany(r => r.Files)
+                .HasForeignKey(f => f.RfqId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasQueryFilter(f => !f.Rfq.IsDeleted);
+        });
+
+        builder.Entity<Quotation>(entity =>
+        {
+            entity.ToTable("Quotations");
+            entity.Property(q => q.QuotationNumber).HasMaxLength(40).IsRequired();
+            entity.HasIndex(q => q.QuotationNumber).IsUnique();
+            entity.Property(q => q.Subtotal).HasPrecision(18, 2);
+            entity.Property(q => q.Tax).HasPrecision(18, 2);
+            entity.Property(q => q.Discount).HasPrecision(18, 2);
+            entity.Property(q => q.Total).HasPrecision(18, 2);
+            entity.Property(q => q.Currency).HasMaxLength(3);
+            entity.Property(q => q.PaymentTerms).HasMaxLength(500);
+            entity.Property(q => q.DeliveryTerms).HasMaxLength(500);
+            entity.Property(q => q.Freight).HasMaxLength(500);
+            entity.Property(q => q.Packing).HasMaxLength(500);
+            entity.Property(q => q.Remarks).HasMaxLength(2000);
+            entity.Property(q => q.Status).HasMaxLength(30);
+            entity.Property(q => q.CustomerResponseComment).HasMaxLength(2000);
+            entity.Property(q => q.RowVersion).IsRowVersion();
+            entity.HasQueryFilter(q => !q.IsDeleted);
+            entity.HasIndex(q => q.CompanyId);
+            entity.HasOne(q => q.Rfq).WithMany()
+                .HasForeignKey(q => q.RfqId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(q => q.Company).WithMany()
+                .HasForeignKey(q => q.CompanyId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<QuotationItem>(entity =>
+        {
+            entity.ToTable("QuotationItems");
+            entity.Property(i => i.PartNumber).HasMaxLength(100).IsRequired();
+            entity.Property(i => i.Description).HasMaxLength(500).IsRequired();
+            entity.Property(i => i.MaterialGrade).HasMaxLength(100);
+            entity.Property(i => i.Unit).HasMaxLength(20);
+            entity.Property(i => i.UnitPrice).HasPrecision(18, 2);
+            entity.Property(i => i.TaxPercent).HasPrecision(5, 2);
+            entity.Property(i => i.LineTotal).HasPrecision(18, 2);
+            entity.HasOne(i => i.Quotation).WithMany(q => q.Items)
+                .HasForeignKey(i => i.QuotationId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasQueryFilter(i => !i.Quotation.IsDeleted);
+        });
+
+        builder.Entity<QuotationStatusHistory>(entity =>
+        {
+            entity.ToTable("QuotationStatusHistory");
+            entity.Property(h => h.FromStatus).HasMaxLength(30).IsRequired();
+            entity.Property(h => h.ToStatus).HasMaxLength(30).IsRequired();
+            entity.Property(h => h.ChangedByRole).HasMaxLength(30);
+            entity.Property(h => h.Note).HasMaxLength(2000);
+            entity.HasIndex(h => new { h.QuotationId, h.CreatedAtUtc });
+            entity.HasOne(h => h.Quotation).WithMany(q => q.StatusHistory)
+                .HasForeignKey(h => h.QuotationId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasQueryFilter(h => !h.Quotation.IsDeleted);
+        });
+
+        builder.Entity<QuotationComment>(entity =>
+        {
+            entity.ToTable("QuotationComments");
+            entity.Property(c => c.AuthorRole).HasMaxLength(30);
+            entity.Property(c => c.Message).HasMaxLength(4000).IsRequired();
+            entity.HasOne(c => c.Quotation).WithMany(q => q.Comments)
+                .HasForeignKey(c => c.QuotationId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasQueryFilter(c => !c.Quotation.IsDeleted);
+        });
+
+        builder.Entity<QuotationAttachment>(entity =>
+        {
+            entity.ToTable("QuotationAttachments");
+            entity.Property(a => a.FileName).HasMaxLength(255).IsRequired();
+            entity.Property(a => a.ContentType).HasMaxLength(127).IsRequired();
+            entity.Property(a => a.StorageKey).HasMaxLength(200).IsRequired();
+            entity.Property(a => a.Description).HasMaxLength(500);
+            entity.HasIndex(a => a.StorageKey).IsUnique();
+            entity.HasOne(a => a.Quotation).WithMany(q => q.Attachments)
+                .HasForeignKey(a => a.QuotationId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasQueryFilter(a => !a.Quotation.IsDeleted);
+        });
+
+        builder.Entity<QuotationRevision>(entity =>
+        {
+            entity.ToTable("QuotationRevisions");
+            entity.Property(r => r.ChangeNotes).HasMaxLength(2000);
+            entity.Property(r => r.PreviousTotal).HasPrecision(18, 2);
+            entity.Property(r => r.NewTotal).HasPrecision(18, 2);
+            entity.HasOne(r => r.Quotation).WithMany(q => q.Revisions)
+                .HasForeignKey(r => r.QuotationId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasQueryFilter(r => !r.Quotation.IsDeleted);
+        });
+
+        builder.Entity<QuotationApproval>(entity =>
+        {
+            entity.ToTable("QuotationApprovals");
+            entity.Property(a => a.Action).HasMaxLength(20).IsRequired();
+            entity.Property(a => a.Comment).HasMaxLength(2000);
+            entity.HasOne(a => a.Quotation).WithMany(q => q.Approvals)
+                .HasForeignKey(a => a.QuotationId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasQueryFilter(a => !a.Quotation.IsDeleted);
+        });
+
+        builder.Entity<Order>(entity =>
+        {
+            entity.ToTable("Orders");
+            entity.Property(o => o.OrderNumber).HasMaxLength(40).IsRequired();
+            entity.HasIndex(o => o.OrderNumber).IsUnique();
+            entity.Property(o => o.PurchaseOrderReference).HasMaxLength(100);
+            entity.Property(o => o.Status).HasMaxLength(30);
+            entity.Property(o => o.DeliveryAddress).HasMaxLength(500);
+            entity.HasIndex(o => o.CompanyId);
+            entity.HasOne(o => o.Company).WithMany()
+                .HasForeignKey(o => o.CompanyId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(o => o.Quotation).WithMany()
+                .HasForeignKey(o => o.QuotationId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        builder.Entity<OrderItem>(entity =>
+        {
+            entity.ToTable("OrderItems");
+            entity.Property(i => i.PartNumber).HasMaxLength(100).IsRequired();
+            entity.Property(i => i.Description).HasMaxLength(500).IsRequired();
+            entity.Property(i => i.MaterialGrade).HasMaxLength(100);
+            entity.Property(i => i.DrawingRevision).HasMaxLength(50);
+            entity.Property(i => i.Unit).HasMaxLength(20);
+            entity.Property(i => i.UnitRate).HasPrecision(18, 2);
+            entity.HasOne(i => i.Order).WithMany(o => o.Items)
+                .HasForeignKey(i => i.OrderId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<OrderMilestone>(entity =>
+        {
+            entity.ToTable("OrderMilestones");
+            entity.Property(m => m.StatusCode).HasMaxLength(30).IsRequired();
+            entity.Property(m => m.CustomerMessage).HasMaxLength(1000);
+            entity.Property(m => m.InternalNote).HasMaxLength(2000);
+            entity.Property(m => m.ActorType).HasMaxLength(30);
+            entity.HasIndex(m => new { m.OrderId, m.OccurredAtUtc });
+            entity.HasOne(m => m.Order).WithMany(o => o.Milestones)
+                .HasForeignKey(m => m.OrderId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<Shipment>(entity =>
+        {
+            entity.ToTable("Shipments");
+            entity.Property(s => s.Transporter).HasMaxLength(200);
+            entity.Property(s => s.TrackingNumber).HasMaxLength(100);
+            entity.HasOne(s => s.Order).WithMany(o => o.Shipments)
+                .HasForeignKey(s => s.OrderId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<ShipmentTrackingEvent>(entity =>
+        {
+            entity.ToTable("ShipmentTrackingEvents");
+            entity.Property(e => e.Location).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(1000).IsRequired();
+            entity.HasOne(e => e.Shipment).WithMany()
+                .HasForeignKey(e => e.ShipmentId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<OrderComment>(entity =>
+        {
+            entity.ToTable("OrderComments");
+            entity.Property(c => c.AuthorRole).HasMaxLength(30);
+            entity.Property(c => c.Message).HasMaxLength(4000).IsRequired();
+            entity.HasOne(c => c.Order).WithMany()
+                .HasForeignKey(c => c.OrderId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<OrderStatusHistory>(entity =>
+        {
+            entity.ToTable("OrderStatusHistory");
+            entity.Property(h => h.FromStatus).HasMaxLength(30).IsRequired();
+            entity.Property(h => h.ToStatus).HasMaxLength(30).IsRequired();
+            entity.Property(h => h.ChangedByRole).HasMaxLength(30);
+            entity.Property(h => h.Note).HasMaxLength(2000);
+            entity.HasOne(h => h.Order).WithMany()
+                .HasForeignKey(h => h.OrderId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<Invoice>(entity =>
+        {
+            entity.ToTable("Invoices");
+            entity.Property(i => i.InvoiceNumber).HasMaxLength(40).IsRequired();
+            entity.HasIndex(i => i.InvoiceNumber).IsUnique();
+            entity.Property(i => i.Subtotal).HasPrecision(18, 2);
+            entity.Property(i => i.Tax).HasPrecision(18, 2);
+            entity.Property(i => i.Total).HasPrecision(18, 2);
+            entity.Property(i => i.AmountPaid).HasPrecision(18, 2);
+            entity.Property(i => i.BalanceDue).HasPrecision(18, 2);
+            entity.Property(i => i.Currency).HasMaxLength(3);
+            entity.Property(i => i.Status).HasMaxLength(30);
+            entity.HasIndex(i => i.CompanyId);
+            entity.HasOne(i => i.Company).WithMany()
+                .HasForeignKey(i => i.CompanyId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(i => i.Order).WithMany()
+                .HasForeignKey(i => i.OrderId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        builder.Entity<Payment>(entity =>
+        {
+            entity.ToTable("Payments");
+            entity.Property(p => p.PaymentReference).HasMaxLength(100).IsRequired();
+            entity.Property(p => p.Method).HasMaxLength(50);
+            entity.Property(p => p.Amount).HasPrecision(18, 2);
+            entity.Property(p => p.Status).HasMaxLength(30);
+            entity.Property(p => p.VerificationNote).HasMaxLength(1000);
+            entity.HasIndex(p => p.CompanyId);
+            entity.HasOne(p => p.Company).WithMany()
+                .HasForeignKey(p => p.CompanyId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(p => p.Invoice).WithMany()
+                .HasForeignKey(p => p.InvoiceId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<Document>(entity =>
+        {
+            entity.ToTable("Documents");
+            entity.Property(d => d.Title).HasMaxLength(255).IsRequired();
+            entity.Property(d => d.Category).HasMaxLength(50).IsRequired();
+            entity.Property(d => d.FileName).HasMaxLength(255).IsRequired();
+            entity.Property(d => d.ContentType).HasMaxLength(127).IsRequired();
+            entity.Property(d => d.StorageKey).HasMaxLength(200).IsRequired();
+            entity.HasIndex(d => d.StorageKey).IsUnique();
+            entity.HasIndex(d => new { d.CompanyId, d.Category });
+            entity.HasOne(d => d.Company).WithMany()
+                .HasForeignKey(d => d.CompanyId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<Notification>(entity =>
+        {
+            entity.ToTable("Notifications");
+            entity.Property(n => n.Type).HasMaxLength(30);
+            entity.Property(n => n.Title).HasMaxLength(200).IsRequired();
+            entity.Property(n => n.Body).HasMaxLength(1000);
+            entity.Property(n => n.LinkPath).HasMaxLength(300);
+            entity.HasIndex(n => new { n.UserId, n.IsRead });
+            entity.HasOne(n => n.User).WithMany()
+                .HasForeignKey(n => n.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<SupportRequest>(entity =>
+        {
+            entity.ToTable("SupportRequests");
+            entity.Property(s => s.Subject).HasMaxLength(200).IsRequired();
+            entity.Property(s => s.Message).HasMaxLength(4000).IsRequired();
+            entity.Property(s => s.Status).HasMaxLength(30);
+            entity.HasIndex(s => s.CompanyId);
+            entity.HasOne(s => s.Company).WithMany()
+                .HasForeignKey(s => s.CompanyId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(s => s.Order).WithMany()
+                .HasForeignKey(s => s.OrderId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        builder.Entity<RfqStatusHistory>(entity =>
+        {
+            entity.ToTable("RfqStatusHistory");
+            entity.Property(h => h.FromStatus).HasMaxLength(30).IsRequired();
+            entity.Property(h => h.ToStatus).HasMaxLength(30).IsRequired();
+            entity.Property(h => h.ChangedByRole).HasMaxLength(30);
+            entity.Property(h => h.Note).HasMaxLength(2000);
+            entity.HasIndex(h => new { h.RfqId, h.CreatedAtUtc });
+            entity.HasOne(h => h.Rfq).WithMany(r => r.StatusHistory)
+                .HasForeignKey(h => h.RfqId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasQueryFilter(h => !h.Rfq.IsDeleted);
+        });
+
+        builder.Entity<RfqComment>(entity =>
+        {
+            entity.ToTable("RfqComments");
+            entity.Property(c => c.AuthorRole).HasMaxLength(30);
+            entity.Property(c => c.Message).HasMaxLength(4000).IsRequired();
+            entity.HasIndex(c => new { c.RfqId, c.CreatedAtUtc });
+            entity.HasOne(c => c.Rfq).WithMany(r => r.Comments)
+                .HasForeignKey(c => c.RfqId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasQueryFilter(c => !c.Rfq.IsDeleted);
+        });
+
+        builder.Entity<RfqAssignment>(entity =>
+        {
+            entity.ToTable("RfqAssignments");
+            entity.HasIndex(a => new { a.RfqId, a.IsActive });
+            entity.HasOne(a => a.Rfq).WithMany(r => r.Assignments)
+                .HasForeignKey(a => a.RfqId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasQueryFilter(a => !a.Rfq.IsDeleted);
+        });
+
+        builder.Entity<RfqItem>(entity =>
+        {
+            entity.ToTable("RfqItems");
+            entity.Property(i => i.PartNumber).HasMaxLength(100).IsRequired();
+            entity.Property(i => i.Description).HasMaxLength(500).IsRequired();
+            entity.Property(i => i.MaterialGrade).HasMaxLength(100);
+            entity.Property(i => i.Unit).HasMaxLength(20);
+            entity.Property(i => i.DrawingRevision).HasMaxLength(50);
+            entity.HasOne(i => i.Rfq).WithMany(r => r.Items)
+                .HasForeignKey(i => i.RfqId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasQueryFilter(i => !i.Rfq.IsDeleted);
+        });
+
+        builder.Entity<Rfq>(entity =>
+        {
+            entity.HasOne(r => r.Company).WithMany()
+                .HasForeignKey(r => r.CompanyId).OnDelete(DeleteBehavior.SetNull);
+            entity.Property(r => r.RowVersion).IsRowVersion();
+            entity.HasQueryFilter(r => !r.IsDeleted);
+        });
+
+        builder.Entity<UserCompany>(entity =>
+        {
+            entity.HasOne(uc => uc.Company).WithMany()
+                .HasForeignKey(uc => uc.CompanyId).OnDelete(DeleteBehavior.Cascade);
         });
 
         builder.Entity<Enquiry>(entity =>

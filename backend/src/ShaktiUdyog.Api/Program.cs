@@ -14,6 +14,8 @@ using ShaktiUdyog.Domain.Entities;
 using ShaktiUdyog.Infrastructure.Auditing;
 using ShaktiUdyog.Infrastructure.Auth;
 using ShaktiUdyog.Infrastructure.Data;
+using ShaktiUdyog.Infrastructure.Notifications;
+using ShaktiUdyog.Infrastructure.Storage;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -139,6 +141,19 @@ builder.Services.AddScoped<IAuditWriter, AuditWriter>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddSingleton<IPublicContentService, PublicContentService>();
 builder.Services.AddScoped<IPublicSubmissionService, PublicSubmissionService>();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICustomerContextService, CustomerContextService>();
+builder.Services.AddScoped<ICustomerService, CustomerService>();
+builder.Services.AddScoped<ICustomerProfileService, CustomerProfileService>();
+builder.Services.AddScoped<IDataUpdaterService, DataUpdaterService>();
+builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddScoped<IQuotationUpdaterService, QuotationUpdaterService>();
+builder.Services.AddScoped<IQuotationAdminService, QuotationAdminService>();
+builder.Services.AddSingleton<IFileStorageService, LocalFileStorageService>();
+builder.Services.AddSingleton<IQuotationPdfService, PlaceholderQuotationPdfService>();
+builder.Services.AddSingleton<INotificationService, PlaceholderNotificationService>();
+builder.Services.AddScoped<IOrderUpdaterService, OrderUpdaterService>();
+builder.Services.AddScoped<IOrderAdminService, OrderAdminService>();
 
 // --- API plumbing -----------------------------------------------------------
 builder.Services.AddControllers();
@@ -176,7 +191,6 @@ else
 {
     app.UseHsts();
 }
-
 app.UseHttpsRedirection();
 app.UseCors("Frontend");
 app.UseRateLimiter();
@@ -202,6 +216,7 @@ using (var scope = app.Services.CreateScope())
             {
                 var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
                 await DevAdminSeeder.SeedAsync(userManager, app.Configuration["DevAdmin:Password"], logger);
+                await DevPortalSeeder.SeedAsync(db, userManager, app.Configuration["DevCustomer:Password"], logger);
             }
 
             logger.LogInformation("Startup seeding completed.");

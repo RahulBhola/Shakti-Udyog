@@ -131,6 +131,13 @@ npm run build
 - CORS allows only the configured frontend origin (`Frontend:BaseUrl`) with credentials.
 - All company details displayed anywhere must come from `docs/shakti-udyog-requirements.md`; unverified details stay as placeholders.
 
+## Customer portal (Milestone 4)
+
+- Portal: [http://localhost:5173/customer](http://localhost:5173/customer) — requires the Customer role.
+- Development demo login: `customer@demo.local` — password in user secrets (`DevCustomer:Password`, seeded with clearly-labelled demo data only in Development).
+- Every `/api/v1/customer/*` endpoint requires the Customer role and filters all data by the caller's approved company (`UserCompanies`); cross-company or unknown IDs return 404. Internal milestone notes and internal documents are never selected into customer responses.
+- Protected files (drawings, payment proofs) are stored outside the web root via `IFileStorageService` (local implementation; cloud implementation is a future DI swap) with extension, size, and magic-byte validation. Downloads stream through the API after authorization — no file paths or public URLs.
+
 ## Milestone status
 
 - ✅ Milestone 1 — foundation: solution structure, EF Core + SQL Server, initial migration, role seeding, Swagger, health check, error handling, frontend scaffold.

@@ -60,9 +60,9 @@ cta:
 
 ### Hero
 
-**Heading:** Precision Iron Castings for Demanding Industries  
-**Subheading:** Shakti Udyog delivers robust, quality-focused iron casting solutions—from drawing review and pattern development to machining and dependable dispatch.  
-**Primary button:** Request a Quote  
+**Heading:** Precision Iron Castings for Demanding Industries
+**Subheading:** Shakti Udyog delivers robust, quality-focused iron casting solutions—from drawing review and pattern development to machining and dependable dispatch.
+**Primary button:** Request a Quote
 **Secondary button:** Explore Our Capabilities
 
 ### Trust Strip
@@ -147,13 +147,13 @@ industries:
 
 ### Final CTA
 
-**Heading:** Have a Casting Requirement?  
-**Text:** Send us your drawing, material grade, quantity, and delivery requirement. Our team will review it and respond with the next steps.  
+**Heading:** Have a Casting Requirement?
+**Text:** Send us your drawing, material grade, quantity, and delivery requirement. Our team will review it and respond with the next steps.
 **Button:** Get a Custom Quote
 
 ## 4. About Us Page
 
-**Meta title:** About Shakti Udyog | Iron Casting Manufacturer  
+**Meta title:** About Shakti Udyog | Iron Casting Manufacturer
 **Meta description:** Learn about Shakti Udyog, an iron casting manufacturer focused on dependable cast components, responsive support, and quality-led production.
 
 ### Page Content
@@ -198,8 +198,8 @@ Grey iron castings offer excellent castability, machinability, wear resistance, 
 
 **Typical applications:** machine bases, gear housings, pump bodies, valve bodies, flywheels, covers, brackets, bearing housings, and general engineering parts.
 
-**Common grades:** `[Insert only grades you manufacture, e.g., IS 210 / EN 1561 / ASTM equivalent]`  
-**Casting weight range:** `[XX g to XX kg]`  
+**Common grades:** `[Insert only grades you manufacture, e.g., IS 210 / EN 1561 / ASTM equivalent]`
+**Casting weight range:** `[XX g to XX kg]`
 **Available finish:** as-cast / shot blasted / machined / painted `[select actual options]`
 
 ### Ductile Iron (SG Iron) Castings
@@ -208,8 +208,8 @@ Ductile iron combines the casting versatility of iron with improved strength, du
 
 **Typical applications:** hubs, carriers, manifolds, axle components, agricultural parts, pipe fittings, valve components, gearbox housings, and construction equipment parts.
 
-**Common grades:** `[Insert only grades you manufacture, e.g., IS 1865 / EN 1563 / ASTM equivalent]`  
-**Casting weight range:** `[XX g to XX kg]`  
+**Common grades:** `[Insert only grades you manufacture, e.g., IS 1865 / EN 1563 / ASTM equivalent]`
+**Casting weight range:** `[XX g to XX kg]`
 **Available finish:** as-cast / shot blasted / machined / painted `[select actual options]`
 
 ### Custom / OEM Castings
@@ -343,7 +343,7 @@ To provide an accurate quotation, please share:
 
 ### Contact Page
 
-**Heading:** Let’s Discuss Your Casting Requirement  
+**Heading:** Let’s Discuss Your Casting Requirement
 **Text:** Tell us about your component, application, material, and volume. We will connect you with the appropriate team member.
 
 ```yaml

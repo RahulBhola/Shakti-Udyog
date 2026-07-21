@@ -1,0 +1,628 @@
+<!-- Read `CLAUDE.md` and `docs/shakti-udyog-requirements.md` again before making any changes.
+
+Start **Milestone 6 only**: Order Management & Tracking.
+
+First inspect the existing codebase and provide a concise implementation plan. Wait for my approval before making changes.
+
+Implement ONLY the complete Order Management & Tracking module.
+
+Do NOT implement:
+
+- Invoice Management
+- Payment Management
+- Payment Gateway
+- Jira Integration
+- Email Providers
+- SMS Providers
+- Production Cloud Storage
+- CRM Integration
+- Analytics
+
+Use interfaces/placeholders where external integrations are required.
+
+--------------------------------------------------
+GOAL
+--------------------------------------------------
+
+Implement the complete Order lifecycle after a quotation has been accepted.
+
+The module must support:
+
+• Automatic Order creation from Accepted Quotations
+• Customer Order Tracking
+• Internal Order Management
+• Shipment Tracking
+• Production Milestones
+• Customer Timeline
+• Dispatch Management
+• Delivery Confirmation
+
+This module must become the foundation for Invoice Management.
+
+--------------------------------------------------
+ORDER WORKFLOW
+--------------------------------------------------
+
+Workflow:
+
+Accepted Quotation
+
+↓
+
+Order Created
+
+↓
+
+Order Confirmed
+
+↓
+
+Pattern Development
+
+↓
+
+Production
+
+↓
+
+Quality Inspection
+
+↓
+
+Packed
+
+↓
+
+Ready to Dispatch
+
+↓
+
+Dispatched
+
+↓
+
+Delivered
+
+↓
+
+Closed
+
+Additional statuses:
+
+On Hold
+
+Cancelled
+
+Returned
+
+Every transition must be validated.
+
+--------------------------------------------------
+CUSTOMER ORDER EXPERIENCE
+--------------------------------------------------
+
+Create an Amazon-style tracking experience.
+
+Customers can:
+
+View Orders
+
+View Order Details
+
+Track Timeline
+
+View Shipment
+
+View Documents
+
+Raise Support Request
+
+Download Approved Documents
+
+View Commercial Summary
+
+Customers must NEVER see:
+
+Internal Notes
+
+Internal Costs
+
+Jira References
+
+Factory Comments
+
+Internal Quality Notes
+
+Other Customer Data
+
+--------------------------------------------------
+FRONTEND
+--------------------------------------------------
+
+Customer Pages:
+
+Order List
+
+Order Details
+
+Order Timeline
+
+Shipment Tracking
+
+Order Documents
+
+Support Requests
+
+Order Search
+
+Data Updater Pages:
+
+Orders Dashboard
+
+Manage Orders
+
+Update Milestones
+
+Manage Shipments
+
+Upload Documents
+
+Production Updates
+
+Admin Pages:
+
+Orders Dashboard
+
+Approve Customer-visible Updates
+
+Override Status
+
+Manage Orders
+
+Shipment Administration
+
+Order History
+
+--------------------------------------------------
+ORDER DETAILS
+--------------------------------------------------
+
+Display:
+
+Order Number
+
+Customer
+
+Company
+
+Quotation Reference
+
+Current Status
+
+Order Date
+
+Promised Dispatch Date
+
+Expected Delivery
+
+Delivery Address
+
+Order Summary
+
+Commercial Summary
+
+--------------------------------------------------
+ORDER ITEMS
+--------------------------------------------------
+
+Each order includes:
+
+Part Number
+
+Description
+
+Material Grade
+
+Drawing Revision
+
+Quantity Ordered
+
+Quantity Produced
+
+Quantity Dispatched
+
+Unit
+
+Status
+
+--------------------------------------------------
+ORDER TIMELINE
+--------------------------------------------------
+
+Implement customer-friendly timeline.
+
+Statuses:
+
+Order Confirmed
+
+Pattern Development
+
+Production
+
+Quality Inspection
+
+Packed
+
+Ready to Dispatch
+
+Dispatched
+
+Delivered
+
+On Hold
+
+Each event should include:
+
+Date
+
+Time
+
+Status
+
+Customer-visible Message
+
+Actor
+
+Do NOT expose internal messages.
+
+--------------------------------------------------
+SHIPMENTS
+--------------------------------------------------
+
+Implement shipment management.
+
+Shipment Details:
+
+Transporter
+
+Tracking Number
+
+LR Number
+
+Vehicle Number
+
+Dispatch Date
+
+ETA
+
+Delivery Date
+
+Proof of Delivery Placeholder
+
+Shipment Status
+
+--------------------------------------------------
+SUPPORT REQUESTS
+--------------------------------------------------
+
+Customers can:
+
+Raise Support Request
+
+Delivery Issue
+
+Missing Document
+
+Order Clarification
+
+Shipment Issue
+
+Track Support Status
+
+Internal notes remain hidden.
+
+--------------------------------------------------
+DOCUMENTS
+--------------------------------------------------
+
+Customer-visible documents:
+
+Packing List
+
+Inspection Report
+
+Delivery Challan
+
+Approved Certificates
+
+Dispatch Documents
+
+Drawing Revision
+
+Use secure downloads.
+
+Never expose file paths.
+
+--------------------------------------------------
+BACKEND
+--------------------------------------------------
+
+Create APIs:
+
+Customer
+
+GET /api/v1/customer/orders
+
+GET /api/v1/customer/orders/{id}
+
+GET /api/v1/customer/orders/{id}/timeline
+
+GET /api/v1/customer/orders/{id}/shipment
+
+GET /api/v1/customer/orders/{id}/documents
+
+POST /api/v1/customer/orders/{id}/support
+
+Data Updater
+
+GET /api/v1/updater/orders
+
+PATCH /api/v1/updater/orders/{id}
+
+PATCH /api/v1/updater/orders/{id}/milestones
+
+POST /api/v1/updater/orders/{id}/shipment
+
+POST /api/v1/updater/orders/{id}/documents
+
+POST /api/v1/updater/orders/{id}/comments
+
+Admin
+
+GET /api/v1/admin/orders
+
+PATCH /api/v1/admin/orders/{id}/approve-update
+
+PATCH /api/v1/admin/orders/{id}/override-status
+
+PATCH /api/v1/admin/orders/{id}/cancel
+
+GET /api/v1/admin/orders/{id}/history
+
+--------------------------------------------------
+DATABASE
+--------------------------------------------------
+
+Create or extend entities:
+
+Order
+
+OrderItem
+
+OrderMilestone
+
+Shipment
+
+ShipmentTrackingEvent
+
+SupportRequest
+
+OrderDocument
+
+OrderComment
+
+OrderStatusHistory
+
+Relationships:
+
+Quotation → Order
+
+Order → Items
+
+Order → Shipment
+
+Order → Timeline
+
+Order → Documents
+
+Order → Support Requests
+
+Generate EF Core migrations.
+
+--------------------------------------------------
+BUSINESS RULES
+--------------------------------------------------
+
+• Only Accepted Quotations may create Orders.
+
+• One Accepted Quotation creates one Order.
+
+• Customers may only access Orders belonging to their approved company.
+
+• Every Order update creates a history record.
+
+• Soft delete only where appropriate.
+
+• Validate every status transition.
+
+• Never trust IDs from the frontend.
+
+• Prevent IDOR attacks.
+
+• Use optimistic concurrency.
+
+• Paginate all list APIs.
+
+• Support filtering and searching.
+
+• Use DTOs for all requests/responses.
+
+--------------------------------------------------
+VALIDATION
+--------------------------------------------------
+
+Implement FluentValidation for:
+
+Create Order
+
+Update Order
+
+Milestone Updates
+
+Shipment Updates
+
+Support Requests
+
+Status Changes
+
+Comments
+
+--------------------------------------------------
+AUDIT LOGGING
+--------------------------------------------------
+
+Log:
+
+Order Created
+
+Order Updated
+
+Milestone Updated
+
+Shipment Updated
+
+Order Dispatched
+
+Order Delivered
+
+Status Changed
+
+Support Request Created
+
+Customer Viewed Order
+
+Document Uploaded
+
+Comment Added
+
+Include:
+
+User
+
+Role
+
+Company
+
+Timestamp
+
+Trace ID
+
+--------------------------------------------------
+NOTIFICATIONS
+--------------------------------------------------
+
+Create abstraction only.
+
+INotificationService
+
+Placeholder implementation.
+
+Future support for:
+
+Email
+
+SMS
+
+Push
+
+In-app Notifications
+
+Do NOT integrate providers.
+
+--------------------------------------------------
+SWAGGER
+--------------------------------------------------
+
+Document every Order API.
+
+Configure JWT Authentication.
+
+Document:
+
+Role requirements
+
+Example requests
+
+Example responses
+
+Validation errors
+
+--------------------------------------------------
+TESTING
+--------------------------------------------------
+
+Run:
+
+Backend Build
+
+Frontend Build
+
+Database Migration
+
+Swagger
+
+CRUD Tests
+
+Authorization Tests
+
+Validation Tests
+
+Routing Tests
+
+Fix every build error before completion.
+
+--------------------------------------------------
+WHEN COMPLETE
+--------------------------------------------------
+
+Stop and report:
+
+1. Files created/modified
+
+2. React pages implemented
+
+3. APIs implemented
+
+4. Database entities
+
+5. EF Core migrations
+
+6. Authorization implemented
+
+7. Validation implemented
+
+8. Audit logging implemented
+
+9. Notification abstraction implemented
+
+10. Build results
+
+11. Test results
+
+12. Remaining placeholders
+
+13. Recommended Milestone 7
+
+Follow every rule in `CLAUDE.md`.
+
+Do NOT implement:
+
+- Invoice Management
+- Payment Management
+- Payment Gateway
+- Jira Integration
+- Email Providers
+- SMS Providers
+- Production Cloud Storage
+- CRM
+- Analytics -->

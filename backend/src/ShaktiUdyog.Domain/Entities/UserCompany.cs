@@ -14,8 +14,8 @@ public class UserCompany
     public Guid UserId { get; set; }
     public ApplicationUser User { get; set; } = null!;
 
-    /// <summary>Future FK to Companies; no navigation until that table exists.</summary>
     public Guid CompanyId { get; set; }
+    public Company Company { get; set; } = null!;
 
     /// <summary>Company access requires explicit admin approval (least privilege).</summary>
     public bool IsApproved { get; set; }

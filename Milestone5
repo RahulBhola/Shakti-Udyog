@@ -1,0 +1,561 @@
+<!-- Read `CLAUDE.md` and `docs/shakti-udyog-requirements.md` again before making any changes.
+
+Start **Milestone 5 only**: Quotation Module.
+
+First inspect the existing codebase and provide a concise implementation plan. Wait for my approval before making changes.
+
+Implement ONLY the complete Quotation module.
+
+Do NOT implement:
+
+- Order Management
+- Invoices
+- Payments
+- Payment Gateway
+- Jira Integration
+- Email Providers
+- SMS Providers
+- Production Cloud Storage
+- CRM
+- Analytics
+
+Use interfaces/placeholders where external integrations are required.
+
+--------------------------------------------------
+GOAL
+--------------------------------------------------
+
+Implement a complete quotation lifecycle that begins after an RFQ has been reviewed and approved.
+
+The module must allow:
+
+• Data Updaters to prepare quotations
+• Admins to approve quotations
+• Customers to view quotations
+• Customers to accept or decline quotations
+• Automatic preparation for future Order creation
+
+The Quotation module must become the foundation for the future Order module.
+
+--------------------------------------------------
+QUOTATION WORKFLOW
+--------------------------------------------------
+
+Workflow:
+
+Approved RFQ
+
+↓
+
+Quotation Draft
+
+↓
+
+Internal Review
+
+↓
+
+Admin Approval
+
+↓
+
+Issued to Customer
+
+↓
+
+Customer Response
+
+↓
+
+Accepted → Order Module (future)
+
+↓
+
+Declined
+
+↓
+
+Expired
+
+Statuses:
+
+Draft
+
+Pending Approval
+
+Approved
+
+Issued
+
+Viewed
+
+Accepted
+
+Declined
+
+Expired
+
+Cancelled
+
+Every status transition must be validated.
+
+--------------------------------------------------
+FRONTEND
+--------------------------------------------------
+
+Create pages:
+
+Customer
+
+- Quotation List
+- Quotation Details
+- Accept Quotation
+- Decline Quotation
+- Quotation Timeline
+
+Data Updater
+
+- Quotation Dashboard
+- Create Quotation
+- Edit Draft
+- Submit for Approval
+- Attach Documents
+
+Admin
+
+- Pending Quotations
+- Approve Quotation
+- Reject Quotation
+- Override Status
+- Quotation History
+
+--------------------------------------------------
+CUSTOMER FEATURES
+--------------------------------------------------
+
+Customers can:
+
+View quotations
+
+Download quotation PDF (placeholder)
+
+Accept quotation
+
+Decline quotation
+
+Provide comments
+
+View quotation timeline
+
+View validity date
+
+View payment terms
+
+View delivery terms
+
+Customers cannot:
+
+Modify pricing
+
+Modify line items
+
+Modify terms
+
+Modify taxes
+
+--------------------------------------------------
+DATA UPDATER FEATURES
+--------------------------------------------------
+
+Create quotation
+
+Edit draft
+
+Add line items
+
+Update material grades
+
+Update quantities
+
+Update pricing
+
+Taxes
+
+Discounts
+
+Delivery terms
+
+Payment terms
+
+Attachments
+
+Internal Notes
+
+Customer Notes
+
+Submit for approval
+
+Cannot issue quotation directly if admin approval is required.
+
+--------------------------------------------------
+ADMIN FEATURES
+--------------------------------------------------
+
+Approve quotation
+
+Reject quotation
+
+Issue quotation
+
+Cancel quotation
+
+Override status
+
+Review pricing
+
+View audit history
+
+Approve customer-visible documents
+
+--------------------------------------------------
+DATABASE
+--------------------------------------------------
+
+Create or extend entities:
+
+Quotation
+
+QuotationItem
+
+QuotationRevision
+
+QuotationComment
+
+QuotationAttachment
+
+QuotationStatusHistory
+
+QuotationApproval
+
+Relationships:
+
+RFQ → Quotation
+
+Quotation → Items
+
+Quotation → Attachments
+
+Quotation → Comments
+
+Quotation → History
+
+Create EF Core migrations.
+
+--------------------------------------------------
+QUOTATION DETAILS
+--------------------------------------------------
+
+Quotation Header:
+
+Quotation Number
+
+Customer
+
+Company
+
+RFQ Reference
+
+Issue Date
+
+Expiry Date
+
+Currency
+
+Status
+
+Prepared By
+
+Approved By
+
+Subtotal
+
+Tax
+
+Discount
+
+Grand Total
+
+Line Items:
+
+Item
+
+Description
+
+Material Grade
+
+Quantity
+
+Unit
+
+Unit Price
+
+Tax
+
+Line Total
+
+Commercial Terms:
+
+Validity
+
+Delivery
+
+Payment Terms
+
+Freight
+
+Packing
+
+Remarks
+
+--------------------------------------------------
+BACKEND APIs
+--------------------------------------------------
+
+Customer
+
+GET /api/v1/customer/quotations
+
+GET /api/v1/customer/quotations/{id}
+
+POST /api/v1/customer/quotations/{id}/accept
+
+POST /api/v1/customer/quotations/{id}/decline
+
+GET /api/v1/customer/quotations/{id}/timeline
+
+Data Updater
+
+GET /api/v1/updater/quotations
+
+POST /api/v1/updater/quotations
+
+PUT /api/v1/updater/quotations/{id}
+
+POST /api/v1/updater/quotations/{id}/submit
+
+POST /api/v1/updater/quotations/{id}/attachments
+
+POST /api/v1/updater/quotations/{id}/comments
+
+Admin
+
+GET /api/v1/admin/quotations
+
+PATCH /api/v1/admin/quotations/{id}/approve
+
+PATCH /api/v1/admin/quotations/{id}/reject
+
+PATCH /api/v1/admin/quotations/{id}/issue
+
+PATCH /api/v1/admin/quotations/{id}/cancel
+
+GET /api/v1/admin/quotations/{id}/history
+
+--------------------------------------------------
+BUSINESS RULES
+--------------------------------------------------
+
+• Only approved RFQs may generate quotations.
+
+• One RFQ may have multiple quotation revisions.
+
+• Customers may only access quotations belonging to their approved company.
+
+• Every quotation update creates a history record.
+
+• Soft delete only.
+
+• Validate every status transition.
+
+• Never trust IDs from the frontend.
+
+• Prevent IDOR attacks.
+
+• Use optimistic concurrency.
+
+• Support pagination.
+
+• Support filtering.
+
+• Support searching.
+
+• Use DTOs for all requests and responses.
+
+--------------------------------------------------
+VALIDATION
+--------------------------------------------------
+
+Implement FluentValidation for:
+
+Create Quotation
+
+Update Quotation
+
+Approve Quotation
+
+Issue Quotation
+
+Accept Quotation
+
+Decline Quotation
+
+Attachments
+
+Comments
+
+Status Changes
+
+--------------------------------------------------
+AUDIT LOGGING
+--------------------------------------------------
+
+Record:
+
+Quotation Created
+
+Quotation Updated
+
+Quotation Submitted
+
+Quotation Approved
+
+Quotation Rejected
+
+Quotation Issued
+
+Quotation Viewed
+
+Quotation Accepted
+
+Quotation Declined
+
+Status Changed
+
+Attachment Uploaded
+
+Comment Added
+
+Include:
+
+User
+
+Role
+
+Company
+
+Timestamp
+
+Trace ID
+
+--------------------------------------------------
+PDF
+--------------------------------------------------
+
+Create an abstraction:
+
+IQuotationPdfService
+
+Implement placeholder PDF generation.
+
+Do NOT create production-ready PDFs.
+
+Return placeholder files until the PDF module is implemented later.
+
+--------------------------------------------------
+SWAGGER
+--------------------------------------------------
+
+Document every Quotation API.
+
+Configure JWT Authentication.
+
+Document:
+
+Role requirements
+
+Example requests
+
+Example responses
+
+Validation errors
+
+--------------------------------------------------
+TESTING
+--------------------------------------------------
+
+Run:
+
+Backend Build
+
+Frontend Build
+
+Database Migration
+
+Swagger
+
+CRUD Tests
+
+Authorization Tests
+
+Validation Tests
+
+Routing Tests
+
+Fix every build error before completion.
+
+--------------------------------------------------
+WHEN COMPLETE
+--------------------------------------------------
+
+Stop and report:
+
+1. Files created/modified
+
+2. React pages implemented
+
+3. APIs implemented
+
+4. Database entities
+
+5. EF Core migrations
+
+6. Authorization implemented
+
+7. Validation implemented
+
+8. Audit logging implemented
+
+9. PDF placeholder implementation
+
+10. Build results
+
+11. Test results
+
+12. Remaining placeholders
+
+13. Recommended Milestone 6
+
+Follow every rule in `CLAUDE.md`.
+
+Do NOT implement:
+
+- Orders
+- Invoices
+- Payments
+- Payment Gateway
+- Jira Integration
+- Email Providers
+- SMS Providers
+- Production Cloud Storage
+- CRM
+- Analytics -->

@@ -8,6 +8,17 @@ namespace ShaktiUdyog.Domain.Entities;
 public class Rfq
 {
     public Guid Id { get; set; }
+    /// <summary>Set when submitted from the customer portal; null for anonymous public RFQs.</summary>
+    public Guid? CompanyId { get; set; }
+    public Company? Company { get; set; }
+    public Guid? SubmittedByUserId { get; set; }
+    /// <summary>Portal drafts are editable and excluded from staff review queues.</summary>
+    public bool IsDraft { get; set; }
+    public List<RfqFile> Files { get; set; } = [];
+    public List<RfqItem> Items { get; set; } = [];
+    public List<RfqStatusHistory> StatusHistory { get; set; } = [];
+    public List<RfqComment> Comments { get; set; } = [];
+    public List<RfqAssignment> Assignments { get; set; } = [];
     public required string FullName { get; set; }
     public required string CompanyName { get; set; }
     public required string Email { get; set; }
@@ -21,4 +32,9 @@ public class Rfq
     public string Status { get; set; } = "Received";
     public DateTimeOffset CreatedAtUtc { get; set; } = DateTimeOffset.UtcNow;
     public string? SubmittedByIp { get; set; }
+    /// <summary>Soft-delete flag; records are never hard-deleted.</summary>
+    public bool IsDeleted { get; set; }
+    public DateTimeOffset? DeletedAtUtc { get; set; }
+    /// <summary>Optimistic concurrency token.</summary>
+    public byte[] RowVersion { get; set; } = [];
 }

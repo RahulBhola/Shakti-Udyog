@@ -1,31 +1,48 @@
 /* ---------------------------------------------------------------------------
-   Shakti Udyog design tokens — industrial manufacturing theme.
-   Palette: iron charcoal + molten orange accent on warm neutrals.
-   All colors pass WCAG AA against their intended backgrounds.
+   Shakti Udyog design tokens — "Glacier" glassmorphism theme (per the
+   provided Stitch hi-fi designs): deep navy-black base, ice-blue primary,
+   soft lavender secondary, frosted-glass surfaces with luminous borders.
+   Token NAMES are kept from the original theme so components need no edits;
+   the VALUES are remapped to the Glacier palette.
 --------------------------------------------------------------------------- */
 :root {
-  /* Color */
-  --c-ink: #1c1f23;            /* near-black charcoal — body text */
-  --c-ink-soft: #43484f;       /* secondary text */
-  --c-ink-muted: #5f656d;      /* captions, meta (AA on white) */
-  --c-iron-900: #14171b;       /* darkest surfaces (footer, hero) */
-  --c-iron-800: #1e242b;
-  --c-iron-700: #2b333d;
-  --c-steel-100: #eef0f2;      /* light section backgrounds */
-  --c-steel-50: #f7f8f9;
-  --c-white: #ffffff;
-  --c-ember: #c2410c;          /* molten-orange accent (AA on white) */
-  --c-ember-strong: #9a3412;   /* hover / active */
-  --c-ember-soft: #fff1e7;     /* accent tint backgrounds */
-  --c-on-dark: #f4f5f6;        /* text on dark surfaces */
-  --c-on-dark-muted: #b7bcc2;  /* secondary text on dark (AA on iron-900) */
-  --c-line: #d8dbde;           /* borders */
-  --c-focus: #1d4ed8;          /* focus ring — distinct from accent */
-  --c-success: #166534;
-  --c-error: #b91c1c;
+  /* Base + text */
+  --c-bg: #0a0e1a;                       /* deep navy-black page base */
+  --c-ink: #e0e8f0;                      /* primary text */
+  --c-ink-soft: #a0b4c4;                 /* secondary text */
+  --c-ink-muted: #88a4b8;                /* captions, meta */
+  --c-white: #ffffff;                    /* pure white — headings only */
+  --c-on-dark: #e0e8f0;
+  --c-on-dark-muted: #a0b4c4;
 
-  /* Typography — system stack: fast, no external requests */
-  --font-sans: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* Dark layer surfaces */
+  --c-iron-900: #060a14;                 /* deepest (footer) */
+  --c-iron-800: #0f1524;
+  --c-iron-700: #1a2438;
+  --c-steel-100: #111828;                /* raised solid surface */
+  --c-steel-50: #0d1320;                 /* tinted section background */
+
+  /* Glass layers (core Glacier pattern) */
+  --glass: rgba(15, 21, 36, 0.6);
+  --glass-strong: rgba(15, 21, 36, 0.75);
+  --glass-blur: 16px;
+  --glass-blur-strong: 24px;
+  --glow: 0 0 30px rgba(125, 211, 252, 0.05);
+
+  /* Accents — ice blue primary, lavender tertiary */
+  --c-ember: #7dd3fc;                    /* primary accent (was orange) */
+  --c-ember-strong: #a5e0ff;             /* hover — brighter ice */
+  --c-ember-soft: rgba(125, 211, 252, 0.12);
+  --c-lavender: #c8a0f0;
+
+  --c-line: rgba(125, 211, 252, 0.12);   /* luminous borders */
+  --c-line-soft: rgba(255, 255, 255, 0.08);
+  --c-focus: #c8a0f0;                    /* focus ring — lavender, distinct */
+  --c-success: #6ee7b7;
+  --c-error: #ff6b6b;
+
+  /* Typography — Inter (self-hosted via @fontsource) */
+  --font-sans: "Inter Variable", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
   --fs-xs: 0.8125rem;
   --fs-sm: 0.9375rem;
   --fs-base: 1.0625rem;
@@ -49,10 +66,10 @@
 
   /* Layout */
   --container: 72rem;
-  --radius: 6px;
-  --radius-lg: 10px;
-  --shadow-sm: 0 1px 3px rgb(20 23 27 / 0.08);
-  --shadow-md: 0 6px 24px rgb(20 23 27 / 0.10);
+  --radius: 10px;
+  --radius-lg: 16px;
+  --shadow-sm: var(--glow);
+  --shadow-md: 0 0 40px rgba(125, 211, 252, 0.1);
 
   /* Motion */
   --ease: cubic-bezier(0.22, 0.61, 0.36, 1);

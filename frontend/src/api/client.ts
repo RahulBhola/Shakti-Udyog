@@ -54,6 +54,9 @@ async function request<T>(path: string, init: RequestInit, retryOn401 = true): P
     throw new ApiError(response.status, traceId, detail);
   }
 
+  if (response.status === 204) {
+    return undefined as T;
+  }
   return response.json() as Promise<T>;
 }
 
@@ -67,4 +70,53 @@ export function apiPost<T>(path: string, body?: unknown): Promise<T> {
     headers: { "Content-Type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
+}
+
+export function apiPatch<T>(path: string, body: unknown): Promise<T> {
+  return request<T>(path, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+export function apiPut<T>(path: string, body: unknown): Promise<T> {
+  return request<T>(path, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+/** Multipart upload — browser sets the Content-Type boundary itself. */
+export function apiUpload<T>(path: string, form: FormData): Promise<T> {
+  return request<T>(path, { method: "POST", body: form });
+}
+
+export function apiDelete<T>(path: string): Promise<T> {
+  return request<T>(path, { method: "DELETE" });
+}
+
+/** Fetches a protected file with auth and triggers a browser download. */
+export async function apiDownload(path: string, fallbackName: string): Promise<void> {
+  const token = tokenStorage.getAccessToken();
+  const response = await fetch(`${config.apiBaseUrl}${path}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    credentials: "include",
+  });
+  if (!response.ok) {
+    throw new ApiError(response.status);
+  }
+
+  const disposition = response.headers.get("Content-Disposition") ?? "";
+  const match = /filename\*?=(?:UTF-8'')?"?([^";]+)/i.exec(disposition);
+  const name = match?.[1] ? decodeURIComponent(match[1]) : fallbackName;
+
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = name;
+  anchor.click();
+  URL.revokeObjectURL(url);
 }

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en" style=""><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet"/><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script id="tailwind-config">try{
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-tint": "#7dd3fc",
+                      "on-surface": "#e0e8f0",
+                      "surface-dim": "#0f1524",
+                      "primary-fixed": "#c8eaff",
+                      "tertiary": "#c8a0f0",
+                      "inverse-surface": "#e0e8f0",
+                      "surface-variant": "#1a2438",
+                      "inverse-on-surface": "#0a0e1a",
+                      "inverse-primary": "#0a4c6e",
+                      "secondary": "#88b4cc",
+                      "secondary-container": "#1a3a4e",
+                      "surface-container": "#141c2e",
+                      "primary": "#7dd3fc",
+                      "outline": "#4a6070",
+                      "on-tertiary-fixed": "#1a002e",
+                      "on-secondary-fixed-variant": "#2a4a5e",
+                      "on-primary-fixed": "#001f2e",
+                      "tertiary-fixed-dim": "#c8a0f0",
+                      "on-tertiary-container": "#e8d0ff",
+                      "primary-container": "#0e4d6e",
+                      "on-primary": "#001f2e",
+                      "surface-container-highest": "#202c42",
+                      "on-primary-fixed-variant": "#004d73",
+                      "on-error-container": "#ffb3b3",
+                      "surface": "#0f1524",
+                      "on-error": "#1a0000",
+                      "error-container": "#3d1414",
+                      "on-tertiary-fixed-variant": "#4d2a73",
+                      "surface-container-lowest": "#0a0e1a",
+                      "surface-container-low": "#111828",
+                      "outline-variant": "#2a3a48",
+                      "on-surface-variant": "#a0b4c4",
+                      "tertiary-container": "#3d2060",
+                      "tertiary-fixed": "#e8d0ff",
+                      "secondary-fixed": "#c0d8e8",
+                      "error": "#ff6b6b",
+                      "secondary-fixed-dim": "#88b4cc",
+                      "primary-fixed-dim": "#7dd3fc",
+                      "on-secondary-fixed": "#0d1f2b",
+                      "on-secondary": "#001f2e",
+                      "surface-container-high": "#1a2438",
+                      "on-background": "#e0e8f0",
+                      "surface-bright": "#1a2438",
+                      "on-tertiary": "#1a002e",
+                      "background": "#0a0e1a",
+                      "on-secondary-container": "#c0d8e8",
+                      "on-primary-container": "#c8eaff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.5rem",
+                      "lg": "1rem",
+                      "xl": "1.5rem",
+                      "full": "9999px"
+              },
+              "spacing": {},
+              "fontFamily": {
+                      "headline": ["Inter"],
+                      "display": ["Inter"],
+                      "body": ["Inter"],
+                      "label": ["Inter"]
+              },
+              "fontSize": {}
+            },
+          },
+        }
+    }catch(_e){}</script><meta charset="utf-8"/></head><body class="bg-[#0f1524] text-[#e0e8f0] font-body min-h-screen flex flex-col relative overflow-x-hidden antialiased selection:bg-primary/30 selection:text-primary-fixed">
+<!-- Ambient Background Lighting -->
+<div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
+<div class="absolute bg-primary/10 w-[600px] h-[600px] -top-[200px] -left-[200px] rounded-full blur-[100px] opacity-30"></div>
+<div class="absolute bg-tertiary/5 w-[800px] h-[800px] top-[40%] -right-[300px] rounded-full blur-[120px] opacity-20"></div>
+<div class="absolute bg-primary/10 w-[500px] h-[500px] -bottom-[200px] left-[20%] rounded-full blur-[100px] opacity-30"></div>
+</div>
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full border-b border-white/5 z-50 bg-[#0f1524]/80 backdrop-blur-[20px]"><div class="flex justify-between items-center px-8 py-4 max-w-full mx-auto z-50"><div class="flex items-center gap-2"><span class="text-xl font-headline font-bold text-white tracking-tight uppercase">Shakti</span><span class="text-xl font-headline font-bold text-[#7dd3fc] tracking-tight uppercase">Udyog</span></div><nav class="hidden md:flex items-center gap-8 font-body text-sm font-medium"><a class="text-[#7dd3fc] font-semibold hover:text-[#7dd3fc]/80 transition-colors duration-300" href="#">Capabilities</a><a class="text-on-surface-variant hover:text-white transition-colors duration-300" href="#">Products</a><a class="text-on-surface-variant hover:text-white transition-colors duration-300" href="#">Industries</a><a class="text-on-surface-variant hover:text-white transition-colors duration-300" href="#">About Us</a></nav><div class="flex items-center"><button class="bg-[#7dd3fc] text-[#001f2e] px-6 py-2.5 rounded-lg font-headline font-semibold text-sm transition-all duration-200 active:scale-95 hover:bg-[#7dd3fc]/90 shadow-[0_0_15px_rgba(125,211,252,0.2)]">Request a Quote</button></div></div></header>
+<!-- Main Content Canvas -->
+<main class="flex-grow pt-32 pb-24 px-6 md:px-12 lg:px-24 max-w-[1800px] mx-auto w-full relative z-10 flex flex-col gap-16">
+<!-- Hero / Intro Section (Asymmetric Layout) -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+<!-- Left: Hero Typography -->
+<div class="lg:col-span-7 flex flex-col gap-6">
+<div class="inline-flex items-center px-4 py-1.5 rounded-full border border-[#7dd3fc]/20 bg-[#7dd3fc]/5 w-fit">
+<span class="text-[#7dd3fc] text-xs font-semibold tracking-[0.15em] uppercase">Uncompromising Standards</span>
+</div>
+<h1 class="text-5xl md:text-6xl lg:text-7xl font-headline font-bold tracking-tight text-white leading-[1.1]">
+                    Quality Built <br/>
+<span class="text-transparent bg-clip-text bg-gradient-to-r from-[#7dd3fc] to-[#c8a0f0]">into the Process</span>
+</h1>
+<div class="bg-surface-variant/30 backdrop-blur-[20px] rounded-xl p-8 mt-6 relative overflow-hidden border border-white/5 border-l-4 border-l-[#7dd3fc]">
+<p class="text-lg text-on-surface-variant font-body leading-relaxed relative z-10">
+                        Quality at Shakti Udyog begins with a clear agreement on the drawing, material, and acceptance criteria. We do not just inspect for quality; we engineer it directly into every stage of our foundry process.
+                    </p>
+</div>
+</div>
+<!-- Right: Atmospheric Image Card -->
+<div class="lg:col-span-5 h-[500px] rounded-2xl overflow-hidden bg-surface-variant/20 border border-white/5 p-2 relative group">
+<div class="w-full h-full rounded-xl bg-cover bg-center overflow-hidden relative" data-alt="A dramatic, cinematic shot of a high-tech modern industrial foundry floor. Glowing molten metal casts an intense, ethereal icy blue and deep navy light across precise, heavy machinery. The aesthetic is dark, premium, and glassmorphic, highlighting advanced manufacturing processes. Subtle volumetric fog and sharp metallic reflections create a sense of cutting-edge quality control and precision engineering." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuD4NgDmdNCu1wmUmsUaKu9nBYXU3SiMWUKVHVwqLskTHIwuEQhkx-HcN8qbPUK5nkz173iQ-67ngv0csWTJ2YABXJ0_XAg1Q93jMkn9GX76ifTu1hxGisgOVq6M4QepkgGl9fU92mvoTvhA-t7mJcILzUsI3KHyQGz5a9VZ8RXHXoTl_CvcMLIGfag4uhCf4YgWU-PnXNXUHXD1Zg4vNRs1hDc9x6SLw9COFekj99YFy14FaW8PbdVBhqii04D4IjtETJW31IdCT7c')">
+<!-- Decorative overlay UI elements to enhance the high-tech feel -->
+<div class="absolute top-4 right-4 z-20 flex gap-2 items-center">
+<div class="w-2 h-2 rounded-full bg-[#7dd3fc]"></div>
+<div class="text-[10px] text-[#7dd3fc] font-mono tracking-widest uppercase">SYS.ACTIVE</div>
+</div>
+<div class="absolute bottom-4 right-4 z-20 bg-[#0f1524]/80 backdrop-blur-[20px] px-4 py-3 rounded-xl border border-white/5 flex flex-col gap-1 min-w-[160px]">
+<span class="text-[10px] text-on-surface-variant uppercase tracking-wider">Live Monitoring</span>
+<span class="text-sm text-white font-semibold">Tolerances Nominal</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Spacer -->
+<div class="w-full h-[1px] bg-white/5 my-4"></div>
+<!-- Bento Grid: Quality Checks List -->
+<section class="flex flex-col gap-8">
+<div class="flex items-center justify-between">
+<h2 class="text-3xl font-headline font-semibold text-white tracking-tight">Rigorous Quality Checks</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 auto-rows-[220px]">
+<!-- Card 1: Incoming material control (Spans 2 cols, 2 rows) -->
+<div class="bg-surface-variant/20 backdrop-blur-[20px] rounded-2xl p-8 flex flex-col justify-between border border-white/5 hover:border-white/10 transition-colors duration-300 md:col-span-2 md:row-span-2 relative overflow-hidden group">
+<div class="w-14 h-14 rounded-full bg-surface-variant/50 border border-white/5 flex items-center justify-center mb-6 relative z-10 group-hover:border-[#7dd3fc]/30 transition-colors">
+<span class="material-symbols-outlined text-[#7dd3fc] text-2xl" style="font-variation-settings: 'wght' 300;">inventory_2</span>
+</div>
+<div class="relative z-10">
+<h3 class="text-2xl font-headline font-semibold text-white mb-3">Incoming Material Control</h3>
+<p class="text-on-surface-variant leading-relaxed text-sm">
+                            Every batch of raw material is subjected to stringent incoming inspections. We ensure foundational integrity before a single process begins, eliminating defects at the source.
+                        </p>
+</div>
+<!-- Decorative background image for the large card -->
+<div class="absolute inset-0 opacity-20 pointer-events-none mix-blend-screen" data-alt="Close-up macro photography of raw industrial metallic ingots stacked neatly in a dark, moody warehouse. Soft, icy blue light highlights the rough texture of the unrefined metal. The scene conveys a sense of foundational strength and meticulous inventory management within a high-tech glassmorphic UI aesthetic." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuB7EKH4i7taX7gvHzQILT3r2Z5wSWNmWbNzq1orf8xyqiBXrM3LL8onCf0Nv5tY-Mj0VCDEYIelIsSUi4I5If79Qkh171qHlHmndJwvWHuLpTidRbg5Ogj89XhhtmUQTwDSQS5kcQ4kHLbi4u9-xt5SzWSFfBcR2TI4yKZ-RvPBYAF9uucZqO5cI7tnXyvAG0ZVFuu9rlmJcgP-Fy-g2V8JvX1D9iS9vHDujTUWDePFwwaDxpDaWrmx-GgyMy-_rfovhMsIIYkqO4Y'); background-size: cover; background-position: center; filter: grayscale(100%) contrast(1.2);">
+</div>
+<div class="absolute inset-0 bg-gradient-to-t from-[#0f1524] via-[#0f1524]/80 to-transparent"></div>
+</div>
+<!-- Card 2: Chemical composition -->
+<div class="bg-surface-variant/20 backdrop-blur-[20px] rounded-2xl p-6 flex flex-col justify-between border border-white/5 hover:border-white/10 transition-colors duration-300 group">
+<div class="w-12 h-12 rounded-full bg-surface-variant/50 border border-white/5 flex items-center justify-center group-hover:border-[#c8a0f0]/30 transition-colors">
+<span class="material-symbols-outlined text-[#c8a0f0] text-xl" style="font-variation-settings: 'wght' 300;">science</span>
+</div>
+<div>
+<h3 class="text-lg font-headline font-semibold text-white mb-4">Chemical Composition Verification</h3>
+<div class="w-8 h-0.5 bg-[#7dd3fc]/30 rounded-full group-hover:w-full transition-all duration-500"></div>
+</div>
+</div>
+<!-- Card 3: Visual & Dimensional -->
+<div class="bg-surface-variant/20 backdrop-blur-[20px] rounded-2xl p-6 flex flex-col justify-between border border-white/5 hover:border-white/10 transition-colors duration-300 group">
+<div class="w-12 h-12 rounded-full bg-surface-variant/50 border border-white/5 flex items-center justify-center group-hover:border-[#7dd3fc]/30 transition-colors">
+<span class="material-symbols-outlined text-[#7dd3fc] text-xl" style="font-variation-settings: 'wght' 300;">precision_manufacturing</span>
+</div>
+<div>
+<h3 class="text-lg font-headline font-semibold text-white mb-4">Visual &amp; Dimensional Inspection</h3>
+<div class="w-8 h-0.5 bg-[#7dd3fc]/30 rounded-full group-hover:w-full transition-all duration-500"></div>
+</div>
+</div>
+<!-- Card 4: Hardness testing -->
+<div class="bg-surface-variant/20 backdrop-blur-[20px] rounded-2xl p-6 flex flex-col justify-between border border-white/5 hover:border-white/10 transition-colors duration-300 group">
+<div class="w-12 h-12 rounded-full bg-surface-variant/50 border border-white/5 flex items-center justify-center group-hover:border-[#88b4cc]/30 transition-colors">
+<span class="material-symbols-outlined text-[#88b4cc] text-xl" style="font-variation-settings: 'wght' 300;">hardware</span>
+</div>
+<div>
+<h3 class="text-lg font-headline font-semibold text-white mb-4">Hardness Testing</h3>
+<div class="w-8 h-0.5 bg-[#7dd3fc]/30 rounded-full group-hover:w-full transition-all duration-500"></div>
+</div>
+</div>
+<!-- Card 5: Microstructure testing -->
+<div class="bg-surface-variant/20 backdrop-blur-[20px] rounded-2xl p-6 flex flex-col justify-between border border-white/5 hover:border-white/10 transition-colors duration-300 group">
+<div class="w-12 h-12 rounded-full bg-surface-variant/50 border border-white/5 flex items-center justify-center group-hover:border-[#c8a0f0]/30 transition-colors">
+<span class="material-symbols-outlined text-[#c8a0f0] text-xl" style="font-variation-settings: 'wght' 300;">biotech</span>
+</div>
+<div>
+<h3 class="text-lg font-headline font-semibold text-white mb-4">Microstructure Testing</h3>
+<div class="w-8 h-0.5 bg-[#7dd3fc]/30 rounded-full group-hover:w-full transition-all duration-500"></div>
+</div>
+</div>
+<!-- Card 6: Traceability (Spans 2 cols) -->
+<div class="bg-surface-variant/20 backdrop-blur-[20px] rounded-2xl p-8 flex flex-row items-center gap-6 border border-white/5 hover:border-white/10 transition-colors duration-300 md:col-span-2 group">
+<div class="w-14 h-14 rounded-full bg-surface-variant/50 border border-white/5 flex-shrink-0 flex items-center justify-center group-hover:border-[#7dd3fc]/30 transition-colors">
+<span class="material-symbols-outlined text-[#7dd3fc] text-2xl" style="font-variation-settings: 'wght' 300;">receipt_long</span>
+</div>
+<div>
+<h3 class="text-xl font-headline font-semibold text-white mb-2">Traceability Records</h3>
+<p class="text-sm text-on-surface-variant leading-relaxed">Complete, unbroken documentation mapping every component back to its raw material source and processing conditions.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Certification Statement Banner -->
+<section class="mt-12">
+<div class="bg-surface-variant/10 backdrop-blur-[20px] rounded-3xl p-16 text-center relative overflow-hidden border border-white/5">
+<div class="relative z-10 max-w-4xl mx-auto flex flex-col items-center gap-8">
+<div class="w-14 h-14 rounded-full bg-[#7dd3fc]/10 flex items-center justify-center mb-2">
+<span class="material-symbols-outlined text-[#7dd3fc] text-2xl" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+</div>
+<blockquote class="text-3xl md:text-4xl font-headline font-semibold text-white leading-tight tracking-tight">
+                        "We follow documented quality practices tailored to each order’s agreed requirements."
+                    </blockquote>
+<p class="text-[#7dd3fc] tracking-[0.15em] uppercase text-xs font-semibold mt-4">Certified Excellence</p>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-[#0f1524] w-full border-t border-white/5 relative z-10 mt-auto">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-8 px-12 py-16 w-full max-w-[1800px] mx-auto">
+<!-- Brand Column -->
+<div class="flex flex-col gap-4">
+<div class="text-lg font-headline font-bold text-white tracking-tight">
+                    Shakti Udyog
+                </div>
+<p class="text-sm text-on-surface-variant font-body mt-2">
+                    © 2024 Shakti Udyog. All rights reserved.
+                </p>
+</div>
+<!-- Links Columns -->
+<div class="flex flex-col gap-4">
+<h4 class="text-white font-semibold text-xs tracking-[0.1em] uppercase mb-1">Company</h4>
+<a class="font-body text-on-surface-variant hover:text-white transition-colors text-sm w-fit" href="#">Resources</a>
+<a class="font-body text-on-surface-variant hover:text-white transition-colors text-sm w-fit" href="#">Careers</a>
+</div>
+<div class="flex flex-col gap-4">
+<h4 class="text-white font-semibold text-xs tracking-[0.1em] uppercase mb-1">Legal</h4>
+<a class="font-body text-on-surface-variant hover:text-white transition-colors text-sm w-fit" href="#">Privacy Policy</a>
+<a class="font-body text-on-surface-variant hover:text-white transition-colors text-sm w-fit" href="#">Terms of Service</a>
+</div>
+<!-- Empty column for grid balancing or future use -->
+<div class="flex flex-col items-start md:items-end justify-end opacity-40">
+<span class="material-symbols-outlined text-4xl text-on-surface-variant" style="font-variation-settings: 'wght' 200;">precision_manufacturing</span>
+</div>
+</div>
+</footer>
+</body></html>

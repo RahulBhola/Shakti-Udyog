@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en" style=""><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet"/><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script id="tailwind-config">try{
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-dim": "#0f1524",
+                        "surface-container-highest": "#202c42",
+                        "on-primary": "#001f2e",
+                        "secondary-fixed-dim": "#88b4cc",
+                        "primary-fixed": "#c8eaff",
+                        "on-secondary-fixed": "#0d1f2b",
+                        "outline-variant": "#2a3a48",
+                        "on-secondary-fixed-variant": "#2a4a5e",
+                        "on-surface-variant": "#a0b4c4",
+                        "primary": "#7dd3fc",
+                        "inverse-primary": "#0a4c6e",
+                        "tertiary-fixed-dim": "#c8a0f0",
+                        "outline": "#4a6070",
+                        "tertiary": "#c8a0f0",
+                        "on-primary-container": "#c8eaff",
+                        "tertiary-container": "#3d2060",
+                        "secondary-fixed": "#c0d8e8",
+                        "surface-container-high": "#1a2438",
+                        "secondary": "#88b4cc",
+                        "on-background": "#e0e8f0",
+                        "on-secondary-container": "#c0d8e8",
+                        "on-error-container": "#ffb3b3",
+                        "surface-container": "#141c2e",
+                        "surface-container-low": "#111828",
+                        "surface-bright": "#1a2438",
+                        "on-tertiary": "#1a002e",
+                        "error": "#ff6b6b",
+                        "surface-tint": "#7dd3fc",
+                        "primary-fixed-dim": "#7dd3fc",
+                        "on-primary-fixed": "#001f2e",
+                        "on-error": "#1a0000",
+                        "error-container": "#3d1414",
+                        "inverse-on-surface": "#0a0e1a",
+                        "tertiary-fixed": "#e8d0ff",
+                        "background": "#0a0e1a",
+                        "surface": "#0f1524",
+                        "on-tertiary-fixed-variant": "#4d2a73",
+                        "on-tertiary-container": "#e8d0ff",
+                        "on-surface": "#e0e8f0",
+                        "on-tertiary-fixed": "#1a002e",
+                        "on-secondary": "#001f2e",
+                        "secondary-container": "#1a3a4e",
+                        "surface-container-lowest": "#0a0e1a",
+                        "primary-container": "#0e4d6e",
+                        "on-primary-fixed-variant": "#004d73",
+                        "inverse-surface": "#e0e8f0",
+                        "surface-variant": "#1a2438"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter", "sans-serif"],
+                        "display": ["Inter", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Inter", "sans-serif"]
+                    }
+                }
+            }
+        }
+    }catch(_e){}</script></head><body class="antialiased min-h-screen flex flex-col relative overflow-x-hidden selection:bg-primary/30 selection:text-primary bg-surface text-on-surface font-body">
+<!-- TopNavBar (Matches Homepage) -->
+<header class="fixed top-0 w-full z-50 bg-surface/60 backdrop-blur-[20px] border-b border-primary/10 shadow-[0_0_30px_rgba(125,211,252,0.05)] transition-all duration-300" id="main-nav"><div class="flex justify-between items-center px-12 py-4 max-w-full mx-auto">
+<a class="text-xl font-bold tracking-wider text-on-surface flex items-center gap-2 group" href="#">
+<span class="text-on-surface">Shakti</span>
+<span class="text-primary">Udyog</span>
+</a>
+<nav class="hidden md:flex items-center gap-8 font-headline font-medium">
+<a class="nav-link text-on-surface-variant hover:text-primary transition-colors" href="#">Home</a>
+<a class="nav-link text-on-surface-variant hover:text-primary transition-colors" href="#">About Us</a>
+<a class="nav-link text-on-surface-variant hover:text-primary transition-colors" href="#">Products</a>
+<a class="nav-link text-primary font-semibold" href="#">Capabilities</a>
+<a class="nav-link text-on-surface-variant hover:text-primary transition-colors" href="#">Quality</a>
+<a class="nav-link text-on-surface-variant hover:text-primary transition-colors" href="#">Industries</a>
+<a class="nav-link text-on-surface-variant hover:text-primary transition-colors" href="#">Resources</a>
+<a class="nav-link text-on-surface-variant hover:text-primary transition-colors" href="#">Contact</a>
+</nav>
+<div class="hidden md:flex items-center">
+<button class="bg-primary hover:bg-primary-fixed-dim px-6 py-2.5 rounded-lg text-on-primary font-medium tracking-wide active:scale-95 transition-all">
+            Request a Quote
+        </button>
+</div>
+<button class="md:hidden text-on-surface p-2 rounded-lg hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</div></header>
+<!-- Main Content Canvas -->
+<main class="flex-grow pt-40 pb-24 px-6 md:px-12 max-w-7xl mx-auto w-full relative z-10">
+<!-- Abstract Ambient Background Orbs -->
+<div class="fixed top-0 left-0 w-full h-full bg-gradient-to-b from-primary/5 via-transparent to-tertiary/5 pointer-events-none -z-10"></div>
+<div class="fixed bottom-1/4 right-1/4 w-64 h-64 bg-tertiary/5 rounded-full blur-[80px] pointer-events-none -z-10"></div>
+<!-- Hero Section -->
+<header class="mb-20">
+<div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-surface-container/50 backdrop-blur-[20px] mb-8 border border-primary/20 shadow-[0_0_30px_rgba(125,211,252,0.1)]">
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+<span class="text-sm font-medium tracking-wide text-primary">Manufacturing Excellence</span>
+</div>
+<h1 class="text-5xl md:text-7xl font-extrabold font-headline mb-8 tracking-tight leading-tight">
+            From Requirement to <br/>
+<span class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-tertiary">Ready-to-Use Casting</span>
+</h1>
+<p class="text-xl md:text-2xl text-on-surface-variant max-w-3xl font-body leading-relaxed font-light">
+            Precision engineering driven by decades of metallurgical expertise. Our end-to-end capabilities ensure absolute control over quality, dimensional accuracy, and material integrity at every stage.
+        </p>
+</header>
+<!-- Bento Layout: Capabilities Overview & Technical Data -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-24">
+<!-- Technical Specifications Table -->
+<div class="lg:col-span-7 bg-surface-container/30 backdrop-blur-[20px] border border-outline-variant/30 rounded-2xl p-8 relative overflow-hidden group">
+<div class="flex items-center gap-4 mb-10">
+<div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20 group-hover:border-primary/40 transition-colors">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">analytics</span>
+</div>
+<h2 class="text-3xl font-headline font-bold text-on-surface tracking-tight">Technical Parameters</h2>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left font-body">
+<thead>
+<tr class="border-b border-outline-variant text-primary/60 text-xs tracking-[0.2em] uppercase">
+<th class="pb-6 font-semibold w-1/3">Parameter</th>
+<th class="pb-6 font-semibold w-2/3">Specification</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/30">
+<tr class="group/row hover:bg-primary/5 transition-colors duration-200">
+<td class="py-5 text-primary font-medium tracking-wide">Materials</td>
+<td class="py-5 text-on-surface-variant">Grey Iron (FG200 - FG350), SG/Ductile Iron (SG400 - SG700)</td>
+</tr>
+<tr class="group/row hover:bg-primary/5 transition-colors duration-200">
+<td class="py-5 text-primary font-medium tracking-wide">Part Weight Range</td>
+<td class="py-5 text-on-surface-variant">0.5 kg to 150 kg</td>
+</tr>
+<tr class="group/row hover:bg-primary/5 transition-colors duration-200">
+<td class="py-5 text-primary font-medium tracking-wide">Monthly Capacity</td>
+<td class="py-5 text-on-surface-variant">2,500 Metric Tons</td>
+</tr>
+<tr class="group/row hover:bg-primary/5 transition-colors duration-200">
+<td class="py-5 text-primary font-medium tracking-wide">Moulding Technology</td>
+<td class="py-5 text-on-surface-variant">High-Pressure Disamatic, Green Sand, Resin Sand</td>
+</tr>
+<tr class="group/row hover:bg-primary/5 transition-colors duration-200">
+<td class="py-5 text-primary font-medium tracking-wide">Core Making</td>
+<td class="py-5 text-on-surface-variant">Cold Box, Shell Core, No-Bake</td>
+</tr>
+<tr class="group/row hover:bg-primary/5 transition-colors duration-200">
+<td class="py-5 text-primary font-medium tracking-wide">Certifications</td>
+<td class="py-5 text-on-surface-variant">IATF 16949:2016, ISO 9001:2015, ISO 14001:2015</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Featured Capability Image / Visualization -->
+<div class="lg:col-span-5 bg-surface-container/30 backdrop-blur-[20px] border border-outline-variant/30 rounded-2xl relative overflow-hidden flex flex-col justify-end min-h-[450px]">
+<div class="absolute inset-0 bg-cover bg-center object-cover opacity-60 mix-blend-luminosity hover:mix-blend-normal transition-all duration-700" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCuseagQHbpTzGo5K6CYP0JVHizHgnO-JDPIZ7EXorj4IgNpKK1LEfPR1f38kaBMNRHPZ9nfmw7nubdzSIGD1sBtmSQw6p_2oCc46WsAES8NH740QMMH-37m1C_i1H-Sd9TTawGewsNBp4mAz7Cy6zIr4ZVU9vpiuSw7qkvUE-NE4v0Kc73osGxYbuFx7yY55XlFbI1katFtgwIWltEX2Y4YIUKW6P_6cD6-RX5HE54lV66vvihQF-B6kL2xOjLAYOrG21h6VcBo9M')"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest via-surface-container-lowest/60 to-transparent"></div>
+<div class="relative z-10 p-8">
+<h3 class="text-2xl font-bold text-on-surface mb-3 flex items-center gap-2">
+<span class="w-1.5 h-6 bg-primary rounded-full"></span>
+                    Metallurgical Precision
+                </h3>
+<p class="text-on-surface-variant font-body text-sm leading-relaxed max-w-sm">
+                    Advanced spectrometry and thermal analysis ensure absolute chemical composition control before pouring, guaranteeing mechanical integrity.
+                </p>
+</div>
+</div>
+</div>
+<!-- The Process Timeline -->
+<section class="relative">
+<div class="mb-16">
+<h2 class="text-4xl md:text-5xl font-display font-bold text-on-surface tracking-tight mb-4">The Manufacturing Process</h2>
+<div class="h-1 w-24 bg-gradient-to-r from-primary to-transparent rounded-full mb-4"></div>
+<p class="text-on-surface-variant text-lg font-light">A seamless, vertically integrated workflow.</p>
+</div>
+<div class="relative ml-4 md:ml-10">
+<!-- Main connecting line -->
+<div class="absolute top-0 bottom-0 left-6 md:left-8 w-0.5 bg-outline-variant/30 -z-10"></div>
+<!-- Process Steps -->
+<div class="flex flex-col gap-12">
+<!-- Step 1 -->
+<div class="relative z-10 flex gap-8 md:gap-12 items-start group">
+<div class="flex-shrink-0 w-12 h-12 md:w-16 md:h-16 rounded-2xl bg-surface-container/50 backdrop-blur-[20px] flex items-center justify-center border border-primary/20 group-hover:border-primary/60 transition-all duration-500 group-hover:scale-110 shadow-[0_0_30px_rgba(125,211,252,0.1)] relative">
+<div class="absolute inset-0 bg-primary/5 rounded-2xl -z-10"></div>
+<span class="material-symbols-outlined text-primary text-2xl md:text-3xl" style="font-variation-settings: 'FILL' 1;">architecture</span>
+</div>
+<div class="bg-surface-container/30 backdrop-blur-[20px] rounded-2xl p-8 flex-grow border border-outline-variant/30 group-hover:border-primary/20 transition-all duration-500">
+<div class="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 mb-4">
+<span class="text-primary font-mono text-xs font-bold tracking-[0.3em] uppercase">Phase 01</span>
+<h4 class="text-2xl font-bold text-on-surface">Enquiry &amp; Drawing Review</h4>
+</div>
+<p class="text-on-surface-variant font-body leading-relaxed text-lg font-light">
+                            Our engineering team analyzes 2D drawings and 3D CAD models to assess manufacturability. We conduct gating system design simulation and solidification analysis using MAGMASOFT to ensure defect-free castings before tooling begins.
+                        </p>
+</div>
+</div>
+<!-- Step 2 -->
+<div class="relative z-10 flex gap-8 md:gap-12 items-start group">
+<div class="flex-shrink-0 w-12 h-12 md:w-16 md:h-16 rounded-2xl bg-surface-container/50 backdrop-blur-[20px] flex items-center justify-center border border-primary/20 group-hover:border-primary/60 transition-all duration-500 group-hover:scale-110 shadow-[0_0_30px_rgba(125,211,252,0.1)] relative">
+<div class="absolute inset-0 bg-primary/5 rounded-2xl -z-10"></div>
+<span class="material-symbols-outlined text-primary text-2xl md:text-3xl" style="font-variation-settings: 'FILL' 1;">precision_manufacturing</span>
+</div>
+<div class="bg-surface-container/30 backdrop-blur-[20px] rounded-2xl p-8 flex-grow border border-outline-variant/30 group-hover:border-primary/20 transition-all duration-500">
+<div class="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 mb-4">
+<span class="text-primary font-mono text-xs font-bold tracking-[0.3em] uppercase">Phase 02</span>
+<h4 class="text-2xl font-bold text-on-surface">Pattern Development</h4>
+</div>
+<p class="text-on-surface-variant font-body leading-relaxed text-lg font-light">
+                            In-house tool room equipped with VMC machines for precision pattern and core box manufacturing. We utilize aluminum, cast iron, and resin materials based on production volume requirements to ensure dimensional stability.
+                        </p>
+</div>
+</div>
+<!-- Step 3 -->
+<div class="relative z-10 flex gap-8 md:gap-12 items-start group">
+<div class="flex-shrink-0 w-12 h-12 md:w-16 md:h-16 rounded-2xl bg-surface-container/50 backdrop-blur-[20px] flex items-center justify-center border border-primary/20 group-hover:border-primary/60 transition-all duration-500 group-hover:scale-110 shadow-[0_0_30px_rgba(125,211,252,0.1)] relative">
+<div class="absolute inset-0 bg-primary/5 rounded-2xl -z-10"></div>
+<span class="material-symbols-outlined text-primary text-2xl md:text-3xl" style="font-variation-settings: 'FILL' 1;">layers</span>
+</div>
+<div class="bg-surface-container/30 backdrop-blur-[20px] rounded-2xl p-8 flex-grow border border-outline-variant/30 group-hover:border-primary/20 transition-all duration-500">
+<div class="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 mb-4">
+<span class="text-primary font-mono text-xs font-bold tracking-[0.3em] uppercase">Phase 03</span>
+<h4 class="text-2xl font-bold text-on-surface">Moulding &amp; Core Making</h4>
+</div>
+<p class="text-on-surface-variant font-body leading-relaxed text-lg font-light">
+                            High-pressure automated moulding lines ensure consistent mould hardness and accurate parting lines. Core shop utilizes cold box and shell core technologies to produce complex internal cavity structures.
+                        </p>
+</div>
+</div>
+<!-- Step 4 -->
+<div class="relative z-10 flex gap-8 md:gap-12 items-start group">
+<div class="flex-shrink-0 w-12 h-12 md:w-16 md:h-16 rounded-2xl bg-surface-container/50 backdrop-blur-[20px] flex items-center justify-center border border-primary/20 group-hover:border-primary/60 transition-all duration-500 group-hover:scale-110 shadow-[0_0_30px_rgba(125,211,252,0.1)] relative">
+<div class="absolute inset-0 bg-primary/5 rounded-2xl -z-10"></div>
+<span class="material-symbols-outlined text-primary text-2xl md:text-3xl" style="font-variation-settings: 'FILL' 1;">local_fire_department</span>
+</div>
+<div class="bg-surface-container/30 backdrop-blur-[20px] rounded-2xl p-8 flex-grow border border-outline-variant/30 group-hover:border-primary/20 transition-all duration-500">
+<div class="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 mb-4">
+<span class="text-primary font-mono text-xs font-bold tracking-[0.3em] uppercase">Phase 04</span>
+<h4 class="text-2xl font-bold text-on-surface">Melting &amp; Pouring</h4>
+</div>
+<p class="text-on-surface-variant font-body leading-relaxed text-lg font-light">
+                            Dual-track induction furnaces with strict temperature control. Every batch is analyzed via optical emission spectrometer before pouring. Specialized inoculation techniques guarantee uniform graphite distribution.
+                        </p>
+</div>
+</div>
+<!-- Step 5 -->
+<div class="relative z-10 flex gap-8 md:gap-12 items-start group">
+<div class="flex-shrink-0 w-12 h-12 md:w-16 md:h-16 rounded-2xl bg-surface-container/50 backdrop-blur-[20px] flex items-center justify-center border border-primary/20 group-hover:border-primary/60 transition-all duration-500 group-hover:scale-110 shadow-[0_0_30px_rgba(125,211,252,0.1)] relative">
+<div class="absolute inset-0 bg-primary/5 rounded-2xl -z-10"></div>
+<span class="material-symbols-outlined text-primary text-2xl md:text-3xl" style="font-variation-settings: 'FILL' 1;">hardware</span>
+</div>
+<div class="bg-surface-container/30 backdrop-blur-[20px] rounded-2xl p-8 flex-grow border border-outline-variant/30 group-hover:border-primary/20 transition-all duration-500">
+<div class="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 mb-4">
+<span class="text-primary font-mono text-xs font-bold tracking-[0.3em] uppercase">Phase 05</span>
+<h4 class="text-2xl font-bold text-on-surface">Fettling</h4>
+</div>
+<p class="text-on-surface-variant font-body leading-relaxed text-lg font-light">
+                            Automated shot blasting and robotic grinding stations ensure a clean, consistent surface finish while removing gates and risers. This controlled process minimizes manual variation.
+                        </p>
+</div>
+</div>
+<!-- Step 6 -->
+<div class="relative z-10 flex gap-8 md:gap-12 items-start group">
+<div class="flex-shrink-0 w-12 h-12 md:w-16 md:h-16 rounded-2xl bg-surface-container/50 backdrop-blur-[20px] flex items-center justify-center border border-primary/20 group-hover:border-primary/60 transition-all duration-500 group-hover:scale-110 shadow-[0_0_30px_rgba(125,211,252,0.1)] relative">
+<div class="absolute inset-0 bg-primary/5 rounded-2xl -z-10"></div>
+<span class="material-symbols-outlined text-primary text-2xl md:text-3xl" style="font-variation-settings: 'FILL' 1;">settings</span>
+</div>
+<div class="bg-surface-container/30 backdrop-blur-[20px] rounded-2xl p-8 flex-grow border border-outline-variant/30 group-hover:border-primary/20 transition-all duration-500">
+<div class="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 mb-4">
+<span class="text-primary font-mono text-xs font-bold tracking-[0.3em] uppercase">Phase 06</span>
+<h4 class="text-2xl font-bold text-on-surface">Machining</h4>
+</div>
+<p class="text-on-surface-variant font-body leading-relaxed text-lg font-light">
+                            Fully equipped CNC and VMC machine shop capable of delivering ready-to-assemble components. We maintain strict tolerances on complex geometries, turning raw castings into precision parts.
+                        </p>
+</div>
+</div>
+<!-- Step 7-->
+<div class="relative z-10 flex gap-8 md:gap-12 items-start group">
+<div class="flex-shrink-0 w-12 h-12 md:w-16 md:h-16 rounded-2xl bg-surface-container/50 backdrop-blur-[20px] flex items-center justify-center border border-primary/20 group-hover:border-primary/60 transition-all duration-500 group-hover:scale-110 shadow-[0_0_30px_rgba(125,211,252,0.1)] relative">
+<div class="absolute inset-0 bg-primary/5 rounded-2xl -z-10"></div>
+<span class="material-symbols-outlined text-primary text-2xl md:text-3xl" style="font-variation-settings: 'FILL' 1;">fact_check</span>
+</div>
+<div class="bg-surface-container/30 backdrop-blur-[20px] rounded-2xl p-8 flex-grow border border-primary/30 shadow-[0_0_40px_rgba(125,211,252,0.05)]">
+<div class="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 mb-4">
+<span class="text-primary font-mono text-xs font-bold tracking-[0.3em] uppercase">Phase 07</span>
+<h4 class="text-2xl font-bold text-on-surface">Inspection &amp; Dispatch</h4>
+</div>
+<p class="text-on-surface-variant font-body leading-relaxed text-lg font-light">
+                            Rigorous quality assurance including CMM inspection, ultrasonic testing, magnetic particle inspection, and pressure testing. Castings are securely packaged to international standards.
+                        </p>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer (Matches Homepage) -->
+<footer class="bg-surface-container-lowest w-full rounded-t-xl border-t border-outline-variant relative z-10 mt-20"><div class="grid grid-cols-1 md:grid-cols-4 gap-8 px-12 py-16 w-full"><div class="col-span-1 md:col-span-1"><a class="text-lg font-bold text-on-surface flex items-center gap-2 mb-4" href="#"><span class="material-symbols-outlined text-primary">factory</span>SHAKTI UDYOG</a><p class="font-body text-sm text-on-surface-variant mb-6 leading-relaxed">Precision Iron Casting Excellence. Delivering robust solutions for demanding manufacturing sectors worldwide.</p><p class="font-body text-xs text-on-surface-variant/60">© 2024 Shakti Udyog. Precision Iron Casting Excellence.</p></div><div class="col-span-1 flex flex-col gap-3"><h4 class="text-on-surface font-semibold mb-2">Company</h4><a class="font-body text-sm text-on-surface-variant hover:text-tertiary transition-colors opacity-80 hover:opacity-100" href="#">About Us</a><a class="font-body text-sm text-on-surface-variant hover:text-tertiary transition-colors opacity-80 hover:opacity-100" href="#">Quality Policy</a><a class="font-body text-sm text-on-surface-variant hover:text-tertiary transition-colors opacity-80 hover:opacity-100" href="#">Accreditations</a><a class="font-body text-sm text-on-surface-variant hover:text-tertiary transition-colors opacity-80 hover:opacity-100" href="#">Career</a></div><div class="col-span-1 flex flex-col gap-3"><h4 class="text-on-surface font-semibold mb-2">Capabilities</h4><a class="font-body text-sm text-on-surface-variant hover:text-tertiary transition-colors opacity-80 hover:opacity-100" href="#">Grey Iron Castings</a><a class="font-body text-sm text-on-surface-variant hover:text-tertiary transition-colors opacity-80 hover:opacity-100" href="#">Ductile Iron Castings</a><a class="font-body text-sm text-on-surface-variant hover:text-tertiary transition-colors opacity-80 hover:opacity-100" href="#">Custom Tooling</a><a class="font-body text-sm text-on-surface-variant hover:text-tertiary transition-colors opacity-80 hover:opacity-100" href="#">CNC Machining</a></div><div class="col-span-1 flex flex-col gap-3"><h4 class="text-on-surface font-semibold mb-2">Connect</h4><a class="font-body text-sm text-on-surface-variant hover:text-tertiary transition-colors opacity-80 hover:opacity-100 flex items-center gap-2" href="#"><span class="material-symbols-outlined text-sm">mail</span>Contact Support</a><a class="font-body text-sm text-on-surface-variant hover:text-tertiary transition-colors opacity-80 hover:opacity-100 flex items-center gap-2" href="#"><span class="material-symbols-outlined text-sm">phone</span>+91 (0) 123 456 7890</a><a class="font-body text-sm text-on-surface-variant hover:text-tertiary transition-colors opacity-80 hover:opacity-100 flex items-center gap-2 mt-4" href="#"><span class="material-symbols-outlined text-sm">location_on</span>Industrial Area, Phase 1, India</a></div></div></footer>
+<script class="">
+    // Simple nav background effect on scroll
+    window.addEventListener('scroll', () => {
+        const nav = document.getElementById('main-nav');
+        if (window.scrollY > 20) {
+            nav.classList.add('shadow-md');
+        } else {
+            nav.classList.remove('shadow-md');
+        }
+    });
+</script></body></html>
