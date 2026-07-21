@@ -1,0 +1,570 @@
+<!-- Read `CLAUDE.md` and `docs/shakti-udyog-requirements.md` again before making any changes.
+
+Start **Milestone 7 only**: Customer Portal.
+
+First inspect the existing codebase and provide a concise implementation plan. Wait for my approval before making changes.
+
+Implement ONLY the complete Customer Portal. Reuse the existing Authentication, RFQ, Quotation, Order, and Document modules. Do NOT duplicate business logic or APIs.
+
+Do NOT implement:
+
+- Admin Portal
+- Data Updater Portal
+- Jira Integration
+- Email Providers
+- SMS Providers
+- Payment Gateway
+- Production Cloud Storage
+- CRM
+- Analytics
+
+Use interfaces/placeholders where external integrations are required.
+
+--------------------------------------------------
+GOAL
+--------------------------------------------------
+
+Develop a complete Customer Portal that provides customers with a secure self-service experience.
+
+Customers should be able to:
+
+• View dashboard
+• Manage RFQs
+• View quotations
+• Accept/Decline quotations
+• Track orders
+• View shipment status
+• Download documents
+• View invoices
+• Upload payment proofs (placeholder)
+• Manage profile
+• Receive notifications
+• Raise support requests
+
+All functionality must use existing backend services.
+
+--------------------------------------------------
+PORTAL LAYOUT
+--------------------------------------------------
+
+Create:
+
+Customer Layout
+
+Sidebar Navigation
+
+Top Navigation
+
+Breadcrumbs
+
+Profile Menu
+
+Notification Panel
+
+Responsive Drawer
+
+Dashboard Widgets
+
+Footer
+
+Dark Mode Ready
+
+--------------------------------------------------
+ROUTES
+--------------------------------------------------
+
+/customer
+
+/customer/dashboard
+
+/customer/rfqs
+
+/customer/rfqs/create
+
+/customer/rfqs/:id
+
+/customer/quotations
+
+/customer/quotations/:id
+
+/customer/orders
+
+/customer/orders/:id
+
+/customer/orders/:id/timeline
+
+/customer/documents
+
+/customer/invoices
+
+/customer/invoices/:id
+
+/customer/payments
+
+/customer/profile
+
+/customer/company
+
+/customer/notifications
+
+/customer/support
+
+/customer/settings
+
+Protect every route using JWT + Customer role.
+
+--------------------------------------------------
+CUSTOMER DASHBOARD
+--------------------------------------------------
+
+Dashboard widgets:
+
+Open RFQs
+
+RFQs Under Review
+
+Pending Quotations
+
+Accepted Quotations
+
+Active Orders
+
+Recent Shipments
+
+Invoices Summary
+
+Outstanding Payments (placeholder)
+
+Recent Documents
+
+Unread Notifications
+
+Support Requests
+
+Quick Actions
+
+Recent Activity Timeline
+
+Charts should consume existing APIs.
+
+--------------------------------------------------
+RFQ MODULE
+--------------------------------------------------
+
+Integrate existing RFQ APIs.
+
+Customer can:
+
+Create RFQ
+
+Save Draft
+
+Edit Draft
+
+Submit RFQ
+
+View Timeline
+
+Track Status
+
+Upload Drawings
+
+View Attachments
+
+Search RFQs
+
+Filter RFQs
+
+Cancel Draft
+
+--------------------------------------------------
+QUOTATION MODULE
+--------------------------------------------------
+
+Integrate existing quotation APIs.
+
+Customer can:
+
+View Quotations
+
+Accept
+
+Decline
+
+View Timeline
+
+Download PDF Placeholder
+
+View Commercial Terms
+
+View Validity
+
+View Line Items
+
+Add Comments
+
+--------------------------------------------------
+ORDER MODULE
+--------------------------------------------------
+
+Integrate existing Order APIs.
+
+Provide Amazon-style tracking.
+
+Customer can:
+
+View Orders
+
+Track Order
+
+View Timeline
+
+Shipment Tracking
+
+Download Documents
+
+Commercial Summary
+
+Raise Support Request
+
+--------------------------------------------------
+DOCUMENT CENTER
+--------------------------------------------------
+
+Customer document library.
+
+Categories:
+
+Drawings
+
+Inspection Reports
+
+Certificates
+
+Packing Lists
+
+Invoices
+
+Delivery Challans
+
+Shipment Documents
+
+Filters
+
+Search
+
+Pagination
+
+Secure Downloads
+
+Preview Placeholder
+
+--------------------------------------------------
+INVOICE CENTER
+--------------------------------------------------
+
+Integrate Invoice placeholder APIs.
+
+Display:
+
+Invoice Number
+
+Invoice Date
+
+Status
+
+Amount
+
+Paid
+
+Outstanding
+
+Due Date
+
+Download Placeholder
+
+--------------------------------------------------
+PAYMENTS
+--------------------------------------------------
+
+Placeholder implementation.
+
+Customer can:
+
+Upload Payment Proof
+
+View Payment History
+
+Track Verification Status
+
+No payment gateway implementation.
+
+--------------------------------------------------
+PROFILE
+--------------------------------------------------
+
+Manage:
+
+Personal Information
+
+Company Information
+
+Contact Details
+
+Password
+
+Profile Picture Placeholder
+
+Security Settings
+
+--------------------------------------------------
+COMPANY
+--------------------------------------------------
+
+Display:
+
+Company Profile
+
+GST
+
+PAN
+
+Address
+
+Billing Address
+
+Shipping Address
+
+Primary Contacts
+
+Approval Status
+
+Read-only unless permitted.
+
+--------------------------------------------------
+NOTIFICATIONS
+--------------------------------------------------
+
+Notification Center.
+
+Support:
+
+Unread
+
+Read
+
+Archive
+
+Filtering
+
+Pagination
+
+Deep links to RFQs
+
+Orders
+
+Quotations
+
+--------------------------------------------------
+SUPPORT
+--------------------------------------------------
+
+Customers can:
+
+Create Ticket
+
+Comment
+
+Upload Attachments
+
+Track Status
+
+View Resolution
+
+--------------------------------------------------
+BACKEND
+--------------------------------------------------
+
+Reuse existing APIs whenever possible.
+
+Only add APIs that are genuinely missing.
+
+Do NOT duplicate:
+
+Authentication
+
+RFQ
+
+Quotation
+
+Order
+
+Document
+
+Notification
+
+--------------------------------------------------
+SECURITY
+--------------------------------------------------
+
+Every request must:
+
+Validate JWT
+
+Validate Customer role
+
+Validate Company ownership
+
+Prevent IDOR
+
+Prevent unauthorized downloads
+
+Use Trace IDs
+
+Return standardized API responses
+
+--------------------------------------------------
+UI REQUIREMENTS
+--------------------------------------------------
+
+Responsive
+
+Accessible (WCAG)
+
+Loading Skeletons
+
+Error Boundaries
+
+Toast Notifications
+
+Pagination
+
+Searching
+
+Filtering
+
+Sorting
+
+Reusable Components
+
+Empty States
+
+Confirmation Dialogs
+
+--------------------------------------------------
+PERFORMANCE
+--------------------------------------------------
+
+Lazy loading
+
+Route-based code splitting
+
+API caching where appropriate
+
+Optimistic UI updates where safe
+
+--------------------------------------------------
+AUDIT
+--------------------------------------------------
+
+Audit:
+
+Profile Updates
+
+RFQ Actions
+
+Quotation Acceptance
+
+Quotation Decline
+
+Document Downloads
+
+Support Requests
+
+Include:
+
+User
+
+Company
+
+Timestamp
+
+Trace ID
+
+--------------------------------------------------
+SWAGGER
+--------------------------------------------------
+
+Document every new API.
+
+JWT Authentication
+
+Role requirements
+
+Example requests
+
+Example responses
+
+--------------------------------------------------
+TESTING
+--------------------------------------------------
+
+Run:
+
+Backend Build
+
+Frontend Build
+
+Swagger
+
+Authorization Tests
+
+Integration Tests
+
+Routing Tests
+
+Responsive Testing
+
+Fix every build error before completion.
+
+--------------------------------------------------
+WHEN COMPLETE
+--------------------------------------------------
+
+Stop and report:
+
+1. Files created/modified
+
+2. React pages created
+
+3. Components created
+
+4. APIs reused
+
+5. New APIs added
+
+6. Dashboard features
+
+7. Security implemented
+
+8. Build results
+
+9. Test results
+
+10. Remaining placeholders
+
+11. Recommended next milestone
+
+Follow every rule in `CLAUDE.md`.
+
+Do NOT implement:
+
+- Admin Portal
+- Data Updater Portal
+- Jira Integration
+- Email Providers
+- SMS Providers
+- Payment Gateway
+- Production Cloud Storage
+- CRM
+- Analytics -->

@@ -29,6 +29,11 @@ public class DataUpdaterController(
     private string UserRole =>
         HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "DataUpdater";
 
+    // ---- Dashboard ----------------------------------------------------------
+
+    [HttpGet("dashboard")]
+    public async Task<IActionResult> GetDashboard() => Ok(await updaterService.GetDashboardAsync());
+
     // ---- RFQ list -----------------------------------------------------------
 
     [HttpGet("rfqs")]

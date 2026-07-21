@@ -11,6 +11,7 @@ namespace ShaktiUdyog.Api.Services;
 
 public interface IDataUpdaterService
 {
+    Task<UpdaterDashboardDto> GetDashboardAsync();
     Task<PagedResult<UpdaterRfqListItemDto>> GetRfqsAsync(int page = 1, int pageSize = 20, string? search = null, string? status = null);
     Task<UpdaterRfqDetailDto?> GetRfqAsync(Guid rfqId);
     Task<bool?> UpdateRfqStatusAsync(Guid rfqId, RfqStatusChangeRequest request, Guid userId, string? ip);
@@ -18,10 +19,23 @@ public interface IDataUpdaterService
     Task<bool?> AssignRfqAsync(Guid rfqId, RfqAssignmentRequest request, Guid userId, string? ip);
 }
 
+public record UpdaterDashboardDto(int PendingRfqs, int PendingQuotations, int OrdersInProduction, int OrdersAwaitingShipment);
+
 public class DataUpdaterService(
     AppDbContext db,
     IAuditWriter audit) : IDataUpdaterService
 {
+    // ---- Dashboard ---------------------------------------------------------
+
+    public async Task<UpdaterDashboardDto> GetDashboardAsync()
+    {
+        var pendingRfqs = await db.Rfqs.CountAsync(r => r.Status == "Received");
+        var pendingQuotations = await db.Quotations.CountAsync(q => q.Status == "Draft" || q.Status == "Pending Approval");
+        var ordersInProduction = await db.Orders.CountAsync(o => o.Status == "production" || o.Status == "quality_check");
+        var ordersAwaitingShipment = await db.Orders.CountAsync(o => o.Status == "packed" || o.Status == "ready_to_dispatch");
+        return new UpdaterDashboardDto(pendingRfqs, pendingQuotations, ordersInProduction, ordersAwaitingShipment);
+    }
+
     // ---- RFQ list -----------------------------------------------------------
 
     public async Task<PagedResult<UpdaterRfqListItemDto>> GetRfqsAsync(

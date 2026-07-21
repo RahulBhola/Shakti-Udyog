@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { customerApi, type Dashboard } from "../../api/customerApi";
-import { Loading, EmptyState } from "../../components/ui";
+import { EmptyState } from "../../components/ui";
+import { SkeletonCard } from "../../components/Skeleton";
 import { Panel, formatDate } from "../shared";
 
 export default function DashboardPage() {
@@ -13,81 +14,108 @@ export default function DashboardPage() {
   }, []);
 
   if (error) return <EmptyState title="Dashboard unavailable" text={error} />;
-  if (!data) return <Loading label="Loading dashboard" />;
-
-  const stats = [
-    { label: "Open RFQs", value: data.openRfqs, href: "/customer/rfqs" },
-    { label: "Active Quotations", value: data.activeQuotations, href: "/customer/quotations" },
-    { label: "Active Orders", value: data.activeOrders, href: "/customer/orders" },
-    { label: "Unpaid Invoices", value: data.unpaidInvoices, href: "/customer/invoices" },
-  ];
 
   return (
     <>
       <h1>Dashboard</h1>
 
-      <div className="stat-cards">
-        {stats.map((s) => (
-          <Link key={s.label} to={s.href} className="row-link">
-            <div className="stat-card">
-              <div className="stat-card__value">{s.value}</div>
-              <div className="stat-card__label">{s.label}</div>
-            </div>
-          </Link>
-        ))}
-      </div>
-
-      <Panel title="Quick actions">
-        <div className="quick-actions">
-          <Link className="btn btn--primary" to="/customer/rfqs/new">Submit a new RFQ</Link>
-          <Link className="btn btn--ghost" style={{ color: "var(--c-ink)" }} to="/customer/documents">Browse documents</Link>
-          <Link className="btn btn--ghost" style={{ color: "var(--c-ink)" }} to="/customer/support">Raise a support request</Link>
+      {!data ? (
+        <div style={{ display: "grid", gap: "var(--sp-4)" }}>
+          <div className="stat-cards">
+            {[1, 2, 3, 4].map((i) => <SkeletonCard key={i} height={96} />)}
+          </div>
+          <SkeletonCard height={140} />
+          <div className="panel-grid panel-grid--2">
+            <SkeletonCard height={200} />
+            <SkeletonCard height={200} />
+          </div>
         </div>
-      </Panel>
+      ) : (
+        <>
+          <div className="stat-cards">
+            <Link to="/customer/rfqs" className="row-link">
+              <div className="stat-card">
+                <div className="stat-card__value">{data.openRfqs}</div>
+                <div className="stat-card__label">Open RFQs</div>
+              </div>
+            </Link>
+            <Link to="/customer/quotations" className="row-link">
+              <div className="stat-card">
+                <div className="stat-card__value">{data.activeQuotations}</div>
+                <div className="stat-card__label">Active Quotations</div>
+              </div>
+            </Link>
+            <Link to="/customer/orders" className="row-link">
+              <div className="stat-card">
+                <div className="stat-card__value">{data.activeOrders}</div>
+                <div className="stat-card__label">Active Orders</div>
+              </div>
+            </Link>
+            <Link to="/customer/invoices" className="row-link">
+              <div className="stat-card">
+                <div className="stat-card__value">{data.unpaidInvoices}</div>
+                <div className="stat-card__label">Unpaid Invoices</div>
+              </div>
+            </Link>
+          </div>
 
-      <div className="panel-grid panel-grid--2">
-        <Panel title="Recent activity">
-          {data.recentActivity.length === 0 ? (
-            <p className="placeholder-note">No recent activity yet.</p>
-          ) : (
-            <div className="list-rows">
-              {data.recentActivity.map((a, i) => (
-                <div className="list-row" key={i}>
-                  <div className="list-row__main">
-                    <div className="list-row__title">{a.title}</div>
-                    <div className="list-row__meta">{formatDate(a.occurredAtUtc)}</div>
-                  </div>
-                  {a.linkPath && <Link to={a.linkPath}>View</Link>}
-                </div>
-              ))}
+          <Panel title="Quick actions">
+            <div className="quick-actions">
+              <Link className="btn btn--primary" to="/customer/rfqs/new">Submit a new RFQ</Link>
+              <Link className="btn btn--ghost" style={{ color: "var(--c-ink)" }} to="/customer/documents">Browse documents</Link>
+              <Link className="btn btn--ghost" style={{ color: "var(--c-ink)" }} to="/customer/support">Raise a support request</Link>
+              <Link className="btn btn--ghost" style={{ color: "var(--c-ink)" }} to="/customer/payments">Payment history</Link>
             </div>
-          )}
-        </Panel>
+          </Panel>
 
-        <Panel title="Recent documents">
-          {data.recentDocuments.length === 0 ? (
-            <p className="placeholder-note">No documents shared yet.</p>
-          ) : (
-            <div className="list-rows">
-              {data.recentDocuments.map((d) => (
-                <div className="list-row" key={d.id}>
-                  <div className="list-row__main">
-                    <div className="list-row__title">{d.title}</div>
-                    <div className="list-row__meta">{d.category} · {formatDate(d.createdAtUtc)}</div>
-                  </div>
-                  <Link to="/customer/documents">Open</Link>
+          <div className="panel-grid panel-grid--2">
+            <Panel title="Recent activity">
+              {data.recentActivity.length === 0 ? (
+                <p className="placeholder-note">No recent activity yet.</p>
+              ) : (
+                <div className="list-rows">
+                  {data.recentActivity.map((a, i) => (
+                    <div className="list-row" key={i}>
+                      <div className="list-row__main">
+                        <div className="list-row__title">{a.title}</div>
+                        <div className="list-row__meta">{formatDate(a.occurredAtUtc)}</div>
+                      </div>
+                      {a.linkPath && <Link to={a.linkPath}>View</Link>}
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
-        </Panel>
-      </div>
+              )}
+            </Panel>
 
-      <Panel title="Activity chart">
-        <p className="placeholder-note">
-          [Chart placeholder — order and RFQ activity charts will appear here. Demo data only.]
-        </p>
-      </Panel>
+            <Panel title="Recent documents">
+              {data.recentDocuments.length === 0 ? (
+                <p className="placeholder-note">No documents shared yet.</p>
+              ) : (
+                <div className="list-rows">
+                  {data.recentDocuments.map((d) => (
+                    <div className="list-row" key={d.id}>
+                      <div className="list-row__main">
+                        <div className="list-row__title">{d.title}</div>
+                        <div className="list-row__meta">{d.category} · {formatDate(d.createdAtUtc)}</div>
+                      </div>
+                      <Link to="/customer/documents">Open</Link>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Panel>
+          </div>
+
+          <Panel title="Notifications">
+            <div className="quick-actions">
+              <span style={{ color: "var(--c-ink-muted)", fontSize: "var(--fs-sm)" }}>
+                {data.unreadNotifications} unread notification{data.unreadNotifications !== 1 ? "s" : ""}
+              </span>
+              <Link className="btn btn--ghost" style={{ color: "var(--c-ink)" }} to="/customer/notifications">View all</Link>
+            </div>
+          </Panel>
+        </>
+      )}
     </>
   );
 }

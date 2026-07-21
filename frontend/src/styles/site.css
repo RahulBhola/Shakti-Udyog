@@ -391,6 +391,7 @@ ul, ol { padding-left: 1.25rem; }
   animation: spin 0.8s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 @media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
 .empty-state { text-align: center; padding: var(--sp-8) var(--sp-4); color: var(--c-ink-muted); }
 

@@ -1,5 +1,5 @@
-import { apiGet, apiPatch } from "./client";
-import type { QuotationListItem, QuotationDetail, QuotationTimelineEntry, OrderListItem, OrderDetail, Paged } from "./customerApi";
+import { apiGet, apiPatch, apiPost } from "./client";
+import type { QuotationListItem, QuotationDetail, QuotationTimelineEntry, OrderListItem, OrderDetail, InvoiceListItem, InvoiceDetail, Paged } from "./customerApi";
 
 const base = "/api/v1/admin";
 
@@ -35,4 +35,17 @@ export const adminApi = {
   cancelOrder: (id: string, reason: string) =>
     apiPatch<{ message: string }>(`${base}/orders/${id}/cancel`, reason),
   orderHistory: (id: string) => apiGet<{ fromStatus: string; toStatus: string; changedByRole: string; note: string | null; occurredAtUtc: string }[]>(`${base}/orders/${id}/history`),
+
+  // ---- Invoices ------------------------------------------------------------
+
+  invoices: (page = 1, pageSize = 20, status?: string) => {
+    const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+    if (status) params.set("status", status);
+    return apiGet<Paged<InvoiceListItem>>(`${base}/invoices?${params}`);
+  },
+  invoice: (id: string) => apiGet<InvoiceDetail>(`${base}/invoices/${id}`),
+  createInvoice: (payload: {
+    orderId?: string; companyId: string; subtotal: number; tax: number; total: number;
+    issueDate: string; dueDate?: string; currency: string;
+  }) => apiPost<InvoiceDetail>(`${base}/invoices`, payload),
 };

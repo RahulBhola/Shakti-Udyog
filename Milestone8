@@ -1,0 +1,641 @@
+<!-- Read `CLAUDE.md` and `docs/shakti-udyog-requirements.md` again before making any changes.
+
+Start **Milestone 8 only**: Data Updater Portal.
+
+First inspect the existing codebase and provide a concise implementation plan. Wait for my approval before making changes.
+
+Implement ONLY the complete Data Updater Portal.
+
+Reuse the existing Authentication, RFQ, Quotation, Order Management, Customer Portal, Document Management, and Product modules.
+
+Do NOT duplicate business logic or APIs.
+
+Do NOT implement:
+
+- Admin Portal
+- Invoice Management
+- Payment Management
+- Payment Gateway
+- Jira Integration
+- Email Providers
+- SMS Providers
+- Production Cloud Storage
+- CRM
+- Analytics
+
+Use interfaces/placeholders where external integrations are required.
+
+--------------------------------------------------
+GOAL
+--------------------------------------------------
+
+Develop a complete internal Data Updater Portal used by manufacturing and sales teams to manage operational data.
+
+The portal should allow Data Updaters to:
+
+• Manage Products
+• Manage Categories
+• Manage Industries
+• Manage Resources
+• Manage FAQs
+• Manage Gallery
+• Process RFQs
+• Prepare Quotations
+• Update Orders
+• Update Production Status
+• Update Shipment Information
+• Upload Customer Documents
+• Manage Customer-visible Content
+
+All business logic must reuse existing services.
+
+--------------------------------------------------
+LAYOUT
+--------------------------------------------------
+
+Create:
+
+DataUpdaterLayout
+
+Sidebar Navigation
+
+Top Navigation
+
+Dashboard
+
+Notification Panel
+
+Profile Menu
+
+Responsive Navigation
+
+Breadcrumbs
+
+--------------------------------------------------
+ROUTES
+--------------------------------------------------
+
+/updater
+
+/updater/dashboard
+
+/updater/products
+
+/updater/products/new
+
+/updater/products/:id
+
+/updater/categories
+
+/updater/industries
+
+/updater/resources
+
+/updater/gallery
+
+/updater/faqs
+
+/updater/rfqs
+
+/updater/rfqs/:id
+
+/updater/quotations
+
+/updater/quotations/:id
+
+/updater/orders
+
+/updater/orders/:id
+
+/updater/orders/:id/shipment
+
+/updater/documents
+
+/updater/uploads
+
+/updater/profile
+
+Protect every route using JWT + DataUpdater role.
+
+--------------------------------------------------
+DASHBOARD
+--------------------------------------------------
+
+Display:
+
+Pending RFQs
+
+Pending Quotations
+
+Orders in Production
+
+Orders Awaiting Shipment
+
+Recent Uploads
+
+Assigned Work
+
+Recent Activities
+
+Today's Tasks
+
+Quick Actions
+
+--------------------------------------------------
+PRODUCT MANAGEMENT
+--------------------------------------------------
+
+Manage:
+
+Products
+
+Product Images
+
+Specifications
+
+Material Grades
+
+Categories
+
+Industries
+
+SEO Information
+
+Publish Status
+
+Search
+
+Filtering
+
+Pagination
+
+Draft Support
+
+--------------------------------------------------
+CATEGORY MANAGEMENT
+--------------------------------------------------
+
+Manage:
+
+Categories
+
+Subcategories
+
+Display Order
+
+Visibility
+
+Icons
+
+--------------------------------------------------
+INDUSTRIES
+--------------------------------------------------
+
+Manage:
+
+Industry Information
+
+Descriptions
+
+Images
+
+Status
+
+--------------------------------------------------
+RESOURCES
+--------------------------------------------------
+
+Manage:
+
+Blogs
+
+Case Studies
+
+Technical Documents
+
+Downloads
+
+Videos
+
+Images
+
+SEO
+
+Draft Workflow
+
+--------------------------------------------------
+FAQ MANAGEMENT
+--------------------------------------------------
+
+Create
+
+Edit
+
+Delete
+
+Publish
+
+Categorize
+
+Search
+
+--------------------------------------------------
+GALLERY
+--------------------------------------------------
+
+Manage:
+
+Images
+
+Albums
+
+Videos
+
+Captions
+
+Alt Text
+
+Sorting
+
+Visibility
+
+--------------------------------------------------
+RFQ MANAGEMENT
+--------------------------------------------------
+
+Reuse existing RFQ module.
+
+Support:
+
+View RFQs
+
+Assign RFQs
+
+Update Status
+
+Request Clarification
+
+Internal Notes
+
+Customer Notes
+
+Upload Attachments
+
+Prepare for Quotation
+
+Search
+
+Filtering
+
+--------------------------------------------------
+QUOTATION MANAGEMENT
+--------------------------------------------------
+
+Reuse existing Quotation module.
+
+Support:
+
+Create Draft
+
+Edit Draft
+
+Update Pricing
+
+Line Items
+
+Discounts
+
+Taxes
+
+Commercial Terms
+
+Attachments
+
+Submit for Approval
+
+--------------------------------------------------
+ORDER MANAGEMENT
+--------------------------------------------------
+
+Reuse existing Order module.
+
+Update:
+
+Production Status
+
+Manufacturing Progress
+
+Shipment Details
+
+Dispatch Details
+
+Customer Timeline
+
+Documents
+
+Milestones
+
+--------------------------------------------------
+SHIPMENT MANAGEMENT
+--------------------------------------------------
+
+Manage:
+
+Transporter
+
+Tracking Number
+
+LR Number
+
+Vehicle Number
+
+Dispatch Date
+
+ETA
+
+Delivery Status
+
+Proof of Delivery Placeholder
+
+--------------------------------------------------
+DOCUMENT MANAGEMENT
+--------------------------------------------------
+
+Upload:
+
+Inspection Reports
+
+Certificates
+
+Packing Lists
+
+Approved Drawings
+
+Dispatch Documents
+
+Customer Files
+
+Validate:
+
+Type
+
+Size
+
+MIME Type
+
+--------------------------------------------------
+UPLOAD CENTER
+--------------------------------------------------
+
+Manage:
+
+Uploads
+
+Draft Files
+
+Image Library
+
+Document Library
+
+Search
+
+Filter
+
+Preview
+
+--------------------------------------------------
+PROFILE
+--------------------------------------------------
+
+Manage:
+
+Profile
+
+Password
+
+Preferences
+
+Notification Settings
+
+--------------------------------------------------
+BACKEND
+--------------------------------------------------
+
+Reuse existing services.
+
+Only create APIs that are missing.
+
+Do NOT duplicate:
+
+Authentication
+
+RFQ
+
+Quotation
+
+Order
+
+Product
+
+Documents
+
+--------------------------------------------------
+SECURITY
+--------------------------------------------------
+
+Every request must:
+
+Validate JWT
+
+Validate DataUpdater role
+
+Use Policy-based Authorization
+
+Prevent IDOR
+
+Validate resource ownership
+
+Return standardized API responses
+
+Include Trace IDs
+
+--------------------------------------------------
+VALIDATION
+--------------------------------------------------
+
+Implement FluentValidation for:
+
+Product
+
+Category
+
+Industry
+
+Resource
+
+FAQ
+
+Gallery
+
+Shipment Updates
+
+Production Updates
+
+Uploads
+
+--------------------------------------------------
+AUDIT LOGGING
+--------------------------------------------------
+
+Audit:
+
+Product Changes
+
+RFQ Updates
+
+Quotation Updates
+
+Order Updates
+
+Shipment Updates
+
+Uploads
+
+Document Changes
+
+Content Publishing
+
+Include:
+
+User
+
+Role
+
+Timestamp
+
+Trace ID
+
+--------------------------------------------------
+UI REQUIREMENTS
+--------------------------------------------------
+
+Responsive
+
+Accessible
+
+Reusable Components
+
+Loading Skeletons
+
+Toast Notifications
+
+Pagination
+
+Searching
+
+Filtering
+
+Sorting
+
+Confirmation Dialogs
+
+Empty States
+
+--------------------------------------------------
+PERFORMANCE
+--------------------------------------------------
+
+Lazy Loading
+
+Route-based Code Splitting
+
+Virtualized Tables (where appropriate)
+
+Optimistic UI Updates (where safe)
+
+--------------------------------------------------
+SWAGGER
+--------------------------------------------------
+
+Document every new API.
+
+Configure JWT Authentication.
+
+Document:
+
+Role requirements
+
+Request examples
+
+Response examples
+
+Validation errors
+
+--------------------------------------------------
+TESTING
+--------------------------------------------------
+
+Run:
+
+Backend Build
+
+Frontend Build
+
+Swagger
+
+CRUD Tests
+
+Authorization Tests
+
+Validation Tests
+
+Integration Tests
+
+Fix every build error before completion.
+
+--------------------------------------------------
+WHEN COMPLETE
+--------------------------------------------------
+
+Stop and report:
+
+1. Files created/modified
+
+2. React pages created
+
+3. Components created
+
+4. APIs reused
+
+5. New APIs added
+
+6. Dashboard features
+
+7. Authorization implemented
+
+8. Validation implemented
+
+9. Audit logging implemented
+
+10. Build results
+
+11. Test results
+
+12. Remaining placeholders
+
+13. Recommended Milestone 9
+
+Follow every rule in `CLAUDE.md`.
+
+Do NOT implement:
+
+- Admin Portal
+- Invoice Management
+- Payment Management
+- Payment Gateway
+- Jira Integration
+- Email Providers
+- SMS Providers
+- Production Cloud Storage
+- CRM
+- Analytics -->
