@@ -254,6 +254,15 @@ public class CustomerController(
         return Ok(await customerService.GetPaymentsAsync(ctx!));
     }
 
+    [HttpGet("outstanding")]
+    [ProducesResponseType<IReadOnlyList<PaymentDto>>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetOutstanding()
+    {
+        var (ctx, failure) = await RequireContextAsync();
+        if (failure is not null) return failure;
+        return Ok(await customerService.GetOutstandingAsync(ctx!));
+    }
+
     /// <summary>Submits offline payment proof (bank/NEFT/UPI reference + optional file).</summary>
     [HttpPost("payments/proof")]
     [EnableRateLimiting("public")]

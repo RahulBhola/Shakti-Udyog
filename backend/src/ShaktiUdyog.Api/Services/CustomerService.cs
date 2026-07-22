@@ -39,6 +39,7 @@ public interface ICustomerService
 
     Task<IReadOnlyList<InvoiceListItemDto>> GetInvoicesAsync(CustomerContext ctx);
     Task<InvoiceDetailDto?> GetInvoiceAsync(CustomerContext ctx, Guid invoiceId);
+    Task<object> GetOutstandingAsync(CustomerContext ctx);
 
     Task<IReadOnlyList<PaymentDto>> GetPaymentsAsync(CustomerContext ctx);
     Task<PaymentDto?> SubmitPaymentProofAsync(CustomerContext ctx, PaymentProofRequest request, IFormFile? proofFile, string? ip);
@@ -489,6 +490,13 @@ public class CustomerService(
     }
 
     // ---- Invoices & payments ------------------------------------------------
+    public async Task<object> GetOutstandingAsync(CustomerContext ctx)
+    {
+        var invoices = await GetInvoicesAsync(ctx);
+        var totalOutstanding = invoices.Where(i => i.Status == "Issued" || i.Status == "Partially Paid" || i.Status == "Overdue").Sum(i => i.BalanceDue);
+        return new { outstandingAmount = totalOutstanding, invoiceCount = invoices.Count };
+    }
+
 
     public async Task<IReadOnlyList<InvoiceListItemDto>> GetInvoicesAsync(CustomerContext ctx) =>
         await db.Invoices

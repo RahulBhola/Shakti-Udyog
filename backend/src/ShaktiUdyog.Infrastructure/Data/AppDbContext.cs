@@ -49,6 +49,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<GalleryItem> GalleryItems => Set<GalleryItem>();
     public DbSet<DocumentFolder> DocumentFolders => Set<DocumentFolder>();
     public DbSet<DocumentVersion> DocumentVersions => Set<DocumentVersion>();
+    public DbSet<InvoiceItem> InvoiceItems => Set<InvoiceItem>();
+    public DbSet<InvoiceStatusHistory> InvoiceStatusHistories => Set<InvoiceStatusHistory>();
+    public DbSet<InvoiceAttachment> InvoiceAttachments => Set<InvoiceAttachment>();
+    public DbSet<CreditNote> CreditNotes => Set<CreditNote>();
+    public DbSet<DebitNote> DebitNotes => Set<DebitNote>();
     public DbSet<ShipmentTrackingEvent> ShipmentTrackingEvents => Set<ShipmentTrackingEvent>();
     public DbSet<OrderComment> OrderComments => Set<OrderComment>();
     public DbSet<OrderStatusHistory> OrderStatusHistories => Set<OrderStatusHistory>();
@@ -385,16 +390,90 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             entity.HasIndex(i => i.InvoiceNumber).IsUnique();
             entity.Property(i => i.Subtotal).HasPrecision(18, 2);
             entity.Property(i => i.Tax).HasPrecision(18, 2);
+            entity.Property(i => i.Discount).HasPrecision(18, 2);
+            entity.Property(i => i.Freight).HasPrecision(18, 2);
+            entity.Property(i => i.Packing).HasPrecision(18, 2);
+            entity.Property(i => i.OtherCharges).HasPrecision(18, 2);
             entity.Property(i => i.Total).HasPrecision(18, 2);
             entity.Property(i => i.AmountPaid).HasPrecision(18, 2);
             entity.Property(i => i.BalanceDue).HasPrecision(18, 2);
             entity.Property(i => i.Currency).HasMaxLength(3);
             entity.Property(i => i.Status).HasMaxLength(30);
+            entity.Property(i => i.PaymentTerms).HasMaxLength(500);
+            entity.Property(i => i.Notes).HasMaxLength(2000);
+            entity.Property(i => i.HsnSacCode).HasMaxLength(20);
+            entity.Property(i => i.RowVersion).IsRowVersion();
             entity.HasIndex(i => i.CompanyId);
             entity.HasOne(i => i.Company).WithMany()
                 .HasForeignKey(i => i.CompanyId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(i => i.Order).WithMany()
                 .HasForeignKey(i => i.OrderId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        builder.Entity<InvoiceItem>(entity =>
+        {
+            entity.ToTable("InvoiceItems");
+            entity.Property(i => i.Description).HasMaxLength(500).IsRequired();
+            entity.Property(i => i.HsnSacCode).HasMaxLength(20);
+            entity.Property(i => i.Unit).HasMaxLength(20);
+            entity.Property(i => i.UnitPrice).HasPrecision(18, 2);
+            entity.Property(i => i.TaxPercent).HasPrecision(5, 2);
+            entity.Property(i => i.LineTotal).HasPrecision(18, 2);
+            entity.HasOne(i => i.Invoice).WithMany(inv => inv.Items)
+                .HasForeignKey(i => i.InvoiceId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<InvoiceStatusHistory>(entity =>
+        {
+            entity.ToTable("InvoiceStatusHistory");
+            entity.Property(h => h.FromStatus).HasMaxLength(30).IsRequired();
+            entity.Property(h => h.ToStatus).HasMaxLength(30).IsRequired();
+            entity.Property(h => h.ChangedByRole).HasMaxLength(30);
+            entity.Property(h => h.Note).HasMaxLength(2000);
+            entity.HasOne(h => h.Invoice).WithMany(inv => inv.StatusHistory)
+                .HasForeignKey(h => h.InvoiceId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<InvoiceAttachment>(entity =>
+        {
+            entity.ToTable("InvoiceAttachments");
+            entity.Property(a => a.FileName).HasMaxLength(255).IsRequired();
+            entity.Property(a => a.ContentType).HasMaxLength(127).IsRequired();
+            entity.Property(a => a.StorageKey).HasMaxLength(200).IsRequired();
+            entity.Property(a => a.Description).HasMaxLength(500);
+            entity.HasIndex(a => a.StorageKey).IsUnique();
+            entity.HasOne(a => a.Invoice).WithMany(inv => inv.Attachments)
+                .HasForeignKey(a => a.InvoiceId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<CreditNote>(entity =>
+        {
+            entity.ToTable("CreditNotes");
+            entity.Property(c => c.CreditNoteNumber).HasMaxLength(40).IsRequired();
+            entity.HasIndex(c => c.CreditNoteNumber).IsUnique();
+            entity.Property(c => c.Total).HasPrecision(18, 2);
+            entity.Property(c => c.Currency).HasMaxLength(3);
+            entity.Property(c => c.Reason).HasMaxLength(2000).IsRequired();
+            entity.Property(c => c.Status).HasMaxLength(30);
+            entity.HasOne(c => c.Invoice).WithMany()
+                .HasForeignKey(c => c.InvoiceId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(c => c.Company).WithMany()
+                .HasForeignKey(c => c.CompanyId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<DebitNote>(entity =>
+        {
+            entity.ToTable("DebitNotes");
+            entity.Property(d => d.DebitNoteNumber).HasMaxLength(40).IsRequired();
+            entity.HasIndex(d => d.DebitNoteNumber).IsUnique();
+            entity.Property(d => d.Total).HasPrecision(18, 2);
+            entity.Property(d => d.Currency).HasMaxLength(3);
+            entity.Property(d => d.Reason).HasMaxLength(2000).IsRequired();
+            entity.Property(d => d.Status).HasMaxLength(30);
+            entity.HasOne(d => d.Invoice).WithMany()
+                .HasForeignKey(d => d.InvoiceId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(d => d.Company).WithMany()
+                .HasForeignKey(d => d.CompanyId).OnDelete(DeleteBehavior.Restrict);
         });
 
         builder.Entity<Payment>(entity =>

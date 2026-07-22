@@ -7,16 +7,18 @@ using ShaktiUdyog.Infrastructure.Data;
 
 namespace ShaktiUdyog.Api.Services;
 
+public record CreateInvoiceRequest(
+    Guid? OrderId, Guid CompanyId, decimal Subtotal, decimal Tax, decimal Discount,
+    decimal Freight, decimal Packing, decimal OtherCharges, decimal Total,
+    DateTimeOffset IssueDate, DateTimeOffset? DueDate, string Currency,
+    string? PaymentTerms, string? Notes);
+
 public interface IInvoiceAdminService
 {
     Task<InvoiceDetailDto?> GetInvoiceAsync(Guid id);
     Task<PagedResult<InvoiceListItemDto>> GetInvoicesAsync(int page, int pageSize, string? status);
     Task<InvoiceDetailDto> CreateInvoiceAsync(CreateInvoiceRequest request, Guid userId, string? ip);
 }
-
-public record CreateInvoiceRequest(
-    Guid? OrderId, Guid CompanyId, decimal Subtotal, decimal Tax, decimal Total,
-    DateTimeOffset IssueDate, DateTimeOffset? DueDate, string Currency);
 
 public class InvoiceAdminService(AppDbContext db, IAuditWriter audit) : IInvoiceAdminService
 {
@@ -51,8 +53,10 @@ public class InvoiceAdminService(AppDbContext db, IAuditWriter audit) : IInvoice
         {
             Id = Guid.NewGuid(), InvoiceNumber = number, OrderId = request.OrderId,
             CompanyId = request.CompanyId, IssueDateUtc = request.IssueDate, DueDateUtc = request.DueDate,
-            Subtotal = request.Subtotal, Tax = request.Tax, Total = request.Total,
-            AmountPaid = 0, BalanceDue = request.Total, Currency = request.Currency ?? "INR",
+            Subtotal = request.Subtotal, Tax = request.Tax, Discount = request.Discount,
+            Freight = request.Freight, Packing = request.Packing, OtherCharges = request.OtherCharges,
+            Total = request.Total, AmountPaid = 0, BalanceDue = request.Total,
+            Currency = request.Currency ?? "INR", PaymentTerms = request.PaymentTerms, Notes = request.Notes,
             Status = InvoiceStatuses.Issued,
         };
         db.Invoices.Add(invoice);

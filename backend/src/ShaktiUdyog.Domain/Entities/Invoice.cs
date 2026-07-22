@@ -2,11 +2,6 @@ using ShaktiUdyog.Domain.Constants;
 
 namespace ShaktiUdyog.Domain.Entities;
 
-/// <summary>
-/// Invoice against an order (requirements §14/§20). Issued invoices are never
-/// overwritten — corrections use credit notes / revisions with an audit trail
-/// (enforced by staff workflows in a later milestone).
-/// </summary>
 public class Invoice
 {
     public Guid Id { get; set; }
@@ -19,12 +14,23 @@ public class Invoice
     public DateTimeOffset? DueDateUtc { get; set; }
     public decimal Subtotal { get; set; }
     public decimal Tax { get; set; }
+    public decimal Discount { get; set; }
+    public decimal Freight { get; set; }
+    public decimal Packing { get; set; }
+    public decimal OtherCharges { get; set; }
     public decimal Total { get; set; }
     public decimal AmountPaid { get; set; }
     public decimal BalanceDue { get; set; }
     public string Currency { get; set; } = "INR";
     public string Status { get; set; } = InvoiceStatuses.Draft;
-    /// <summary>Invoice PDF in protected storage, when available.</summary>
+    public string? PaymentTerms { get; set; }
+    public string? Notes { get; set; }
+    public string? HsnSacCode { get; set; }
     public Guid? DocumentId { get; set; }
     public DateTimeOffset CreatedAtUtc { get; set; } = DateTimeOffset.UtcNow;
+    public byte[] RowVersion { get; set; } = [];
+
+    public List<InvoiceItem> Items { get; set; } = [];
+    public List<InvoiceStatusHistory> StatusHistory { get; set; } = [];
+    public List<InvoiceAttachment> Attachments { get; set; } = [];
 }

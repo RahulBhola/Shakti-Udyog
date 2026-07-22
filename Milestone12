@@ -1,0 +1,635 @@
+<!-- Read `CLAUDE.md` and `docs/shakti-udyog-requirements.md` again before making any changes.
+
+Start **Milestone 12 only**: Jira Integration.
+
+First inspect the existing codebase and provide a concise implementation plan. Wait for my approval before making changes.
+
+Implement ONLY the complete Jira Integration module.
+
+Reuse the existing Authentication, RFQ, Quotation, Order, Customer Portal, Data Updater Portal, Admin Portal, Invoice, Payment, and Document modules.
+
+Do NOT duplicate business logic.
+
+Do NOT implement:
+
+- Email Providers
+- SMS Providers
+- Payment Gateway
+- Azure DevOps Integration
+- GitHub Issues Integration
+- Slack Integration
+- Microsoft Teams Integration
+- CRM Integration
+
+Use interfaces/placeholders where external integrations are required.
+
+--------------------------------------------------
+GOAL
+--------------------------------------------------
+
+Develop a complete Jira Cloud integration that automatically synchronizes business operations with Jira.
+
+The system should support:
+
+• Automatic Jira Issue Creation
+
+• Issue Synchronization
+
+• Comments Synchronization
+
+• Attachments Synchronization
+
+• Status Synchronization
+
+• Production Tracking
+
+• Assignment
+
+• Dashboard Monitoring
+
+• Manual Sync
+
+• Scheduled Sync
+
+--------------------------------------------------
+SUPPORTED MODULES
+--------------------------------------------------
+
+RFQ
+
+Quotation
+
+Orders
+
+Production
+
+Shipment
+
+Support Requests
+
+Quality Issues
+
+Customer Complaints
+
+--------------------------------------------------
+JIRA ISSUE TYPES
+--------------------------------------------------
+
+Epic
+
+Story
+
+Task
+
+Bug
+
+Sub-task
+
+Service Request
+
+Custom Issue Type Mapping
+
+--------------------------------------------------
+WORKFLOW
+--------------------------------------------------
+
+Example:
+
+RFQ Approved
+
+↓
+
+Create Jira Task
+
+↓
+
+Production Team Assigned
+
+↓
+
+Development / Manufacturing Updates
+
+↓
+
+Status Sync
+
+↓
+
+Order Updated
+
+↓
+
+Customer Timeline Updated
+
+--------------------------------------------------
+JIRA CONFIGURATION
+--------------------------------------------------
+
+Admin can configure:
+
+Jira URL
+
+Cloud Site
+
+API Token
+
+Project Key
+
+Project Mapping
+
+Issue Type Mapping
+
+Priority Mapping
+
+Status Mapping
+
+Transition Mapping
+
+Webhook Secret
+
+Synchronization Frequency
+
+Retry Policy
+
+--------------------------------------------------
+ADMIN SETTINGS
+--------------------------------------------------
+
+Create pages:
+
+/admin/integrations
+
+/admin/integrations/jira
+
+/admin/integrations/jira/projects
+
+/admin/integrations/jira/mappings
+
+/admin/integrations/jira/logs
+
+/admin/integrations/jira/settings
+
+--------------------------------------------------
+FEATURES
+--------------------------------------------------
+
+Connect / Disconnect Jira
+
+Validate Connection
+
+Sync Projects
+
+Sync Issue Types
+
+Sync Priorities
+
+Sync Statuses
+
+Sync Users
+
+Test Connection
+
+View Logs
+
+Retry Failed Sync
+
+Manual Synchronization
+
+--------------------------------------------------
+AUTOMATIC ISSUE CREATION
+--------------------------------------------------
+
+Automatically create Jira issues for:
+
+Approved RFQs
+
+Accepted Quotations
+
+Production Orders
+
+Shipment Delays
+
+Quality Issues
+
+Support Requests
+
+Customer Escalations
+
+--------------------------------------------------
+ISSUE SYNCHRONIZATION
+--------------------------------------------------
+
+Synchronize:
+
+Summary
+
+Description
+
+Priority
+
+Status
+
+Assignee
+
+Reporter
+
+Labels
+
+Components
+
+Attachments
+
+Comments
+
+Custom Fields
+
+Due Dates
+
+--------------------------------------------------
+COMMENTS
+--------------------------------------------------
+
+Synchronize:
+
+Internal Comments
+
+Customer-visible Comments
+
+Admin Notes
+
+System Notes
+
+Support optional one-way or two-way sync.
+
+--------------------------------------------------
+ATTACHMENTS
+--------------------------------------------------
+
+Upload:
+
+Drawings
+
+CAD Files
+
+Inspection Reports
+
+Certificates
+
+Invoices
+
+Photos
+
+Technical Documents
+
+Use existing Document Management module.
+
+--------------------------------------------------
+WEBHOOKS
+--------------------------------------------------
+
+Implement webhook endpoints:
+
+Issue Updated
+
+Comment Added
+
+Attachment Added
+
+Transition Changed
+
+Issue Assigned
+
+Issue Closed
+
+Validate webhook secret.
+
+--------------------------------------------------
+BACKGROUND JOBS
+--------------------------------------------------
+
+Create background services for:
+
+Pending Sync
+
+Retry Failed Sync
+
+Polling (fallback)
+
+Webhook Processing
+
+Cleanup Logs
+
+Configurable schedule.
+
+--------------------------------------------------
+DATABASE
+--------------------------------------------------
+
+Create entities:
+
+JiraConfiguration
+
+JiraProject
+
+JiraIssueMapping
+
+JiraSyncJob
+
+JiraWebhookLog
+
+JiraAuditLog
+
+JiraSyncHistory
+
+JiraRetryQueue
+
+Relationships:
+
+RFQ → Jira Issue
+
+Quotation → Jira Issue
+
+Order → Jira Issue
+
+Support Ticket → Jira Issue
+
+Generate EF Core migrations.
+
+--------------------------------------------------
+BACKEND APIs
+--------------------------------------------------
+
+Admin
+
+GET /api/v1/admin/jira/configuration
+
+PUT /api/v1/admin/jira/configuration
+
+POST /api/v1/admin/jira/test
+
+POST /api/v1/admin/jira/connect
+
+POST /api/v1/admin/jira/disconnect
+
+POST /api/v1/admin/jira/sync
+
+GET /api/v1/admin/jira/logs
+
+GET /api/v1/admin/jira/projects
+
+GET /api/v1/admin/jira/issues
+
+POST /api/v1/admin/jira/retry
+
+Webhook
+
+POST /api/v1/webhooks/jira
+
+--------------------------------------------------
+JIRA SERVICE
+--------------------------------------------------
+
+Create abstraction:
+
+IJiraService
+
+Implement:
+
+JiraCloudService
+
+Future placeholders:
+
+Azure DevOps
+
+GitHub Issues
+
+ServiceNow
+
+--------------------------------------------------
+ERROR HANDLING
+--------------------------------------------------
+
+Handle:
+
+Network Errors
+
+Rate Limits
+
+Authentication Failures
+
+Token Expiration
+
+Missing Projects
+
+Invalid Mapping
+
+Retry Queue
+
+Dead Letter Queue Placeholder
+
+--------------------------------------------------
+DASHBOARD
+--------------------------------------------------
+
+Admin dashboard widgets:
+
+Connection Status
+
+Pending Sync Jobs
+
+Failed Sync Jobs
+
+Successful Syncs
+
+Average Sync Time
+
+Issues Created Today
+
+Issues Updated Today
+
+Webhook Activity
+
+Retry Queue
+
+Recent Errors
+
+--------------------------------------------------
+REPORTS
+--------------------------------------------------
+
+Generate reports:
+
+Sync History
+
+Issue Statistics
+
+Webhook Logs
+
+Failed Synchronizations
+
+Retry Queue
+
+Performance Metrics
+
+Export placeholders only.
+
+--------------------------------------------------
+SECURITY
+--------------------------------------------------
+
+Implement:
+
+Encrypted API Token Storage
+
+JWT Authentication
+
+Admin Authorization
+
+Webhook Signature Validation
+
+Rate Limiting
+
+IP Restrictions Placeholder
+
+Audit Sensitive Operations
+
+--------------------------------------------------
+AUDIT LOGGING
+--------------------------------------------------
+
+Audit:
+
+Configuration Changes
+
+Connection Events
+
+Issue Creation
+
+Issue Updates
+
+Synchronization
+
+Webhook Processing
+
+Retry Attempts
+
+Failures
+
+Include:
+
+User
+
+Role
+
+Timestamp
+
+Trace ID
+
+IP Address
+
+--------------------------------------------------
+PERFORMANCE
+--------------------------------------------------
+
+Batch Synchronization
+
+Async Processing
+
+Queue-based Jobs
+
+Caching
+
+Optimized API Calls
+
+Configurable Rate Limiting
+
+--------------------------------------------------
+SWAGGER
+--------------------------------------------------
+
+Document every API.
+
+JWT Authentication.
+
+Webhook documentation.
+
+Example requests.
+
+Example responses.
+
+--------------------------------------------------
+TESTING
+--------------------------------------------------
+
+Run:
+
+Backend Build
+
+Frontend Build
+
+EF Core Migration
+
+Swagger
+
+CRUD Tests
+
+Webhook Tests
+
+Synchronization Tests
+
+Authorization Tests
+
+Retry Queue Tests
+
+Integration Tests
+
+Fix every build error before completion.
+
+--------------------------------------------------
+WHEN COMPLETE
+--------------------------------------------------
+
+Stop and report:
+
+1. Files created/modified
+
+2. React pages created
+
+3. Dashboard widgets implemented
+
+4. Jira configuration screens
+
+5. Database entities
+
+6. EF Core migrations
+
+7. APIs implemented
+
+8. Background jobs implemented
+
+9. Webhook implementation
+
+10. Security implemented
+
+11. Audit logging implemented
+
+12. Build results
+
+13. Test results
+
+14. Remaining placeholders
+
+15. Recommended Milestone 13
+
+Follow every rule in `CLAUDE.md`.
+
+Do NOT implement:
+
+- Azure DevOps Integration
+- GitHub Issues Integration
+- Slack Integration
+- Microsoft Teams Integration
+- Payment Gateway
+- Email Providers
+- SMS Providers
+- CRM Integration -->
