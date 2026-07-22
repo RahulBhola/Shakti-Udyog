@@ -56,6 +56,10 @@ builder.Services
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
 var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();
 
+// --- External Auth (Google, Apple) ------------------------------------------
+builder.Services.Configure<ExternalAuthOptions>(
+    builder.Configuration.GetSection(ExternalAuthOptions.SectionName));
+
 if (string.IsNullOrEmpty(jwtOptions.SigningKey) || Encoding.UTF8.GetByteCount(jwtOptions.SigningKey) < 32)
 {
     throw new InvalidOperationException(
@@ -64,7 +68,7 @@ if (string.IsNullOrEmpty(jwtOptions.SigningKey) || Encoding.UTF8.GetByteCount(jw
         + "dotnet run --project tools or `openssl rand -base64 48`.");
 }
 
-builder.Services
+var authBuilder = builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -82,7 +86,17 @@ builder.Services
             RoleClaimType = System.Security.Claims.ClaimTypes.Role,
             NameClaimType = "sub",
         };
-    });
+    })
+    .AddCookie(IdentityConstants.ExternalScheme);
+
+var externalAuthConfig = builder.Configuration
+    .GetSection(ExternalAuthOptions.SectionName).Get<ExternalAuthOptions>() ?? new ExternalAuthOptions();
+
+if (!string.IsNullOrEmpty(externalAuthConfig.Google.ClientId))
+    authBuilder.AddGoogle("Google", options => { options.ClientId = externalAuthConfig.Google.ClientId; options.ClientSecret = externalAuthConfig.Google.ClientSecret; options.CallbackPath = "/signin-google"; options.SaveTokens = false; options.SignInScheme = IdentityConstants.ExternalScheme; });
+
+if (!string.IsNullOrEmpty(externalAuthConfig.Apple.ClientId))
+    authBuilder.AddOpenIdConnect("Apple", options => { options.ClientId = externalAuthConfig.Apple.ClientId; options.Authority = "https://appleid.apple.com"; options.CallbackPath = "/signin-apple"; options.ResponseType = "code id_token"; options.ResponseMode = "form_post"; options.SaveTokens = false; options.SignInScheme = IdentityConstants.ExternalScheme; });
 
 // --- Authorization ----------------------------------------------------------
 // Role policies plus dynamic "permission:<name>" policies. Authorization is
@@ -139,6 +153,7 @@ builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
 builder.Services.AddScoped<IEmailSender, NoOpEmailSender>();
 builder.Services.AddScoped<IAuditWriter, AuditWriter>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IExternalAuthService, ExternalAuthService>();
 builder.Services.AddSingleton<IPublicContentService, PublicContentService>();
 builder.Services.AddScoped<IPublicSubmissionService, PublicSubmissionService>();
 builder.Services.AddHttpContextAccessor();

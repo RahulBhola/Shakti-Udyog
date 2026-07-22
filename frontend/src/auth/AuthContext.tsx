@@ -8,12 +8,14 @@ import {
   type ReactNode,
 } from "react";
 import { authService, type AuthUser } from "./authService";
+import { oauthService, type OAuthProvider } from "./oauthService";
 
 interface AuthContextValue {
   user: AuthUser | null;
   /** True while the initial silent-refresh session bootstrap is running. */
   isLoading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
+  loginWithProvider: (provider: OAuthProvider) => void;
   logout: () => Promise<void>;
 }
 
@@ -48,14 +50,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return ok;
   }, []);
 
+  const loginWithProvider = useCallback((provider: OAuthProvider) => {
+    oauthService.initiateLogin(provider);
+  }, []);
+
   const logout = useCallback(async () => {
     await authService.logout();
     setUser(null);
   }, []);
 
   const value = useMemo(
-    () => ({ user, isLoading, login, logout }),
-    [user, isLoading, login, logout],
+    () => ({ user, isLoading, login, loginWithProvider, logout }),
+    [user, isLoading, login, loginWithProvider, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
