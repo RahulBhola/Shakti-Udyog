@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
+import { useAuth } from "../auth/AuthContext";
 import { useTheme } from "../auth/ThemeContext";
 import { company } from "../content/company";
 import { cta, navItems } from "../content/navigation";
@@ -15,6 +16,28 @@ function Header() {
   const location = useLocation();
   const toggleRef = useRef<HTMLButtonElement>(null);
   const { theme, toggleTheme } = useTheme();
+  const { user, logout } = useAuth();
+
+  async function handleLogout() {
+    await logout();
+    window.location.href = "/";
+  }
+
+  function portalHref() {
+    if (!user) return "/login";
+    const role = user.roles[0];
+    if (role === "Admin") return "/admin/dashboard";
+    if (role === "DataUpdater") return "/updater/dashboard";
+    return "/customer/dashboard";
+  }
+
+  function portalLabel() {
+    if (!user) return "Login";
+    const role = user.roles[0];
+    if (role === "Admin") return "Admin Portal";
+    if (role === "DataUpdater") return "Updater Portal";
+    return "Customer Portal";
+  }
 
   useEffect(() => setOpen(false), [location.pathname]);
   useEffect(() => {
@@ -36,9 +59,26 @@ function Header() {
             <li><Link className="btn btn--primary nav-cta" to={cta.primary.href}>{cta.primary.label}</Link></li>
           </ul>
         </nav>
-        <button type="button" className="btn btn--ghost" onClick={toggleTheme} aria-label="Toggle theme" style={{ marginLeft: "auto", marginRight: "var(--sp-2)", padding: "0.4rem 0.7rem", fontSize: "var(--fs-sm)", color: "var(--c-ink)" }}>
-          {theme === "dark" ? "☀️ Light" : "🌙 Dark"}
-        </button>
+        <div className="auth-actions" style={{ display: "flex", alignItems: "center", gap: "0.25rem", marginLeft: "0.5rem" }}>
+          {user ? (
+            <>
+              <Link to={portalHref()} className="btn btn--ghost" style={{ fontSize: "var(--fs-sm)", color: "var(--c-ink)", padding: "0.4rem 0.7rem", whiteSpace: "nowrap" }}>
+                {user.email} · {portalLabel()}
+              </Link>
+              <button className="btn btn--ghost" onClick={() => void handleLogout()} style={{ fontSize: "var(--fs-sm)", color: "var(--c-error)", padding: "0.4rem 0.7rem" }}>
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <Link to="/login" className="btn btn--ghost" style={{ fontSize: "var(--fs-sm)", color: "var(--c-ink)", padding: "0.4rem 0.7rem" }}>Login</Link>
+              <Link to="/signup" className="btn btn--ghost" style={{ fontSize: "var(--fs-sm)", color: "var(--c-primary)", padding: "0.4rem 0.7rem" }}>Sign Up</Link>
+            </>
+          )}
+          <button type="button" className="btn btn--ghost" onClick={toggleTheme} aria-label="Toggle theme" style={{ padding: "0.4rem 0.6rem", fontSize: "var(--fs-sm)" }}>
+            {theme === "dark" ? "☀️" : "🌙"}
+          </button>
+        </div>
         <button ref={toggleRef} type="button" className="nav-toggle" aria-expanded={open} aria-controls="mobile-nav" onClick={() => setOpen(v => !v)}>
           {open ? "Close" : "Menu"}
         </button>
@@ -47,6 +87,18 @@ function Header() {
         <nav className="nav-mobile" id="mobile-nav" aria-label="Main">
           <ul>
             {navItems.map((item) => (<li key={item.href}><NavLink to={item.href} end={item.href === "/"}>{item.label}</NavLink></li>))}
+            {user ? (
+              <>
+                <li style={{ padding: "var(--sp-2) var(--sp-3)", fontSize: "var(--fs-sm)", color: "var(--c-muted)" }}>{user.email}</li>
+                <li><Link className="btn btn--ghost" to={portalHref()} style={{ width: "100%", color: "var(--c-ink)" }}>{portalLabel()}</Link></li>
+                <li><button className="btn btn--ghost" onClick={() => void handleLogout()} style={{ width: "100%", color: "var(--c-error)" }}>Logout</button></li>
+              </>
+            ) : (
+              <>
+                <li><Link className="btn btn--ghost" to="/login" style={{ width: "100%", color: "var(--c-ink)" }}>Login</Link></li>
+                <li><Link className="btn btn--ghost" to="/signup" style={{ width: "100%", color: "var(--c-primary)" }}>Sign Up</Link></li>
+              </>
+            )}
             <li><button className="btn btn--ghost" onClick={toggleTheme} style={{ width: "100%", color: "var(--c-ink)", marginBottom: "var(--sp-2)" }}>{theme === "dark" ? "☀️ Light mode" : "🌙 Dark mode"}</button></li>
             <li><Link className="btn btn--primary" to={cta.primary.href}>{cta.primary.label}</Link></li>
           </ul>

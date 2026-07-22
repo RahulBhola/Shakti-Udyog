@@ -1,4 +1,5 @@
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
+import { useAuth } from "../auth/AuthContext";
 import "./portal.css";
 
 const navItems = [
@@ -26,6 +27,13 @@ export function AdminBreadcrumb() {
 }
 
 export default function AdminLayout() {
+  const { user, logout } = useAuth();
+
+  async function handleLogout() {
+    await logout();
+    window.location.href = "/login";
+  }
+
   return (
     <div className="portal">
       <aside className="portal__sidebar">
@@ -36,8 +44,13 @@ export default function AdminLayout() {
       </aside>
       <div className="portal__main">
         <header className="portal__topbar">
-          <strong>Admin Portal</strong><span className="nav-spacer" />
+          <strong>Admin Portal</strong>
+          {user && <span style={{ fontSize: "var(--fs-sm)", color: "var(--c-muted)", marginLeft: "0.5rem" }}>{user.email}</span>}
+          <span className="nav-spacer" />
           <Link to="/" style={{ fontSize: "var(--fs-sm)" }}>Public site</Link>
+          <button className="btn btn--ghost" onClick={() => void handleLogout()} style={{ fontSize: "var(--fs-sm)", color: "var(--c-error)", marginLeft: "0.5rem" }}>
+            Logout
+          </button>
         </header>
         <nav className="portal-mobile-nav" aria-label="Admin portal">
           {navItems.map((item) => (<NavLink key={item.href} to={item.href}>{item.label}</NavLink>))}

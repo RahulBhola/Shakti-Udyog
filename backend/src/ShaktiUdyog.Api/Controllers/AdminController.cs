@@ -25,7 +25,8 @@ public class AdminController(IAdminService adminService, AppDbContext db, UserMa
     private string? ClientIp => HttpContext.Connection.RemoteIpAddress?.ToString();
 
     private Guid UserId => Guid.Parse(
-        HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+        HttpContext.User.FindFirst("sub")?.Value
+        ?? HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
         ?? throw new UnauthorizedAccessException());
 
     // ---- Dashboard ---------------------------------------------------------
@@ -67,6 +68,93 @@ public class AdminController(IAdminService adminService, AppDbContext db, UserMa
 
     [HttpGet("companies")]
     public async Task<IActionResult> GetCompanies() => Ok(await db.Companies.OrderByDescending(c => c.CreatedAtUtc).ToListAsync());
+
+    // ---- Pending Approvals (users needing company access) --------------------
+
+    [HttpGet("pending-approvals")]
+    public async Task<IActionResult> GetPendingApprovals()
+    {
+        // All active customer-role users who have no approved UserCompany link.
+        var customerRoleId = await db.Roles
+            .Where(r => r.Name == Roles.Customer)
+            .Select(r => r.Id)
+            .FirstOrDefaultAsync();
+
+        var customerUserIds = await db.UserRoles
+            .Where(ur => ur.RoleId == customerRoleId)
+            .Select(ur => ur.UserId)
+            .ToListAsync();
+
+        var pending = await userManager.Users
+            .Where(u => customerUserIds.Contains(u.Id))
+            .Where(u => !db.UserCompanies.Any(uc => uc.UserId == u.Id && uc.IsApproved))
+            .OrderByDescending(u => u.CreatedAtUtc)
+            .Select(u => new { u.Id, u.FullName, u.CompanyName, u.Email, u.PhoneNumber, u.CreatedAtUtc })
+            .ToListAsync();
+        return Ok(pending);
+    }
+
+    [HttpPost("pending-approvals/{userId:guid}/approve")]
+    public async Task<IActionResult> ApprovePendingUser(Guid userId, [FromBody] ApproveUserRequest request)
+    {
+        try
+        {
+            var user = await userManager.FindByIdAsync(userId.ToString());
+            if (user is null) return NotFound(new MessageResponse("User not found."));
+
+            var companyName = request.CompanyName?.Trim();
+            if (string.IsNullOrEmpty(companyName))
+                return BadRequest(new MessageResponse("Company name is required."));
+
+            // Find or create the company.
+            var company = await db.Companies
+                .FirstOrDefaultAsync(c => c.Name == companyName);
+
+            if (company is null)
+            {
+                company = new Company
+                {
+                    Name = companyName,
+                    City = request.City?.Trim(),
+                    State = request.State?.Trim(),
+                    GstNumber = request.GstNumber?.Trim(),
+                };
+                db.Companies.Add(company);
+                await db.SaveChangesAsync();
+            }
+
+            // Create approved UserCompany link.
+            var existingLink = await db.UserCompanies
+                .FirstOrDefaultAsync(uc => uc.UserId == userId && uc.CompanyId == company.Id);
+
+            if (existingLink is not null)
+            {
+                existingLink.IsApproved = true;
+                existingLink.ApprovedByUserId = UserId;
+                existingLink.ApprovedAtUtc = DateTimeOffset.UtcNow;
+            }
+            else
+            {
+                db.UserCompanies.Add(new UserCompany
+                {
+                    UserId = userId,
+                    CompanyId = company.Id,
+                    IsApproved = true,
+                    ApprovedByUserId = UserId,
+                    ApprovedAtUtc = DateTimeOffset.UtcNow,
+                });
+            }
+
+            await db.SaveChangesAsync();
+            return Ok(new MessageResponse($"Approved. User linked to {company.Name}."));
+        }
+        catch (Exception ex)
+        {
+            var logger = HttpContext.RequestServices.GetRequiredService<ILogger<AdminController>>();
+            logger.LogError(ex, "Failed to approve user {UserId}", userId);
+            return StatusCode(500, new MessageResponse($"Approval failed: {ex.Message}"));
+        }
+    }
 
     // ---- Audit Logs ----------------------------------------------------------
 
@@ -178,3 +266,5 @@ public class AdminController(IAdminService adminService, AppDbContext db, UserMa
 }
 
 public record OverrideStatusRequest(string NewStatus, string? Note);
+
+public record ApproveUserRequest(string CompanyName, string? City = null, string? State = null, string? GstNumber = null);

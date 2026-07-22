@@ -1,11 +1,21 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../auth/AuthContext";
 
 export function LoginPage() {
-  const { login } = useAuth();
+  const { user, login, loginWithProvider } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Already logged in — redirect away from login page (useEffect, not during render).
+  useEffect(() => {
+    if (!user) return;
+    const role = user.roles[0];
+    const target = role === "Admin" ? "/admin/dashboard"
+      : role === "DataUpdater" ? "/updater/dashboard"
+      : "/customer/dashboard";
+    navigate(target, { replace: true });
+  }, [user, navigate]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);

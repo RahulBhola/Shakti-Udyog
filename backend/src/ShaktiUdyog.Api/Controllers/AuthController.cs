@@ -132,8 +132,9 @@ public class AuthController(IAuthService authService) : ControllerBase
         Response.Cookies.Append(RefreshCookieName, rawToken, new CookieOptions
         {
             HttpOnly = true,
-            Secure = true,
-            SameSite = SameSiteMode.Strict,
+            // Secure only in production (HTTPS); on HTTP the browser won't send it back.
+            Secure = Request.IsHttps,
+            SameSite = SameSiteMode.Lax,
             Path = "/api/v1/auth",
             MaxAge = TimeSpan.FromDays(7),
         });
