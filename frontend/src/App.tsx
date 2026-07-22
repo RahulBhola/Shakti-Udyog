@@ -1,6 +1,7 @@
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "./auth/AuthContext";
+import { ThemeProvider } from "./auth/ThemeContext";
 import { ProtectedRoute } from "./auth/ProtectedRoute";
 import { Roles } from "./auth/roles";
 import { PublicLayout } from "./components/PublicLayout";
@@ -61,6 +62,17 @@ const AdminQuotationDetailPage = lazy(() => import("./portal/pages/AdminQuotatio
 const AdminOrderDetailPage = lazy(() => import("./portal/pages/AdminOrderDetailPage"));
 const AdminInvoiceListPage = lazy(() => import("./portal/pages/AdminInvoicePage").then(m => ({ default: m.AdminInvoiceListPage })));
 const AdminInvoiceCreatePage = lazy(() => import("./portal/pages/AdminInvoicePage").then(m => ({ default: m.AdminInvoiceCreatePage })));
+const AdminLayout = lazy(() => import("./portal/AdminLayout"));
+const AdminDashboardPage = lazy(() => import("./portal/pages/AdminDashboardPage"));
+const AdminUsersPage = lazy(() => import("./portal/pages/AdminUsersPage"));
+const AdminCompaniesPage = lazy(() => import("./portal/pages/AdminCompaniesPage"));
+const AdminAuditLogsPage = lazy(() => import("./portal/pages/AdminAuditLogsPage"));
+const AdminReportsPage = lazy(() => import("./portal/pages/AdminReportsPage"));
+const AdminSettingsPage = lazy(() => import("./portal/pages/AdminSettingsPage"));
+const AdminJiraPage = lazy(() => import("./portal/pages/AdminJiraPage"));
+const AdminInvoiceManagePage = lazy(() => import("./portal/pages/AdminInvoiceManagePage"));
+const AdminProductPage = lazy(() => import("./portal/pages/AdminProductPage"));
+const AdminCategoryPage = lazy(() => import("./portal/pages/AdminCategoryPage"));
 const DataUpdaterLayout = lazy(() => import("./portal/DataUpdaterLayout"));
 const UpdaterDashboardPage = lazy(() => import("./portal/pages/updater/DashboardPage"));
 const UpdaterRfqListPage = lazy(() => import("./portal/pages/updater/RfqListPage"));
@@ -72,6 +84,7 @@ const UpdaterOrderDetailPage = lazy(() => import("./portal/pages/updater/OrderDe
 function App() {
   return (
     <BrowserRouter>
+      <ThemeProvider>
       <AuthProvider>
         <Suspense fallback={<Loading label="Loading page" />}>
           <Routes>
@@ -208,10 +221,28 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            {/* Admin Portal — /admin/* */}
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute roles={[Roles.Admin]}><AdminLayout /></ProtectedRoute>
+              }>
+              <Route index element={<Navigate to="/admin/dashboard" replace />} />
+              <Route path="dashboard" element={<AdminDashboardPage />} />
+              <Route path="users" element={<AdminUsersPage />} />
+              <Route path="companies" element={<AdminCompaniesPage />} />
+              <Route path="products" element={<AdminProductPage />} />
+              <Route path="categories" element={<AdminCategoryPage />} />
+              <Route path="invoices" element={<AdminInvoiceManagePage />} />
+              <Route path="reports" element={<AdminReportsPage />} />
+              <Route path="audit-logs" element={<AdminAuditLogsPage />} />
+              <Route path="settings" element={<AdminSettingsPage />} />
+              <Route path="jira" element={<AdminJiraPage />} />
+            </Route>
           </Routes>
         </Suspense>
       </AuthProvider>
-    </BrowserRouter>
+    </ThemeProvider></BrowserRouter>
   );
 }
 

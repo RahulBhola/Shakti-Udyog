@@ -1,0 +1,568 @@
+<!-- You are a Senior Agile Project Manager, Scrum Master, Product Owner, and Jira Administrator.
+
+I am building a project called **Shakti Udyog**, a Manufacturing ERP + CRM Platform.
+
+Technology Stack:
+
+- ASP.NET Core 8 Web API
+- React + TypeScript
+- SQL Server
+- Entity Framework Core
+- JWT Authentication
+- Clean Architecture
+- REST APIs
+
+I want you to create a **production-quality Jira Scrum Project**.
+
+Do NOT generate application code.
+
+Instead, generate a complete Jira project structure that can be imported or recreated inside Jira.
+
+The output should resemble a real enterprise Jira project used by software companies.
+
+--------------------------------------------------
+PROJECT SETUP
+--------------------------------------------------
+
+Generate:
+
+• Project Name
+• Project Key
+• Project Description
+• Scrum Board
+• Product Backlog
+• Active Sprint
+• Releases
+• Components
+• Labels
+• Versions
+• Priorities
+• Workflow
+• Board Configuration
+
+--------------------------------------------------
+EPICS
+--------------------------------------------------
+
+Create Epics for every major module.
+
+Each Epic must contain:
+
+• Epic Name
+
+• Goal
+
+• Business Value
+
+• Description
+
+• Priority
+
+• Dependencies
+
+• Estimated Story Points
+
+--------------------------------------------------
+USER STORIES
+--------------------------------------------------
+
+Generate complete User Stories.
+
+Every Story should include:
+
+Story ID
+
+Story Title
+
+Business Description
+
+Acceptance Criteria
+
+Definition of Done
+
+Story Points
+
+Priority
+
+Risk
+
+Dependencies
+
+Assignee (placeholder)
+
+Reporter
+
+Labels
+
+Components
+
+Sprint
+
+Release
+
+Estimated Hours
+
+--------------------------------------------------
+TASKS
+--------------------------------------------------
+
+Break every User Story into technical implementation tasks.
+
+Each Task should contain:
+
+Task Title
+
+Backend Tasks
+
+Frontend Tasks
+
+Database Tasks
+
+API Tasks
+
+Testing Tasks
+
+Documentation Tasks
+
+Estimated Hours
+
+--------------------------------------------------
+SUBTASKS
+--------------------------------------------------
+
+Generate implementation subtasks for every task.
+
+Include detailed engineering activities.
+
+--------------------------------------------------
+SPRINT PLANNING
+--------------------------------------------------
+
+Automatically create Sprint Planning.
+
+Sprint 1
+
+Sprint 2
+
+Sprint 3
+
+...
+
+Distribute stories according to dependencies.
+
+Balance workload.
+
+Do NOT overload sprints.
+
+Every sprint should contain:
+
+Sprint Goal
+
+Stories
+
+Tasks
+
+Estimated Story Points
+
+Estimated Duration
+
+--------------------------------------------------
+BACKLOG MANAGEMENT
+--------------------------------------------------
+
+Generate a prioritized Product Backlog.
+
+Support:
+
+Must Have
+
+Should Have
+
+Could Have
+
+Won't Have
+
+Also assign priorities:
+
+Highest
+
+High
+
+Medium
+
+Low
+
+Lowest
+
+--------------------------------------------------
+DRAG & DROP SUPPORT
+--------------------------------------------------
+
+Generate backlog in a way that supports manual drag-and-drop prioritization.
+
+Each issue should have:
+
+Rank
+
+Priority
+
+Sprint
+
+Epic
+
+Parent
+
+Order
+
+Dependencies
+
+--------------------------------------------------
+SPRINT BOARD
+--------------------------------------------------
+
+Create Scrum Board columns:
+
+Backlog
+
+Selected for Sprint
+
+To Do
+
+In Progress
+
+Code Review
+
+QA Testing
+
+UAT
+
+Done
+
+Blocked
+
+Reopened
+
+Cancelled
+
+--------------------------------------------------
+ISSUE TYPES
+--------------------------------------------------
+
+Epic
+
+Story
+
+Task
+
+Sub-task
+
+Bug
+
+Spike
+
+Improvement
+
+Technical Debt
+
+--------------------------------------------------
+COMPONENTS
+--------------------------------------------------
+
+Backend
+
+Frontend
+
+Database
+
+API
+
+Authentication
+
+Public Website
+
+Customer Portal
+
+Data Updater
+
+Admin Portal
+
+RFQ
+
+Quotation
+
+Orders
+
+Documents
+
+Invoices
+
+Payments
+
+Reporting
+
+Infrastructure
+
+Deployment
+
+--------------------------------------------------
+LABELS
+--------------------------------------------------
+
+Generate useful labels.
+
+Example:
+
+backend
+
+frontend
+
+api
+
+security
+
+performance
+
+database
+
+testing
+
+bug
+
+enhancement
+
+documentation
+
+high-priority
+
+critical
+
+technical-debt
+
+--------------------------------------------------
+DEPENDENCY GRAPH
+--------------------------------------------------
+
+Show dependencies between Epics and Stories.
+
+Highlight blockers.
+
+Identify parallel development opportunities.
+
+--------------------------------------------------
+STORY POINT ESTIMATION
+--------------------------------------------------
+
+Estimate using Fibonacci:
+
+1
+
+2
+
+3
+
+5
+
+8
+
+13
+
+21
+
+--------------------------------------------------
+TEAM ASSIGNMENT
+--------------------------------------------------
+
+Generate placeholder assignments for:
+
+Backend Developer
+
+Frontend Developer
+
+QA Engineer
+
+Tech Lead
+
+UI/UX Designer
+
+DevOps Engineer
+
+Product Owner
+
+--------------------------------------------------
+DASHBOARDS
+--------------------------------------------------
+
+Generate dashboards.
+
+Executive Dashboard
+
+Sprint Dashboard
+
+Developer Dashboard
+
+QA Dashboard
+
+Release Dashboard
+
+Product Owner Dashboard
+
+--------------------------------------------------
+REPORTS
+--------------------------------------------------
+
+Generate reports for:
+
+Sprint Burndown
+
+Sprint Burnup
+
+Velocity
+
+Epic Progress
+
+Release Progress
+
+Team Capacity
+
+Cycle Time
+
+Lead Time
+
+Open Bugs
+
+Technical Debt
+
+Blocked Issues
+
+--------------------------------------------------
+DOWNLOADABLE ARTIFACTS
+--------------------------------------------------
+
+Generate project artifacts that can be exported.
+
+Sprint-wise Backlog
+
+Sprint-wise Stories
+
+Sprint-wise Tasks
+
+Sprint-wise Bugs
+
+Epic-wise Stories
+
+Release-wise Stories
+
+Developer-wise Tasks
+
+QA Checklist
+
+Definition of Done Checklist
+
+Release Checklist
+
+--------------------------------------------------
+EXPORT FORMAT
+--------------------------------------------------
+
+Prepare data suitable for:
+
+CSV
+
+Excel
+
+JSON
+
+Jira Bulk Import
+
+Azure DevOps Import
+
+Markdown
+
+--------------------------------------------------
+BOARD FEATURES
+--------------------------------------------------
+
+The generated Jira project should support:
+
+✔ Drag & Drop Story Prioritization
+
+✔ Drag & Drop Sprint Planning
+
+✔ Sprint Reordering
+
+✔ Epic Reordering
+
+✔ Story Ranking
+
+✔ Parent/Child Relationships
+
+✔ Story Dependencies
+
+✔ Sprint Capacity Planning
+
+✔ Burndown Tracking
+
+✔ Velocity Tracking
+
+✔ Progress Tracking
+
+✔ Release Tracking
+
+✔ Developer Workload Tracking
+
+✔ QA Tracking
+
+✔ Executive Reporting
+
+--------------------------------------------------
+DEFINITION OF DONE
+--------------------------------------------------
+
+Generate a reusable Definition of Done checklist.
+
+--------------------------------------------------
+BUG WORKFLOW
+--------------------------------------------------
+
+Create complete Bug Lifecycle.
+
+--------------------------------------------------
+DELIVERABLE
+--------------------------------------------------
+
+Generate a complete enterprise Jira backlog.
+
+The backlog should be organized as:
+
+Epic
+    ├── Stories
+           ├── Tasks
+                   ├── Subtasks
+
+Every issue should contain:
+
+• Title
+
+• Description
+
+• Acceptance Criteria
+
+• Story Points
+
+• Priority
+
+• Sprint
+
+• Labels
+
+• Components
+
+• Dependencies
+
+• Assignee Placeholder
+
+• Estimated Hours
+
+The output must be ready for importing into Jira and managing a Scrum project with a team of 5–10 developers.
+
+Ensure all stories are ordered by priority, grouped by Epic, assigned to recommended sprints, and structured to support drag-and-drop backlog management and sprint planning. -->

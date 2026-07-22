@@ -163,6 +163,18 @@ public class AdminController(IAdminService adminService, AppDbContext db, UserMa
         var history = await adminService.GetRfqHistoryAsync(id);
         return Ok(history);
     }
+
+    // ---- Charts ---------------------------------------------------------------
+
+    [HttpGet("charts")]
+    public async Task<IActionResult> GetCharts()
+    {
+        var ordersByStatus = await db.Orders.GroupBy(o => o.Status).Select(g => new { name = g.Key, value = g.Count() }).ToListAsync();
+        var invoicesByStatus = await db.Invoices.GroupBy(i => i.Status).Select(g => new { name = g.Key, value = g.Count() }).ToListAsync();
+        var now = DateTimeOffset.UtcNow;
+        var monthlyRfqs = await db.Rfqs.Where(r => r.CreatedAtUtc >= now.AddMonths(-12)).GroupBy(r => new { r.CreatedAtUtc.Year, r.CreatedAtUtc.Month }).Select(g => new { year = g.Key.Year, month = g.Key.Month, count = g.Count() }).OrderBy(x => x.year).ThenBy(x => x.month).ToListAsync();
+        return Ok(new { ordersByStatus, invoicesByStatus, monthlyRfqs });
+    }
 }
 
 public record OverrideStatusRequest(string NewStatus, string? Note);

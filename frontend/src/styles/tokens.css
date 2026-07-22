@@ -84,3 +84,51 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* ---- Light theme overrides (data-theme="light") ----------------------- */
+[data-theme="light"] {
+  --c-bg: #f4f6fa;
+  --c-ink: #1a1e2e;
+  --c-ink-soft: #4a5068;
+  --c-ink-muted: #7a8098;
+  --c-white: #1a1e2e;
+  --c-on-dark: #1a1e2e;
+  --c-on-dark-muted: #4a5068;
+
+  --c-iron-900: #eef0f4;
+  --c-iron-800: #e4e6ec;
+  --c-iron-700: #d8dae0;
+  --c-steel-100: #eef0f4;
+  --c-steel-50: #e8eaf0;
+
+  --glass: rgba(255, 255, 255, 0.72);
+  --glass-strong: rgba(255, 255, 255, 0.85);
+  --glow: 0 0 30px rgba(125, 211, 252, 0.08);
+
+  --c-ember: #0a6e9e;
+  --c-ember-strong: #005a8a;
+  --c-ember-soft: rgba(10, 110, 158, 0.1);
+
+  --c-line: rgba(10, 110, 158, 0.15);
+  --c-line-soft: rgba(0, 0, 0, 0.08);
+  --c-focus: #0a6e9e;
+
+  --c-lavender: #7a4aae;
+
+  background: var(--c-bg);
+  color: var(--c-ink);
+}
+
+/* ---- Header & nav glassmorphism enhancement --------------------------- */
+.site-header {
+  background: rgba(10, 14, 26, 0.72);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(125, 211, 252, 0.12);
+  box-shadow: 0 0 30px rgba(125, 211, 252, 0.04);
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+[data-theme="light"] .site-header {
+  background: rgba(244, 246, 250, 0.8);
+  border-bottom: 1px solid rgba(10, 110, 158, 0.12);
+}
