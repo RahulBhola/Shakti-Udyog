@@ -36,6 +36,21 @@ public class AuthController(IAuthService authService) : ControllerBase
         return Ok(result);
     }
 
+    [HttpPost("register")]
+    [ProducesResponseType<AuthResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Register(RegisterRequest request)
+    {
+        var result = await authService.RegisterAsync(request, ClientIp, UserAgent);
+        if (result is null)
+        {
+            return BadRequest(new MessageResponse("Registration failed. Please try again."));
+        }
+
+        SetRefreshCookie(result.RefreshToken);
+        return Ok(result);
+    }
+
     [HttpPost("refresh")]
     [ProducesResponseType<AuthResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

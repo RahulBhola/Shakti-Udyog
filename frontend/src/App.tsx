@@ -9,6 +9,7 @@ import { CustomerLayout } from "./portal/CustomerLayout";
 import { Navigate } from "react-router-dom";
 import { Loading } from "./components/ui";
 import { LoginPage } from "./features/auth/LoginPage";
+import { SignUpPage } from "./features/auth/SignUpPage";
 import { AccessDeniedPage, UnauthorizedPage } from "./features/auth/ErrorPages";
 import { PortalPlaceholder } from "./features/shared/PortalPlaceholder";
 import "./styles/site.css";
@@ -109,6 +110,7 @@ function App() {
 
             {/* Authentication & future portals (Milestone 2 foundation) */}
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignUpPage />} />
             <Route path="/unauthorized" element={<UnauthorizedPage />} />
             <Route path="/access-denied" element={<AccessDeniedPage />} />
             {/* Customer portal — role-guarded; backend enforces authorization again. */}

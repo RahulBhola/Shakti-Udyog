@@ -15,6 +15,7 @@ public interface IAuthService
     Task<bool> ResetPasswordAsync(ResetPasswordRequest request, string? ipAddress);
     Task LogoutAsync(string? rawRefreshToken, string? ipAddress);
     Task<MeResponse?> GetMeAsync(Guid userId);
+    Task<AuthResponse?> RegisterAsync(RegisterRequest request, string? ipAddress, string? userAgent);
 }
 
 /// <summary>
@@ -155,5 +156,46 @@ public class AuthService(
             .ToList();
 
         return new MeResponse(user.Id, user.Email ?? string.Empty, user.FullName, roles.ToList(), permissions);
+    }
+
+    public async Task<AuthResponse?> RegisterAsync(RegisterRequest request, string? ipAddress, string? userAgent)
+    {
+        var existingUser = await userManager.FindByEmailAsync(request.Email);
+        if (existingUser is not null)
+        {
+            // Same response as login failure: do not disclose account existence.
+            await audit.WriteAsync("auth.register.failed", null, "User", request.Email, ipAddress, userAgent);
+            return null;
+        }
+
+        var user = new ApplicationUser
+        {
+            UserName = request.Email,
+            Email = request.Email,
+            FullName = request.FullName,
+            PhoneNumber = request.Phone,
+            CompanyName = request.CompanyName,
+            IsActive = true,
+            CreatedAtUtc = DateTimeOffset.UtcNow,
+        };
+
+        var result = await userManager.CreateAsync(user, request.Password);
+        if (!result.Succeeded)
+        {
+            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+            logger.LogWarning("Registration failed for {Email}: {Errors}", request.Email, errors);
+            await audit.WriteAsync("auth.register.failed", null, "User", request.Email, ipAddress, userAgent);
+            return null;
+        }
+
+        // Assign default Customer role
+        await userManager.AddToRoleAsync(user, Roles.Customer);
+
+        // Generate tokens for immediate login
+        var access = await tokenService.CreateAccessTokenAsync(user);
+        var refresh = await tokenService.IssueRefreshTokenAsync(user, ipAddress);
+
+        await audit.WriteAsync("auth.register.succeeded", user.Id, "User", user.Id.ToString(), ipAddress, userAgent);
+        return new AuthResponse(access.Token, access.ExpiresAtUtc, refresh.RawToken);
     }
 }

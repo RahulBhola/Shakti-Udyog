@@ -6,6 +6,13 @@ public record LoginRequest(
     [Required, EmailAddress] string Email,
     [Required] string Password);
 
+public record RegisterRequest(
+    [Required] string FullName,
+    [Required, EmailAddress] string Email,
+    [Required] string Phone,
+    [Required] string CompanyName,
+    [Required, MinLength(8)] string Password);
+
 public record RefreshRequest(string? RefreshToken);
 
 public record ForgotPasswordRequest([Required, EmailAddress] string Email);
