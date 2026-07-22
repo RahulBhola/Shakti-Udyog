@@ -57,6 +57,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<ShipmentTrackingEvent> ShipmentTrackingEvents => Set<ShipmentTrackingEvent>();
     public DbSet<OrderComment> OrderComments => Set<OrderComment>();
     public DbSet<OrderStatusHistory> OrderStatusHistories => Set<OrderStatusHistory>();
+    public DbSet<JiraConfiguration> JiraConfigurations => Set<JiraConfiguration>();
+    public DbSet<JiraIssueMapping> JiraIssueMappings => Set<JiraIssueMapping>();
+    public DbSet<JiraSyncJob> JiraSyncJobs => Set<JiraSyncJob>();
+    public DbSet<JiraWebhookLog> JiraWebhookLogs => Set<JiraWebhookLog>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -657,6 +661,43 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             entity.Property(a => a.UserAgent).HasMaxLength(512);
             entity.HasIndex(a => a.OccurredAtUtc);
             entity.HasIndex(a => new { a.EntityType, a.EntityId });
+        });
+
+        builder.Entity<JiraConfiguration>(entity =>
+        {
+            entity.ToTable("JiraConfigurations");
+            entity.Property(j => j.JiraUrl).HasMaxLength(500).IsRequired();
+            entity.Property(j => j.ProjectKey).HasMaxLength(50).IsRequired();
+            entity.Property(j => j.ApiToken).HasMaxLength(500).IsRequired();
+            entity.Property(j => j.Email).HasMaxLength(254).IsRequired();
+            entity.Property(j => j.WebhookSecret).HasMaxLength(200);
+            entity.Property(j => j.IssueTypeMappings).HasMaxLength(2000);
+        });
+
+        builder.Entity<JiraIssueMapping>(entity =>
+        {
+            entity.ToTable("JiraIssueMappings");
+            entity.Property(j => j.EntityType).HasMaxLength(50).IsRequired();
+            entity.Property(j => j.JiraIssueKey).HasMaxLength(50).IsRequired();
+            entity.Property(j => j.JiraIssueUrl).HasMaxLength(500).IsRequired();
+            entity.Property(j => j.Status).HasMaxLength(30);
+            entity.HasIndex(j => new { j.EntityType, j.EntityId }).IsUnique();
+        });
+
+        builder.Entity<JiraSyncJob>(entity =>
+        {
+            entity.ToTable("JiraSyncJobs");
+            entity.Property(j => j.JobType).HasMaxLength(30).IsRequired();
+            entity.Property(j => j.Status).HasMaxLength(30);
+            entity.Property(j => j.ErrorMessage).HasMaxLength(2000);
+        });
+
+        builder.Entity<JiraWebhookLog>(entity =>
+        {
+            entity.ToTable("JiraWebhookLogs");
+            entity.Property(j => j.EventType).HasMaxLength(100).IsRequired();
+            entity.Property(j => j.Payload).HasColumnType("nvarchar(max)");
+            entity.Property(j => j.ErrorMessage).HasMaxLength(2000);
         });
     }
 
