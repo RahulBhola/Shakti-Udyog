@@ -23,6 +23,39 @@ public class JiraAdminController(IJiraService service) : ControllerBase
     [HttpGet("logs")] public async Task<IActionResult> GetLogs() => Ok(await service.GetSyncLogsAsync());
     [HttpGet("webhook-logs")] public async Task<IActionResult> GetWebhookLogs() => Ok(await service.GetWebhookLogsAsync());
     [HttpGet("mappings")] public async Task<IActionResult> GetMappings() => Ok(await service.GetMappingsAsync());
+
+    [HttpGet("kanban")]
+    public async Task<IActionResult> GetKanban()
+    {
+        var mappings = await service.GetMappingsAsync();
+        var config = await service.GetConfigurationAsync();
+
+        var columns = mappings
+            .GroupBy(m => m.Status ?? "Unknown")
+            .Select(g => new
+            {
+                status = g.Key,
+                issues = g.Select(m => new
+                {
+                    m.Id,
+                    m.EntityType,
+                    m.EntityId,
+                    m.JiraIssueKey,
+                    m.JiraIssueUrl,
+                    m.Status,
+                    m.CreatedAtUtc,
+                    m.LastSyncAtUtc,
+                }).OrderByDescending(m => m.LastSyncAtUtc ?? m.CreatedAtUtc).ToList()
+            })
+            .OrderBy(c => c.status)
+            .ToList();
+
+        return Ok(new
+        {
+            connected = config?.IsConnected ?? false,
+            columns,
+        });
+    }
 }
 
 public record JiraConfigRequest(string JiraUrl, string ProjectKey, string ApiToken, string Email, string? WebhookSecret, string? IssueTypeMappings);

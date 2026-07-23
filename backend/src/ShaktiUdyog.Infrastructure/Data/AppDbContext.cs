@@ -47,6 +47,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<Resource> Resources => Set<Resource>();
     public DbSet<Faq> Faqs => Set<Faq>();
     public DbSet<GalleryItem> GalleryItems => Set<GalleryItem>();
+public DbSet<KanbanTask> KanbanTasks => Set<KanbanTask>();
     public DbSet<DocumentFolder> DocumentFolders => Set<DocumentFolder>();
     public DbSet<DocumentVersion> DocumentVersions => Set<DocumentVersion>();
     public DbSet<InvoiceItem> InvoiceItems => Set<InvoiceItem>();

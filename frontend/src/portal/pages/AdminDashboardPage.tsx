@@ -4,6 +4,7 @@ import { apiGet } from "../../api/client";
 import { Loading } from "../../components/ui";
 import { Panel } from "../shared";
 import { OrdersPieChart, InvoicesPieChart, MonthlyBarChart, RevenueLineChart } from "../../components/AdminCharts";
+import { KanbanBoard } from "../../components/KanbanBoard";
 
 interface AdminDashboard {
   totalCustomers: number; activeCustomers: number; pendingRfqs: number; approvedRfqs: number;
@@ -67,6 +68,8 @@ export default function AdminDashboardPage() {
         <MonthlyBarChart data={charts?.monthlyRfqs} />
         <RevenueLineChart />
       </div>
+
+      <KanbanBoard />
     </>
   );
 }
