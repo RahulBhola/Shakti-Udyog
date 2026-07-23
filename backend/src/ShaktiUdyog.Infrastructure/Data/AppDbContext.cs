@@ -62,6 +62,15 @@ public DbSet<KanbanTask> KanbanTasks => Set<KanbanTask>();
     public DbSet<JiraIssueMapping> JiraIssueMappings => Set<JiraIssueMapping>();
     public DbSet<JiraSyncJob> JiraSyncJobs => Set<JiraSyncJob>();
     public DbSet<JiraWebhookLog> JiraWebhookLogs => Set<JiraWebhookLog>();
+    public DbSet<ProductionJob> ProductionJobs => Set<ProductionJob>();
+    public DbSet<ProductionStage> ProductionStages => Set<ProductionStage>();
+    public DbSet<ProductionStageHistory> ProductionStageHistories => Set<ProductionStageHistory>();
+    public DbSet<ProductionQuality> ProductionQualities => Set<ProductionQuality>();
+    public DbSet<ProductionComment> ProductionComments => Set<ProductionComment>();
+    public DbSet<ProductionTimeline> ProductionTimelines => Set<ProductionTimeline>();
+    public DbSet<ProductionDepartment> ProductionDepartments => Set<ProductionDepartment>();
+    public DbSet<ProductionMachine> ProductionMachines => Set<ProductionMachine>();
+    public DbSet<UserBoardPreference> UserBoardPreferences => Set<UserBoardPreference>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -699,6 +708,133 @@ public DbSet<KanbanTask> KanbanTasks => Set<KanbanTask>();
             entity.Property(j => j.EventType).HasMaxLength(100).IsRequired();
             entity.Property(j => j.Payload).HasColumnType("nvarchar(max)");
             entity.Property(j => j.ErrorMessage).HasMaxLength(2000);
+        });
+
+        // ── Production Kanban entities ──────────────────────────────────────
+
+        builder.Entity<ProductionStage>(entity =>
+        {
+            entity.ToTable("ProductionStages");
+            entity.Property(s => s.Name).HasMaxLength(100).IsRequired();
+            entity.Property(s => s.Color).HasMaxLength(20);
+            entity.Property(s => s.Icon).HasMaxLength(50);
+            entity.HasIndex(s => s.Name).IsUnique();
+            entity.HasIndex(s => s.SortOrder);
+        });
+
+        builder.Entity<ProductionDepartment>(entity =>
+        {
+            entity.ToTable("ProductionDepartments");
+            entity.Property(d => d.Name).HasMaxLength(100).IsRequired();
+            entity.HasIndex(d => d.Name).IsUnique();
+        });
+
+        builder.Entity<ProductionMachine>(entity =>
+        {
+            entity.ToTable("ProductionMachines");
+            entity.Property(m => m.Name).HasMaxLength(100).IsRequired();
+            entity.Property(m => m.Department).HasMaxLength(100);
+            entity.Property(m => m.Status).HasMaxLength(30);
+            entity.HasIndex(m => m.Department);
+        });
+
+        builder.Entity<ProductionJob>(entity =>
+        {
+            entity.ToTable("ProductionJobs");
+            entity.Property(j => j.JobNumber).HasMaxLength(30).IsRequired();
+            entity.HasIndex(j => j.JobNumber).IsUnique();
+            entity.Property(j => j.CastingName).HasMaxLength(200).IsRequired();
+            entity.Property(j => j.PartNumber).HasMaxLength(100);
+            entity.Property(j => j.DrawingNumber).HasMaxLength(100);
+            entity.Property(j => j.PatternNumber).HasMaxLength(100);
+            entity.Property(j => j.MaterialGrade).HasMaxLength(100);
+            entity.Property(j => j.CastingWeight).HasPrecision(18, 2);
+            entity.Property(j => j.CurrentStage).HasMaxLength(100);
+            entity.Property(j => j.Priority).HasMaxLength(20);
+            entity.Property(j => j.ProductionBatch).HasMaxLength(50);
+            entity.Property(j => j.CurrentMachine).HasMaxLength(100);
+            entity.Property(j => j.CurrentOperator).HasMaxLength(100);
+            entity.Property(j => j.AssignedEngineer).HasMaxLength(100);
+            entity.Property(j => j.AssignedSupervisor).HasMaxLength(100);
+            entity.Property(j => j.Department).HasMaxLength(100);
+            entity.Property(j => j.Status).HasMaxLength(30);
+            entity.Property(j => j.BlockReason).HasMaxLength(500);
+            entity.Property(j => j.RowVersion).IsRowVersion();
+            entity.HasIndex(j => j.CurrentStage);
+            entity.HasIndex(j => j.CompanyId);
+            entity.HasIndex(j => j.OrderId);
+            entity.HasIndex(j => j.Priority);
+            entity.HasIndex(j => j.Status);
+            entity.HasQueryFilter(j => !j.IsDeleted);
+            entity.HasOne(j => j.Company).WithMany()
+                .HasForeignKey(j => j.CompanyId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(j => j.Order).WithMany()
+                .HasForeignKey(j => j.OrderId).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(j => j.Rfq).WithMany()
+                .HasForeignKey(j => j.RfqId).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(j => j.Quotation).WithMany()
+                .HasForeignKey(j => j.QuotationId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        builder.Entity<ProductionStageHistory>(entity =>
+        {
+            entity.ToTable("ProductionStageHistory");
+            entity.Property(h => h.FromStage).HasMaxLength(100).IsRequired();
+            entity.Property(h => h.ToStage).HasMaxLength(100).IsRequired();
+            entity.Property(h => h.Remarks).HasMaxLength(2000);
+            entity.Property(h => h.ChangedByUserId).HasMaxLength(100);
+            entity.Property(h => h.ChangedByName).HasMaxLength(100);
+            entity.HasIndex(h => new { h.JobId, h.OccurredAtUtc });
+            entity.HasOne(h => h.Job).WithMany(j => j.StageHistory)
+                .HasForeignKey(h => h.JobId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<ProductionQuality>(entity =>
+        {
+            entity.ToTable("ProductionQualities");
+            entity.Property(q => q.InspectionStatus).HasMaxLength(30);
+            entity.Property(q => q.NdtResult).HasMaxLength(100);
+            entity.Property(q => q.Inspector).HasMaxLength(100);
+            entity.Property(q => q.Remarks).HasMaxLength(2000);
+            entity.HasIndex(q => q.JobId);
+            entity.HasOne(q => q.Job).WithMany(j => j.QualityInspections)
+                .HasForeignKey(q => q.JobId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<ProductionComment>(entity =>
+        {
+            entity.ToTable("ProductionComments");
+            entity.Property(c => c.AuthorName).HasMaxLength(100).IsRequired();
+            entity.Property(c => c.AuthorRole).HasMaxLength(50);
+            entity.Property(c => c.Message).HasMaxLength(4000).IsRequired();
+            entity.Property(c => c.CommentType).HasMaxLength(50);
+            entity.HasIndex(c => new { c.JobId, c.CreatedAtUtc });
+            entity.HasOne(c => c.Job).WithMany(j => j.Comments)
+                .HasForeignKey(c => c.JobId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<ProductionTimeline>(entity =>
+        {
+            entity.ToTable("ProductionTimelines");
+            entity.Property(t => t.Event).HasMaxLength(200).IsRequired();
+            entity.Property(t => t.Details).HasMaxLength(2000);
+            entity.Property(t => t.ActorName).HasMaxLength(100);
+            entity.HasIndex(t => new { t.JobId, t.OccurredAtUtc });
+            entity.HasOne(t => t.Job).WithMany(j => j.Timeline)
+                .HasForeignKey(t => t.JobId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<UserBoardPreference>(entity =>
+        {
+            entity.ToTable("UserBoardPreferences");
+            entity.Property(p => p.VisibleColumns).HasMaxLength(4000);
+            entity.Property(p => p.VisibleCardFields).HasMaxLength(4000);
+            entity.Property(p => p.CardSize).HasMaxLength(20);
+            entity.Property(p => p.DisplayMode).HasMaxLength(20);
+            entity.Property(p => p.ColumnOrder).HasMaxLength(4000);
+            entity.HasIndex(p => p.UserId).IsUnique();
+            entity.HasOne(p => p.User).WithMany()
+                .HasForeignKey(p => p.UserId).OnDelete(DeleteBehavior.Cascade);
         });
     }
 

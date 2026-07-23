@@ -178,6 +178,7 @@ builder.Services.AddScoped<IInvoiceManagementService, InvoiceManagementService>(
 builder.Services.AddSingleton<INotificationService, PlaceholderNotificationService>();
 builder.Services.AddScoped<IOrderUpdaterService, OrderUpdaterService>();
 builder.Services.AddScoped<IOrderAdminService, OrderAdminService>();
+builder.Services.AddScoped<IProductionBoardService, ProductionBoardService>();
 
 // --- API plumbing -----------------------------------------------------------
 builder.Services.AddControllers();

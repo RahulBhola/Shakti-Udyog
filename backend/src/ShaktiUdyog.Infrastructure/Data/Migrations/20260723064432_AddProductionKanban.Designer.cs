@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ShaktiUdyog.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using ShaktiUdyog.Infrastructure.Data;
 namespace ShaktiUdyog.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260723064432_AddProductionKanban")]
+    partial class AddProductionKanban
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -3017,51 +3020,6 @@ namespace ShaktiUdyog.Infrastructure.Data.Migrations
                     b.ToTable("SupportRequests", (string)null);
                 });
 
-            modelBuilder.Entity("ShaktiUdyog.Domain.Entities.UserBoardPreference", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("CardSize")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<string>("ColumnOrder")
-                        .HasMaxLength(4000)
-                        .HasColumnType("nvarchar(4000)");
-
-                    b.Property<DateTimeOffset>("CreatedAtUtc")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("DisplayMode")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<DateTimeOffset?>("UpdatedAtUtc")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("VisibleCardFields")
-                        .HasMaxLength(4000)
-                        .HasColumnType("nvarchar(4000)");
-
-                    b.Property<string>("VisibleColumns")
-                        .HasMaxLength(4000)
-                        .HasColumnType("nvarchar(4000)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId")
-                        .IsUnique();
-
-                    b.ToTable("UserBoardPreferences", (string)null);
-                });
-
             modelBuilder.Entity("ShaktiUdyog.Domain.Entities.UserCompany", b =>
                 {
                     b.Property<Guid>("Id")
@@ -3683,17 +3641,6 @@ namespace ShaktiUdyog.Infrastructure.Data.Migrations
                     b.Navigation("Company");
 
                     b.Navigation("Order");
-                });
-
-            modelBuilder.Entity("ShaktiUdyog.Domain.Entities.UserBoardPreference", b =>
-                {
-                    b.HasOne("ShaktiUdyog.Domain.Entities.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("ShaktiUdyog.Domain.Entities.UserCompany", b =>

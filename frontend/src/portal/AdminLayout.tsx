@@ -13,6 +13,7 @@ const navItems = [
   { label: "Orders", href: "/admin/orders" },
   { label: "Invoices", href: "/admin/invoices" },
   { label: "Jira", href: "/admin/jira" },
+  { label: "Production Board", href: "/admin/production" },
   { label: "Reports", href: "/admin/reports" },
   { label: "Audit Logs", href: "/admin/audit-logs" },
   { label: "Settings", href: "/admin/settings" },
