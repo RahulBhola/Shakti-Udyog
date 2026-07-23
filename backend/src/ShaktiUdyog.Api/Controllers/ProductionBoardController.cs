@@ -92,6 +92,19 @@ public class ProductionBoardController(IProductionBoardService service) : Contro
         return Ok(comment);
     }
 
+    [HttpPut("jobs/{id:guid}/comments/{commentId:guid}")]
+    public async Task<IActionResult> UpdateComment(Guid id, Guid commentId, [FromBody] UpdateCommentRequest request)
+    {
+        var comment = await service.UpdateCommentAsync(id, commentId, request, UserId);
+        return Ok(comment);
+    }
+
+    [HttpDelete("jobs/{id:guid}/comments/{commentId:guid}")]
+    public async Task<IActionResult> DeleteComment(Guid id, Guid commentId)
+    {
+        return await service.DeleteCommentAsync(id, commentId, UserId) ? Ok(new MessageResponse("Comment deleted.")) : NotFound();
+    }
+
     // ── Dashboard ───────────────────────────────────────────────────────────
 
     [HttpGet("dashboard")]

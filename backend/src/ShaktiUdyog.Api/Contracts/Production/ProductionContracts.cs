@@ -101,11 +101,13 @@ public record QualityDto(
 
 public record CommentDto(
     Guid Id,
+    Guid AuthorId,
     string AuthorName,
     string? AuthorRole,
     string Message,
     string? CommentType,
-    DateTimeOffset CreatedAtUtc
+    DateTimeOffset CreatedAtUtc,
+    DateTimeOffset? EditedAtUtc
 );
 
 public record TimelineDto(
@@ -193,6 +195,7 @@ public record UpdateQualityRequest(
 );
 
 public record AddProductionCommentRequest(string Message, string? CommentType);
+public record UpdateCommentRequest(string Message);
 
 // ── Lookup DTOs ─────────────────────────────────────────────────────────────
 

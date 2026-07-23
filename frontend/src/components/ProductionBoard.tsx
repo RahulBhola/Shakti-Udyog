@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { apiGet, apiPost, apiPut } from "../api/client";
+import { apiDelete, apiGet, apiPost, apiPut } from "../api/client";
+import { useAuth } from "../auth/AuthContext";
 import { formatDate } from "../portal/shared";
 
 /* ── Types ─────────────────────────────────────────────────────────────────── */
@@ -688,7 +689,7 @@ interface JobDetailFull {
   createdAtUtc: string; updatedAtUtc: string | null;
   stageHistory: Array<{ id: string; fromStage: string; toStage: string; changedByName: string | null; remarks: string | null; occurredAtUtc: string; }>;
   qualityInspections: Array<{ id: string; inspectionStatus: string; acceptedQuantity: number; rejectedQuantity: number; reworkQuantity: number; hardnessTest: boolean; chemicalAnalysis: boolean; dimensionalInspection: boolean; visualInspection: boolean; ndtResult: string | null; inspector: string | null; inspectionDateUtc: string | null; remarks: string | null; createdAtUtc: string; }>;
-  comments: Array<{ id: string; authorName: string; authorRole: string | null; message: string; commentType: string | null; createdAtUtc: string; }>;
+  comments: Array<{ id: string; authorId: string; authorName: string; authorRole: string | null; message: string; commentType: string | null; createdAtUtc: string; editedAtUtc: string | null; }>;
   timeline: Array<{ id: string; event: string; details: string | null; actorName: string | null; occurredAtUtc: string; }>;
 }
 
@@ -730,7 +731,9 @@ function ProductionJobDetailPanel({ job, onClose }: { job: ProductionJob; onClos
             : detail ? (<>
               {tab === "overview" && <OverviewTab detail={detail} />}
               {tab === "quality" && <QualityTab detail={detail} />}
-              {tab === "comments" && <CommentsTab detail={detail} />}
+              {tab === "comments" && <CommentsTab jobId={job.id} detail={detail} onRefresh={() => {
+                apiGet<JobDetailFull>(`/api/v1/admin/production-board/jobs/${job.id}`).then(setDetail).catch(() => {});
+              }} />}
               {tab === "timeline" && <TimelineTab detail={detail} />}
             </>) : <p className="placeholder-note">Failed to load details.</p>}
         </div>
@@ -804,20 +807,105 @@ function QualityTab({ detail }: { detail: JobDetailFull }) {
   );
 }
 
-function CommentsTab({ detail }: { detail: JobDetailFull }) {
-  if (detail.comments.length === 0) return <p className="placeholder-note">No comments yet.</p>;
+function CommentsTab({ jobId, detail, onRefresh }: { jobId: string; detail: JobDetailFull; onRefresh: () => void }) {
+  const { user } = useAuth();
+  const [message, setMessage] = useState("");
+  const [posting, setPosting] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editText, setEditText] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  async function handlePost() {
+    const text = message.trim();
+    if (!text || posting) return;
+    setPosting(true);
+    try {
+      await apiPost(`/api/v1/admin/production-board/jobs/${jobId}/comments`, { message: text });
+      setMessage("");
+      onRefresh();
+    } catch { /* ignore */ }
+    finally { setPosting(false); }
+  }
+
+  async function handleSaveEdit(commentId: string) {
+    const text = editText.trim();
+    if (!text || saving) return;
+    setSaving(true);
+    try {
+      await apiPut(`/api/v1/admin/production-board/jobs/${jobId}/comments/${commentId}`, { message: text });
+      setEditingId(null);
+      onRefresh();
+    } catch { /* ignore */ }
+    finally { setSaving(false); }
+  }
+
+  async function handleDelete(commentId: string) {
+    if (!window.confirm("Delete this comment?")) return;
+    try {
+      await apiDelete(`/api/v1/admin/production-board/jobs/${jobId}/comments/${commentId}`);
+      onRefresh();
+    } catch { /* ignore */ }
+  }
+
+  function startEdit(c: JobDetailFull["comments"][number]) {
+    setEditingId(c.id);
+    setEditText(c.message);
+  }
+
   return (
-    <div className="prod-detail__comments-list">
-      {detail.comments.map((c) => (
-        <div key={c.id} className="prod-detail__comment-card">
-          <div className="prod-detail__comment-header">
-            <strong>{c.authorName}</strong>
-            {c.commentType && <span className="prod-detail__comment-type">{c.commentType}</span>}
-            <span className="prod-detail__comment-date">{formatDate(c.createdAtUtc)}</span>
+    <div className="prod-detail__comments-section">
+      {detail.comments.length === 0 && <p className="placeholder-note">No comments yet.</p>}
+      <div className="prod-detail__comments-list">
+        {detail.comments.map((c) => (
+          <div key={c.id} className="prod-detail__comment-card">
+            <div className="prod-detail__comment-header">
+              <strong>{c.authorName}</strong>
+              {c.editedAtUtc && <span className="prod-detail__comment-edited">(edited)</span>}
+              <span className="prod-detail__comment-date">{formatDate(c.createdAtUtc)}</span>
+              {user?.id === c.authorId && (
+                <div className="prod-detail__comment-actions">
+                  <button className="prod-detail__comment-action-btn" title="Edit" onClick={() => startEdit(c)}>✎</button>
+                  <button className="prod-detail__comment-action-btn prod-detail__comment-action-btn--danger" title="Delete" onClick={() => void handleDelete(c.id)}>✕</button>
+                </div>
+              )}
+            </div>
+            {editingId === c.id ? (
+              <div className="prod-detail__comment-edit">
+                <textarea
+                  className="prod-detail__comment-textarea"
+                  rows={2}
+                  value={editText}
+                  onChange={(e) => setEditText(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) void handleSaveEdit(c.id); if (e.key === "Escape") setEditingId(null); }}
+                />
+                <div className="prod-detail__comment-edit-btns">
+                  <button className="btn btn--ghost btn--sm" onClick={() => setEditingId(null)}>Cancel</button>
+                  <button className="btn btn--primary btn--sm" disabled={!editText.trim() || saving} onClick={() => void handleSaveEdit(c.id)}>
+                    {saving ? "Saving…" : "Save"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p className="prod-detail__comment-message">{c.message}</p>
+            )}
           </div>
-          <p className="prod-detail__comment-message">{c.message}</p>
+        ))}
+      </div>
+      <div className="prod-detail__comment-form">
+        <textarea
+          className="prod-detail__comment-textarea"
+          placeholder="Write a comment…"
+          rows={3}
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) void handlePost(); }}
+        />
+        <div className="prod-detail__comment-form-row">
+          <button className="btn btn--primary btn--sm" disabled={!message.trim() || posting} onClick={() => void handlePost()}>
+            {posting ? "Posting…" : "Add Comment"}
+          </button>
         </div>
-      ))}
+      </div>
     </div>
   );
 }

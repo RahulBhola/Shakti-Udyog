@@ -8,9 +8,11 @@ public class ProductionComment
     public Guid Id { get; set; }
     public Guid JobId { get; set; }
     public ProductionJob Job { get; set; } = null!;
+    public Guid AuthorId { get; set; }
     public required string AuthorName { get; set; }
     public string? AuthorRole { get; set; }
     public required string Message { get; set; }
     public string? CommentType { get; set; }
     public DateTimeOffset CreatedAtUtc { get; set; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset? EditedAtUtc { get; set; }
 }

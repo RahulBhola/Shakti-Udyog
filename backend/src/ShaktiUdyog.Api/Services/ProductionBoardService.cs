@@ -19,6 +19,8 @@ public interface IProductionBoardService
     Task<bool> MoveStageAsync(Guid id, MoveStageRequest request, Guid userId, string? ip);
     Task<bool> UpdateQualityAsync(Guid id, UpdateQualityRequest request, Guid userId, string? ip);
     Task<CommentDto> AddCommentAsync(Guid id, AddProductionCommentRequest request, Guid userId, string? ip);
+    Task<CommentDto?> UpdateCommentAsync(Guid jobId, Guid commentId, UpdateCommentRequest request, Guid userId);
+    Task<bool> DeleteCommentAsync(Guid jobId, Guid commentId, Guid userId);
     Task<bool> DeleteJobAsync(Guid id, Guid userId, string? ip);
     Task<ProductionDashboardDto> GetDashboardAsync();
     Task<BoardPreferenceDto?> GetPreferencesAsync(Guid userId);
@@ -142,7 +144,7 @@ public class ProductionBoardService(AppDbContext db, IAuditWriter audit) : IProd
                         q.HardnessTest, q.ChemicalAnalysis, q.DimensionalInspection, q.VisualInspection,
                         q.NdtResult, q.Inspector, q.InspectionDateUtc, q.Remarks, q.CreatedAtUtc)).ToList(),
                 j.Comments.OrderByDescending(c => c.CreatedAtUtc).Select(c =>
-                    new CommentDto(c.Id, c.AuthorName, c.AuthorRole, c.Message, c.CommentType, c.CreatedAtUtc)).ToList(),
+                    new CommentDto(c.Id, c.AuthorId, c.AuthorName, c.AuthorRole, c.Message, c.CommentType, c.CreatedAtUtc, c.EditedAtUtc)).ToList(),
                 j.Timeline.OrderByDescending(t => t.OccurredAtUtc).Select(t =>
                     new TimelineDto(t.Id, t.Event, t.Details, t.ActorName, t.OccurredAtUtc)).ToList()))
             .SingleOrDefaultAsync();
@@ -344,14 +346,22 @@ public class ProductionBoardService(AppDbContext db, IAuditWriter audit) : IProd
         var job = await db.ProductionJobs.FirstOrDefaultAsync(j => j.Id == id && !j.IsDeleted)
             ?? throw new InvalidOperationException("Job not found.");
 
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        var authorName = user?.FullName ?? user?.Email ?? "Unknown";
+        var authorRole = await db.UserRoles
+            .Where(ur => ur.UserId == userId)
+            .Join(db.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => r.Name)
+            .FirstOrDefaultAsync() ?? "User";
+
         var comment = new ProductionComment
         {
             Id = Guid.NewGuid(),
             JobId = job.Id,
-            AuthorName = "Admin",
-            AuthorRole = "Admin",
+            AuthorId = userId,
+            AuthorName = authorName,
+            AuthorRole = authorRole,
             Message = request.Message,
-            CommentType = request.CommentType ?? "Internal",
+            CommentType = request.CommentType,
         };
 
         db.ProductionComments.Add(comment);
@@ -361,15 +371,39 @@ public class ProductionBoardService(AppDbContext db, IAuditWriter audit) : IProd
             Id = Guid.NewGuid(),
             JobId = job.Id,
             Event = "Comment Added",
-            Details = $"[{request.CommentType ?? "Internal"}] {request.Message}",
-            ActorName = "Admin",
+            Details = request.Message,
+            ActorName = authorName,
             OccurredAtUtc = DateTimeOffset.UtcNow,
         });
 
         await db.SaveChangesAsync();
         await audit.WriteAsync("admin.production.job.commented", userId, "ProductionJob", job.Id.ToString(), ip);
 
-        return new CommentDto(comment.Id, comment.AuthorName, comment.AuthorRole, comment.Message, comment.CommentType, comment.CreatedAtUtc);
+        return new CommentDto(comment.Id, comment.AuthorId, comment.AuthorName, comment.AuthorRole, comment.Message, comment.CommentType, comment.CreatedAtUtc, comment.EditedAtUtc);
+    }
+
+    public async Task<CommentDto?> UpdateCommentAsync(Guid jobId, Guid commentId, UpdateCommentRequest request, Guid userId)
+    {
+        var comment = await db.ProductionComments.FirstOrDefaultAsync(c => c.Id == commentId && c.JobId == jobId)
+            ?? throw new InvalidOperationException("Comment not found.");
+        if (comment.AuthorId != userId) throw new InvalidOperationException("You can only edit your own comments.");
+
+        comment.Message = request.Message;
+        comment.EditedAtUtc = DateTimeOffset.UtcNow;
+        await db.SaveChangesAsync();
+
+        return new CommentDto(comment.Id, comment.AuthorId, comment.AuthorName, comment.AuthorRole, comment.Message, comment.CommentType, comment.CreatedAtUtc, comment.EditedAtUtc);
+    }
+
+    public async Task<bool> DeleteCommentAsync(Guid jobId, Guid commentId, Guid userId)
+    {
+        var comment = await db.ProductionComments.FirstOrDefaultAsync(c => c.Id == commentId && c.JobId == jobId)
+            ?? throw new InvalidOperationException("Comment not found.");
+        if (comment.AuthorId != userId) throw new InvalidOperationException("You can only delete your own comments.");
+
+        db.ProductionComments.Remove(comment);
+        await db.SaveChangesAsync();
+        return true;
     }
 
     public async Task<bool> DeleteJobAsync(Guid id, Guid userId, string? ip)
