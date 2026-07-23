@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+/* Theme variables are defined in portal.css (.admin-portal-layout context).
+   @theme tokens below are kept for backward compatibility but all new
+   components use var() directly. */
+@theme {
+  --color-brand-blue: #2563EB;
+}

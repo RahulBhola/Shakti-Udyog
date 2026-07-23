@@ -35,7 +35,7 @@ export default function UpdaterRfqListPage() {
       {data && data.items.length > 0 && (
         <div className="list-rows">
           {data.items.map((r) => (
-            <Link key={r.id} to={`/updater/rfqs/${r.id}`} className="row-link">
+            <Link key={r.id} to={`/admin/rfqs/${r.id}`} className="row-link">
               <div className="list-row">
                 <div className="list-row__main">
                   <div className="list-row__title">{r.productType} — {r.companyName ?? "Unknown"}</div>

@@ -12,7 +12,7 @@ export function LoginPage() {
     if (!user) return;
     const role = user.roles[0];
     const target = role === "Admin" ? "/admin/dashboard"
-      : role === "DataUpdater" ? "/updater/dashboard"
+      : role === "DataUpdater" ? "/admin/dashboard"
       : "/customer/dashboard";
     navigate(target, { replace: true });
   }, [user, navigate]);

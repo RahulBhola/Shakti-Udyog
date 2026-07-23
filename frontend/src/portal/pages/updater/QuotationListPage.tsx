@@ -41,7 +41,7 @@ export default function QuotationListPage() {
       {data && data.items.length > 0 && (
         <div className="list-rows">
           {data.items.map((q) => (
-            <Link key={q.id} to={`/portal/updater/quotations/${q.id}`} className="row-link">
+            <Link key={q.id} to={`/admin/quotations/${q.id}`} className="row-link">
               <div className="list-row">
                 <div className="list-row__main">
                   <div className="list-row__title">{q.quotationNumber} — {q.productType}</div>

@@ -12,7 +12,7 @@ import { LoginPage } from "./features/auth/LoginPage";
 import { SignUpPage } from "./features/auth/SignUpPage";
 import { AuthCallbackPage } from "./features/auth/AuthCallbackPage";
 import { AccessDeniedPage, UnauthorizedPage } from "./features/auth/ErrorPages";
-import { PortalPlaceholder } from "./features/shared/PortalPlaceholder";
+import "./styles/tailwind.css";
 import "./styles/site.css";
 
 // Route-level code splitting: each public page is its own chunk.
@@ -57,12 +57,9 @@ const SupportPage = lazy(() => import("./portal/pages/SupportPage"));
 const PaymentsPage = lazy(() => import("./portal/pages/PaymentsPage"));
 const CompanyPage = lazy(() => import("./portal/pages/CompanyPage"));
 const SettingsPage = lazy(() => import("./portal/pages/SettingsPage"));
-const UpdaterQuotationLayout = lazy(() => import("./portal/pages/updater/UpdaterQuotationLayout"));
-const UpdaterQuotationList = lazy(() => import("./portal/pages/updater/QuotationListPage"));
 const CreateQuotationPage = lazy(() => import("./portal/pages/updater/CreateQuotationPage"));
 const AdminQuotationDetailPage = lazy(() => import("./portal/pages/AdminQuotationPage"));
 const AdminOrderDetailPage = lazy(() => import("./portal/pages/AdminOrderDetailPage"));
-const AdminInvoiceListPage = lazy(() => import("./portal/pages/AdminInvoicePage").then(m => ({ default: m.AdminInvoiceListPage })));
 const AdminInvoiceCreatePage = lazy(() => import("./portal/pages/AdminInvoicePage").then(m => ({ default: m.AdminInvoiceCreatePage })));
 const AdminLayout = lazy(() => import("./portal/AdminLayout"));
 const AdminDashboardPage = lazy(() => import("./portal/pages/AdminDashboardPage"));
@@ -73,15 +70,13 @@ const AdminReportsPage = lazy(() => import("./portal/pages/AdminReportsPage"));
 const AdminSettingsPage = lazy(() => import("./portal/pages/AdminSettingsPage"));
 const AdminProductionPage = lazy(() => import("./portal/pages/AdminProductionPage"));
 const AdminInvoiceManagePage = lazy(() => import("./portal/pages/AdminInvoiceManagePage"));
+const AdminDocumentsPage = lazy(() => import("./portal/pages/AdminDocumentsPage"));
 const AdminProductPage = lazy(() => import("./portal/pages/AdminProductPage"));
 const AdminCategoryPage = lazy(() => import("./portal/pages/AdminCategoryPage"));
-const DataUpdaterLayout = lazy(() => import("./portal/DataUpdaterLayout"));
-const UpdaterDashboardPage = lazy(() => import("./portal/pages/updater/DashboardPage"));
 const UpdaterRfqListPage = lazy(() => import("./portal/pages/updater/RfqListPage"));
 const UpdaterRfqDetailPage = lazy(() => import("./portal/pages/updater/RfqDetailPage"));
 const UpdaterQuotationListPage = lazy(() => import("./portal/pages/updater/QuotationListPage"));
 const UpdaterOrderListPage = lazy(() => import("./portal/pages/updater/OrderListPage"));
-const UpdaterOrderDetailPage = lazy(() => import("./portal/pages/updater/OrderDetailPage"));
 
 function App() {
   return (
@@ -145,103 +140,44 @@ function App() {
               <Route path="settings" element={<SettingsPage />} />
               <Route path="support" element={<SupportPage />} />
             </Route>
-            {/* Data Updater Portal — /updater/* */}
-            <Route
-              path="/updater"
-              element={
-                <ProtectedRoute roles={[Roles.DataUpdater, Roles.Admin]}>
-                  <DataUpdaterLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<Navigate to="/updater/dashboard" replace />} />
-              <Route path="dashboard" element={<UpdaterDashboardPage />} />
-              <Route path="rfqs" element={<UpdaterRfqListPage />} />
-              <Route path="rfqs/:id" element={<UpdaterRfqDetailPage />} />
-              <Route path="quotations" element={<UpdaterQuotationListPage />} />
-              <Route path="quotations/new" element={<CreateQuotationPage />} />
-              <Route path="quotations/:id" element={<UpdaterQuotationListPage />} />
-              <Route path="orders" element={<UpdaterOrderListPage />} />
-              <Route path="orders/:id" element={<UpdaterOrderDetailPage />} />
-            </Route>
+            {/* Backward-compat redirects */}
             <Route path="/portal/customer" element={<Navigate to="/customer" replace />} />
-            <Route
-              path="/portal/updater"
-              element={
-                <ProtectedRoute roles={[Roles.DataUpdater, Roles.Admin]}>
-                  <PortalPlaceholder title="Data Updater Portal" milestone="Milestone 5" />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/portal/updater/quotations"
-              element={
-                <ProtectedRoute roles={[Roles.DataUpdater, Roles.Admin]}>
-                  <UpdaterQuotationLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<UpdaterQuotationList />} />
-              <Route path="new" element={<CreateQuotationPage />} />
-              <Route path=":id" element={<UpdaterQuotationList />} />
-            </Route>
-            <Route
-              path="/portal/admin"
-              element={
-                <ProtectedRoute roles={[Roles.Admin]}>
-                  <PortalPlaceholder title="Admin Portal" milestone="Milestone 5" />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/portal/admin/quotations/:id"
-              element={
-                <ProtectedRoute roles={[Roles.Admin]}>
-                  <AdminQuotationDetailPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/portal/admin/orders/:id"
-              element={
-                <ProtectedRoute roles={[Roles.Admin]}>
-                  <AdminOrderDetailPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/portal/admin/invoices"
-              element={
-                <ProtectedRoute roles={[Roles.Admin]}>
-                  <AdminInvoiceListPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/portal/admin/invoices/new"
-              element={
-                <ProtectedRoute roles={[Roles.Admin]}>
-                  <AdminInvoiceCreatePage />
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/updater/*" element={<Navigate to="/admin/dashboard" replace />} />
+            <Route path="/portal/updater/*" element={<Navigate to="/admin/dashboard" replace />} />
+            <Route path="/portal/admin/*" element={<Navigate to="/admin/dashboard" replace />} />
+
             {/* Admin Portal — /admin/* */}
             <Route
               path="/admin"
               element={
-                <ProtectedRoute roles={[Roles.Admin]}><AdminLayout /></ProtectedRoute>
+                <ProtectedRoute roles={[Roles.Admin, Roles.DataUpdater]}><AdminLayout /></ProtectedRoute>
               }>
               <Route index element={<Navigate to="/admin/dashboard" replace />} />
               <Route path="dashboard" element={<AdminDashboardPage />} />
+              {/* Sales */}
+              <Route path="rfqs" element={<UpdaterRfqListPage />} />
+              <Route path="rfqs/:id" element={<UpdaterRfqDetailPage />} />
+              <Route path="quotations" element={<UpdaterQuotationListPage />} />
+              <Route path="quotations/new" element={<CreateQuotationPage />} />
+              <Route path="quotations/:id" element={<AdminQuotationDetailPage />} />
+              <Route path="orders" element={<UpdaterOrderListPage />} />
+              <Route path="orders/:id" element={<AdminOrderDetailPage />} />
+              {/* Production */}
+              <Route path="production" element={<AdminProductionPage />} />
+              {/* Documents */}
+              <Route path="documents" element={<AdminDocumentsPage />} />
+              {/* Finance */}
+              <Route path="invoices" element={<AdminInvoiceManagePage />} />
+              <Route path="invoices/new" element={<AdminInvoiceCreatePage />} />
+              {/* Administration */}
               <Route path="users" element={<AdminUsersPage />} />
               <Route path="companies" element={<AdminCompaniesPage />} />
               <Route path="products" element={<AdminProductPage />} />
               <Route path="categories" element={<AdminCategoryPage />} />
-              <Route path="invoices" element={<AdminInvoiceManagePage />} />
-              <Route path="reports" element={<AdminReportsPage />} />
-              <Route path="audit-logs" element={<AdminAuditLogsPage />} />
               <Route path="settings" element={<AdminSettingsPage />} />
-              <Route path="production" element={<AdminProductionPage />} />
+              <Route path="audit-logs" element={<AdminAuditLogsPage />} />
+              {/* Reporting */}
+              <Route path="reports" element={<AdminReportsPage />} />
             </Route>
           </Routes>
         </Suspense>

@@ -16,10 +16,10 @@ export default function UpdaterDashboardPage() {
   if (!data) return <Loading label="Loading dashboard" />;
 
   const stats = [
-    { label: "Pending RFQs", value: data.pendingRfqs, href: "/updater/rfqs", filter: "Received" },
-    { label: "Pending Quotations", value: data.pendingQuotations, href: "/updater/quotations", filter: "Draft" },
-    { label: "Orders in Production", value: data.ordersInProduction, href: "/updater/orders", filter: "production" },
-    { label: "Awaiting Shipment", value: data.ordersAwaitingShipment, href: "/updater/orders", filter: "ready_to_dispatch" },
+    { label: "Pending RFQs", value: data.pendingRfqs, href: "/admin/rfqs", filter: "Received" },
+    { label: "Pending Quotations", value: data.pendingQuotations, href: "/admin/quotations", filter: "Draft" },
+    { label: "Orders in Production", value: data.ordersInProduction, href: "/admin/orders", filter: "production" },
+    { label: "Awaiting Shipment", value: data.ordersAwaitingShipment, href: "/admin/orders", filter: "ready_to_dispatch" },
   ];
 
   return (
@@ -37,9 +37,9 @@ export default function UpdaterDashboardPage() {
       </div>
       <Panel title="Quick actions">
         <div className="quick-actions">
-          <Link className="btn btn--primary" to="/updater/rfqs">Review RFQs</Link>
-          <Link className="btn btn--ghost" style={{ color: "var(--c-ink)" }} to="/updater/quotations">Manage quotations</Link>
-          <Link className="btn btn--ghost" style={{ color: "var(--c-ink)" }} to="/updater/orders">Manage orders</Link>
+          <Link className="btn btn--primary" to="/admin/rfqs">Review RFQs</Link>
+          <Link className="btn btn--ghost" style={{ color: "var(--c-ink)" }} to="/admin/quotations">Manage quotations</Link>
+          <Link className="btn btn--ghost" style={{ color: "var(--c-ink)" }} to="/admin/orders">Manage orders</Link>
         </div>
       </Panel>
     </>

@@ -27,7 +27,7 @@ function Header() {
     if (!user) return "/login";
     const role = user.roles[0];
     if (role === "Admin") return "/admin/dashboard";
-    if (role === "DataUpdater") return "/updater/dashboard";
+    if (role === "DataUpdater") return "/admin/dashboard";
     return "/customer/dashboard";
   }
 
@@ -35,7 +35,7 @@ function Header() {
     if (!user) return "Login";
     const role = user.roles[0];
     if (role === "Admin") return "Admin Portal";
-    if (role === "DataUpdater") return "Updater Portal";
+    if (role === "DataUpdater") return "Admin Portal";
     return "Customer Portal";
   }
 

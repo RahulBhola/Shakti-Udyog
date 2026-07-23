@@ -28,7 +28,7 @@ export default function CreateQuotationPage() {
         remarks: (data.get("remarks") as string) || undefined,
         items: [],
       });
-      navigate(`/portal/updater/quotations/${id}`);
+      navigate(`/admin/quotations/${id}`);
     } catch {
       setStatus("error");
     }

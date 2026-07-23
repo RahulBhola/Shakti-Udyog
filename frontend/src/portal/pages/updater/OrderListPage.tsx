@@ -35,7 +35,7 @@ export default function UpdaterOrderListPage() {
       {data && data.items.length > 0 && (
         <div className="list-rows">
           {data.items.map((o) => (
-            <Link key={o.id} to={`/updater/orders/${o.id}`} className="row-link">
+            <Link key={o.id} to={`/admin/orders/${o.id}`} className="row-link">
               <div className="list-row">
                 <div className="list-row__main">
                   <div className="list-row__title">{o.orderNumber}</div>
