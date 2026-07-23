@@ -45,6 +45,15 @@ public class JiraAdminController(IJiraService service) : ControllerBase
                     m.Status,
                     m.CreatedAtUtc,
                     m.LastSyncAtUtc,
+                    // Additional fields for richer display
+                    m.Title,
+                    m.StoryPoints,
+                    m.Priority,
+                    m.Assignee,
+                    m.AssigneeAvatarUrl,
+                    m.IssueType,
+                    m.ParentKey,
+                    m.Labels,
                 }).OrderByDescending(m => m.LastSyncAtUtc ?? m.CreatedAtUtc).ToList()
             })
             .OrderBy(c => c.status)
@@ -53,6 +62,7 @@ public class JiraAdminController(IJiraService service) : ControllerBase
         return Ok(new
         {
             connected = config?.IsConnected ?? false,
+            projectName = config?.ProjectKey ?? "Project",
             columns,
         });
     }

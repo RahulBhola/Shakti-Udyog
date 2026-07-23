@@ -88,14 +88,25 @@ public class JiraService(AppDbContext db, IHttpClientFactory httpClientFactory, 
         try
         {
             var issueType = GetIssueType(entityType, config);
-            var payload = new { fields = new { project = new { key = config.ProjectKey }, summary = $"{entityType}: {entityId}", issuetype = new { name = issueType } } };
+            var summary = $"{entityType}: {entityId}";
+            var payload = new { fields = new { project = new { key = config.ProjectKey }, summary, issuetype = new { name = issueType } } };
             var response = await client.PostAsync("/rest/api/3/issue", new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json"));
             if (!response.IsSuccessStatusCode) return false;
             var json = await response.Content.ReadAsStringAsync();
             var doc = JsonDocument.Parse(json);
             var key = doc.RootElement.GetProperty("key").GetString() ?? "";
             if (!config.IsConnected) { config.IsConnected = true; config.LastSyncAtUtc = DateTimeOffset.UtcNow; }
-            db.JiraIssueMappings.Add(new JiraIssueMapping { Id = Guid.NewGuid(), EntityType = entityType, EntityId = entityId, JiraIssueKey = key, JiraIssueUrl = $"{config.JiraUrl.TrimEnd('/')}/browse/{key}" });
+            db.JiraIssueMappings.Add(new JiraIssueMapping
+            {
+                Id = Guid.NewGuid(),
+                EntityType = entityType,
+                EntityId = entityId,
+                JiraIssueKey = key,
+                JiraIssueUrl = $"{config.JiraUrl.TrimEnd('/')}/browse/{key}",
+                Title = summary,
+                IssueType = issueType,
+                Status = "To Do" // Default status for new issues
+            });
             await db.SaveChangesAsync();
             return true;
         }
@@ -158,8 +169,63 @@ public class JiraService(AppDbContext db, IHttpClientFactory httpClientFactory, 
             if (issueKey is null) return false;
             var mapping = await db.JiraIssueMappings.FirstOrDefaultAsync(m => m.JiraIssueKey == issueKey);
             if (mapping is null) return false;
-            var status = payload.TryGetProperty("issue", out var i2) && i2.TryGetProperty("fields", out var f) && f.TryGetProperty("status", out var s) && s.TryGetProperty("name", out var n) ? n.GetString() : null;
-            if (status is not null) mapping.Status = status;
+
+            // Extract fields
+            if (!payload.TryGetProperty("issue", out var i2) || !i2.TryGetProperty("fields", out var f))
+                return false;
+
+            // Extract status
+            if (f.TryGetProperty("status", out var s) && s.TryGetProperty("name", out var n))
+            {
+                mapping.Status = n.GetString();
+            }
+
+            // Extract summary/title
+            if (f.TryGetProperty("summary", out var summary) && summary.ValueKind == JsonValueKind.String)
+                mapping.Title = summary.GetString();
+
+            // Extract story points (customfield_10016 is common for story points)
+            if (f.TryGetProperty("customfield_10016", out var sp) && sp.ValueKind != JsonValueKind.Null)
+            {
+                if (sp.ValueKind == JsonValueKind.Number)
+                    mapping.StoryPoints = (int)sp.GetDouble();
+                else if (int.TryParse(sp.ToString(), out var spVal))
+                    mapping.StoryPoints = spVal;
+            }
+
+            // Extract priority
+            if (f.TryGetProperty("priority", out var priority) && priority.TryGetProperty("name", out var priorityName))
+                mapping.Priority = priorityName.GetString();
+
+            // Extract assignee
+            if (f.TryGetProperty("assignee", out var assignee) && assignee.ValueKind != JsonValueKind.Null)
+            {
+                if (assignee.TryGetProperty("displayName", out var displayName))
+                    mapping.Assignee = displayName.GetString();
+                if (assignee.TryGetProperty("avatarUrls", out var avatars) && avatars.TryGetProperty("24x24", out var avatarUrl))
+                    mapping.AssigneeAvatarUrl = avatarUrl.GetString();
+            }
+
+            // Extract issue type
+            if (f.TryGetProperty("issuetype", out var issueType) && issueType.TryGetProperty("name", out var issueTypeName))
+                mapping.IssueType = issueTypeName.GetString();
+
+            // Extract parent (for subtasks)
+            if (f.TryGetProperty("parent", out var parent) && parent.ValueKind != JsonValueKind.Null && parent.TryGetProperty("key", out var parentKey))
+                mapping.ParentKey = parentKey.GetString();
+
+            // Extract labels
+            if (f.TryGetProperty("labels", out var labels) && labels.ValueKind == JsonValueKind.Array)
+            {
+                var labelList = new List<string>();
+                foreach (var label in labels.EnumerateArray())
+                {
+                    if (label.ValueKind == JsonValueKind.String)
+                        labelList.Add(label.GetString()!);
+                }
+                mapping.Labels = string.Join(",", labelList);
+            }
+
             mapping.LastSyncAtUtc = DateTimeOffset.UtcNow;
             await db.SaveChangesAsync();
             return true;

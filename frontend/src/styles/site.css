@@ -685,6 +685,429 @@ ul, ol { padding-left: 1.25rem; }
 .nav-spacer { flex: 1; }
 
 /* ========================================================================
+   Jira Kanban Board Styles — Professional Scrum Board Design
+   ======================================================================== */
+
+.jira-board {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  height: calc(100vh - 200px);
+  min-height: 600px;
+}
+
+/* Board Header */
+.jira-board__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--sp-4) 0;
+  border-bottom: 1px solid var(--c-line);
+}
+
+.jira-board__title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+}
+
+.jira-board__title h2 {
+  margin: 0;
+  font-size: var(--fs-xl);
+  font-weight: 700;
+}
+
+.jira-board__subtitle {
+  color: var(--c-ink-muted);
+  font-size: var(--fs-sm);
+}
+
+.jira-board__tabs {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.jira-board__tab {
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--c-line);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--c-ink-soft);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--dur) var(--ease);
+}
+
+.jira-board__tab:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.jira-board__tab--active {
+  background: var(--c-ember-soft);
+  color: var(--c-ember);
+  border-color: rgba(125, 211, 252, 0.35);
+}
+
+/* Filters */
+.jira-board__filters {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-3) 0;
+  border-bottom: 1px solid var(--c-line-soft);
+  flex-wrap: wrap;
+}
+
+.jira-board__search input {
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--c-line);
+  border-radius: var(--radius);
+  background: rgba(15, 21, 36, 0.55);
+  color: var(--c-ink);
+  font-size: var(--fs-sm);
+  width: 200px;
+  transition: border-color var(--dur) var(--ease);
+}
+
+.jira-board__search input:focus {
+  outline: none;
+  border-color: rgba(125, 211, 252, 0.5);
+}
+
+.jira-board__filter-chips {
+  display: flex;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.jira-board__chip {
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px solid var(--c-line-soft);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--c-ink-soft);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--dur) var(--ease);
+}
+
+.jira-board__chip:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.jira-board__chip--active {
+  background: var(--c-ember-soft);
+  color: var(--c-ember);
+  border-color: rgba(125, 211, 252, 0.35);
+}
+
+.jira-board__filter-actions {
+  margin-left: auto;
+  display: flex;
+  gap: var(--sp-2);
+}
+
+/* Kanban Columns */
+.jira-board__columns {
+  display: flex;
+  gap: var(--sp-3);
+  overflow-x: auto;
+  flex: 1;
+  padding-bottom: var(--sp-4);
+}
+
+.jira-board__column {
+  min-width: 280px;
+  max-width: 320px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: rgba(15, 21, 36, 0.3);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--c-line-soft);
+}
+
+.jira-board__column-header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--c-line-soft);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.jira-board__column-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.jira-board__column-title {
+  font-weight: 600;
+  font-size: var(--fs-sm);
+  color: var(--c-white);
+}
+
+.jira-board__column-count {
+  margin-left: auto;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--c-ink-muted);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+}
+
+.jira-board__cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Kanban Card */
+.jira-board__card {
+  background: var(--glass);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--c-line);
+  border-radius: var(--radius);
+  padding: var(--sp-3);
+  cursor: pointer;
+  transition: all var(--dur) var(--ease);
+  position: relative;
+}
+
+.jira-board__card:hover {
+  border-color: rgba(125, 211, 252, 0.35);
+  box-shadow: 0 0 20px rgba(125, 211, 252, 0.1);
+  transform: translateY(-1px);
+}
+
+.jira-board__card-parent {
+  font-size: var(--fs-xs);
+  color: var(--c-ink-muted);
+  margin-bottom: var(--sp-1);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.jira-board__card-parent::before {
+  content: " ";
+  font-size: 0.7rem;
+}
+
+.jira-board__card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--sp-2);
+}
+
+.jira-board__card-key {
+  font-weight: 600;
+  font-size: var(--fs-sm);
+  color: var(--c-ember);
+}
+
+.jira-board__card-type {
+  font-size: var(--fs-sm);
+}
+
+.jira-board__card-title {
+  font-size: var(--fs-sm);
+  color: var(--c-ink);
+  line-height: 1.4;
+  margin-bottom: var(--sp-2);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.jira-board__card-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-2);
+}
+
+.jira-board__card-points {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--c-ink);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius);
+}
+
+.jira-board__card-priority {
+  font-size: var(--fs-sm);
+}
+
+.jira-board__card-assignee {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--sp-2);
+}
+
+.jira-board__card-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--c-line);
+}
+
+.jira-board__card-avatar--initials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: white;
+}
+
+.jira-board__card-labels {
+  display: flex;
+  gap: var(--sp-1);
+  margin-top: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.jira-board__card-label {
+  font-size: 0.65rem;
+  padding: 0.1rem 0.4rem;
+  background: rgba(125, 211, 252, 0.1);
+  color: var(--c-ember);
+  border-radius: var(--radius);
+  border: 1px solid rgba(125, 211, 252, 0.2);
+}
+
+/* Issue Detail Panel */
+.jira-board__detail-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: flex-end;
+  z-index: 100;
+}
+
+.jira-board__detail-panel {
+  width: 400px;
+  max-width: 90vw;
+  background: var(--c-iron-800);
+  border-left: 1px solid var(--c-line);
+  overflow-y: auto;
+  animation: slideIn 0.2s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.jira-board__detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--sp-4);
+  border-bottom: 1px solid var(--c-line);
+  background: var(--c-steel-100);
+}
+
+.jira-board__detail-key {
+  font-weight: 700;
+  font-size: var(--fs-lg);
+  color: var(--c-ember);
+}
+
+.jira-board__detail-close {
+  background: none;
+  border: none;
+  color: var(--c-ink-muted);
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.jira-board__detail-close:hover {
+  color: var(--c-ink);
+}
+
+.jira-board__detail-content {
+  padding: var(--sp-4);
+}
+
+.jira-board__detail-content h3 {
+  margin-bottom: var(--sp-4);
+  color: var(--c-white);
+}
+
+.jira-board__detail-meta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  font-size: var(--fs-sm);
+}
+
+.jira-board__detail-meta div {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.jira-board__detail-meta strong {
+  color: var(--c-ink-muted);
+  min-width: 100px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .jira-board__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--sp-3);
+  }
+
+  .jira-board__tabs {
+    overflow-x: auto;
+    width: 100%;
+    padding-bottom: var(--sp-2);
+  }
+
+  .jira-board__filters {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .jira-board__filter-actions {
+    margin-left: 0;
+  }
+
+  .jira-board__columns {
+    flex-direction: column;
+  }
+
+  .jira-board__column {
+    max-width: none;
+    min-width: auto;
+  }
+}
+
+/* ========================================================================
    Glassmorphic component styles — matched to Stitch hi-fi designs
    ======================================================================== */
 
