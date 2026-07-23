@@ -10,7 +10,7 @@ export default function AdminProductionPage() {
   return (
     <>
       <div className="prod-page__header">
-        <h1>Production</h1>
+        <h1>Manufacturing</h1>
         <div className="prod-page__tabs">
           <button
             className={`prod-page__tab ${view === "board" ? "prod-page__tab--active" : ""}`}

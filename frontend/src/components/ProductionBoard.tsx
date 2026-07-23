@@ -232,7 +232,7 @@ export function ProductionBoard() {
     <div className="prod-board">
       {/* Header */}
       <div className="prod-board__header">
-        <h2>Production Board</h2>
+        <h2>Manufacturing Board</h2>
         <div className="prod-board__header-actions">
           <span className="prod-board__count">{filteredJobs.length} jobs</span>
 

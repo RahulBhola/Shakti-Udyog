@@ -170,9 +170,6 @@ builder.Services.AddSingleton<IInvoicePdfService, PlaceholderInvoicePdfService>(
 builder.Services.AddScoped<IInvoiceWebhookService, InvoiceWebhookService>();
 builder.Services.AddScoped<IAdminContentService, AdminContentService>();
 builder.Services.AddScoped<IDocumentService, DocumentService>();
-builder.Services.AddScoped<IJiraService, JiraService>();
-builder.Services.AddHostedService<ShaktiUdyog.Api.BackgroundServices.JiraSyncBackgroundService>();
-builder.Services.AddHttpClient("Jira", c => { c.Timeout = TimeSpan.FromSeconds(30); });
 builder.Services.AddScoped<IInvoiceAdminService, InvoiceAdminService>();
 builder.Services.AddScoped<IInvoiceManagementService, InvoiceManagementService>();
 builder.Services.AddSingleton<INotificationService, PlaceholderNotificationService>();

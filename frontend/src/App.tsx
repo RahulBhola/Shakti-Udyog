@@ -71,7 +71,6 @@ const AdminCompaniesPage = lazy(() => import("./portal/pages/AdminCompaniesPage"
 const AdminAuditLogsPage = lazy(() => import("./portal/pages/AdminAuditLogsPage"));
 const AdminReportsPage = lazy(() => import("./portal/pages/AdminReportsPage"));
 const AdminSettingsPage = lazy(() => import("./portal/pages/AdminSettingsPage"));
-const AdminJiraPage = lazy(() => import("./portal/pages/AdminJiraPage"));
 const AdminProductionPage = lazy(() => import("./portal/pages/AdminProductionPage"));
 const AdminInvoiceManagePage = lazy(() => import("./portal/pages/AdminInvoiceManagePage"));
 const AdminProductPage = lazy(() => import("./portal/pages/AdminProductPage"));
@@ -242,7 +241,6 @@ function App() {
               <Route path="reports" element={<AdminReportsPage />} />
               <Route path="audit-logs" element={<AdminAuditLogsPage />} />
               <Route path="settings" element={<AdminSettingsPage />} />
-              <Route path="jira" element={<AdminJiraPage />} />
               <Route path="production" element={<AdminProductionPage />} />
             </Route>
           </Routes>
