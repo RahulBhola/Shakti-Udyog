@@ -1,10 +1,14 @@
 import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { updaterApi } from "../../../api/updaterApi";
 import { Panel } from "../../shared";
 
 export default function CreateQuotationPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const rfqIdParam = searchParams.get("rfqId") ?? "";
+  const companyNameParam = searchParams.get("companyName") ?? "";
+
   const [status, setStatus] = useState<"idle" | "saving" | "error">("idle");
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -37,15 +41,20 @@ export default function CreateQuotationPage() {
   return (
     <>
       <h1>Create Quotation</h1>
+      {rfqIdParam && (
+        <div style={{ padding: "0.75rem 1rem", marginBottom: "1rem", borderRadius: "var(--radius)", background: "rgba(15,21,36,0.55)", border: "1px solid var(--c-line)", color: "var(--c-ink)" }}>
+          Generating quotation for <strong>RFQ: {rfqIdParam}</strong>{companyNameParam ? ` — ${companyNameParam}` : ""}
+        </div>
+      )}
       <Panel>
         <form className="form" onSubmit={submit}>
           <div className="form__field">
             <label htmlFor="rfqId">RFQ ID *</label>
-            <input id="rfqId" name="rfqId" required />
+            <input id="rfqId" name="rfqId" defaultValue={rfqIdParam} required />
           </div>
           <div className="form__field">
             <label htmlFor="companyId">Company ID *</label>
-            <input id="companyId" name="companyId" required />
+            <input id="companyId" name="companyId" placeholder="Enter company GUID" required />
           </div>
           <div className="form__field">
             <label htmlFor="subtotal">Subtotal *</label>
@@ -69,11 +78,23 @@ export default function CreateQuotationPage() {
           </div>
           <div className="form__field">
             <label htmlFor="paymentTerms">Payment terms</label>
-            <input id="paymentTerms" name="paymentTerms" />
+            <input id="paymentTerms" name="paymentTerms" placeholder="e.g. 30% advance, 70% on delivery" />
           </div>
           <div className="form__field">
             <label htmlFor="deliveryTerms">Delivery terms</label>
-            <input id="deliveryTerms" name="deliveryTerms" />
+            <input id="deliveryTerms" name="deliveryTerms" placeholder="e.g. FOB Ludhiana" />
+          </div>
+          <div className="form__field">
+            <label htmlFor="freight">Freight</label>
+            <input id="freight" name="freight" />
+          </div>
+          <div className="form__field">
+            <label htmlFor="packing">Packing</label>
+            <input id="packing" name="packing" />
+          </div>
+          <div className="form__field">
+            <label htmlFor="remarks">Remarks</label>
+            <textarea id="remarks" name="remarks" rows={3} />
           </div>
           {status === "error" && <p className="form-status form-status--error" role="alert">Creation failed. Check the RFQ is approved and IDs are correct.</p>}
           <button className="btn btn--primary" type="submit" disabled={status === "saving"}>

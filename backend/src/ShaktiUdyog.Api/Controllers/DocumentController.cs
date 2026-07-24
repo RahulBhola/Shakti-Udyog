@@ -10,7 +10,10 @@ namespace ShaktiUdyog.Api.Controllers;
 [Authorize]
 public class DocumentController(IDocumentService service) : ControllerBase
 {
-    private Guid UserId => Guid.Parse(HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value!);
+    private Guid UserId => Guid.Parse(
+        HttpContext.User.FindFirst("sub")?.Value
+        ?? HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+        ?? throw new UnauthorizedAccessException());
     private string? ClientIp => HttpContext.Connection.RemoteIpAddress?.ToString();
 
     [HttpGet] public async Task<IActionResult> GetAll([FromQuery] string? search, [FromQuery] string? category) => Ok(await service.GetAllAsync(search, category));

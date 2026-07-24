@@ -40,6 +40,9 @@ export const adminApi = {
   cancelOrder: (id: string, reason: string) => apiPatch<{ message: string }>(`${base}/orders/${id}/cancel`, reason),
   orderHistory: (id: string) => apiGet<{ fromStatus: string; toStatus: string; changedByRole: string; note: string | null; occurredAtUtc: string }[]>(`${base}/orders/${id}/history`),
 
+  // ---- Users ---------------------------------------------------------------
+  users: () => apiGet<{ id: string; fullName: string | null; email: string }[]>(`${base}/users`),
+
   // ---- Invoices -----------------------------------------------------------
   invoices: (page = 1, pageSize = 20, status?: string) => {
     const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });

@@ -12,7 +12,10 @@ namespace ShaktiUdyog.Api.Controllers;
 public class AdminContentController(IAdminContentService service) : ControllerBase
 {
     private string? ClientIp => HttpContext.Connection.RemoteIpAddress?.ToString();
-    private Guid UserId => Guid.Parse(HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value!);
+    private Guid UserId => Guid.Parse(
+        HttpContext.User.FindFirst("sub")?.Value
+        ?? HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+        ?? throw new UnauthorizedAccessException());
 
     // ---- Products ----------------------------------------------------------
     [HttpGet("products")] public async Task<IActionResult> GetProducts() => Ok(await service.GetAllProductsAsync());

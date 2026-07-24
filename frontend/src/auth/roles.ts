@@ -6,6 +6,7 @@
 export const Roles = {
   Admin: "Admin",
   DataUpdater: "DataUpdater",
+  Engineer: "Engineer",
   Customer: "Customer",
 } as const;
 

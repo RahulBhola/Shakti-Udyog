@@ -13,7 +13,10 @@ namespace ShaktiUdyog.Api.Controllers;
 public class QuotationUpdaterController(IQuotationUpdaterService service) : ControllerBase
 {
     private string? ClientIp => HttpContext.Connection.RemoteIpAddress?.ToString();
-    private Guid UserId => Guid.Parse(HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value!);
+    private Guid UserId => Guid.Parse(
+        HttpContext.User.FindFirst("sub")?.Value
+        ?? HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+        ?? throw new UnauthorizedAccessException());
 
     [HttpGet("quotations")]
     public async Task<IActionResult> GetQuotations([FromQuery] int page = 1, [FromQuery] int pageSize = 20, [FromQuery] string? search = null, [FromQuery] string? status = null)

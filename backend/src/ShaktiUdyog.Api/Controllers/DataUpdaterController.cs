@@ -23,7 +23,8 @@ public class DataUpdaterController(
     private string? ClientIp => HttpContext.Connection.RemoteIpAddress?.ToString();
 
     private Guid UserId => Guid.Parse(
-        HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+        HttpContext.User.FindFirst("sub")?.Value
+        ?? HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
         ?? throw new UnauthorizedAccessException());
 
     private string UserRole =>

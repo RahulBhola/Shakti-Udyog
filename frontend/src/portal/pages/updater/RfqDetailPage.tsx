@@ -4,11 +4,11 @@ import { updaterApi, type UpdaterRfqDetail } from "../../../api/updaterApi";
 import { Loading } from "../../../components/ui";
 import { formatDate } from "../../shared";
 import {
-  ArrowLeft, Building2, Mail, Phone, Package, Tag, Sigma,
+  ArrowLeft, Building2, Mail, Phone, Package,
   MapPinned, Calendar, Clock, Activity, MessageSquare, Paperclip,
-  UserPlus, MoreHorizontal, ChevronRight, FileText,
-  CheckCircle, XCircle, AlertCircle, Download, FileEdit, User, Hash,
-  ChevronDown, ChevronUp, FileSpreadsheet, Truck, Factory, CreditCard,
+  MoreHorizontal, ChevronRight, FileText,
+  CheckCircle, XCircle, AlertCircle, Download, FileEdit, User,
+  ChevronDown, ChevronUp, Factory, Truck, CreditCard,
   ChevronLeft,
 } from "lucide-react";
 
@@ -44,26 +44,39 @@ function StatusBadge({ status, size = "sm" }: { status: string; size?: "sm" | "m
   );
 }
 
+/* ── Priority badge ────────────────────────────────────────────── */
+
+const priorityColors: Record<string, string> = {
+  Low: "bg-slate-100 text-slate-600 dark:bg-slate-500/10 dark:text-slate-400",
+  Medium: "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400",
+  High: "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400",
+  Urgent: "bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-300 ring-1 ring-red-300 dark:ring-red-500/30",
+};
+
+function PriorityBadge({ priority }: { priority: string }) {
+  const c = priorityColors[priority] ?? priorityColors.Medium;
+  return (
+    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${c}`}>
+      {priority}
+    </span>
+  );
+}
+
 /* ------------------------------------------------------------------ */
 /*  Info card                                                          */
 /* ------------------------------------------------------------------ */
 
-function InfoCard({ icon: Icon, label, value, color, action }: { icon: any; label: string; value: string; color?: string; action?: { label: string; onClick: () => void } }) {
+function InfoCard({ icon: Icon, label, value, sub, color }: { icon: any; label: string; value: string; sub?: string; color?: string }) {
   return (
-    <div className="flex items-center gap-3 rounded-[14px] border border-[var(--border-default)] bg-[var(--bg-card)] p-4 shadow-sm hover:shadow-md transition-all">
-      <span className={`flex items-center justify-center w-10 h-10 rounded-xl shrink-0 ${color ?? "bg-[var(--color-primary)]/10"}`}>
-        <Icon size={18} className={color?.replace("bg-", "text-") ?? "text-[var(--color-primary)]"} />
+    <div className="flex items-center gap-4 rounded-[14px] border border-[var(--border-default)] bg-[var(--bg-card)] p-5 shadow-sm hover:shadow-md transition-all">
+      <span className={`flex items-center justify-center w-12 h-12 rounded-xl shrink-0 ${color ?? "bg-[var(--color-primary)]/10"}`}>
+        <Icon size={22} className={color?.replace("bg-", "text-") ?? "text-[var(--color-primary)]"} />
       </span>
       <div className="flex-1 min-w-0">
-        <div className="text-[11px] text-[var(--text-muted)] mb-0.5">{label}</div>
-        <div className="text-sm font-semibold text-[var(--text-primary)] truncate">{value}</div>
+        <div className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider font-semibold mb-0.5">{label}</div>
+        <div className="text-[15px] font-bold text-[var(--text-primary)] truncate">{value}</div>
+        {sub && <div className="text-[12px] text-[var(--text-secondary)] mt-0.5 truncate">{sub}</div>}
       </div>
-      {action && (
-        <button type="button" onClick={action.onClick}
-          className="shrink-0 text-[11px] font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-hover)] hover:underline whitespace-nowrap">
-          {action.label}
-        </button>
-      )}
     </div>
   );
 }
@@ -109,14 +122,25 @@ function Field({ label, value, icon: Icon }: { label: string; value: string; ico
 /*  Progress Step                                                      */
 /* ------------------------------------------------------------------ */
 
-const workflowSteps = ["Received", "Engineering Review", "Cost Estimation", "Quotation", "Customer Approval", "Production"];
+/* ── Workflow Steps ──────────────────────────────────────────────── */
+
+const workflowSteps = ["Draft", "Submitted", "Received", "Under Review", "Approved", "Quoted"];
+const workflowIcons: Record<string, any> = {
+  Draft: FileText, Submitted: Clock, Received: Clock,
+  "Under Review": AlertCircle, Approved: CheckCircle,
+  Quoted: FileEdit,
+};
 
 function getStepIndex(status: string): number {
-  // Map RFQ status to workflow step index
   const map: Record<string, number> = {
-    Draft: 0, Received: 0, "Under Review": 1, Approved: 2, Quoted: 3, Accepted: 4, Rejected: -1, Cancelled: -1, Expired: -1,
+    Draft: 0, Submitted: 1, Received: 2, "Under Review": 3,
+    "Waiting for Customer": 3.5, Approved: 4, Quoted: 5,
+    Accepted: 6, Rejected: -1, Declined: -1, Expired: -1, Cancelled: -1,
   };
-  return map[status] ?? 0;
+  const idx = map[status];
+  // Show full timeline if status is beyond Quoted (e.g. Accepted from customer side)
+  if (idx !== undefined && idx > 5) return 6;
+  return idx !== undefined ? Math.max(0, idx) : 0;
 }
 
 function WorkflowProgress({ currentStatus }: { currentStatus: string }) {
@@ -124,29 +148,35 @@ function WorkflowProgress({ currentStatus }: { currentStatus: string }) {
   if (currentIdx < 0) return null;
 
   return (
-    <div className="flex items-center gap-0 w-full">
+    <div className="flex items-center justify-between gap-1 overflow-x-auto pb-1">
       {workflowSteps.map((step, i) => {
-        const isComplete = i < currentIdx;
-        const isCurrent = i === currentIdx;
-        const Icon = isComplete ? CheckCircle : isCurrent ? Clock : Activity;
+        const Icon = workflowIcons[step] ?? Clock;
+        const isComplete = Math.floor(currentIdx) > i;
+        const isCurrent = Math.floor(currentIdx) === i;
+        const isPartial = currentIdx > i && currentIdx < i + 1;
         return (
-          <div key={step} className="flex-1 flex flex-col items-center relative">
-            <div className="flex items-center w-full">
-              {i > 0 && (
-                <div className={`flex-1 h-0.5 ${isComplete ? "bg-[#22C55E]" : isCurrent ? "bg-[#2563EB]" : "bg-[#E2E8F0]"}`} />
-              )}
-              <div className={`flex items-center justify-center w-8 h-8 rounded-full shrink-0 ring-2 ring-white z-10 ${
-                isComplete ? "bg-[#22C55E] text-white" : isCurrent ? "bg-[#2563EB] text-white" : "bg-[#F1F5F9] text-[#94A3B8]"
+          <div key={step} className="flex items-center gap-0 flex-1 min-w-0">
+            <div className="flex flex-col items-center gap-1.5 min-w-0">
+              <div className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${
+                isComplete || isPartial ? "bg-emerald-500 text-white" :
+                isCurrent ? "bg-[var(--color-primary)] text-white ring-2 ring-[var(--color-primary)]/30" :
+                "bg-[var(--bg-surface-hover)] text-[var(--text-muted)]"
               }`}>
-                <Icon size={14} />
+                <Icon size={15} />
               </div>
-              {i < workflowSteps.length - 1 && i > 0 && (
-                <div className={`flex-1 h-0.5 ${isComplete && i < currentIdx ? "bg-[#22C55E]" : i === currentIdx - 1 && isCurrent ? "bg-gradient-to-r from-[#22C55E] to-[#2563EB]" : "bg-[#E2E8F0]"}`} />
-              )}
+              <span className={`text-[10px] font-medium text-center leading-tight max-w-[80px] ${
+                isCurrent ? "text-[var(--color-primary)]" :
+                isComplete || isPartial ? "text-emerald-600 dark:text-emerald-400" :
+                "text-[var(--text-muted)]"
+              }`}>
+                {step}
+              </span>
             </div>
-            <span className={`text-[10px] font-medium mt-1.5 whitespace-nowrap ${
-              isComplete ? "text-[#22C55E]" : isCurrent ? "text-[#2563EB]" : "text-[#94A3B8]"
-            }`}>{step}</span>
+            {i < workflowSteps.length - 1 && (
+              <div className={`flex-1 h-px mx-1 mt-[-20px] ${
+                (isComplete || isPartial) || (isCurrent && i < Math.floor(currentIdx)) ? "bg-emerald-400" : "bg-[var(--border-default)]"
+              }`} />
+            )}
           </div>
         );
       })}
@@ -238,6 +268,11 @@ export default function UpdaterRfqDetailPage() {
                   RFQ — {rfq.productType}
                 </h1>
                 <StatusBadge status={rfq.status} size="md" />
+                {rfq.isDraft && (
+                  <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-semibold bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20">
+                    DRAFT
+                  </span>
+                )}
               </div>
               <div className="flex items-center gap-3 text-[13px] text-[var(--text-secondary)] flex-wrap">
                 <span className="font-mono text-[12px] font-medium text-[var(--color-primary)]">
@@ -253,19 +288,29 @@ export default function UpdaterRfqDetailPage() {
                     <span className="flex items-center gap-1"><User size={12} /> Assigned</span>
                   </>
                 )}
+                <span className="w-1 h-1 rounded-full bg-[var(--border-default)]" />
+                <span className="flex items-center gap-1"><AlertCircle size={12} /> <PriorityBadge priority={rfq.priority} /></span>
               </div>
             </div>
 
             {/* Actions */}
             <div className="flex items-center gap-2 shrink-0 ml-4">
-              <button type="button" disabled
-                className="inline-flex items-center gap-1.5 px-3.5 h-9 rounded-lg bg-[var(--color-primary)] text-white text-xs font-semibold opacity-60 cursor-not-allowed transition-all">
-                <FileEdit size={14} /> Quotation
-              </button>
-              <button type="button" onClick={() => alert("Assign engineer — coming soon")}
-                className="inline-flex items-center gap-1.5 px-3.5 h-9 rounded-lg border border-[var(--border-default)] text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all">
-                <UserPlus size={14} /> Assign
-              </button>
+              {!["Quoted", "Accepted", "Rejected", "Declined", "Cancelled", "Expired"].includes(rfq.status) && (
+                <button type="button" disabled={busy} onClick={() => {
+                  const workflowOrder = ["Draft", "Submitted", "Received", "Under Review", "Approved"];
+                  const idx = workflowOrder.indexOf(rfq.status);
+                  if (idx >= 0 && idx < workflowOrder.length - 1) void updateStatus(workflowOrder[idx + 1]);
+                }}
+                  className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg bg-[var(--color-primary)] text-white text-xs font-semibold hover:bg-[var(--color-primary-hover)] disabled:opacity-50 transition-all">
+                  <ChevronRight size={14} /> Advance Stage
+                </button>
+              )}
+              {rfq.status === "Approved" && (
+                <button type="button" onClick={() => window.location.assign(`/admin/quotations/new?rfqId=${rfq.id}&companyName=${encodeURIComponent(rfq.companyName)}`)}
+                  className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg bg-emerald-500 text-white text-xs font-semibold hover:bg-emerald-600 transition-all">
+                  <FileEdit size={14} /> Generate Quotation
+                </button>
+              )}
               <button type="button"
                 className="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-[var(--border-default)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all">
                 <MoreHorizontal size={15} />
@@ -285,16 +330,11 @@ export default function UpdaterRfqDetailPage() {
 
         {/* ── Summary Cards ── */}
         <div className="px-6 pb-5">
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5">
-            <InfoCard icon={Building2} label="Customer" value={rfq.companyName} color="bg-[var(--color-primary)]/10" />
-            <InfoCard icon={Package} label="Product" value={rfq.productType} color="bg-[#F0FDF4]" />
-            <InfoCard icon={Tag} label="Material" value={rfq.materialGrade ?? "—"} color="bg-[#F5F3FF]" />
-            <InfoCard icon={Sigma} label="Quantity" value={rfq.quantity} color="bg-[#EFF6FF]" />
-            <InfoCard icon={MapPinned} label="Delivery" value={rfq.deliveryLocation ?? "—"} color="bg-[#FFF7ED]" />
-            <InfoCard icon={Hash} label="Status" value={cfg.label} color="bg-[#F1F5F9]" />
-            <InfoCard icon={User} label="Engineer" value={rfq.assignedToUserId ? "Assigned" : "Unassigned"} color="bg-[#ECFEFF]"
-              action={!rfq.assignedToUserId ? { label: "Assign", onClick: () => alert("Assign — coming soon") } : undefined} />
-            <InfoCard icon={Calendar} label="Received" value={formatDate(rfq.createdAtUtc)} color="bg-[#FFFBEB]" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <InfoCard icon={Building2} label="Customer" value={rfq.companyName} sub={rfq.fullName ? `Contact: ${rfq.fullName}` : undefined} color="bg-[var(--color-primary)]/10" />
+            <InfoCard icon={Package} label="Product / Material" value={rfq.productType} sub={rfq.materialGrade ? `Grade: ${rfq.materialGrade}` : undefined} color="bg-[#F0FDF4]" />
+            <InfoCard icon={MapPinned} label="Quantity / Delivery" value={rfq.quantity} sub={rfq.deliveryLocation ?? "No delivery location"} color="bg-[#EFF6FF]" />
+            <InfoCard icon={Activity} label="Status / Priority" value={cfg.label} sub={`Priority: ${rfq.priority}`} color="bg-[#FFF7ED]" />
           </div>
         </div>
       </div>
@@ -380,32 +420,11 @@ export default function UpdaterRfqDetailPage() {
             )}
           </Section>
 
-          {/* Status Actions */}
-          <Section icon={Activity} title="Status Actions" defaultOpen={false}>
-            <div className="flex flex-wrap gap-2">
-              <button type="button" disabled={busy || rfq.status === "Under Review"}
-                onClick={() => void updateStatus("Under Review")}
-                className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg bg-[#FFF7ED] text-[#F97316] text-xs font-semibold hover:bg-[#FFEDD5] disabled:opacity-40 disabled:cursor-not-allowed transition-all">
-                <AlertCircle size={13} /> Mark Under Review
-              </button>
-              <button type="button" disabled={busy || rfq.status === "Approved"}
-                onClick={() => void updateStatus("Approved")}
-                className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg bg-[#F0FDF4] text-[#22C55E] text-xs font-semibold hover:bg-[#DCFCE7] disabled:opacity-40 disabled:cursor-not-allowed transition-all">
-                <CheckCircle size={13} /> Approve
-              </button>
-              <button type="button" disabled={busy || rfq.status === "Rejected"}
-                onClick={() => void updateStatus("Rejected")}
-                className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg bg-[#FEF2F2] text-[#EF4444] text-xs font-semibold hover:bg-[#FEE2E2] disabled:opacity-40 disabled:cursor-not-allowed transition-all">
-                <XCircle size={13} /> Reject
-              </button>
-            </div>
-          </Section>
-
           {/* Related Records */}
-          <Section icon={FileSpreadsheet} title="Related Records" defaultOpen={false}>
+          <Section icon={Activity} title="Related Records" defaultOpen={false}>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <RelatedCard icon={FileText} label="Quotation" status="Pending" href="/admin/quotations" />
-              <RelatedCard icon={Factory} label="Production" status="Not Started" href="/admin/production" />
+              <RelatedCard icon={FileEdit} label="Quotation" status={rfq.status === "Approved" ? "Pending" : "Not Started"} href="/admin/quotations" />
+              <RelatedCard icon={Factory} label="Pattern / Tooling" status="Not Started" href="/admin/production" />
               <RelatedCard icon={Truck} label="Dispatch" status="Pending" href="/admin/orders" />
               <RelatedCard icon={CreditCard} label="Invoice" status="Pending" href="/admin/invoices" />
             </div>
@@ -431,6 +450,10 @@ export default function UpdaterRfqDetailPage() {
             </div>
             <div className="space-y-3 text-[12px]">
               <div className="flex items-center justify-between">
+                <span className="text-[var(--text-muted)]">Priority</span>
+                <PriorityBadge priority={rfq.priority} />
+              </div>
+              <div className="flex items-center justify-between">
                 <span className="text-[var(--text-muted)]">Assigned Engineer</span>
                 <span className="text-[var(--text-primary)] font-medium">{rfq.assignedToUserId ? "Assigned" : "Unassigned"}</span>
               </div>
@@ -445,33 +468,6 @@ export default function UpdaterRfqDetailPage() {
                 </span>
               </div>
             </div>
-          </section>
-
-          {/* Next Action */}
-          <section className="rounded-[16px] border border-[var(--border-default)] bg-[var(--bg-card)] p-5 shadow-sm">
-            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)] m-0 mb-3">Next Action</h3>
-            {rfq.assignedToUserId ? (
-              <div>
-                <div className="flex items-center gap-3 mb-3 p-3 rounded-xl bg-[#FFF7ED] border border-amber-200">
-                  <AlertCircle size={16} className="text-[#F97316] shrink-0" />
-                  <p className="text-[12px] text-[#92400E] m-0">Review RFQ details and prepare cost estimation for quotation.</p>
-                </div>
-                <button type="button" disabled className="w-full inline-flex items-center justify-center gap-1.5 px-4 h-10 rounded-lg bg-[var(--color-primary)] text-white text-xs font-semibold opacity-60 cursor-not-allowed transition-all">
-                  <FileEdit size={14} /> Generate Quotation
-                </button>
-              </div>
-            ) : (
-              <div>
-                <div className="flex items-center gap-3 mb-3 p-3 rounded-xl bg-[#EFF6FF] border border-blue-200">
-                  <UserPlus size={16} className="text-[#2563EB] shrink-0" />
-                  <p className="text-[12px] text-[#1E40AF] m-0">Assign an engineer to start reviewing this RFQ.</p>
-                </div>
-                <button type="button" onClick={() => alert("Assign engineer — coming soon")}
-                  className="w-full inline-flex items-center justify-center gap-1.5 px-4 h-10 rounded-lg bg-[var(--color-primary)] text-white text-xs font-semibold hover:bg-[var(--color-primary-hover)] transition-all">
-                  <UserPlus size={14} /> Assign Engineer
-                </button>
-              </div>
-            )}
           </section>
 
           {/* Status Timeline */}
@@ -537,16 +533,13 @@ export default function UpdaterRfqDetailPage() {
           className="inline-flex items-center gap-1.5 px-5 h-10 rounded-lg bg-[var(--color-primary)] text-white text-xs font-semibold opacity-60 cursor-not-allowed transition-all">
           <FileEdit size={14} /> Generate Quotation
         </button>
-        <button type="button" onClick={() => alert("Assign engineer — coming soon")}
-          className="inline-flex items-center gap-1.5 px-5 h-10 rounded-lg border border-[var(--border-default)] text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all">
-          <UserPlus size={14} /> Assign Engineer
-        </button>
         <div className="flex-1" />
         <Link to="/admin/rfqs"
           className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all no-underline hover:no-underline">
           <ArrowLeft size={14} /> Back to List
         </Link>
       </div>
+
     </div>
   );
 }

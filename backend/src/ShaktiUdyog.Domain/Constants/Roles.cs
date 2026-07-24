@@ -8,7 +8,8 @@ public static class Roles
 {
     public const string Admin = "Admin";
     public const string DataUpdater = "DataUpdater";
+    public const string Engineer = "Engineer";
     public const string Customer = "Customer";
 
-    public static readonly IReadOnlyList<string> All = [Admin, DataUpdater, Customer];
+    public static readonly IReadOnlyList<string> All = [Admin, DataUpdater, Engineer, Customer];
 }

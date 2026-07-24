@@ -329,6 +329,28 @@ export default function AdminOrderDetailPage() {
               <p className="text-[13px] text-[var(--text-muted)] text-center py-4">No shipments recorded yet.</p>
             </Section>
           )}
+
+          {/* Documents */}
+          {order.documents && order.documents.length > 0 && (
+            <Section title={`Documents (${order.documents.length})`}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {order.documents.map((doc) => (
+                  <div key={doc.id} className="flex items-center gap-3 rounded-xl border border-[var(--border-default)] p-3.5 hover:bg-[var(--bg-surface-hover)] transition-all cursor-pointer">
+                    <span className="flex items-center justify-center w-10 h-10 rounded-lg bg-[#EFF6FF] text-[#2563EB] shrink-0">
+                      <FileText size={18} />
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[12px] font-medium text-[var(--text-primary)] truncate">{doc.title || doc.fileName}</div>
+                      <div className="text-[11px] text-[var(--text-muted)]">
+                        {doc.category} · {(doc.sizeBytes / 1024).toFixed(1)} KB
+                      </div>
+                      <div className="text-[10px] text-[var(--text-muted)]">{formatDate(doc.createdAtUtc)}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Section>
+          )}
         </div>
 
         {/* ── Right sidebar ─────────────────────────────────── */}

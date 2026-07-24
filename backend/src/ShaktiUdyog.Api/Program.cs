@@ -110,6 +110,7 @@ builder.Services.AddAuthorization(options =>
 
     AddRolePolicy(AuthPolicies.AdminOnly, Roles.Admin);
     AddRolePolicy(AuthPolicies.DataUpdaterOnly, Roles.DataUpdater, Roles.Admin);
+    AddRolePolicy(AuthPolicies.EngineerOnly, Roles.Engineer, Roles.Admin);
     AddRolePolicy(AuthPolicies.CustomerOnly, Roles.Customer);
 
     // Milestone 1 aliases.

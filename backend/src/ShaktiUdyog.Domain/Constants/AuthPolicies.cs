@@ -10,6 +10,7 @@ public static class AuthPolicies
 {
     public const string AdminOnly = "AdminOnly";
     public const string DataUpdaterOnly = "DataUpdaterOnly";
+    public const string EngineerOnly = "EngineerOnly";
     public const string CustomerOnly = "CustomerOnly";
 
     // Milestone 1 aliases, kept so existing registrations stay valid.

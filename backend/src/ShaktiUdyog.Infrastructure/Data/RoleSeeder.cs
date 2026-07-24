@@ -15,6 +15,7 @@ public static class RoleSeeder
     {
         [Roles.Admin] = "Full administrative access: users, roles, approvals, audit logs, and system settings.",
         [Roles.DataUpdater] = "Internal staff: content, enquiry, quotation, and order-milestone updates within assigned scope.",
+        [Roles.Engineer] = "Pattern and tooling engineers: production job and manufacturing oversight.",
         [Roles.Customer] = "Approved customer users: access restricted to records of their approved company.",
     };
 
