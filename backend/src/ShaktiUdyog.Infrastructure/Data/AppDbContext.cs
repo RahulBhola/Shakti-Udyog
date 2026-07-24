@@ -67,6 +67,8 @@ public DbSet<KanbanTask> KanbanTasks => Set<KanbanTask>();
     public DbSet<ProductionDepartment> ProductionDepartments => Set<ProductionDepartment>();
     public DbSet<ProductionMachine> ProductionMachines => Set<ProductionMachine>();
     public DbSet<UserBoardPreference> UserBoardPreferences => Set<UserBoardPreference>();
+    public DbSet<ProductMaster> ProductMasters => Set<ProductMaster>();
+    public DbSet<ProductMasterAttachment> ProductMasterAttachments => Set<ProductMasterAttachment>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -262,6 +264,60 @@ public DbSet<KanbanTask> KanbanTasks => Set<KanbanTask>();
             entity.HasIndex(m => m.StorageKey).IsUnique();
             entity.HasOne(m => m.Product).WithMany(p => p.Media)
                 .HasForeignKey(m => m.ProductId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<ProductMaster>(entity =>
+        {
+            entity.ToTable("ProductMasters");
+            entity.Property(p => p.ProductCode).HasMaxLength(100).IsRequired();
+            entity.HasIndex(p => p.ProductCode).IsUnique();
+            entity.Property(p => p.ProductName).HasMaxLength(255).IsRequired();
+            entity.HasIndex(p => p.ProductName);
+            entity.Property(p => p.Description).HasMaxLength(4000);
+            entity.Property(p => p.CastingType).HasMaxLength(100);
+            entity.Property(p => p.Unit).HasMaxLength(50);
+            entity.Property(p => p.Material).HasMaxLength(200);
+            entity.Property(p => p.MaterialGrade).HasMaxLength(100);
+            entity.Property(p => p.Weight).HasPrecision(18, 3);
+            entity.Property(p => p.Tolerance).HasMaxLength(100);
+            entity.Property(p => p.Density).HasMaxLength(100);
+            entity.Property(p => p.Hardness).HasMaxLength(100);
+            entity.Property(p => p.HeatTreatment).HasMaxLength(200);
+            entity.Property(p => p.SurfaceFinish).HasMaxLength(200);
+            entity.Property(p => p.Length).HasPrecision(18, 2);
+            entity.Property(p => p.Width).HasPrecision(18, 2);
+            entity.Property(p => p.Height).HasPrecision(18, 2);
+            entity.Property(p => p.Diameter).HasPrecision(18, 2);
+            entity.Property(p => p.DrawingNumber).HasMaxLength(100);
+            entity.Property(p => p.Revision).HasMaxLength(50);
+            entity.Property(p => p.PatternNumber).HasMaxLength(100);
+            entity.Property(p => p.StandardCost).HasPrecision(18, 2);
+            entity.Property(p => p.SellingPrice).HasPrecision(18, 2);
+            entity.Property(p => p.GstPercent).HasPrecision(5, 2);
+            entity.Property(p => p.HsnCode).HasMaxLength(20);
+            entity.Property(p => p.Currency).HasMaxLength(3);
+            entity.Property(p => p.Status).HasMaxLength(30);
+            entity.Property(p => p.RowVersion).IsRowVersion();
+            entity.HasIndex(p => p.CategoryId);
+            entity.HasIndex(p => p.Status);
+            entity.HasOne(p => p.Category).WithMany()
+                .HasForeignKey(p => p.CategoryId).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(p => p.CreatedByUser).WithMany()
+                .HasForeignKey(p => p.CreatedByUserId).OnDelete(DeleteBehavior.NoAction);
+            entity.HasOne(p => p.UpdatedByUser).WithMany()
+                .HasForeignKey(p => p.UpdatedByUserId).OnDelete(DeleteBehavior.NoAction);
+        });
+
+        builder.Entity<ProductMasterAttachment>(entity =>
+        {
+            entity.ToTable("ProductMasterAttachments");
+            entity.Property(a => a.FileName).HasMaxLength(255).IsRequired();
+            entity.Property(a => a.ContentType).HasMaxLength(127).IsRequired();
+            entity.Property(a => a.StorageKey).HasMaxLength(200).IsRequired();
+            entity.Property(a => a.Description).HasMaxLength(500);
+            entity.HasIndex(a => a.StorageKey).IsUnique();
+            entity.HasOne(a => a.ProductMaster).WithMany(p => p.Attachments)
+                .HasForeignKey(a => a.ProductMasterId).OnDelete(DeleteBehavior.Cascade);
         });
 
         builder.Entity<Category>(entity =>

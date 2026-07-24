@@ -176,6 +176,7 @@ builder.Services.AddSingleton<INotificationService, PlaceholderNotificationServi
 builder.Services.AddScoped<IOrderUpdaterService, OrderUpdaterService>();
 builder.Services.AddScoped<IOrderAdminService, OrderAdminService>();
 builder.Services.AddScoped<IProductionBoardService, ProductionBoardService>();
+builder.Services.AddScoped<IProductMasterService, ProductMasterService>();
 
 // --- API plumbing -----------------------------------------------------------
 builder.Services.AddControllers();
@@ -237,7 +238,7 @@ using (var scope = app.Services.CreateScope())
             if (app.Environment.IsDevelopment())
             {
                 var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-                await DevAdminSeeder.SeedAsync(userManager, app.Configuration["DevAdmin:Password"], logger);
+                await DevAdminSeeder.SeedAsync(userManager, app.Configuration["DevAdmin:Password"], db, logger);
                 await DevPortalSeeder.SeedAsync(db, userManager, app.Configuration["DevCustomer:Password"], logger);
             }
 

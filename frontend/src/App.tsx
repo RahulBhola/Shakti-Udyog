@@ -72,6 +72,7 @@ const AdminProductionPage = lazy(() => import("./portal/pages/AdminProductionPag
 const AdminInvoiceManagePage = lazy(() => import("./portal/pages/AdminInvoiceManagePage"));
 const AdminDocumentsPage = lazy(() => import("./portal/pages/AdminDocumentsPage"));
 const AdminProductPage = lazy(() => import("./portal/pages/AdminProductPage"));
+const AdminProductDetailPage = lazy(() => import("./portal/pages/AdminProductDetailPage"));
 const AdminCategoryPage = lazy(() => import("./portal/pages/AdminCategoryPage"));
 const UpdaterRfqListPage = lazy(() => import("./portal/pages/updater/RfqListPage"));
 const UpdaterRfqDetailPage = lazy(() => import("./portal/pages/updater/RfqDetailPage"));
@@ -173,6 +174,7 @@ function App() {
               <Route path="users" element={<AdminUsersPage />} />
               <Route path="companies" element={<AdminCompaniesPage />} />
               <Route path="products" element={<AdminProductPage />} />
+              <Route path="products/:id" element={<AdminProductDetailPage />} />
               <Route path="categories" element={<AdminCategoryPage />} />
               <Route path="settings" element={<AdminSettingsPage />} />
               <Route path="audit-logs" element={<AdminAuditLogsPage />} />
