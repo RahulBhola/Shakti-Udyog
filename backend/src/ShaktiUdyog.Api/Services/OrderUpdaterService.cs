@@ -63,7 +63,8 @@ public class OrderUpdaterService(
         var from = o.Status;
         o.Status = request.StatusCode;
         o.LastUpdatedAtUtc = DateTimeOffset.UtcNow;
-        o.Milestones.Add(new OrderMilestone { Id = Guid.NewGuid(), OrderId = o.Id, StatusCode = request.StatusCode, CustomerMessage = request.CustomerMessage, InternalNote = request.InternalNote, ActorType = "DataUpdater", IsCustomerVisible = true });
+        var milestone = new OrderMilestone { Id = Guid.NewGuid(), OrderId = o.Id, StatusCode = request.StatusCode, CustomerMessage = request.CustomerMessage, InternalNote = request.InternalNote, ActorType = "DataUpdater", IsCustomerVisible = true };
+        db.OrderMilestones.Add(milestone);
         db.OrderStatusHistories.Add(new OrderStatusHistory { Id = Guid.NewGuid(), OrderId = o.Id, FromStatus = from, ToStatus = request.StatusCode, ChangedByUserId = userId, ChangedByRole = "DataUpdater", Note = request.CustomerMessage });
         await db.SaveChangesAsync();
         await notifications.NotifyOrderStatusChangedAsync(o, from, request.StatusCode);

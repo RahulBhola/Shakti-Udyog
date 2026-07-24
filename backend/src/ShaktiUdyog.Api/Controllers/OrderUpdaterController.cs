@@ -13,7 +13,10 @@ namespace ShaktiUdyog.Api.Controllers;
 public class OrderUpdaterController(IOrderUpdaterService service) : ControllerBase
 {
     private string? ClientIp => HttpContext.Connection.RemoteIpAddress?.ToString();
-    private Guid UserId => Guid.Parse(HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value!);
+    private Guid UserId => Guid.Parse(
+        HttpContext.User.FindFirst("sub")?.Value
+        ?? HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+        ?? throw new UnauthorizedAccessException());
     private string UserRole => HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "DataUpdater";
 
     [HttpGet("orders")]
