@@ -13,6 +13,7 @@ export interface UpdaterRfqListItem {
   assignedToUserId: string | null;
   fileCount: number;
   createdAtUtc: string;
+  priority: string;
 }
 
 export interface UpdaterRfqDetail {
@@ -34,6 +35,7 @@ export interface UpdaterRfqDetail {
   statusHistory: { fromStatus: string; toStatus: string; changedByRole: string; note: string | null; occurredAtUtc: string }[];
   comments: { id: string; authorUserId: string; authorRole: string; isCustomerVisible: boolean; message: string; createdAtUtc: string }[];
   assignedToUserId: string | null;
+  priority: string;
 }
 
 export interface UpdaterDashboard {

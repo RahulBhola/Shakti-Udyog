@@ -57,7 +57,7 @@ public class AdminService(
                 r.Id, r.ProductType, r.CompanyName, r.Quantity,
                 r.Status, r.IsDraft,
                 r.Assignments.Where(a => a.IsActive).Select(a => (Guid?)a.AssignedToUserId).FirstOrDefault(),
-                r.Files.Count, r.CreatedAtUtc))
+                r.Files.Count, r.CreatedAtUtc, r.Priority))
             .ToListAsync();
 
         return new PagedResult<UpdaterRfqListItemDto>(items, page, pageSize, total);
@@ -87,7 +87,7 @@ public class AdminService(
                 h.FromStatus, h.ToStatus, h.ChangedByRole, h.Note, h.CreatedAtUtc)).ToList(),
             rfq.Comments.Select(c => new RfqCommentDto(
                 c.Id, c.AuthorUserId, c.AuthorRole, c.IsCustomerVisible, c.Message, c.CreatedAtUtc)).ToList(),
-            rfq.Assignments.FirstOrDefault()?.AssignedToUserId);
+            rfq.Assignments.FirstOrDefault()?.AssignedToUserId, rfq.Priority);
     }
 
     /// <summary>Approves an RFQ (Received → Approved).</summary>

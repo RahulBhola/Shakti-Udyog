@@ -7,7 +7,7 @@ namespace ShaktiUdyog.Api.Contracts.Updater;
 public record UpdaterRfqListItemDto(
     Guid Id, string ProductType, string? CompanyName, string Quantity,
     string Status, bool IsDraft, Guid? AssignedToUserId, int FileCount,
-    DateTimeOffset CreatedAtUtc);
+    DateTimeOffset CreatedAtUtc, string Priority);
 
 public record UpdaterRfqDetailDto(
     Guid Id, string FullName, string CompanyName, string Email, string Phone,
@@ -17,7 +17,7 @@ public record UpdaterRfqDetailDto(
     IReadOnlyList<UpdaterRfqFileDto> Files,
     IReadOnlyList<RfqTimelineEntryDto> StatusHistory,
     IReadOnlyList<RfqCommentDto> Comments,
-    Guid? AssignedToUserId);
+    Guid? AssignedToUserId, string Priority);
 
 public record UpdaterRfqFileDto(
     Guid Id, string FileName, string ContentType, long SizeBytes,

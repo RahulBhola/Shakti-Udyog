@@ -35,6 +35,8 @@ public class Rfq
     /// <summary>Soft-delete flag; records are never hard-deleted.</summary>
     public bool IsDeleted { get; set; }
     public DateTimeOffset? DeletedAtUtc { get; set; }
+    /// <summary>Priority level: Low, Medium, High, Urgent. Defaults to Medium.</summary>
+    public string Priority { get; set; } = "Medium";
     /// <summary>Optimistic concurrency token.</summary>
     public byte[] RowVersion { get; set; } = [];
 }
