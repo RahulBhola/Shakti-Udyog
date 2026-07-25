@@ -29,6 +29,21 @@ export interface RfqDetail extends RfqListItem {
   deliveryLocation: string | null;
   requirementDetails: string;
   files: { id: string; fileName: string; sizeBytes: number; uploadedAtUtc: string }[];
+  partName: string | null;
+  partNumber: string | null;
+  industry: string | null;
+  application: string | null;
+  materialStandard: string | null;
+  approxWeight: number | null;
+  machiningRequired: string | null;
+  patternAvailability: string | null;
+  prototypeQuantity: string | null;
+  productionQuantity: string | null;
+  annualRequirement: string | null;
+  expectedDeliveryDate: string | null;
+  preferredDeliveryTerms: string | null;
+  additionalRequirements: string | null;
+  remarks: string | null;
 }
 
 export interface QuotationListItem {
@@ -247,13 +262,7 @@ export const customerApi = {
     requirementDetails: string;
     saveAsDraft: boolean;
   }) => apiPost<{ id: string }>(`${base}/rfqs`, payload),
-  updateRfq: (id: string, payload: {
-    productType?: string;
-    materialGrade?: string;
-    quantity?: string;
-    deliveryLocation?: string;
-    requirementDetails?: string;
-  }) => apiPatch<{ message: string }>(`${base}/rfqs/${id}`, payload),
+  updateRfq: (id: string, payload: Record<string, unknown>) => apiPatch<{ message: string }>(`${base}/rfqs/${id}`, payload),
   deleteRfq: (id: string) => apiDelete<{ message: string }>(`${base}/rfqs/${id}`),
   submitRfq: (id: string) => apiPost<{ message: string }>(`${base}/rfqs/${id}/submit`),
   rfqTimeline: (id: string) => apiGet<RfqTimelineEntry[]>(`${base}/rfqs/${id}/timeline`),

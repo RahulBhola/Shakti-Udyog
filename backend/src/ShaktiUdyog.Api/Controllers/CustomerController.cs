@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
 using ShaktiUdyog.Api.Contracts.Auth;
 using ShaktiUdyog.Api.Contracts.Customer;
 using ShaktiUdyog.Api.Services;
 using ShaktiUdyog.Domain.Constants;
+using ShaktiUdyog.Infrastructure.Data;
 using ShaktiUdyog.Infrastructure.Storage;
 
 namespace ShaktiUdyog.Api.Controllers;
@@ -22,7 +24,9 @@ namespace ShaktiUdyog.Api.Controllers;
 public class CustomerController(
     ICustomerContextService contextService,
     ICustomerService customerService,
-    ICustomerProfileService profileService) : ControllerBase
+    ICustomerProfileService profileService,
+    AppDbContext db,
+    IFileStorageService storage) : ControllerBase
 {
     private string? ClientIp => HttpContext.Connection.RemoteIpAddress?.ToString();
 
@@ -90,6 +94,21 @@ public class CustomerController(
         return CreatedAtAction(nameof(GetRfq), new { id }, new { id });
     }
 
+    /// <summary>Update a draft RFQ. Only draft RFQs can be edited.</summary>
+    [HttpPatch("rfqs/{id:guid}")]
+    public async Task<IActionResult> UpdateRfq(Guid id, UpdateRfqRequest request)
+    {
+        var (ctx, failure) = await RequireContextAsync();
+        if (failure is not null) return failure;
+        var result = await customerService.UpdateDraftRfqAsync(ctx!, id, request, ClientIp);
+        return result switch
+        {
+            null => NotFound(),
+            false => Conflict(new MessageResponse("Only drafts can be edited.")),
+            true => Ok(new MessageResponse("RFQ updated.")),
+        };
+    }
+
     /// <summary>Uploads a drawing/specification to the caller's own RFQ (multipart).</summary>
     [HttpPost("rfqs/{id:guid}/files")]
     [EnableRateLimiting("public")]
@@ -111,6 +130,30 @@ public class CustomerController(
         {
             return BadRequest(new MessageResponse(ex.Message));
         }
+    }
+
+    [HttpGet("rfqs/{id:guid}/files/{fileId:guid}")]
+    public async Task<IActionResult> DownloadRfqFile(Guid id, Guid fileId)
+    {
+        var (ctx, failure) = await RequireContextAsync();
+        if (failure is not null) return failure;
+        var f = await db.RfqFiles.Where(x => x.Id == fileId && x.RfqId == id).FirstOrDefaultAsync();
+        if (f is null) return NotFound();
+        var stream = await storage.OpenReadAsync(f.StorageKey);
+        if (stream is null) return NotFound();
+        return File(stream, f.ContentType, f.FileName);
+    }
+
+    [HttpDelete("rfqs/{id:guid}/files/{fileId:guid}")]
+    public async Task<IActionResult> DeleteRfqFile(Guid id, Guid fileId)
+    {
+        var (ctx, failure) = await RequireContextAsync();
+        if (failure is not null) return failure;
+        var f = await db.RfqFiles.Where(x => x.Id == fileId && x.RfqId == id).FirstOrDefaultAsync();
+        if (f is null) return NotFound();
+        db.RfqFiles.Remove(f);
+        await db.SaveChangesAsync();
+        return Ok(new MessageResponse("File deleted."));
     }
 
     // ---- Quotations ---------------------------------------------------------

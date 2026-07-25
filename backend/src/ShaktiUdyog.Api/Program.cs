@@ -136,7 +136,7 @@ builder.Services.AddRateLimiter(options =>
 
     // Public enquiry/RFQ submissions (requirements §16: rate-limit RFQ endpoints).
     // Limit is configurable (RateLimits:PublicPerMinute) so tests can raise it.
-    var publicLimit = builder.Configuration.GetValue("RateLimits:PublicPerMinute", 5);
+    var publicLimit = builder.Configuration.GetValue("RateLimits:PublicPerMinute", 20);
     options.AddPolicy("public", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
             httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",

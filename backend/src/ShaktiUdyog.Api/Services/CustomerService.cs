@@ -127,7 +127,8 @@ public class CustomerService(
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .Select(r => new RfqListItemDto(
-                r.Id, r.ProductType, r.Quantity, r.Status, r.IsDraft, r.Files.Count, r.CreatedAtUtc))
+                r.Id, r.ProductType, r.Quantity, r.Status, r.IsDraft, r.Files.Count, r.CreatedAtUtc,
+                r.PartName, r.PartNumber, r.Industry, r.ProductionQuantity))
             .ToListAsync();
 
         return new PagedResult<RfqListItemDto>(items, page, pageSize, total);
@@ -140,7 +141,11 @@ public class CustomerService(
                 r.Id, r.FullName, r.CompanyName, r.ProductType, r.MaterialGrade, r.Quantity,
                 r.DeliveryLocation, r.RequirementDetails, r.Status, r.IsDraft,
                 r.Files.Select(f => new RfqFileDto(f.Id, f.FileName, f.SizeBytes, f.UploadedAtUtc)).ToList(),
-                r.CreatedAtUtc))
+                r.CreatedAtUtc,
+                r.PartName, r.PartNumber, r.Industry, r.Application,
+                r.MaterialStandard, r.ApproxWeight, r.MachiningRequired, r.PatternAvailability,
+                r.PrototypeQuantity, r.ProductionQuantity, r.AnnualRequirement,
+                r.ExpectedDeliveryDate, r.PreferredDeliveryTerms, r.AdditionalRequirements, r.Remarks))
             .SingleOrDefaultAsync();
 
     public async Task<Guid> CreateRfqAsync(CustomerContext ctx, CreateRfqRequest request, string? ip)
@@ -169,6 +174,21 @@ public class CustomerService(
             IsDraft = request.SaveAsDraft,
             Status = request.SaveAsDraft ? RfqStatuses.Draft : RfqStatuses.Submitted,
             SubmittedByIp = ip,
+            PartName = request.PartName,
+            PartNumber = request.PartNumber,
+            Industry = request.Industry,
+            Application = request.Application,
+            MaterialStandard = request.MaterialStandard,
+            ApproxWeight = request.ApproxWeight,
+            MachiningRequired = request.MachiningRequired,
+            PatternAvailability = request.PatternAvailability,
+            PrototypeQuantity = request.PrototypeQuantity,
+            ProductionQuantity = request.ProductionQuantity,
+            AnnualRequirement = request.AnnualRequirement,
+            ExpectedDeliveryDate = request.ExpectedDeliveryDate,
+            PreferredDeliveryTerms = request.PreferredDeliveryTerms,
+            AdditionalRequirements = request.AdditionalRequirements,
+            Remarks = request.Remarks,
         };
 
         db.Rfqs.Add(rfq);
@@ -235,6 +255,21 @@ public class CustomerService(
         if (request.Quantity is not null) rfq.Quantity = request.Quantity;
         if (request.DeliveryLocation is not null) rfq.DeliveryLocation = request.DeliveryLocation;
         if (request.RequirementDetails is not null) rfq.RequirementDetails = request.RequirementDetails;
+        if (request.PartName is not null) rfq.PartName = request.PartName;
+        if (request.PartNumber is not null) rfq.PartNumber = request.PartNumber;
+        if (request.Industry is not null) rfq.Industry = request.Industry;
+        if (request.Application is not null) rfq.Application = request.Application;
+        if (request.MaterialStandard is not null) rfq.MaterialStandard = request.MaterialStandard;
+        if (request.ApproxWeight is not null) rfq.ApproxWeight = request.ApproxWeight;
+        if (request.MachiningRequired is not null) rfq.MachiningRequired = request.MachiningRequired;
+        if (request.PatternAvailability is not null) rfq.PatternAvailability = request.PatternAvailability;
+        if (request.PrototypeQuantity is not null) rfq.PrototypeQuantity = request.PrototypeQuantity;
+        if (request.ProductionQuantity is not null) rfq.ProductionQuantity = request.ProductionQuantity;
+        if (request.AnnualRequirement is not null) rfq.AnnualRequirement = request.AnnualRequirement;
+        if (request.ExpectedDeliveryDate is not null) rfq.ExpectedDeliveryDate = request.ExpectedDeliveryDate;
+        if (request.PreferredDeliveryTerms is not null) rfq.PreferredDeliveryTerms = request.PreferredDeliveryTerms;
+        if (request.AdditionalRequirements is not null) rfq.AdditionalRequirements = request.AdditionalRequirements;
+        if (request.Remarks is not null) rfq.Remarks = request.Remarks;
 
         await db.SaveChangesAsync();
         await audit.WriteAsync("customer.rfq.updated", ctx.UserId, "Rfq", rfq.Id.ToString(), ip);

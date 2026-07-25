@@ -39,4 +39,21 @@ public class Rfq
     public string Priority { get; set; } = "Medium";
     /// <summary>Optimistic concurrency token.</summary>
     public byte[] RowVersion { get; set; } = [];
+
+    // ── New RFQ fields (Milestone 7) ──────────────────────────────────────
+    public string? PartName { get; set; }
+    public string? PartNumber { get; set; }
+    public string? Industry { get; set; }
+    public string? Application { get; set; }
+    public string? MaterialStandard { get; set; }
+    public decimal? ApproxWeight { get; set; }
+    public string? MachiningRequired { get; set; }
+    public string? PatternAvailability { get; set; }
+    public string? PrototypeQuantity { get; set; }
+    public string? ProductionQuantity { get; set; }
+    public string? AnnualRequirement { get; set; }
+    public DateTimeOffset? ExpectedDeliveryDate { get; set; }
+    public string? PreferredDeliveryTerms { get; set; }
+    public string? AdditionalRequirements { get; set; }
+    public string? Remarks { get; set; }
 }

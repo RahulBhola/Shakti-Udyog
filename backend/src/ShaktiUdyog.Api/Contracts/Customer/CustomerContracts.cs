@@ -19,13 +19,20 @@ public record ActivityItemDto(string Type, string Title, string? LinkPath, DateT
 
 public record RfqListItemDto(
     Guid Id, string ProductType, string Quantity, string Status, bool IsDraft,
-    int FileCount, DateTimeOffset CreatedAtUtc);
+    int FileCount, DateTimeOffset CreatedAtUtc,
+    string? PartName, string? PartNumber, string? Industry, string? ProductionQuantity);
 
 public record RfqDetailDto(
     Guid Id, string FullName, string CompanyName, string ProductType,
     string? MaterialGrade, string Quantity, string? DeliveryLocation,
     string RequirementDetails, string Status, bool IsDraft,
-    IReadOnlyList<RfqFileDto> Files, DateTimeOffset CreatedAtUtc);
+    IReadOnlyList<RfqFileDto> Files, DateTimeOffset CreatedAtUtc,
+    string? PartName, string? PartNumber, string? Industry, string? Application,
+    string? MaterialStandard, decimal? ApproxWeight,
+    string? MachiningRequired, string? PatternAvailability,
+    string? PrototypeQuantity, string? ProductionQuantity, string? AnnualRequirement,
+    DateTimeOffset? ExpectedDeliveryDate, string? PreferredDeliveryTerms,
+    string? AdditionalRequirements, string? Remarks);
 
 public record RfqFileDto(Guid Id, string FileName, long SizeBytes, DateTimeOffset UploadedAtUtc);
 
@@ -35,7 +42,23 @@ public record CreateRfqRequest(
     [Required, StringLength(100)] string Quantity,
     [StringLength(300)] string? DeliveryLocation,
     [Required, StringLength(8000, MinimumLength = 10)] string RequirementDetails,
-    bool SaveAsDraft);
+    bool SaveAsDraft,
+    // New optional fields
+    [StringLength(200)] string? PartName = null,
+    [StringLength(100)] string? PartNumber = null,
+    [StringLength(100)] string? Industry = null,
+    [StringLength(8000)] string? Application = null,
+    [StringLength(200)] string? MaterialStandard = null,
+    decimal? ApproxWeight = null,
+    [StringLength(50)] string? MachiningRequired = null,
+    [StringLength(50)] string? PatternAvailability = null,
+    [StringLength(100)] string? PrototypeQuantity = null,
+    [StringLength(100)] string? ProductionQuantity = null,
+    [StringLength(100)] string? AnnualRequirement = null,
+    DateTimeOffset? ExpectedDeliveryDate = null,
+    [StringLength(100)] string? PreferredDeliveryTerms = null,
+    [StringLength(2000)] string? AdditionalRequirements = null,
+    [StringLength(4000)] string? Remarks = null);
 
 public record RfqTimelineEntryDto(
     string FromStatus, string ToStatus, string ChangedByRole,
@@ -43,11 +66,16 @@ public record RfqTimelineEntryDto(
 
 /// <summary>DTO for updating a draft RFQ. All fields are optional — only supplied fields are changed.</summary>
 public record UpdateRfqRequest(
-    string? ProductType,
-    string? MaterialGrade,
-    string? Quantity,
-    string? DeliveryLocation,
-    string? RequirementDetails);
+    string? ProductType, string? MaterialGrade, string? Quantity,
+    string? DeliveryLocation, string? RequirementDetails,
+    string? PartName = null, string? PartNumber = null,
+    string? Industry = null, string? Application = null,
+    string? MaterialStandard = null, decimal? ApproxWeight = null,
+    string? MachiningRequired = null, string? PatternAvailability = null,
+    string? PrototypeQuantity = null, string? ProductionQuantity = null,
+    string? AnnualRequirement = null, DateTimeOffset? ExpectedDeliveryDate = null,
+    string? PreferredDeliveryTerms = null, string? AdditionalRequirements = null,
+    string? Remarks = null);
 
 // ---- Quotations -------------------------------------------------------------
 
