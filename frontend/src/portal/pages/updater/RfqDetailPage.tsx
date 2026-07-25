@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { updaterApi, type UpdaterRfqDetail } from "../../../api/updaterApi";
+import { tokenStorage } from "../../../auth/tokenStorage";
+import { config } from "../../../config";
 import { Loading } from "../../../components/ui";
 import { formatDate } from "../../shared";
 import {
@@ -228,6 +230,15 @@ export default function UpdaterRfqDetailPage() {
     finally { setBusy(false); }
   }
 
+  function downloadFile(fileId: string, fileName: string) {
+    const token = tokenStorage.getAccessToken();
+    const url = `${config.apiBaseUrl}/api/v1/updater/rfqs/${id}/files/${fileId}/download`;
+    fetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {}, credentials: "include" })
+      .then((r) => { if (!r.ok) throw new Error(); return r.blob(); })
+      .then((blob) => { const u = URL.createObjectURL(blob); const d = document.createElement("a"); d.href = u; d.download = fileName; d.click(); URL.revokeObjectURL(u); })
+      .catch(() => setMsg("Download failed."));
+  }
+
   if (missing) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px]">
@@ -295,7 +306,7 @@ export default function UpdaterRfqDetailPage() {
 
             {/* Actions */}
             <div className="flex items-center gap-2 shrink-0 ml-4">
-              {!["Quoted", "Accepted", "Rejected", "Declined", "Cancelled", "Expired"].includes(rfq.status) && (
+              {!["Approved", "Quoted", "Accepted", "Rejected", "Declined", "Cancelled", "Expired"].includes(rfq.status) && (
                 <button type="button" disabled={busy} onClick={() => {
                   const workflowOrder = ["Draft", "Submitted", "Received", "Under Review", "Approved"];
                   const idx = workflowOrder.indexOf(rfq.status);
@@ -403,7 +414,7 @@ export default function UpdaterRfqDetailPage() {
                       <div className="text-[12px] font-medium text-[var(--text-primary)] truncate">{f.fileName}</div>
                       <div className="text-[11px] text-[var(--text-muted)]">{(f.sizeBytes / 1024).toFixed(1)} KB</div>
                     </div>
-                    <button type="button" className="flex items-center justify-center w-7 h-7 rounded-md text-[var(--text-muted)] hover:text-[var(--color-primary)] hover:bg-[var(--bg-surface-hover)] transition-all" title="Download">
+                    <button type="button" onClick={() => downloadFile(f.id, f.fileName)} className="flex items-center justify-center w-7 h-7 rounded-md text-[var(--text-muted)] hover:text-[var(--color-primary)] hover:bg-[var(--bg-surface-hover)] transition-all" title="Download">
                       <Download size={14} />
                     </button>
                   </div>
@@ -529,10 +540,17 @@ export default function UpdaterRfqDetailPage() {
 
       {/* ── Sticky Bottom Action Bar ── */}
       <div className="shrink-0 border-t border-[var(--border-default)] bg-[var(--bg-card)] px-6 py-4 flex items-center gap-3">
-        <button type="button" disabled
-          className="inline-flex items-center gap-1.5 px-5 h-10 rounded-lg bg-[var(--color-primary)] text-white text-xs font-semibold opacity-60 cursor-not-allowed transition-all">
-          <FileEdit size={14} /> Generate Quotation
-        </button>
+        {rfq.status === "Approved" ? (
+          <button type="button" onClick={() => window.location.assign(`/admin/quotations/new?rfqId=${rfq.id}&companyName=${encodeURIComponent(rfq.companyName)}`)}
+            className="inline-flex items-center gap-1.5 px-5 h-10 rounded-lg bg-emerald-500 text-white text-xs font-semibold hover:bg-emerald-600 transition-all">
+            <FileEdit size={14} /> Generate Quotation
+          </button>
+        ) : (
+          <button type="button" disabled
+            className="inline-flex items-center gap-1.5 px-5 h-10 rounded-lg bg-[var(--color-primary)] text-white text-xs font-semibold opacity-60 cursor-not-allowed transition-all">
+            <FileEdit size={14} /> Generate Quotation
+          </button>
+        )}
         <div className="flex-1" />
         <Link to="/admin/rfqs"
           className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all no-underline hover:no-underline">

@@ -5,8 +5,9 @@ import { Seo } from "../components/Seo";
 import { Breadcrumb, Section, SectionHeading } from "../components/ui";
 import { seoPages } from "../content/seo";
 
-const allowedExtensions = ["pdf", "dwg", "dxf", "step", "stp", "iges", "igs", "jpg", "png", "zip"];
+const allowedExtensions = ["pdf", "dwg", "dxf", "step", "stp", "iges", "igs", "jpg", "jpeg", "png", "zip"];
 const maxFileMb = 10;
+const maxFiles = 10;
 
 type FormStatus =
   | { kind: "idle" }
@@ -17,25 +18,25 @@ type FormStatus =
 export default function RequestQuotePage() {
   const [status, setStatus] = useState<FormStatus>({ kind: "idle" });
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [fileName, setFileName] = useState<string | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [fileError, setFileError] = useState<string | null>(null);
 
-  function handleFileChange(files: FileList | null) {
+  function handleFilesChosen(files: FileList | null) {
     setFileError(null);
-    setFileName(null);
-    const file = files?.[0];
-    if (!file) return;
-
-    const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
-    if (!allowedExtensions.includes(ext)) {
-      setFileError(`File type .${ext} is not accepted. Allowed: ${allowedExtensions.join(", ")}.`);
-      return;
+    if (!files || files.length === 0) return;
+    const newFiles: File[] = [];
+    for (const file of Array.from(files)) {
+      const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+      if (!allowedExtensions.includes(ext)) { setFileError(`"${file.name}": .${ext} not accepted`); return; }
+      if (file.size > maxFileMb * 1024 * 1024) { setFileError(`"${file.name}": exceeds ${maxFileMb} MB`); return; }
+      newFiles.push(file);
     }
-    if (file.size > maxFileMb * 1024 * 1024) {
-      setFileError(`File is larger than ${maxFileMb} MB.`);
-      return;
-    }
-    setFileName(file.name);
+    const total = selectedFiles.length + newFiles.length;
+    if (total > maxFiles) { setFileError(`Max ${maxFiles} files`); return; }
+    setSelectedFiles((prev) => [...prev, ...newFiles]);
+  }
+  function removeFile(i: number) {
+    setSelectedFiles((prev) => prev.filter((_, idx) => idx !== i));
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -73,7 +74,7 @@ export default function RequestQuotePage() {
       });
       setStatus({ kind: "ok", message: result.message, reference: result.id });
       form.reset();
-      setFileName(null);
+      setSelectedFiles([]);
     } catch {
       setStatus({ kind: "error", message: "We could not submit your request. Please try again or call us." });
     }
@@ -163,19 +164,36 @@ export default function RequestQuotePage() {
               {errors.requirementDetails && <span className="form__error">{errors.requirementDetails}</span>}
             </div>
             <div className="form__field">
-              <label htmlFor="r-file">Upload Drawing or Specification</label>
-              <input
-                id="r-file"
-                type="file"
+              <label>Upload Drawings or Specifications (max {maxFiles} files)</label>
+              <input id="r-file" type="file" multiple
                 accept={allowedExtensions.map((e) => `.${e}`).join(",")}
-                onChange={(e) => handleFileChange(e.target.files)}
-              />
+                onChange={(e) => handleFilesChosen(e.target.files)} />
               <span className="form__hint">
-                Accepted: {allowedExtensions.join(", ")} · up to {maxFileMb} MB. Secure upload
-                storage is coming soon — until then our team will request the drawing by email
-                after reviewing your RFQ.
+                Accepted: {allowedExtensions.join(", ")} · up to {maxFileMb} MB each · max {maxFiles} files
               </span>
-              {fileName && <span className="form__hint">Selected: {fileName} (will be requested by email — not uploaded yet)</span>}
+              {selectedFiles.length > 0 && (
+                <div style={{ marginTop: "0.5rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                  {selectedFiles.map((f, i) => {
+                    const ext = f.name.split(".").pop()?.toLowerCase() ?? "";
+                    const isImage = ["jpg", "jpeg", "png"].includes(ext);
+                    const previewUrl = isImage ? URL.createObjectURL(f) : null;
+                    return (
+                      <div key={i} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.5rem", borderRadius: "0.5rem", border: "1px solid var(--c-line)", background: "var(--c-bg-secondary)" }}>
+                        {previewUrl ? (
+                          <img src={previewUrl} alt={f.name} style={{ width: "48px", height: "48px", objectFit: "cover", borderRadius: "0.25rem", border: "1px solid var(--c-line)" }} />
+                        ) : (
+                          <span style={{ width: "48px", height: "48px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "0.25rem", background: "var(--c-bg)", fontSize: "1.5rem" }}>📄</span>
+                        )}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: "0.875rem", fontWeight: 500, color: "var(--c-ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.name}</div>
+                          <div style={{ fontSize: "0.75rem", color: "var(--c-ink-muted)" }}>{(f.size / 1024).toFixed(1)} KB</div>
+                        </div>
+                        <button type="button" onClick={() => removeFile(i)} style={{ background: "none", border: "none", color: "var(--c-danger)", cursor: "pointer", fontSize: "1rem", padding: "0.25rem" }} title="Remove">✕</button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
               {fileError && <span className="form__error">{fileError}</span>}
             </div>
             <div className="visually-hidden" aria-hidden="true">

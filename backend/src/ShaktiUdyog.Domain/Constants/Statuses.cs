@@ -56,13 +56,14 @@ public static class QuotationStatuses
     public const string Approved = "Approved";
     public const string Issued = "Issued";
     public const string Viewed = "Viewed";
+    public const string Negotiating = "Negotiating";
     public const string Accepted = "Accepted";
     public const string Declined = "Declined";
     public const string Expired = "Expired";
     public const string Cancelled = "Cancelled";
 
     public static readonly IReadOnlyList<string> All =
-        [Draft, PendingApproval, Approved, Issued, Viewed, Accepted, Declined, Expired, Cancelled];
+        [Draft, PendingApproval, Approved, Issued, Viewed, Negotiating, Accepted, Declined, Expired, Cancelled];
 
     public static readonly IReadOnlyDictionary<string, IReadOnlySet<string>> ValidTransitions =
         new Dictionary<string, IReadOnlySet<string>>
@@ -70,12 +71,13 @@ public static class QuotationStatuses
             [Draft] = new HashSet<string> { PendingApproval, Cancelled },
             [PendingApproval] = new HashSet<string> { Approved, Draft, Cancelled },
             [Approved] = new HashSet<string> { Issued, Cancelled },
-            [Issued] = new HashSet<string> { Viewed, Accepted, Declined, Expired, Cancelled },
-            [Viewed] = new HashSet<string> { Accepted, Declined, Expired, Cancelled },
-            [Accepted] = new HashSet<string> { },  // Terminal — becomes an order
-            [Declined] = new HashSet<string> { },   // Terminal
-            [Expired] = new HashSet<string> { },    // Terminal
-            [Cancelled] = new HashSet<string> { },  // Terminal
+            [Issued] = new HashSet<string> { Viewed, Negotiating, Accepted, Declined, Expired, Cancelled },
+            [Viewed] = new HashSet<string> { Negotiating, Accepted, Declined, Expired, Cancelled },
+            [Negotiating] = new HashSet<string> { Issued, Accepted, Declined, Cancelled },
+            [Accepted] = new HashSet<string> { },
+            [Declined] = new HashSet<string> { },
+            [Expired] = new HashSet<string> { },
+            [Cancelled] = new HashSet<string> { },
         };
 
     public static bool IsValidTransition(string from, string to) =>

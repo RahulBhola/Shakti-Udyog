@@ -43,6 +43,9 @@ export const adminApi = {
   // ---- Users ---------------------------------------------------------------
   users: () => apiGet<{ id: string; fullName: string | null; email: string }[]>(`${base}/users`),
 
+  // ---- Companies -----------------------------------------------------------
+  companies: () => apiGet<{ id: string; name: string }[]>(`${base}/companies`),
+
   // ---- Invoices -----------------------------------------------------------
   invoices: (page = 1, pageSize = 20, status?: string) => {
     const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });

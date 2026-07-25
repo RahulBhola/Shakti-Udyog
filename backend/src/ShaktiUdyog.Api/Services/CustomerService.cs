@@ -364,7 +364,14 @@ public class CustomerService(
         }
 
         // Only the response fields change — amounts and terms are untouchable here.
-        quotation.Status = request.Response == "accept" ? QuotationStatuses.Accepted : QuotationStatuses.Declined;
+        if (request.Response == "negotiate")
+        {
+            quotation.Status = QuotationStatuses.Negotiating;
+        }
+        else
+        {
+            quotation.Status = request.Response == "accept" ? QuotationStatuses.Accepted : QuotationStatuses.Declined;
+        }
         quotation.CustomerResponseComment = request.Comment;
         quotation.CustomerRespondedAtUtc = DateTimeOffset.UtcNow;
         quotation.RespondedByUserId = ctx.UserId;
@@ -372,7 +379,9 @@ public class CustomerService(
         var rfq = await db.Rfqs.SingleOrDefaultAsync(r => r.Id == quotation.RfqId);
         if (rfq is not null)
         {
-            rfq.Status = request.Response == "accept" ? RfqStatuses.Accepted : RfqStatuses.Declined;
+            rfq.Status = request.Response == "accept" ? RfqStatuses.Accepted
+                : request.Response == "negotiate" ? RfqStatuses.UnderReview
+                : RfqStatuses.Declined;
         }
 
         await db.SaveChangesAsync();

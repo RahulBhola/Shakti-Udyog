@@ -4,7 +4,9 @@ import { customerApi } from "../../api/customerApi";
 import { rfqProductTypes } from "../../api/publicApi";
 import { Panel } from "../shared";
 
-const allowedExtensions = ["pdf", "dwg", "dxf", "step", "stp", "iges", "igs", "jpg", "png", "zip"];
+const allowedExtensions = ["pdf", "dwg", "dxf", "step", "stp", "iges", "igs", "jpg", "jpeg", "png", "zip"];
+const maxFileMb = 10;
+const maxFiles = 10;
 
 export default function RfqNewPage() {
   const navigate = useNavigate();
@@ -16,21 +18,20 @@ export default function RfqNewPage() {
 
   function handleFiles(list: FileList | null) {
     setFileError(null);
-    if (!list) return;
+    if (!list || list.length === 0) return;
     const next: File[] = [];
     for (const file of Array.from(list)) {
       const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
-      if (!allowedExtensions.includes(ext)) {
-        setFileError(`.${ext} files are not accepted.`);
-        continue;
-      }
-      if (file.size > 10 * 1024 * 1024) {
-        setFileError(`${file.name} exceeds 10 MB.`);
-        continue;
-      }
+      if (!allowedExtensions.includes(ext)) { setFileError(`"${file.name}": .${ext} not accepted`); continue; }
+      if (file.size > maxFileMb * 1024 * 1024) { setFileError(`"${file.name}": exceeds ${maxFileMb} MB`); continue; }
       next.push(file);
     }
-    setFiles(next);
+    const total = files.length + next.length;
+    if (total > maxFiles) { setFileError(`Max ${maxFiles} files`); return; }
+    setFiles((prev) => [...prev, ...next]);
+  }
+  function removeFile(index: number) {
+    setFiles((prev) => prev.filter((_, i) => i !== index));
   }
 
   async function submit(event: FormEvent<HTMLFormElement>, saveAsDraft: boolean) {
@@ -113,10 +114,28 @@ export default function RfqNewPage() {
               onChange={(e) => handleFiles(e.target.files)}
             />
             <span className="form__hint">
-              {allowedExtensions.join(", ")} · up to 10 MB each. Files are stored securely and
-              visible only to your company and Shakti Udyog staff.
+              {allowedExtensions.join(", ")} · up to {maxFileMb} MB each · max {maxFiles} files. Files are stored securely.
             </span>
-            {files.length > 0 && <span className="form__hint">Selected: {files.map((f) => f.name).join(", ")}</span>}
+            {files.length > 0 && (
+              <div style={{ marginTop: "0.5rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                {files.map((f, i) => {
+                  const ext = f.name.split(".").pop()?.toLowerCase() ?? "";
+                  const isImage = ["jpg", "jpeg", "png"].includes(ext);
+                  const url = isImage ? URL.createObjectURL(f) : null;
+                  return (
+                    <div key={i} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.5rem", borderRadius: "0.5rem", border: "1px solid var(--c-line)", background: "var(--c-bg-secondary)" }}>
+                      {url ? <img src={url} alt={f.name} style={{ width: "48px", height: "48px", objectFit: "cover", borderRadius: "0.25rem", border: "1px solid var(--c-line)" }} />
+                        : <span style={{ width: "48px", height: "48px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "0.25rem", background: "var(--c-bg)", fontSize: "1.5rem" }}>📄</span>}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: "0.875rem", fontWeight: 500, color: "var(--c-ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.name}</div>
+                        <div style={{ fontSize: "0.75rem", color: "var(--c-ink-muted)" }}>{(f.size / 1024).toFixed(1)} KB</div>
+                      </div>
+                      <button type="button" onClick={() => removeFile(i)} style={{ background: "none", border: "none", color: "var(--c-danger)", cursor: "pointer", fontSize: "1rem", padding: "0.25rem" }} title="Remove">✕</button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
             {fileError && <span className="form__error">{fileError}</span>}
           </div>
 

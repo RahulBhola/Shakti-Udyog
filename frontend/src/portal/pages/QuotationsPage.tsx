@@ -45,7 +45,7 @@ export function QuotationDetailPage() {
   const [quotation, setQuotation] = useState<QuotationDetail | null>(null);
   const [timeline, setTimeline] = useState<QuotationTimelineEntry[] | null>(null);
   const [missing, setMissing] = useState(false);
-  const [responding, setResponding] = useState<"accept" | "decline" | null>(null);
+  const [responding, setResponding] = useState<"accept" | "decline" | "negotiate" | null>(null);
   const [comment, setComment] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -61,8 +61,8 @@ export function QuotationDetailPage() {
     try {
       const result = await customerApi.respondToQuotation(quotation.id, responding, comment || undefined);
       setMessage(result.message);
-      setQuotation(await customerApi.quotation(id));
-      setTimeline(await customerApi.quotationTimeline(id));
+      try { setQuotation(await customerApi.quotation(id)); } catch { /* stale data ok */ }
+      try { setTimeline(await customerApi.quotationTimeline(id)); } catch { /* timeline may not exist */ }
       setResponding(null);
     } catch {
       setMessage("Could not record your response. Please try again.");
@@ -122,6 +122,9 @@ export function QuotationDetailPage() {
               <button className="btn btn--primary" type="button" onClick={() => setResponding("accept")}>
                 Accept quotation
               </button>
+              <button className="btn btn--ghost" style={{ color: "#F59E0B" }} type="button" onClick={() => setResponding("negotiate")}>
+                Negotiate
+              </button>
               <button className="btn btn--ghost" style={{ color: "var(--c-ink)" }} type="button" onClick={() => setResponding("decline")}>
                 Decline
               </button>
@@ -131,13 +134,14 @@ export function QuotationDetailPage() {
             <div className="form">
               <div className="form__field">
                 <label htmlFor="q-comment">
-                  Comment {responding === "decline" ? "(optional)" : "(optional)"}
+                  {responding === "negotiate" ? "Your counter-offer / terms *" : "Comment (optional)"}
                 </label>
-                <textarea id="q-comment" value={comment} onChange={(e) => setComment(e.target.value)} maxLength={2000} />
+                <textarea id="q-comment" value={comment} onChange={(e) => setComment(e.target.value)} maxLength={2000}
+                  placeholder={responding === "negotiate" ? "Describe your proposed changes to pricing, terms, delivery, etc." : undefined} />
               </div>
               <div className="quick-actions">
                 <button className="btn btn--primary" type="button" disabled={busy} onClick={() => void respond()}>
-                  {busy ? "Recording…" : `Confirm ${responding}`}
+                  {busy ? "Recording…" : responding === "negotiate" ? "Send Proposal" : `Confirm ${responding}`}
                 </button>
                 <button className="btn btn--ghost" style={{ color: "var(--c-ink)" }} type="button" disabled={busy} onClick={() => setResponding(null)}>
                   Cancel

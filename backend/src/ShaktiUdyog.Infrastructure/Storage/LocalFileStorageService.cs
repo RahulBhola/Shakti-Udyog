@@ -19,6 +19,7 @@ public class LocalFileStorageService : IFileStorageService
         [".pdf"] = [[0x25, 0x50, 0x44, 0x46]],                    // %PDF
         [".png"] = [[0x89, 0x50, 0x4E, 0x47]],
         [".jpg"] = [[0xFF, 0xD8, 0xFF]],
+        [".jpeg"] = [[0xFF, 0xD8, 0xFF]],
         [".zip"] = [[0x50, 0x4B, 0x03, 0x04], [0x50, 0x4B, 0x05, 0x06]],
         // CAD/exchange formats (dwg/dxf/step/stp/iges/igs) have text or
         // vendor-specific headers; extension + size checks apply, signature
@@ -26,7 +27,7 @@ public class LocalFileStorageService : IFileStorageService
     };
 
     private static readonly string[] AllowedExtensions =
-        [".pdf", ".dwg", ".dxf", ".step", ".stp", ".iges", ".igs", ".jpg", ".png", ".zip"];
+        [".pdf", ".dwg", ".dxf", ".step", ".stp", ".iges", ".igs", ".jpg", ".jpeg", ".png", ".zip"];
 
     private readonly string _rootPath;
     private readonly ILogger<LocalFileStorageService> _logger;

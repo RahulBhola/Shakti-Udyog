@@ -73,7 +73,7 @@ public record QuotationTimelineEntryDto(
     string FromStatus, string ToStatus, string ChangedByRole, string? Note, DateTimeOffset OccurredAtUtc);
 
 public record QuotationResponseRequest(
-    [Required, RegularExpression("^(accept|decline)$", ErrorMessage = "Response must be 'accept' or 'decline'.")]
+    [Required, RegularExpression("^(accept|decline|negotiate)$", ErrorMessage = "Response must be 'accept', 'decline', or 'negotiate'.")]
     string Response,
     [StringLength(2000)] string? Comment);
 

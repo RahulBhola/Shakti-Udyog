@@ -115,6 +115,7 @@ export default function UpdaterRfqListPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [priorityFilter, setPriorityFilter] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const pageSize = 20;
@@ -156,7 +157,8 @@ export default function UpdaterRfqListPage() {
     }
   };
 
-  const clearFilters = () => { setSearch(""); setStatusFilter(""); setPage(1); };
+  const clearFilters = () => { setSearch(""); setStatusFilter(""); setPriorityFilter(""); setPage(1); };
+  const filteredItems = data?.items.filter((r) => !priorityFilter || r.priority === priorityFilter) ?? [];
 
   return (
     <div className="flex flex-col gap-5">
@@ -211,18 +213,30 @@ export default function UpdaterRfqListPage() {
         <SummaryCard icon={XCircle} label="Rejected" value={rejectedCount} color="text-[#EF4444]" />
       </div>
 
-      {/* ── Quick Actions ── */}
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={load}
-          className="flex items-center gap-1.5 px-3.5 h-8 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[11px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all duration-200"
-        >
-          <RotateCcw size={13} />
-          Refresh
+      {/* ── Filter Toolbar ── */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+          className="h-8 px-3 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[11px] text-[var(--text-primary)] outline-none focus:border-[var(--color-primary)]">
+          <option value="">All Statuses</option>
+          <option>Draft</option><option>Received</option><option>Under Review</option>
+          <option>Approved</option><option>Quoted</option><option>Accepted</option>
+          <option>Rejected</option><option>Cancelled</option>
+        </select>
+        <select value={priorityFilter} onChange={(e) => { setPriorityFilter(e.target.value); setPage(1); }}
+          className="h-8 px-3 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[11px] text-[var(--text-primary)] outline-none focus:border-[var(--color-primary)]">
+          <option value="">All Priorities</option>
+          <option>Low</option><option>Medium</option><option>High</option><option>Urgent</option>
+        </select>
+        <button type="button" onClick={load}
+          className="flex items-center gap-1.5 px-3.5 h-8 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[11px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all">
+          <RotateCcw size={13} /> Refresh
         </button>
+        {(search || statusFilter || priorityFilter) && (
+          <button type="button" onClick={clearFilters}
+            className="text-[11px] font-medium text-[var(--color-primary)] hover:underline px-2">Clear filters</button>
+        )}
         {selectedIds.size > 0 && (
-          <span className="text-[11px] text-[var(--text-muted)] ml-1">{selectedIds.size} selected</span>
+          <span className="text-[11px] text-[var(--text-muted)] ml-auto">{selectedIds.size} selected</span>
         )}
       </div>
 
@@ -240,7 +254,7 @@ export default function UpdaterRfqListPage() {
 
       {!data && !error && <div className="py-10"><Loading label="Loading RFQs" /></div>}
 
-      {data && data.items.length === 0 && !error && (
+      {data && filteredItems.length === 0 && !error && (
         <div className="flex flex-col items-center justify-center py-16">
           <FileText size={48} className="text-[var(--text-muted)] mb-4 opacity-50" />
           <h3 className="text-lg font-semibold text-[var(--text-primary)] m-0">No RFQs found</h3>
@@ -262,7 +276,7 @@ export default function UpdaterRfqListPage() {
       )}
 
       {/* ── Data Table ── */}
-      {data && data.items.length > 0 && (
+      {data && filteredItems.length > 0 && (
         <div className="rounded-[16px] border border-[var(--border-default)] bg-[var(--bg-card)] overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-[13px]">
@@ -271,7 +285,7 @@ export default function UpdaterRfqListPage() {
                   <th className="w-10 px-3 py-3 text-left">
                     <input
                       type="checkbox"
-                      checked={data.items.length > 0 && selectedIds.size === data.items.length}
+                      checked={filteredItems.length > 0 && selectedIds.size === filteredItems.length}
                       onChange={toggleSelectAll}
                       className="rounded border-[var(--border-default)] accent-[var(--color-primary)]"
                     />
@@ -288,7 +302,7 @@ export default function UpdaterRfqListPage() {
                 </tr>
               </thead>
               <tbody>
-                {data.items.map((r) => (
+                {filteredItems.map((r) => (
                   <tr
                     key={r.id}
                     className="border-b border-[var(--border-default)] hover:bg-[var(--bg-surface-hover)] transition-colors duration-150 cursor-pointer"

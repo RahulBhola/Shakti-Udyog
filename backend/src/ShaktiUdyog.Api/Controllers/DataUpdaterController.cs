@@ -1,11 +1,14 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using ShaktiUdyog.Api.Contracts.Auth;
 using ShaktiUdyog.Api.Contracts.Customer;
 using ShaktiUdyog.Api.Contracts.Updater;
 using ShaktiUdyog.Api.Services;
 using ShaktiUdyog.Api.Validation;
 using ShaktiUdyog.Domain.Constants;
+using ShaktiUdyog.Infrastructure.Data;
+using ShaktiUdyog.Infrastructure.Storage;
 
 namespace ShaktiUdyog.Api.Controllers;
 
@@ -18,7 +21,9 @@ namespace ShaktiUdyog.Api.Controllers;
 [Route("api/v1/updater")]
 [Authorize(Policy = AuthPolicies.DataUpdaterOnly)]
 public class DataUpdaterController(
-    IDataUpdaterService updaterService) : ControllerBase
+    IDataUpdaterService updaterService,
+    AppDbContext db,
+    IFileStorageService storage) : ControllerBase
 {
     private string? ClientIp => HttpContext.Connection.RemoteIpAddress?.ToString();
 
@@ -99,5 +104,22 @@ public class DataUpdaterController(
             true => Ok(new MessageResponse("RFQ assigned.")),
             _ => BadRequest(new MessageResponse("Assignment failed.")),
         };
+    }
+
+    // ---- File download ----------------------------------------------------
+
+    [HttpGet("rfqs/{id:guid}/files/{fileId:guid}/download")]
+    public async Task<IActionResult> DownloadRfqFile(Guid id, Guid fileId)
+    {
+        var file = await db.RfqFiles
+            .Where(f => f.Id == fileId && f.RfqId == id)
+            .FirstOrDefaultAsync();
+
+        if (file is null) return NotFound();
+
+        var stream = await storage.OpenReadAsync(file.StorageKey);
+        if (stream is null) return NotFound();
+
+        return File(stream, file.ContentType, file.FileName);
     }
 }

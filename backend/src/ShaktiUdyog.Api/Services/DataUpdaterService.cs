@@ -89,7 +89,7 @@ public class DataUpdaterService(
         if (rfq is null) return null;
 
         return new UpdaterRfqDetailDto(
-            rfq.Id, rfq.FullName, rfq.CompanyName, rfq.Email, rfq.Phone,
+            rfq.Id, rfq.CompanyId ?? Guid.Empty, rfq.FullName, rfq.CompanyName, rfq.Email, rfq.Phone,
             rfq.ProductType, rfq.MaterialGrade, rfq.Quantity,
             rfq.DeliveryLocation, rfq.RequirementDetails, rfq.Status, rfq.IsDraft,
             rfq.SubmittedByIp, rfq.CreatedAtUtc,

@@ -18,6 +18,7 @@ export interface UpdaterRfqListItem {
 
 export interface UpdaterRfqDetail {
   id: string;
+  companyId: string;
   fullName: string;
   companyName: string;
   email: string;

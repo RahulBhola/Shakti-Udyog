@@ -10,7 +10,7 @@ public record UpdaterRfqListItemDto(
     DateTimeOffset CreatedAtUtc, string Priority);
 
 public record UpdaterRfqDetailDto(
-    Guid Id, string FullName, string CompanyName, string Email, string Phone,
+    Guid Id, Guid CompanyId, string FullName, string CompanyName, string Email, string Phone,
     string ProductType, string? MaterialGrade, string Quantity,
     string? DeliveryLocation, string RequirementDetails, string Status, bool IsDraft,
     string? SubmittedByIp, DateTimeOffset CreatedAtUtc,
