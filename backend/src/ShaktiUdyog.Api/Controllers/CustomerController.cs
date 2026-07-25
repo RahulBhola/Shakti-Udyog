@@ -109,6 +109,20 @@ public class CustomerController(
         };
     }
 
+    [HttpPost("rfqs/{id:guid}/submit")]
+    public async Task<IActionResult> SubmitRfq(Guid id)
+    {
+        var (ctx, failure) = await RequireContextAsync();
+        if (failure is not null) return failure;
+        var result = await customerService.SubmitDraftRfqAsync(ctx!, id, ClientIp);
+        return result switch
+        {
+            null => NotFound(),
+            false => Conflict(new MessageResponse("Only drafts can be submitted.")),
+            true => Ok(new MessageResponse("RFQ submitted for review.")),
+        };
+    }
+
     /// <summary>Uploads a drawing/specification to the caller's own RFQ (multipart).</summary>
     [HttpPost("rfqs/{id:guid}/files")]
     [EnableRateLimiting("public")]

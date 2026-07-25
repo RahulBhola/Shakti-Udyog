@@ -5,7 +5,7 @@ import { rfqProductTypes } from "../../api/publicApi";
 import { config } from "../../config";
 import { tokenStorage } from "../../auth/tokenStorage";
 import { EmptyState, Loading } from "../../components/ui";
-import { ArrowLeft, Loader2, AlertCircle, ChevronRight, Upload, FileText, X, GripVertical } from "lucide-react";
+import { ArrowLeft, Loader2, AlertCircle, ChevronRight, Upload, FileText, X, GripVertical, Send } from "lucide-react";
 
 const allowedExtensions = ["pdf", "dwg", "dxf", "step", "stp", "iges", "igs", "jpg", "jpeg", "png", "zip"];
 const maxFileMb = 10;
@@ -116,6 +116,8 @@ export default function RfqEditPage() {
   const [dragFileIndex, setDragFileIndex] = useState<number | null>(null);
   const dragIdxRef = useRef<number | null>(null);
   const [fileOrder, setFileOrder] = useState<string[]>([]);
+  const [showSubmitModal, setShowSubmitModal] = useState(false);
+  const [submitBusy, setSubmitBusy] = useState(false);
   useEffect(() => { if (rfq) setFileOrder(rfq.files.map((f) => f.id)); }, [rfq]);
 
   function handleFiles(list: FileList | null) {
@@ -199,6 +201,12 @@ export default function RfqEditPage() {
     setAdditionalReqs((prev) => prev.includes(req) ? prev.filter((r) => r !== req) : [...prev, req]);
   }
 
+  async function handleSubmitDraft() {
+    setSubmitBusy(true);
+    try { await customerApi.submitRfq(id); navigate(`/customer/rfqs/${id}`); }
+    catch { setSubmitBusy(false); setShowSubmitModal(false); }
+  }
+
   if (missing) return <EmptyState title="RFQ not found" />;
   if (!rfq) return <Loading label="Loading RFQ" />;
   if (!rfq.isDraft || rfq.status !== "Draft") {
@@ -224,11 +232,17 @@ export default function RfqEditPage() {
             <h1 className="text-xl font-bold text-[var(--text-primary)]">Edit Draft RFQ</h1>
           </div>
         </div>
-        <button type="submit" form="edit-form" disabled={busy}
-          className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg bg-[var(--color-primary)] text-white text-[12px] font-semibold hover:bg-[var(--color-primary-hover)] disabled:opacity-50">
-          {busy ? <Loader2 size={14} className="animate-spin" /> : null}
-          Save Changes
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          <button type="submit" form="edit-form" disabled={busy}
+            className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg bg-[var(--color-primary)] text-white text-[12px] font-semibold hover:bg-[var(--color-primary-hover)] disabled:opacity-50">
+            {busy ? <Loader2 size={14} className="animate-spin" /> : null}
+            Save Changes
+          </button>
+          <button type="button" onClick={() => setShowSubmitModal(true)}
+            className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg border border-emerald-500 text-emerald-600 text-[12px] font-semibold hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-all">
+            Submit Draft
+          </button>
+        </div>
       </div>
 
       {status === "error" && (
@@ -430,6 +444,49 @@ export default function RfqEditPage() {
             className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2.5 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--color-primary)] resize-none" />
         </Section>
       </form>
+
+      {showSubmitModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-md" onClick={() => !submitBusy && setShowSubmitModal(false)} />
+          <div className="relative w-full max-w-sm mx-4 rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            {/* Top accent bar */}
+            <div className="h-1.5 bg-gradient-to-r from-emerald-500 to-emerald-400" />
+            <div className="p-6">
+              {/* Icon + Title */}
+              <div className="flex items-center gap-4 mb-5">
+                <span className="flex items-center justify-center w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-500 shrink-0">
+                  <Send size={22} />
+                </span>
+                <div>
+                  <h3 className="text-[16px] font-bold text-[var(--text-primary)] m-0">Submit Draft RFQ</h3>
+                  <p className="text-[12px] text-[var(--text-muted)] m-0 mt-0.5">This action cannot be undone</p>
+                </div>
+              </div>
+
+              {/* Message */}
+              <p className="text-[13px] text-[var(--text-secondary)] leading-relaxed m-0 mb-6">
+                Once submitted, this RFQ will be sent to our engineering team for review and quotation. You will not be able to edit it further.
+              </p>
+
+              {/* Divider */}
+              <div className="border-t border-[var(--border-default)] mb-4" />
+
+              {/* Buttons */}
+              <div className="flex items-center justify-end gap-2.5">
+                <button type="button" disabled={submitBusy} onClick={() => setShowSubmitModal(false)}
+                  className="px-4 h-9 rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all disabled:opacity-50">
+                  Cancel
+                </button>
+                <button type="button" disabled={submitBusy} onClick={handleSubmitDraft}
+                  className="px-5 h-9 rounded-xl bg-emerald-500 text-white text-[12px] font-semibold hover:bg-emerald-600 disabled:opacity-50 transition-all flex items-center gap-1.5 shadow-sm">
+                  {submitBusy ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                  {submitBusy ? "Submitting..." : "Yes, Submit"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
