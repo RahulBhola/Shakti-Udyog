@@ -38,6 +38,14 @@ This document is the functional source of truth.
 4. Run relevant build, lint, and test commands after changes.
 5. Report changed files, verification results, assumptions, and the next milestone.
 
+## Quick Start for AI Agents
+
+For a complete project overview without exploring the full codebase, read:
+
+`docs/shakti-udyog-project-reference.md`
+
+This file documents every subsystem: routes, endpoints, entities, auth, workflows, UI theme, security rules, and code patterns.
+
 ## Initial Implementation Order
 
 1. Project setup, database, migrations, configuration, and Swagger
