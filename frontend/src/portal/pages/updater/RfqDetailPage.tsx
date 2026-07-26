@@ -405,20 +405,86 @@ export default function UpdaterRfqDetailPage() {
             </div>
           </Section>
 
-          {/* RFQ Details */}
-          <Section icon={FileText} title="RFQ Details">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
-              <Field label="Product Type" value={rfq.productType} />
-              <Field label="Material Grade" value={rfq.materialGrade ?? "—"} />
-              <Field label="Quantity" value={rfq.quantity} />
-              <Field label="Delivery Location" value={rfq.deliveryLocation ?? "—"} />
-            </div>
-            {rfq.requirementDetails && (
-              <div className="mt-5 pt-5 border-t border-[var(--border-default)]">
-                <div className="text-[11px] text-[var(--text-muted)] mb-2 font-medium">Requirements &amp; Remarks</div>
-                <p className="text-[13px] text-[var(--text-primary)] leading-relaxed whitespace-pre-wrap m-0">{rfq.requirementDetails}</p>
+          {/* RFQ Information */}
+          <Section icon={FileText} title="RFQ Information">
+            <div className="space-y-6">
+
+              {/* Part Details */}
+              <div>
+                <h4 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-3">Part Details</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
+                  <Field label="Part Name" value={rfq.partName ?? "—"} />
+                  <Field label="Part Number" value={rfq.partNumber ?? "—"} />
+                  <Field label="Application" value={rfq.application ?? "—"} />
+                  <Field label="Industry" value={rfq.industry ?? "—"} />
+                </div>
               </div>
-            )}
+              <div className="border-t border-[var(--border-default)]" />
+
+              {/* Material Details */}
+              <div>
+                <h4 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-3">Material Details</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
+                  <Field label="Material Standard" value={rfq.materialStandard ?? "—"} />
+                  <Field label="Approx Weight" value={rfq.approxWeight != null ? `${rfq.approxWeight} kg` : "—"} />
+                  <Field label="Machining Required" value={rfq.machiningRequired ?? "—"} />
+                  <Field label="Pattern Availability" value={rfq.patternAvailability ?? "—"} />
+                </div>
+              </div>
+              <div className="border-t border-[var(--border-default)]" />
+
+              {/* Quantity Details */}
+              <div>
+                <h4 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-3">Quantity Details</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-8 gap-y-4">
+                  <Field label="Prototype Quantity" value={rfq.prototypeQuantity ?? "—"} />
+                  <Field label="Production Quantity" value={rfq.productionQuantity ?? rfq.quantity} />
+                  <Field label="Annual Requirement" value={rfq.annualRequirement ?? "—"} />
+                </div>
+              </div>
+              <div className="border-t border-[var(--border-default)]" />
+
+              {/* Delivery Details */}
+              <div>
+                <h4 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-3">Delivery Details</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
+                  <Field label="Delivery Location" value={rfq.deliveryLocation ?? "—"} />
+                  <Field label="Expected Delivery Date" value={rfq.expectedDeliveryDate ? formatDate(rfq.expectedDeliveryDate) : "—"} />
+                  <Field label="Preferred Delivery Terms" value={rfq.preferredDeliveryTerms ?? "—"} />
+                </div>
+              </div>
+
+              {/* Additional Requirements */}
+              {rfq.additionalRequirements && (
+                <>
+                  <div className="border-t border-[var(--border-default)]" />
+                  <div>
+                    <h4 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-3">Additional Requirements</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {rfq.additionalRequirements.split(", ").filter(Boolean).map((r: string) => (
+                        <span key={r} className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium bg-white dark:bg-[var(--bg-surface)] border border-[var(--border-default)] text-[var(--text-primary)]">
+                          <CheckCircle size={12} className="text-emerald-500 shrink-0" />
+                          {r}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Remarks */}
+              {rfq.remarks && (
+                <>
+                  <div className="border-t border-[var(--border-default)]" />
+                  <div>
+                    <h4 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-3">Remarks</h4>
+                    <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-app)] px-4 py-3">
+                      <p className="text-[13px] text-[var(--text-primary)] leading-relaxed m-0 whitespace-pre-wrap">{rfq.remarks}</p>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
           </Section>
 
           {/* Drawings & Attachments */}

@@ -7,19 +7,19 @@ import { Loading } from "../../components/ui";
 import { formatDate } from "../shared";
 import {
   Clock, CheckCircle, XCircle, AlertCircle, FileText, Package,
-  Send, FileEdit, Info, CheckSquare, Loader2, HelpCircle, Phone, Mail, Headphones
+  Send, FileEdit, Info, CheckSquare, Loader2, Phone, Mail, Headphones
 } from "lucide-react";
 
 /* ── Status timeline steps ──────────────────────────────────── */
 
 const RFQ_STATUSES = [
-  "Draft", "Submitted", "Received", "Under Review", "Waiting for Customer",
+  "Draft", "Submitted", "Received", "Under Review",
   "Approved", "Rejected", "Quoted", "Accepted", "Declined", "Expired", "Cancelled",
 ];
 
 const STATUS_ICONS: Record<string, any> = {
   Draft: FileEdit, Submitted: Send, Received: Clock, "Under Review": AlertCircle,
-  "Waiting for Customer": HelpCircle, Approved: CheckCircle, Rejected: XCircle,
+  Approved: CheckCircle, Rejected: XCircle,
   Quoted: FileText, Accepted: CheckCircle, Declined: XCircle, Expired: Clock, Cancelled: XCircle,
 };
 
@@ -30,7 +30,6 @@ const STATUS_COLORS: Record<string, string> = {
   Submitted: "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400",
   Received: "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400",
   "Under Review": "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400",
-  "Waiting for Customer": "bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400",
   Approved: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400",
   Rejected: "bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400",
   Quoted: "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400",

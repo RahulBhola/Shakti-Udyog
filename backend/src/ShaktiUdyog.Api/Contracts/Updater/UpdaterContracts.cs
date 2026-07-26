@@ -18,7 +18,13 @@ public record UpdaterRfqDetailDto(
     IReadOnlyList<UpdaterRfqFileDto> Files,
     IReadOnlyList<RfqTimelineEntryDto> StatusHistory,
     IReadOnlyList<RfqCommentDto> Comments,
-    Guid? AssignedToUserId, string Priority);
+    Guid? AssignedToUserId, string Priority,
+    string? PartName, string? PartNumber, string? Industry, string? Application,
+    string? MaterialStandard, decimal? ApproxWeight,
+    string? MachiningRequired, string? PatternAvailability,
+    string? PrototypeQuantity, string? ProductionQuantity, string? AnnualRequirement,
+    DateTimeOffset? ExpectedDeliveryDate, string? PreferredDeliveryTerms,
+    string? AdditionalRequirements, string? Remarks);
 
 public record UpdaterRfqFileDto(
     Guid Id, string FileName, string ContentType, long SizeBytes,

@@ -39,6 +39,21 @@ export interface UpdaterRfqDetail {
   comments: { id: string; authorUserId: string; authorRole: string; isCustomerVisible: boolean; message: string; createdAtUtc: string }[];
   assignedToUserId: string | null;
   priority: string;
+  partName: string | null;
+  partNumber: string | null;
+  industry: string | null;
+  application: string | null;
+  materialStandard: string | null;
+  approxWeight: number | null;
+  machiningRequired: string | null;
+  patternAvailability: string | null;
+  prototypeQuantity: string | null;
+  productionQuantity: string | null;
+  annualRequirement: string | null;
+  expectedDeliveryDate: string | null;
+  preferredDeliveryTerms: string | null;
+  additionalRequirements: string | null;
+  remarks: string | null;
 }
 
 export interface UpdaterDashboard {

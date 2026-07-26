@@ -102,7 +102,13 @@ public class DataUpdaterService(
                 h.FromStatus, h.ToStatus, h.ChangedByRole, h.Note, h.CreatedAtUtc)).ToList(),
             rfq.Comments.Select(c => new RfqCommentDto(
                 c.Id, c.AuthorUserId, c.AuthorRole, c.IsCustomerVisible, c.Message, c.CreatedAtUtc)).ToList(),
-            rfq.Assignments.FirstOrDefault()?.AssignedToUserId, rfq.Priority);
+            rfq.Assignments.FirstOrDefault()?.AssignedToUserId, rfq.Priority,
+            rfq.PartName, rfq.PartNumber, rfq.Industry, rfq.Application,
+            rfq.MaterialStandard, rfq.ApproxWeight,
+            rfq.MachiningRequired, rfq.PatternAvailability,
+            rfq.PrototypeQuantity, rfq.ProductionQuantity, rfq.AnnualRequirement,
+            rfq.ExpectedDeliveryDate, rfq.PreferredDeliveryTerms,
+            rfq.AdditionalRequirements, rfq.Remarks);
     }
 
     // ---- Status update ------------------------------------------------------
