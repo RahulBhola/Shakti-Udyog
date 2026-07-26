@@ -238,6 +238,9 @@ export default function RfqDetailPage() {
                   const isDone = i < flowIndex;
                   const isCurrent = i === flowIndex;
                   if (isDone && step === "Rejected") return null;
+                  // Approved and Rejected are mutually exclusive — show only the active one
+                  if (step === "Approved" && rfq.status === "Rejected") return null;
+                  if (step === "Rejected" && rfq.status === "Approved") return null;
                   return (
                     <div key={step} className={`flex gap-2.5 ${isCurrent ? "" : isDone ? "opacity-70" : "opacity-40"}`}>
                       <div className="flex flex-col items-center">
