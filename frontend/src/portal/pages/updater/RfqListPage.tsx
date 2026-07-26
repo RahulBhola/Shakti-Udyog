@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { updaterApi, type UpdaterRfqListItem } from "../../../api/updaterApi";
 import type { Paged } from "../../../api/customerApi";
 import { Loading } from "../../../components/ui";
+import { tokenStorage } from "../../../auth/tokenStorage";
+import { config } from "../../../config";
 import { formatDate } from "../../shared";
 import {
   Search, Plus, Download, Eye, ExternalLink, X,
@@ -102,6 +104,26 @@ function exportToCsv(items: UpdaterRfqListItem[]) {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+/* ------------------------------------------------------------------ */
+/*  Thumbnail image for list                                            */
+/* ------------------------------------------------------------------ */
+
+function ListRfqImage({ rfqId, fileId }: { rfqId: string; fileId: string }) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    const token = tokenStorage.getAccessToken();
+    fetch(`${config.apiBaseUrl}/api/v1/updater/rfqs/${rfqId}/files/${fileId}/download`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {}, credentials: "include",
+    }).then((r) => { if (!r.ok) throw new Error(); return r.blob(); })
+      .then((blob) => { if (!cancelled) setUrl(URL.createObjectURL(blob)); })
+      .catch(() => {});
+    return () => { cancelled = true; if (url) URL.revokeObjectURL(url); };
+  }, [rfqId, fileId]);
+  if (!url) return <div className="w-10 h-10 rounded-lg bg-[var(--bg-surface)] animate-pulse shrink-0" />;
+  return <img src={url} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0" />;
 }
 
 /* ------------------------------------------------------------------ */
@@ -290,6 +312,7 @@ export default function UpdaterRfqListPage() {
                       className="rounded border-[var(--border-default)] accent-[var(--color-primary)]"
                     />
                   </th>
+                  <th className="w-16 px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">Image</th>
                   <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">RFQ No.</th>
                   <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">Customer</th>
                   <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">Product</th>
@@ -315,6 +338,17 @@ export default function UpdaterRfqListPage() {
                         onChange={() => toggleSelect(r.id)}
                         className="rounded border-[var(--border-default)] accent-[var(--color-primary)]"
                       />
+                    </td>
+                    <td className="px-3 py-3">
+                      {r.firstFileId && r.firstFileContentType?.startsWith("image/") ? (
+                        <ListRfqImage rfqId={r.id} fileId={r.firstFileId} />
+                      ) : r.fileCount > 0 ? (
+                        <div className="w-10 h-10 rounded-lg bg-[var(--bg-surface-hover)] flex items-center justify-center shrink-0">
+                          <FileText size={14} className="text-[var(--text-muted)]" />
+                        </div>
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg bg-[var(--bg-surface)] shrink-0" />
+                      )}
                     </td>
                     <td className="px-3 py-3">
                       <span className="font-mono text-[12px] font-medium text-[var(--color-primary)]">

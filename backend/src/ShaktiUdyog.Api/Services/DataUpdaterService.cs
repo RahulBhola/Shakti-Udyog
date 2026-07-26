@@ -69,7 +69,9 @@ public class DataUpdaterService(
                 r.Id, r.ProductType, r.CompanyName, r.Quantity,
                 r.Status, r.IsDraft,
                 r.Assignments.Where(a => a.IsActive).Select(a => (Guid?)a.AssignedToUserId).FirstOrDefault(),
-                r.Files.Count, r.CreatedAtUtc, r.Priority))
+                r.Files.Count, r.CreatedAtUtc, r.Priority,
+                r.Files.OrderBy(f => f.UploadedAtUtc).Select(f => (Guid?)f.Id).FirstOrDefault(),
+                r.Files.OrderBy(f => f.UploadedAtUtc).Select(f => f.ContentType).FirstOrDefault()))
             .ToListAsync();
 
         return new PagedResult<UpdaterRfqListItemDto>(items, page, pageSize, total);

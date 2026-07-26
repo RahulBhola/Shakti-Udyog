@@ -187,6 +187,26 @@ function WorkflowProgress({ currentStatus }: { currentStatus: string }) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Auth-fetched image                                                 */
+/* ------------------------------------------------------------------ */
+
+function RfqImage({ rfqId, fileId, fileName }: { rfqId: string; fileId: string; fileName: string }) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    const token = tokenStorage.getAccessToken();
+    fetch(`${config.apiBaseUrl}/api/v1/updater/rfqs/${rfqId}/files/${fileId}/download`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {}, credentials: "include",
+    }).then((r) => { if (!r.ok) throw new Error(); return r.blob(); })
+      .then((blob) => { if (!cancelled) setUrl(URL.createObjectURL(blob)); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [rfqId, fileId]);
+  if (!url) return <div className="w-full aspect-[4/3] rounded-xl bg-[var(--bg-surface)] animate-pulse" />;
+  return <img src={url} alt={fileName} className="w-full h-full object-cover rounded-xl" />;
+}
+
+/* ------------------------------------------------------------------ */
 /*  Related Record Card                                                */
 /* ------------------------------------------------------------------ */
 
@@ -404,21 +424,38 @@ export default function UpdaterRfqDetailPage() {
           {/* Drawings & Attachments */}
           <Section icon={Paperclip} title={`Drawings & Attachments${rfq.files.length > 0 ? ` (${rfq.files.length})` : ""}`}>
             {rfq.files.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {rfq.files.map((f) => (
-                  <div key={f.id} className="flex items-center gap-3 rounded-xl border border-[var(--border-default)] p-3.5 hover:bg-[var(--bg-surface-hover)] hover:shadow-sm transition-all cursor-pointer">
-                    <span className="flex items-center justify-center w-10 h-10 rounded-lg bg-[#EFF6FF] text-[#2563EB] shrink-0">
-                      <FileText size={18} />
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[12px] font-medium text-[var(--text-primary)] truncate">{f.fileName}</div>
-                      <div className="text-[11px] text-[var(--text-muted)]">{(f.sizeBytes / 1024).toFixed(1)} KB</div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
+                {rfq.files.map((f) => {
+                  const isImage = f.contentType?.startsWith("image/");
+                  return (
+                    <div key={f.id} className="group rounded-xl border border-[var(--border-default)] overflow-hidden bg-[var(--bg-app)] hover:shadow-md hover:border-[var(--color-primary)]/30 transition-all duration-200">
+                      {/* Preview area */}
+                      <div className="relative aspect-[4/3] bg-[var(--bg-surface)]">
+                        {isImage ? (
+                          <RfqImage rfqId={id} fileId={f.id} fileName={f.fileName} />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <FileText size={36} className="text-[var(--text-muted)] opacity-40" />
+                          </div>
+                        )}
+                        {/* Download overlay */}
+                        <button
+                          type="button"
+                          onClick={() => downloadFile(f.id, f.fileName)}
+                          className="absolute top-2 right-2 flex items-center justify-center w-8 h-8 rounded-lg bg-black/50 text-white opacity-0 group-hover:opacity-100 hover:bg-[var(--color-primary)] transition-all duration-200"
+                          title="Download"
+                        >
+                          <Download size={14} />
+                        </button>
+                      </div>
+                      {/* Info bar */}
+                      <div className="px-3 py-2.5 border-t border-[var(--border-default)]">
+                        <div className="text-[12px] font-medium text-[var(--text-primary)] truncate leading-tight">{f.fileName}</div>
+                        <div className="text-[11px] text-[var(--text-muted)] mt-0.5">{(f.sizeBytes / 1024).toFixed(1)} KB</div>
+                      </div>
                     </div>
-                    <button type="button" onClick={() => downloadFile(f.id, f.fileName)} className="flex items-center justify-center w-7 h-7 rounded-md text-[var(--text-muted)] hover:text-[var(--color-primary)] hover:bg-[var(--bg-surface-hover)] transition-all" title="Download">
-                      <Download size={14} />
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-12 rounded-xl border border-dashed border-[var(--border-default)]">

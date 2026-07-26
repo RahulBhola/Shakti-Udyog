@@ -7,7 +7,8 @@ namespace ShaktiUdyog.Api.Contracts.Updater;
 public record UpdaterRfqListItemDto(
     Guid Id, string ProductType, string? CompanyName, string Quantity,
     string Status, bool IsDraft, Guid? AssignedToUserId, int FileCount,
-    DateTimeOffset CreatedAtUtc, string Priority);
+    DateTimeOffset CreatedAtUtc, string Priority,
+    Guid? FirstFileId, string? FirstFileContentType);
 
 public record UpdaterRfqDetailDto(
     Guid Id, Guid CompanyId, string FullName, string CompanyName, string Email, string Phone,

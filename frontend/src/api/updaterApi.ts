@@ -14,6 +14,8 @@ export interface UpdaterRfqListItem {
   fileCount: number;
   createdAtUtc: string;
   priority: string;
+  firstFileId: string | null;
+  firstFileContentType: string | null;
 }
 
 export interface UpdaterRfqDetail {
