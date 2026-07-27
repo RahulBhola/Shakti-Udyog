@@ -90,7 +90,8 @@ public class QuotationUpdaterService(
     {
         var rfq = await db.Rfqs.SingleOrDefaultAsync(r => r.Id == request.RfqId && r.Status == RfqStatuses.Approved)
             ?? throw new InvalidOperationException("RFQ not found or not approved.");
-        var number = $"QT-{DateTimeOffset.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..6].ToUpperInvariant()}";
+        var rfqShortId = rfq.Id.ToString("N")[..8].ToUpperInvariant();
+        var number = $"QT-{DateTimeOffset.UtcNow:yyyyMMdd}-{rfqShortId}";
 
         var quotation = new Quotation
         {

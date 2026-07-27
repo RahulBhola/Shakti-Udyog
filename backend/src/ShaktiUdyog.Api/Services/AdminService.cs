@@ -207,7 +207,8 @@ public class AdminService(
         if (quotation is null) return null;
 
         var advanceAmount = quotation.Total * 30m / 100m;
-        var number = $"ORD-{DateTimeOffset.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..6].ToUpperInvariant()}";
+        var rfqShortId = quotation.RfqId.ToString("N")[..8].ToUpperInvariant();
+        var number = $"ORD-{DateTimeOffset.UtcNow:yyyyMMdd}-{rfqShortId}";
 
         var order = new Order
         {
