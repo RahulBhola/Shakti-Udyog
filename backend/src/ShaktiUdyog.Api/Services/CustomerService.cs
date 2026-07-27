@@ -9,6 +9,9 @@ using ShaktiUdyog.Infrastructure.Storage;
 
 namespace ShaktiUdyog.Api.Services;
 
+public record AdvancePaymentRequest(string PaymentRef);
+
+
 /// <summary>
 /// Customer portal application service. EVERY query filters by the resolved
 /// customer context's approved company IDs — record IDs from the client are
@@ -36,6 +39,7 @@ public interface ICustomerService
     Task<OrderDetailDto?> GetOrderAsync(CustomerContext ctx, Guid orderId);
     Task<IReadOnlyList<TimelineEntryDto>?> GetOrderTimelineAsync(CustomerContext ctx, Guid orderId);
     Task<Guid?> CreateSupportRequestAsync(CustomerContext ctx, Guid orderId, SupportRequestRequest request, string? ip);
+    Task<bool?> SubmitAdvancePaymentAsync(CustomerContext ctx, Guid orderId, AdvancePaymentRequest request, string? ip);
 
     Task<IReadOnlyList<InvoiceListItemDto>> GetInvoicesAsync(CustomerContext ctx);
     Task<InvoiceDetailDto?> GetInvoiceAsync(CustomerContext ctx, Guid invoiceId);
@@ -476,15 +480,20 @@ public class CustomerService(
             order.Status, label, description,
             order.PlacedAtUtc, order.PromisedDispatchDateUtc, order.DeliveryAddress, order.LastUpdatedAtUtc,
             order.Items.Select(i => new OrderItemDto(
-                i.PartNumber, i.Description, i.MaterialGrade, i.DrawingRevision,
-                i.Unit, i.QuantityOrdered, i.QuantityProduced, i.QuantityDispatched)).ToList(),
+                i.Id, i.PartNumber, i.Description, i.MaterialGrade, i.DrawingRevision,
+                i.Unit, i.QuantityOrdered, i.QuantityProduced, i.QuantityDispatched, i.UnitRate)).ToList(),
             order.Shipments.Select(s => new ShipmentDto(
                 s.Id, s.Transporter, s.TrackingNumber, s.DispatchDateUtc,
                 s.EstimatedArrivalUtc, s.DeliveredAtUtc, s.ProofOfDeliveryDocumentId != null)).ToList(),
             invoice is null ? null : new OrderCommercialDto(
                 invoice.InvoiceNumber, invoice.IssueDateUtc, invoice.DueDateUtc,
                 invoice.Total, invoice.AmountPaid, invoice.BalanceDue, invoice.Status),
-            documents);
+            documents,
+            order.AdvancePercent, order.AdvanceAmount, order.AdvancePaid, order.AdvancePaidAtUtc,
+            order.AdvancePaymentRef, order.AdvanceVerifiedAtUtc,
+            order.QuotationTotal, order.PaymentTerms, order.QuotationId,
+            order.Milestones.Select(m => new OrderMilestoneDto(
+                m.Id, m.StatusCode, m.CustomerMessage, m.OccurredAtUtc)).ToList());
     }
 
     public async Task<IReadOnlyList<TimelineEntryDto>?> GetOrderTimelineAsync(CustomerContext ctx, Guid orderId)
@@ -506,6 +515,20 @@ public class CustomerService(
             m.StatusCode,
             OrderStatuses.Labels.TryGetValue(m.StatusCode, out var l) ? l.Label : m.StatusCode,
             m.CustomerMessage, m.ActorType, m.OccurredAtUtc)).ToList();
+    }
+
+        public async Task<bool?> SubmitAdvancePaymentAsync(CustomerContext ctx, Guid orderId, AdvancePaymentRequest request, string? ip)
+    {
+        var order = await db.Orders.SingleOrDefaultAsync(o => o.Id == orderId && ctx.CompanyIds.Contains(o.CompanyId));
+        if (order is null) return null;
+        if (order.Status != OrderStatuses.PendingAdvance) return false;
+        order.Status = OrderStatuses.AwaitingApproval;
+        order.AdvancePaidAtUtc = DateTimeOffset.UtcNow;
+        order.AdvancePaymentRef = request.PaymentRef;
+        order.Milestones.Add(new OrderMilestone { Id = Guid.NewGuid(), OrderId = order.Id, StatusCode = OrderStatuses.AwaitingApproval, CustomerMessage = "Payment proof submitted. Awaiting verification.", ActorType = "Customer" });
+        await db.SaveChangesAsync();
+        await audit.WriteAsync("customer.order.advance_submitted", ctx.UserId, "Order", order.Id.ToString(), ip);
+        return true;
     }
 
     public async Task<Guid?> CreateSupportRequestAsync(

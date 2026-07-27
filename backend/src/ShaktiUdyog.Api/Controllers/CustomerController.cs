@@ -40,6 +40,7 @@ public class CustomerController(
             return (null, StatusCode(StatusCodes.Status403Forbidden, new MessageResponse(
                 "Your account has no approved company access yet. Please contact Shakti Udyog.")));
         }
+
         return (ctx, null);
     }
 
@@ -245,6 +246,15 @@ public class CustomerController(
         return timeline is null ? NotFound() : Ok(timeline);
     }
 
+    [HttpPost("orders/{id:guid}/pay-advance")]
+    public async Task<IActionResult> PayAdvance(Guid id, [FromBody] AdvancePaymentRequest request)
+    {
+        var (ctx, failure) = await RequireContextAsync();
+        if (failure is not null) return failure;
+        var result = await customerService.SubmitAdvancePaymentAsync(ctx!, id, request, ClientIp);
+        return result switch { null => NotFound(), false => BadRequest(new { message = "Cannot accept payment in current state." }), _ => Ok(new { message = "Payment proof submitted for verification." }) };
+    }
+
     [HttpPost("orders/{id:guid}/support-requests")]
     [EnableRateLimiting("public")]
     [ProducesResponseType(StatusCodes.Status201Created)]
@@ -428,3 +438,4 @@ public class CustomerController(
             : BadRequest(new MessageResponse(error ?? "Password change failed."));
     }
 }
+

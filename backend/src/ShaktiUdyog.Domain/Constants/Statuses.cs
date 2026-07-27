@@ -58,12 +58,13 @@ public static class QuotationStatuses
     public const string Viewed = "Viewed";
     public const string Negotiating = "Negotiating";
     public const string Accepted = "Accepted";
+    public const string Converted = "Converted";
     public const string Declined = "Declined";
     public const string Expired = "Expired";
     public const string Cancelled = "Cancelled";
 
     public static readonly IReadOnlyList<string> All =
-        [Draft, PendingApproval, Approved, Issued, Viewed, Negotiating, Accepted, Declined, Expired, Cancelled];
+        [Draft, PendingApproval, Approved, Issued, Viewed, Negotiating, Accepted, Converted, Declined, Expired, Cancelled];
 
     public static readonly IReadOnlyDictionary<string, IReadOnlySet<string>> ValidTransitions =
         new Dictionary<string, IReadOnlySet<string>>
@@ -74,7 +75,8 @@ public static class QuotationStatuses
             [Issued] = new HashSet<string> { Viewed, Negotiating, Accepted, Declined, Expired, Cancelled },
             [Viewed] = new HashSet<string> { Negotiating, Accepted, Declined, Expired, Cancelled },
             [Negotiating] = new HashSet<string> { Issued, Accepted, Declined, Cancelled },
-            [Accepted] = new HashSet<string> { },
+            [Accepted] = new HashSet<string> { Converted, Cancelled },
+            [Converted] = new HashSet<string> { },
             [Declined] = new HashSet<string> { },
             [Expired] = new HashSet<string> { },
             [Cancelled] = new HashSet<string> { },
@@ -87,6 +89,9 @@ public static class QuotationStatuses
 /// <summary>Customer-visible order statuses (requirements §18).</summary>
 public static class OrderStatuses
 {
+    public const string PendingAdvance = "pending_advance";
+    public const string AwaitingApproval = "awaiting_approval";
+    public const string AdvancePaid = "advance_paid";
     public const string Confirmed = "confirmed";
     public const string PatternDevelopment = "pattern_development";
     public const string Production = "production";
@@ -100,13 +105,16 @@ public static class OrderStatuses
     public const string Returned = "returned";
     public const string Closed = "closed";
 
-    /// <summary>Ordered progression used for the tracking timeline (OnHold is out-of-band).</summary>
+    /// <summary>Ordered progression used for the tracking timeline.</summary>
     public static readonly IReadOnlyList<string> Progression =
-        [Confirmed, PatternDevelopment, Production, QualityCheck, Packed, ReadyToDispatch, Dispatched, Delivered];
+        [PendingAdvance, AwaitingApproval, AdvancePaid, Confirmed, PatternDevelopment, Production, QualityCheck, Packed, ReadyToDispatch, Dispatched, Delivered];
 
     public static readonly IReadOnlyDictionary<string, IReadOnlySet<string>> ValidTransitions =
         new Dictionary<string, IReadOnlySet<string>>
         {
+            [PendingAdvance] = new HashSet<string> { AwaitingApproval, Cancelled },
+            [AwaitingApproval] = new HashSet<string> { AdvancePaid, PendingAdvance, Cancelled },
+            [AdvancePaid] = new HashSet<string> { Confirmed, OnHold, Cancelled },
             [Confirmed] = new HashSet<string> { PatternDevelopment, OnHold, Cancelled },
             [PatternDevelopment] = new HashSet<string> { Production, OnHold, Cancelled },
             [Production] = new HashSet<string> { QualityCheck, OnHold, Cancelled },
@@ -121,12 +129,31 @@ public static class OrderStatuses
             [Closed] = new HashSet<string> { },
         };
 
+    public static readonly IReadOnlyDictionary<string, string> ProgressionLabels =
+        new Dictionary<string, string>
+        {
+            [PendingAdvance] = "Awaiting Advance Payment",
+            [AwaitingApproval] = "Payment Under Review",
+            [AdvancePaid] = "Advance Confirmed",
+            [Confirmed] = "Order Confirmed",
+            [PatternDevelopment] = "Pattern Development",
+            [Production] = "Production",
+            [QualityCheck] = "Quality Check",
+            [Packed] = "Packed",
+            [ReadyToDispatch] = "Ready to Dispatch",
+            [Dispatched] = "Dispatched",
+            [Delivered] = "Delivered",
+        };
+
     public static bool IsValidTransition(string from, string to) =>
         ValidTransitions.TryGetValue(from, out var next) && next.Contains(to);
 
     public static readonly IReadOnlyDictionary<string, (string Label, string Description)> Labels =
         new Dictionary<string, (string, string)>
         {
+            [PendingAdvance] = ("Pending Advance", "Advance payment is required to start production."),
+            [AwaitingApproval] = ("Awaiting Approval", "Your payment proof is being verified."),
+            [AdvancePaid] = ("Advance Confirmed", "Advance payment has been verified. Production will begin shortly."),
             [Confirmed] = ("Order Confirmed", "Your order has been accepted and is being planned."),
             [PatternDevelopment] = ("Pattern / Tooling in Progress", "Required pattern or tooling work is underway."),
             [Production] = ("In Production", "Your castings are being produced."),

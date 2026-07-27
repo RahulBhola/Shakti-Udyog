@@ -5,7 +5,7 @@ import { updaterApi } from "../../api/updaterApi";
 import type { QuotationDetail as QD, QuotationTimelineEntry } from "../../api/customerApi";
 import { Loading } from "../../components/ui";
 import { formatDate, formatMoney } from "../shared";
-import { ArrowLeft, FileEdit, CheckCircle, Clock, AlertCircle, Send, Eye, XCircle, Loader2, Calendar, FileText, Tag, Hash } from "lucide-react";
+import { ArrowLeft, FileEdit, CheckCircle, Clock, AlertCircle, Send, Eye, XCircle, Loader2, Calendar, FileText, Tag, Hash, Package } from "lucide-react";
 
 /* ── Status colors ──────────────────────────────────────────── */
 
@@ -171,6 +171,12 @@ export default function AdminQuotationDetailPage() {
             <button type="button" disabled={busy} onClick={() => void doAction(() => adminApi.issueQuotation(id))}
               className="inline-flex items-center gap-1.5 px-4 h-8 rounded-lg bg-[var(--color-primary)] text-white text-[12px] font-semibold hover:bg-[var(--color-primary-hover)] disabled:opacity-50 transition-all">
               {busy ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />} Issue
+            </button>
+          )}
+          {q.status === "Accepted" && (
+            <button type="button" disabled={busy} onClick={async () => { try { const order: any = await adminApi.createOrder(id); if (order?.id) navigate(`/admin/orders/${order.id}`); else setMsg("Order created."); } catch { setMsg("Failed to create order."); } }}
+              className="inline-flex items-center gap-1.5 px-4 h-8 rounded-lg bg-emerald-500 text-white text-[12px] font-semibold hover:bg-emerald-600 disabled:opacity-50 transition-all">
+              {busy ? <Loader2 size={13} className="animate-spin" /> : <Package size={13} />} Create Order
             </button>
           )}
           {!isTerminal && (

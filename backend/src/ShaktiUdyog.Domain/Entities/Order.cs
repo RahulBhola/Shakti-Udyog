@@ -21,6 +21,20 @@ public class Order
     public string? DeliveryAddress { get; set; }
     public DateTimeOffset LastUpdatedAtUtc { get; set; } = DateTimeOffset.UtcNow;
 
+    // Advance payment
+    public int AdvancePercent { get; set; } = 30;
+    public decimal? AdvanceAmount { get; set; }
+    public bool AdvancePaid { get; set; }
+    public DateTimeOffset? AdvancePaidAtUtc { get; set; }
+    public string? AdvancePaymentRef { get; set; }
+    public string? PaymentProofFileName { get; set; }
+    public DateTimeOffset? AdvanceVerifiedAtUtc { get; set; }
+    public Guid? AdvanceVerifiedById { get; set; }
+
+    // Quotation snapshot
+    public decimal? QuotationTotal { get; set; }
+    public string? PaymentTerms { get; set; }
+
     public List<OrderItem> Items { get; set; } = [];
     public List<OrderMilestone> Milestones { get; set; } = [];
     public List<Shipment> Shipments { get; set; } = [];

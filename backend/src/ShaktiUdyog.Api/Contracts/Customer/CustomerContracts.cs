@@ -121,11 +121,19 @@ public record OrderDetailDto(
     IReadOnlyList<OrderItemDto> Items,
     IReadOnlyList<ShipmentDto> Shipments,
     OrderCommercialDto? Commercial,
-    IReadOnlyList<DocumentListItemDto> Documents);
+    IReadOnlyList<DocumentListItemDto> Documents,
+    int AdvancePercent, decimal? AdvanceAmount, bool AdvancePaid,
+    DateTimeOffset? AdvancePaidAtUtc, string? AdvancePaymentRef,
+    DateTimeOffset? AdvanceVerifiedAtUtc,
+    decimal? QuotationTotal, string? PaymentTerms, Guid? QuotationId,
+    IReadOnlyList<OrderMilestoneDto> Milestones);
 
 public record OrderItemDto(
-    string PartNumber, string Description, string? MaterialGrade, string? DrawingRevision,
-    string Unit, int QuantityOrdered, int QuantityProduced, int QuantityDispatched);
+    Guid Id, string PartNumber, string Description, string? MaterialGrade, string? DrawingRevision,
+    string Unit, int QuantityOrdered, int QuantityProduced, int QuantityDispatched, decimal? UnitRate);
+
+public record OrderMilestoneDto(
+    Guid Id, string StatusCode, string? CustomerMessage, DateTimeOffset OccurredAtUtc);
 
 public record OrderCommercialDto(
     string? InvoiceNumber, DateTimeOffset? InvoiceDateUtc, DateTimeOffset? DueDateUtc,

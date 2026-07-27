@@ -16,6 +16,9 @@ public interface IAdminService
     Task<bool?> RejectRfqAsync(Guid rfqId, string reason, Guid userId, string? ip);
     Task<bool?> OverrideStatusAsync(Guid rfqId, string newStatus, string? note, Guid userId, string? ip);
     Task<IReadOnlyList<RfqTimelineEntryDto>> GetRfqHistoryAsync(Guid rfqId);
+    Task<OrderDetailDto?> CreateOrderFromQuotationAsync(Guid quotationId, Guid userId, string? ip);
+    Task<bool?> VerifyAdvancePaymentAsync(Guid orderId, Guid userId, string? ip);
+    Task<bool?> UpdateOrderStageAsync(Guid orderId, string newStage, string? note, Guid userId, string? ip);
 }
 
 public class AdminService(
@@ -192,4 +195,113 @@ public class AdminService(
                 h.FromStatus, h.ToStatus, h.ChangedByRole, h.Note, h.CreatedAtUtc))
             .ToListAsync();
     }
+
+    // ---- Order from Quotation ------------------------------------------------
+
+    public async Task<OrderDetailDto?> CreateOrderFromQuotationAsync(Guid quotationId, Guid userId, string? ip)
+    {
+        var quotation = await db.Quotations
+            .Include(q => q.Items.OrderBy(i => i.LineNumber))
+            .Include(q => q.Company)
+            .SingleOrDefaultAsync(q => q.Id == quotationId && q.Status == QuotationStatuses.Accepted);
+        if (quotation is null) return null;
+
+        var advanceAmount = quotation.Total * 30m / 100m;
+        var number = $"ORD-{DateTimeOffset.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..6].ToUpperInvariant()}";
+
+        var order = new Order
+        {
+            Id = Guid.NewGuid(),
+            OrderNumber = number,
+            CompanyId = quotation.CompanyId,
+            QuotationId = quotation.Id,
+            Status = OrderStatuses.PendingAdvance,
+            AdvancePercent = 30,
+            AdvanceAmount = advanceAmount,
+            QuotationTotal = quotation.Total,
+            PaymentTerms = quotation.PaymentTerms,
+            Items = quotation.Items.Select(i => new OrderItem
+            {
+                Id = Guid.NewGuid(),
+                PartNumber = i.PartNumber,
+                Description = i.Description,
+                MaterialGrade = i.MaterialGrade,
+                Unit = i.Unit,
+                QuantityOrdered = i.Quantity,
+                UnitRate = i.UnitPrice,
+            }).ToList(),
+        };
+
+        db.Orders.Add(order);
+        order.Milestones.Add(new OrderMilestone
+        {
+            Id = Guid.NewGuid(), OrderId = order.Id, StatusCode = OrderStatuses.PendingAdvance,
+            CustomerMessage = "Order created. Advance payment required.", ActorType = "System",
+        });
+
+        quotation.Status = QuotationStatuses.Converted;
+        db.QuotationStatusHistories.Add(new QuotationStatusHistory
+        {
+            Id = Guid.NewGuid(), QuotationId = quotation.Id,
+            FromStatus = QuotationStatuses.Accepted, ToStatus = QuotationStatuses.Converted,
+            ChangedByUserId = userId, ChangedByRole = "Admin",
+            Note = "Order created from quotation",
+        });
+
+        await db.SaveChangesAsync();
+        await audit.WriteAsync("admin.order.created", userId, "Order", order.Id.ToString(), ip);
+        return MapOrderDetail(order);
+    }
+
+    public async Task<bool?> VerifyAdvancePaymentAsync(Guid orderId, Guid userId, string? ip)
+    {
+        var order = await db.Orders.SingleOrDefaultAsync(o => o.Id == orderId);
+        if (order is null) return null;
+        if (order.Status != OrderStatuses.AwaitingApproval) return false;
+        var from = order.Status;
+        order.Status = OrderStatuses.AdvancePaid;
+        order.AdvancePaid = true;
+        order.AdvanceVerifiedAtUtc = DateTimeOffset.UtcNow;
+        order.AdvanceVerifiedById = userId;
+        order.Milestones.Add(new OrderMilestone
+        {
+            Id = Guid.NewGuid(), OrderId = order.Id, StatusCode = OrderStatuses.AdvancePaid,
+            CustomerMessage = "Advance payment verified.", ActorType = "Admin",
+        });
+        await db.SaveChangesAsync();
+        await audit.WriteAsync("admin.order.advance_verified", userId, "Order", order.Id.ToString(), ip);
+        return true;
+    }
+
+    public async Task<bool?> UpdateOrderStageAsync(Guid orderId, string newStage, string? note, Guid userId, string? ip)
+    {
+        var order = await db.Orders.SingleOrDefaultAsync(o => o.Id == orderId);
+        if (order is null) return null;
+        if (!OrderStatuses.IsValidTransition(order.Status, newStage)) return false;
+        var from = order.Status;
+        order.Status = newStage;
+        order.LastUpdatedAtUtc = DateTimeOffset.UtcNow;
+        order.Milestones.Add(new OrderMilestone
+        {
+            Id = Guid.NewGuid(), OrderId = order.Id, StatusCode = newStage,
+            CustomerMessage = OrderStatuses.ProgressionLabels.TryGetValue(newStage, out var label) ? label : newStage.Replace("_", " "),
+            InternalNote = note, ActorType = "Admin",
+        });
+        await db.SaveChangesAsync();
+        await audit.WriteAsync("admin.order.stage_updated", userId, "Order", order.Id.ToString(), ip);
+        return true;
+    }
+
+    private static OrderDetailDto MapOrderDetail(Order o) => new(
+        o.Id, o.OrderNumber, null, o.Status, o.Status, "",
+        o.PlacedAtUtc, o.PromisedDispatchDateUtc, o.DeliveryAddress, o.LastUpdatedAtUtc,
+        o.Items.Select(i => new OrderItemDto(
+            i.Id, i.PartNumber, i.Description, i.MaterialGrade, i.DrawingRevision,
+            i.Unit, i.QuantityOrdered, i.QuantityProduced, i.QuantityDispatched, i.UnitRate)).ToList(),
+        [], null, [],
+        o.AdvancePercent, o.AdvanceAmount, o.AdvancePaid, o.AdvancePaidAtUtc,
+        o.AdvancePaymentRef, o.AdvanceVerifiedAtUtc,
+        o.QuotationTotal, o.PaymentTerms, o.QuotationId,
+        o.Milestones.Select(m => new OrderMilestoneDto(
+            m.Id, m.StatusCode, m.CustomerMessage, m.OccurredAtUtc)).ToList());
 }

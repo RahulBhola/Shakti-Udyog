@@ -25,6 +25,10 @@ export const adminApi = {
   rejectQuotation: (id: string, reason: string) => apiPatch<{ message: string }>(`${base}/quotations/${id}/reject`, reason),
   issueQuotation: (id: string) => apiPatch<{ message: string }>(`${base}/quotations/${id}/issue`, {}),
   cancelQuotation: (id: string, reason?: string) => apiPatch<{ message: string }>(`${base}/quotations/${id}/cancel`, { reason }),
+  createOrder: (quotationId: string) => apiPost<any>(`${base}/quotations/${quotationId}/create-order`, {}),
+  verifyAdvance: (orderId: string) => apiPatch<{ message: string }>(`${base}/orders/${orderId}/verify-advance`, {}),
+  updateOrderStage: (orderId: string, statusCode: string, note?: string) =>
+    apiPatch<{ message: string }>(`${base}/orders/${orderId}/stage`, { statusCode, note }),
   overrideStatus: (id: string, newStatus: string, note?: string) => apiPatch<{ message: string }>(`${base}/quotations/${id}/override-status`, { newStatus, note }),
   history: (id: string) => apiGet<QuotationTimelineEntry[]>(`${base}/quotations/${id}/history`),
 
