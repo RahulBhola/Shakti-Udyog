@@ -39,8 +39,15 @@ public class QuotationUpdaterController(IQuotationUpdaterService service) : Cont
     [HttpPut("quotations/{id:guid}")]
     public async Task<IActionResult> UpdateQuotation(Guid id, UpdateQuotationRequest request)
     {
-        var result = await service.UpdateQuotationAsync(id, request, UserId, ClientIp);
-        return result switch { null => NotFound(), false => BadRequest(new MessageResponse("Cannot edit a non-draft quotation.")), _ => Ok(new MessageResponse("Quotation updated.")) };
+        try
+        {
+            var result = await service.UpdateQuotationAsync(id, request, UserId, ClientIp);
+            return result switch { null => NotFound(), false => BadRequest(new MessageResponse("Cannot edit a non-draft quotation.")), _ => Ok(new MessageResponse("Quotation updated.")) };
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message, inner = ex.InnerException?.Message });
+        }
     }
 
     [HttpPost("quotations/{id:guid}/submit")]

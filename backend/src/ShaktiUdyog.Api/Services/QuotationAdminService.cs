@@ -47,6 +47,7 @@ public class QuotationAdminService(
         if (q is null) return null;
         return new QuotationDetailDto(q.Id, q.QuotationNumber, q.RevisionNumber, q.RfqId, q.Rfq?.ProductType ?? "",
             q.Subtotal, q.Tax, q.Discount, q.Total, q.Currency, q.PaymentTerms, q.DeliveryTerms, q.Freight, q.Packing, q.Remarks,
+            q.DeliveryTime, q.Warranty,
             q.Status, q.CustomerResponseComment, q.CustomerRespondedAtUtc, q.ValidUntilUtc, q.DocumentId, q.CreatedAtUtc,
             q.Items.Select(i => new QuotationItemDto(i.LineNumber, i.PartNumber, i.Description, i.MaterialGrade, i.Quantity, i.Unit, i.UnitPrice, i.TaxPercent, i.LineTotal)).ToList());
     }

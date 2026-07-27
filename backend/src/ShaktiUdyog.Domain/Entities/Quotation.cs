@@ -28,6 +28,8 @@ public class Quotation
     public string? Freight { get; set; }
     public string? Packing { get; set; }
     public string? Remarks { get; set; }
+    public string? DeliveryTime { get; set; }
+    public string? Warranty { get; set; }
     public string Status { get; set; } = QuotationStatuses.Draft;
     public string? CustomerResponseComment { get; set; }
     public DateTimeOffset? CustomerRespondedAtUtc { get; set; }

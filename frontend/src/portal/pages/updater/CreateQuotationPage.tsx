@@ -112,19 +112,23 @@ export default function CreateQuotationPage() {
         setValidUntil(q.validUntilUtc ? q.validUntilUtc.slice(0, 10) : "");
         setPaymentTerms(q.paymentTerms ?? "");
         setDeliveryTerms(q.deliveryTerms ?? "");
+        setDeliveryTime(q.deliveryTime ?? "");
+        setWarranty(q.warranty ?? "");
         setCurrency(q.currency);
         setCustomerNotes(q.remarks ?? "");
         setFreight(Number(q.freight) || 0);
         setPacking(Number(q.packing) || 0);
-        // Pre-fill items
+        // Pre-fill items — preserve discount from saved quotation
         if (q.items.length > 0) {
+          const itemSubtotal = q.items.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
+          const overallDiscPct = q.discount > 0 && itemSubtotal > 0 ? (q.discount / itemSubtotal) * 100 : 0;
           setItems(q.items.map((i) => ({
             id: crypto.randomUUID(),
             description: i.description,
             quantity: i.quantity,
             unit: i.unit,
             unitPrice: i.unitPrice,
-            discountPercent: 0,
+            discountPercent: Math.round(overallDiscPct * 100) / 100,
             gstPercent: Number(i.taxPercent),
             amount: i.lineTotal,
           })));
@@ -204,8 +208,10 @@ export default function CreateQuotationPage() {
         validUntilUtc: validUntil || undefined,
         paymentTerms: paymentTerms || undefined,
         deliveryTerms: deliveryTerms || undefined,
-        freight: freight ? String(freight) : undefined,
-        packing: packing ? String(packing) : undefined,
+        deliveryTime: deliveryTime || undefined,
+        warranty: warranty || undefined,
+        freight: String(freight || 0),
+        packing: String(packing || 0),
         remarks: [customerNotes, internalNotes ? `[Internal] ${internalNotes}` : ""].filter(Boolean).join("\n") || undefined,
         items: calculatedItems.filter((i) => i.description).map((i, idx) => ({
           lineNumber: idx + 1,
@@ -233,8 +239,9 @@ export default function CreateQuotationPage() {
         }
         navigate(`/admin/quotations/${id}`);
       }
-    } catch {
-      setSaveMsg("Failed to create quotation. Please check the data and try again.");
+    } catch (e: any) {
+      const action = editQuotationId ? "update" : "create";
+      setSaveMsg(`Failed to ${action} quotation. ${e?.message ?? ""}`);
     } finally {
       setSaving(false);
     }
@@ -472,7 +479,7 @@ export default function CreateQuotationPage() {
                       <td className="py-1 px-2">
                         <select value={item.unit} onChange={(e) => updateItem(item.id, "unit", e.target.value)}
                           className="w-full h-7 px-1.5 rounded-md border border-[var(--border-input)] bg-[var(--bg-card)] text-[11px] text-[var(--text-primary)] text-center outline-none focus:border-[var(--color-primary)]">
-                          <option>pcs</option><option>kg</option><option>set</option><option>lot</option>
+                          <option>pcs</option><option>kg</option><option>ton</option><option>quintal</option><option>set</option><option>lot</option><option>g</option><option>mg</option><option>lb</option><option>m</option><option>ft</option><option>L</option><option>mL</option><option>sq.ft</option><option>sq.m</option>
                         </select>
                       </td>
                       <td className="py-1 px-2">

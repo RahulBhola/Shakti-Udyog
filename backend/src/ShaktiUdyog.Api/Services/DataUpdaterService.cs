@@ -90,6 +90,11 @@ public class DataUpdaterService(
 
         if (rfq is null) return null;
 
+        var draftQuotationId = await db.Quotations
+            .Where(q => q.RfqId == rfq.Id && q.Status == "Draft")
+            .Select(q => (Guid?)q.Id)
+            .FirstOrDefaultAsync();
+
         return new UpdaterRfqDetailDto(
             rfq.Id, rfq.CompanyId ?? Guid.Empty, rfq.FullName, rfq.CompanyName, rfq.Email, rfq.Phone,
             rfq.ProductType, rfq.MaterialGrade, rfq.Quantity,
@@ -108,7 +113,8 @@ public class DataUpdaterService(
             rfq.MachiningRequired, rfq.PatternAvailability,
             rfq.PrototypeQuantity, rfq.ProductionQuantity, rfq.AnnualRequirement,
             rfq.ExpectedDeliveryDate, rfq.PreferredDeliveryTerms,
-            rfq.AdditionalRequirements, rfq.Remarks);
+            rfq.AdditionalRequirements, rfq.Remarks,
+            draftQuotationId != null, draftQuotationId);
     }
 
     // ---- Status update ------------------------------------------------------

@@ -368,6 +368,7 @@ public class CustomerService(
                 q.Id, q.QuotationNumber, q.RevisionNumber, q.RfqId, q.Rfq.ProductType,
                 q.Subtotal, q.Tax, q.Discount, q.Total, q.Currency,
                 q.PaymentTerms, q.DeliveryTerms, q.Freight, q.Packing, q.Remarks,
+                q.DeliveryTime, q.Warranty,
                 q.Status, q.CustomerResponseComment, q.CustomerRespondedAtUtc,
                 q.ValidUntilUtc, q.DocumentId, q.CreatedAtUtc,
                 q.Items.OrderBy(i => i.LineNumber).Select(i => new QuotationItemDto(

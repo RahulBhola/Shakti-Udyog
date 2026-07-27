@@ -54,6 +54,8 @@ export interface UpdaterRfqDetail {
   preferredDeliveryTerms: string | null;
   additionalRequirements: string | null;
   remarks: string | null;
+  hasDraftQuotation: boolean;
+  draftQuotationId: string | null;
 }
 
 export interface UpdaterDashboard {

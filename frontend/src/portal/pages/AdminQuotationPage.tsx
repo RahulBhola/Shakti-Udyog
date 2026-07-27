@@ -239,6 +239,8 @@ export default function AdminQuotationDetailPage() {
               <Field label="Delivery Terms" value={q.deliveryTerms ?? "—"} />
               <Field label="Freight" value={q.freight ?? "—"} />
               <Field label="Packing" value={q.packing ?? "—"} />
+              <Field label="Delivery Time" value={q.deliveryTime ?? "—"} />
+              <Field label="Warranty" value={q.warranty ?? "—"} />
               <Field label="Valid Until" value={formatDate(q.validUntilUtc)} />
               <Field label="Currency" value={q.currency} />
             </div>
@@ -254,25 +256,64 @@ export default function AdminQuotationDetailPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-[13px]">
                 <thead>
-                  <tr className="border-b border-[var(--border-default)] text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
-                    <th className="text-left py-2 pr-3">Part</th>
-                    <th className="text-left py-2 pr-3">Description</th>
-                    <th className="text-right py-2 pr-3">Qty</th>
-                    <th className="text-right py-2 pr-3">Unit Price</th>
-                    <th className="text-right py-2">Total</th>
+                  <tr className="border-b border-[var(--border-default)] bg-[var(--bg-app)]">
+                    <th className="text-left py-2.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">#</th>
+                    <th className="text-left py-2.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">Part / Material</th>
+                    <th className="text-left py-2.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">Description</th>
+                    <th className="text-right py-2.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">Qty</th>
+                    <th className="text-center py-2.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">Unit</th>
+                    <th className="text-right py-2.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">Unit Price</th>
+                    <th className="text-right py-2.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">GST</th>
+                    <th className="text-right py-2.5 pl-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">Total</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {q.items.map((i) => (
-                    <tr key={i.lineNumber} className="border-b border-[var(--border-default)] last:border-0 hover:bg-[var(--bg-surface-hover)]">
-                      <td className="py-2.5 pr-3 font-medium text-[var(--text-primary)]">{i.partNumber}</td>
-                      <td className="py-2.5 pr-3 text-[var(--text-secondary)]">{i.description}</td>
-                      <td className="py-2.5 pr-3 text-right tabular-nums">{i.quantity} {i.unit}</td>
-                      <td className="py-2.5 pr-3 text-right tabular-nums">{formatMoney(i.unitPrice, q.currency)}</td>
-                      <td className="py-2.5 text-right tabular-nums font-medium">{formatMoney(i.lineTotal, q.currency)}</td>
+                  {q.items.map((i, idx) => (
+                    <tr key={i.lineNumber} className="border-b border-[var(--border-default)] last:border-0 hover:bg-[var(--bg-surface-hover)] transition-colors">
+                      <td className="py-2.5 px-3 text-[var(--text-muted)] text-[12px] tabular-nums">{idx + 1}</td>
+                      <td className="py-2.5 px-3">
+                        <div className="font-medium text-[var(--text-primary)]">{i.partNumber}</div>
+                        {i.materialGrade && <div className="text-[11px] text-[var(--text-muted)] mt-0.5">{i.materialGrade}</div>}
+                      </td>
+                      <td className="py-2.5 px-3 text-[var(--text-secondary)] max-w-[200px] truncate" title={i.description}>{i.description}</td>
+                      <td className="py-2.5 px-3 text-right tabular-nums font-medium text-[var(--text-primary)]">{i.quantity}</td>
+                      <td className="py-2.5 px-3 text-center">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-[var(--bg-surface-hover)] text-[11px] font-medium text-[var(--text-secondary)]">{i.unit}</span>
+                      </td>
+                      <td className="py-2.5 px-3 text-right tabular-nums text-[var(--text-primary)]">{formatMoney(i.unitPrice, q.currency)}</td>
+                      <td className="py-2.5 px-3 text-right tabular-nums text-[var(--text-secondary)]">{i.taxPercent}%</td>
+                      <td className="py-2.5 pl-3 text-right tabular-nums font-semibold text-[var(--text-primary)]">{formatMoney(i.lineTotal, q.currency)}</td>
                     </tr>
                   ))}
                 </tbody>
+                <tfoot>
+                  <tr className="border-t-2 border-[var(--border-default)]">
+                    <td colSpan={6} className="py-3 px-3 text-right text-[13px] font-medium text-[var(--text-secondary)]">Subtotal</td>
+                    <td colSpan={2} className="py-3 pl-3 text-right text-[13px] tabular-nums font-semibold text-[var(--text-primary)]">{formatMoney(q.subtotal, q.currency)}</td>
+                  </tr>
+                  {q.discount > 0 && (
+                    <tr className="border-t border-[var(--border-default)]">
+                      <td colSpan={6} className="py-2 px-3 text-right text-[13px] font-medium text-red-600">Discount</td>
+                      <td colSpan={2} className="py-2 pl-3 text-right text-[13px] tabular-nums font-semibold text-red-600">−{formatMoney(q.discount, q.currency)}</td>
+                    </tr>
+                  )}
+                  {q.tax > 0 && (
+                    <tr className="border-t border-[var(--border-default)]">
+                      <td colSpan={6} className="py-2 px-3 text-right text-[13px] font-medium text-[var(--text-secondary)]">GST</td>
+                      <td colSpan={2} className="py-2 pl-3 text-right text-[13px] tabular-nums font-semibold text-[var(--text-primary)]">{formatMoney(q.tax, q.currency)}</td>
+                    </tr>
+                  )}
+                  <tr className="border-t-2 border-[var(--color-primary)]/20 bg-[var(--color-primary)]/5">
+                    <td colSpan={6} className="py-3 px-3 text-right text-[14px] font-bold text-[var(--text-primary)]">Grand Total</td>
+                    <td colSpan={2} className="py-3 pl-3 text-right text-[16px] tabular-nums font-bold text-[var(--color-primary)]">{formatMoney(q.total, q.currency)}</td>
+                  </tr>
+                  {(q.freight && q.freight !== "0" && q.freight !== "string") && (
+                    <tr className="border-t border-[var(--border-default)]">
+                      <td colSpan={6} className="py-1.5 px-3 text-right text-[11px] text-[var(--text-muted)]">Includes Freight: {q.freight}</td>
+                      <td colSpan={2} />
+                    </tr>
+                  )}
+                </tfoot>
               </table>
             </div>
           </Section>

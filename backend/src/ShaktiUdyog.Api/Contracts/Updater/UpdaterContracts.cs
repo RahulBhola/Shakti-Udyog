@@ -24,7 +24,8 @@ public record UpdaterRfqDetailDto(
     string? MachiningRequired, string? PatternAvailability,
     string? PrototypeQuantity, string? ProductionQuantity, string? AnnualRequirement,
     DateTimeOffset? ExpectedDeliveryDate, string? PreferredDeliveryTerms,
-    string? AdditionalRequirements, string? Remarks);
+    string? AdditionalRequirements, string? Remarks,
+    bool HasDraftQuotation, Guid? DraftQuotationId);
 
 public record UpdaterRfqFileDto(
     Guid Id, string FileName, string ContentType, long SizeBytes,

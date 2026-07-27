@@ -89,6 +89,7 @@ public record QuotationDetailDto(
     decimal Subtotal, decimal Tax, decimal Discount, decimal Total,
     string Currency, string? PaymentTerms, string? DeliveryTerms,
     string? Freight, string? Packing, string? Remarks,
+    string? DeliveryTime, string? Warranty,
     string Status, string? CustomerResponseComment, DateTimeOffset? CustomerRespondedAtUtc,
     DateTimeOffset? ValidUntilUtc, Guid? DocumentId, DateTimeOffset CreatedAtUtc,
     IReadOnlyList<QuotationItemDto> Items);

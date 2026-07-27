@@ -78,6 +78,8 @@ export interface QuotationDetail extends QuotationListItem {
   discount: number;
   paymentTerms: string | null;
   deliveryTerms: string | null;
+  deliveryTime: string | null;
+  warranty: string | null;
   freight: string | null;
   packing: string | null;
   remarks: string | null;

@@ -24,6 +24,7 @@ public record CreateQuotationRequest(
     decimal Subtotal, decimal Tax, decimal Discount, decimal Total,
     DateTimeOffset? ValidUntilUtc, string? PaymentTerms, string? DeliveryTerms,
     string? Freight, string? Packing, string? Remarks,
+    string? DeliveryTime, string? Warranty,
     IReadOnlyList<CreateQuotationItemRequest> Items);
 
 public record CreateQuotationItemRequest(
@@ -34,6 +35,7 @@ public record UpdateQuotationRequest(
     decimal? Subtotal, decimal? Tax, decimal? Discount, decimal? Total,
     string? PaymentTerms, string? DeliveryTerms, string? Freight,
     string? Packing, string? Remarks, DateTimeOffset? ValidUntilUtc,
+    string? DeliveryTime, string? Warranty,
     IReadOnlyList<CreateQuotationItemRequest>? Items);
 
 public record QuotationAttachmentDto(
@@ -107,6 +109,8 @@ public class QuotationUpdaterService(
             Freight = request.Freight,
             Packing = request.Packing,
             Remarks = request.Remarks,
+            DeliveryTime = request.DeliveryTime,
+            Warranty = request.Warranty,
             Status = QuotationStatuses.Draft,
             PreparedById = userId,
             Items = request.Items.Select(i => new QuotationItem
@@ -130,25 +134,25 @@ public class QuotationUpdaterService(
         if (q is null) return null;
         if (!AllowedStatuses.Contains(q.Status)) return false;
 
-        if (request.Subtotal.HasValue) q.Subtotal = request.Subtotal.Value;
-        if (request.Tax.HasValue) q.Tax = request.Tax.Value;
-        if (request.Discount.HasValue) q.Discount = request.Discount.Value;
-        if (request.Total.HasValue) q.Total = request.Total.Value;
-        if (request.PaymentTerms is not null) q.PaymentTerms = request.PaymentTerms;
-        if (request.DeliveryTerms is not null) q.DeliveryTerms = request.DeliveryTerms;
-        if (request.Freight is not null) q.Freight = request.Freight;
-        if (request.Packing is not null) q.Packing = request.Packing;
-        if (request.Remarks is not null) q.Remarks = request.Remarks;
+        q.Subtotal = request.Subtotal ?? q.Subtotal;
+        q.Tax = request.Tax ?? q.Tax;
+        q.Discount = request.Discount ?? q.Discount;
+        q.Total = request.Total ?? q.Total;
+        if (request.PaymentTerms is not null) q.PaymentTerms = string.IsNullOrEmpty(request.PaymentTerms) ? null : request.PaymentTerms;
+        if (request.DeliveryTerms is not null) q.DeliveryTerms = string.IsNullOrEmpty(request.DeliveryTerms) ? null : request.DeliveryTerms;
+        if (request.Freight is not null) q.Freight = string.IsNullOrEmpty(request.Freight) ? null : request.Freight;
+        if (request.Packing is not null) q.Packing = string.IsNullOrEmpty(request.Packing) ? null : request.Packing;
+        if (request.Remarks is not null) q.Remarks = string.IsNullOrEmpty(request.Remarks) ? null : request.Remarks;
+        if (request.DeliveryTime is not null) q.DeliveryTime = string.IsNullOrEmpty(request.DeliveryTime) ? null : request.DeliveryTime;
+        if (request.Warranty is not null) q.Warranty = string.IsNullOrEmpty(request.Warranty) ? null : request.Warranty;
         if (request.ValidUntilUtc.HasValue) q.ValidUntilUtc = request.ValidUntilUtc;
 
         if (request.Items is not null)
         {
-            // Delete old items directly in the database (bypasses change tracker)
-            await db.QuotationItems.Where(i => i.QuotationId == id).ExecuteDeleteAsync();
-            // Add new items through the navigation property
+            await db.Database.ExecuteSqlRawAsync("DELETE FROM QuotationItems WHERE QuotationId = {0}", id);
             foreach (var item in request.Items)
             {
-                q.Items.Add(new QuotationItem
+                db.QuotationItems.Add(new QuotationItem
                 {
                     Id = Guid.NewGuid(),
                     QuotationId = id,
@@ -172,7 +176,14 @@ public class QuotationUpdaterService(
             ChangeNotes = "Quotation updated", ChangedByUserId = userId,
         });
 
-        await db.SaveChangesAsync();
+        try
+        {
+            await db.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"UpdateQuotation error for {id}: {ex.GetType().Name} - {ex.Message}", ex);
+        }
         await audit.WriteAsync("updater.quotation.updated", userId, "Quotation", q.Id.ToString(), ip);
         return true;
     }
@@ -238,6 +249,7 @@ public class QuotationUpdaterService(
         q.Id, q.QuotationNumber, q.RevisionNumber, q.RfqId, q.Rfq?.ProductType ?? "",
         q.Subtotal, q.Tax, q.Discount, q.Total,
         q.Currency, q.PaymentTerms, q.DeliveryTerms, q.Freight, q.Packing, q.Remarks,
+        q.DeliveryTime, q.Warranty,
         q.Status, q.CustomerResponseComment, q.CustomerRespondedAtUtc,
         q.ValidUntilUtc, q.DocumentId, q.CreatedAtUtc,
         q.Items.Select(i => new QuotationItemDto(
