@@ -126,7 +126,7 @@ public class QuotationUpdaterService(
 
     public async Task<bool?> UpdateQuotationAsync(Guid id, UpdateQuotationRequest request, Guid userId, string? ip)
     {
-        var q = await db.Quotations.Include(x => x.Items).SingleOrDefaultAsync(x => x.Id == id);
+        var q = await db.Quotations.SingleOrDefaultAsync(x => x.Id == id);
         if (q is null) return null;
         if (!AllowedStatuses.Contains(q.Status)) return false;
 
@@ -143,15 +143,26 @@ public class QuotationUpdaterService(
 
         if (request.Items is not null)
         {
-            db.QuotationItems.RemoveRange(q.Items);
-            q.Items = request.Items.Select(i => new QuotationItem
+            // Delete old items directly in the database (bypasses change tracker)
+            await db.QuotationItems.Where(i => i.QuotationId == id).ExecuteDeleteAsync();
+            // Add new items through the navigation property
+            foreach (var item in request.Items)
             {
-                Id = Guid.NewGuid(), LineNumber = i.LineNumber, PartNumber = i.PartNumber,
-                Description = i.Description, MaterialGrade = i.MaterialGrade,
-                Quantity = i.Quantity, Unit = i.Unit, UnitPrice = i.UnitPrice,
-                TaxPercent = i.TaxPercent,
-                LineTotal = i.Quantity * i.UnitPrice * (1 + i.TaxPercent / 100m),
-            }).ToList();
+                q.Items.Add(new QuotationItem
+                {
+                    Id = Guid.NewGuid(),
+                    QuotationId = id,
+                    LineNumber = item.LineNumber,
+                    PartNumber = item.PartNumber,
+                    Description = item.Description,
+                    MaterialGrade = item.MaterialGrade,
+                    Quantity = item.Quantity,
+                    Unit = item.Unit,
+                    UnitPrice = item.UnitPrice,
+                    TaxPercent = item.TaxPercent,
+                    LineTotal = item.Quantity * item.UnitPrice * (1 + item.TaxPercent / 100m),
+                });
+            }
         }
 
         q.RevisionNumber++;

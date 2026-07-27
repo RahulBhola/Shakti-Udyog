@@ -15,7 +15,7 @@ public interface IQuotationAdminService
     Task<bool?> ApproveQuotationAsync(Guid id, Guid userId, string? ip);
     Task<bool?> RejectQuotationAsync(Guid id, string reason, Guid userId, string? ip);
     Task<bool?> IssueQuotationAsync(Guid id, Guid userId, string? ip);
-    Task<bool?> CancelQuotationAsync(Guid id, Guid userId, string? ip);
+    Task<bool?> CancelQuotationAsync(Guid id, string? reason, Guid userId, string? ip);
     Task<bool?> OverrideStatusAsync(Guid id, string newStatus, string? note, Guid userId, string? ip);
     Task<IReadOnlyList<QuotationTimelineEntryDto>> GetHistoryAsync(Guid id);
 }
@@ -90,13 +90,13 @@ public class QuotationAdminService(
         return true;
     }
 
-    public async Task<bool?> CancelQuotationAsync(Guid id, Guid userId, string? ip)
+    public async Task<bool?> CancelQuotationAsync(Guid id, string? reason, Guid userId, string? ip)
     {
         var q = await db.Quotations.SingleOrDefaultAsync(x => x.Id == id);
         if (q is null) return null;
         if (!QuotationStatuses.IsValidTransition(q.Status, QuotationStatuses.Cancelled)) return false;
         var from = q.Status; q.Status = QuotationStatuses.Cancelled;
-        AddHistory(q.Id, from, QuotationStatuses.Cancelled, userId, "Admin", "Quotation cancelled");
+        AddHistory(q.Id, from, QuotationStatuses.Cancelled, userId, "Admin", reason ?? "Quotation cancelled");
         await db.SaveChangesAsync();
         await audit.WriteAsync("admin.quotation.cancelled", userId, "Quotation", q.Id.ToString(), ip);
         return true;

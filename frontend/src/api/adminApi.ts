@@ -24,7 +24,7 @@ export const adminApi = {
   approveQuotation: (id: string) => apiPatch<{ message: string }>(`${base}/quotations/${id}/approve`, {}),
   rejectQuotation: (id: string, reason: string) => apiPatch<{ message: string }>(`${base}/quotations/${id}/reject`, reason),
   issueQuotation: (id: string) => apiPatch<{ message: string }>(`${base}/quotations/${id}/issue`, {}),
-  cancelQuotation: (id: string) => apiPatch<{ message: string }>(`${base}/quotations/${id}/cancel`, {}),
+  cancelQuotation: (id: string, reason?: string) => apiPatch<{ message: string }>(`${base}/quotations/${id}/cancel`, { reason }),
   overrideStatus: (id: string, newStatus: string, note?: string) => apiPatch<{ message: string }>(`${base}/quotations/${id}/override-status`, { newStatus, note }),
   history: (id: string) => apiGet<QuotationTimelineEntry[]>(`${base}/quotations/${id}/history`),
 

@@ -51,9 +51,9 @@ public class QuotationAdminController(IQuotationAdminService service) : Controll
     }
 
     [HttpPatch("quotations/{id:guid}/cancel")]
-    public async Task<IActionResult> CancelQuotation(Guid id)
+    public async Task<IActionResult> CancelQuotation(Guid id, CancelQuotationRequest request)
     {
-        var result = await service.CancelQuotationAsync(id, UserId, ClientIp);
+        var result = await service.CancelQuotationAsync(id, request.Reason, UserId, ClientIp);
         return result switch { null => NotFound(), false => Conflict(new MessageResponse("Cannot cancel in current state.")), _ => Ok(new MessageResponse("Quotation cancelled.")) };
     }
 
@@ -72,3 +72,5 @@ public class QuotationAdminController(IQuotationAdminService service) : Controll
         return Ok(await service.GetHistoryAsync(id));
     }
 }
+
+public record CancelQuotationRequest(string Reason);

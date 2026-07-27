@@ -74,6 +74,7 @@ export default function CreateQuotationPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const rfqIdParam = searchParams.get("rfqId") ?? "";
+  const editQuotationId = searchParams.get("editQuotationId") ?? "";
 
   // ── State ─────────────────────────────────────────────────────
   const [rfq, setRfq] = useState<UpdaterRfqDetail | null>(null);
@@ -100,13 +101,43 @@ export default function CreateQuotationPage() {
     { id: "1", description: "", quantity: 0, unit: "pcs", unitPrice: 0, discountPercent: 0, gstPercent: 18, amount: 0 },
   ]);
 
-  // ── Load RFQ ─────────────────────────────────────────────────
+  // ── Load RFQ (or load existing quotation for editing) ────────
   useEffect(() => {
+    if (editQuotationId) {
+      updaterApi.quotation(editQuotationId).then(async (q) => {
+        // Load the originating RFQ for context
+        const rfqData = await updaterApi.rfq(q.rfqId).catch(() => null);
+        setRfq(rfqData);
+        // Pre-fill form fields from existing quotation
+        setValidUntil(q.validUntilUtc ? q.validUntilUtc.slice(0, 10) : "");
+        setPaymentTerms(q.paymentTerms ?? "");
+        setDeliveryTerms(q.deliveryTerms ?? "");
+        setCurrency(q.currency);
+        setCustomerNotes(q.remarks ?? "");
+        setFreight(Number(q.freight) || 0);
+        setPacking(Number(q.packing) || 0);
+        // Pre-fill items
+        if (q.items.length > 0) {
+          setItems(q.items.map((i) => ({
+            id: crypto.randomUUID(),
+            description: i.description,
+            quantity: i.quantity,
+            unit: i.unit,
+            unitPrice: i.unitPrice,
+            discountPercent: 0,
+            gstPercent: Number(i.taxPercent),
+            amount: i.lineTotal,
+          })));
+        }
+        setLoading(false);
+      }).catch(() => { setError("Quotation not found."); setLoading(false); });
+      return;
+    }
     if (!rfqIdParam) { setLoading(false); setError("No RFQ ID provided."); return; }
     updaterApi.rfq(rfqIdParam)
       .then((data) => { setRfq(data); setLoading(false); })
       .catch(() => { setError("RFQ not found or inaccessible."); setLoading(false); });
-  }, [rfqIdParam]);
+  }, [rfqIdParam, editQuotationId]);
 
   // ── Auto-calculate line amounts ───────────────────────────────
   const calculatedItems = useMemo(() =>
@@ -188,13 +219,20 @@ export default function CreateQuotationPage() {
         })),
       };
 
-      const { id } = await updaterApi.createQuotation(payload);
-      // Advance RFQ to Quoted — removes from RFQ list, appears in Quotations
-      await updaterApi.updateRfqStatus(rfq.id, "Quoted").catch(() => {});
-      if (submit) {
-        await updaterApi.submitQuotation(id);
+      if (editQuotationId) {
+        await updaterApi.updateQuotation(editQuotationId, payload);
+        if (submit) {
+          await updaterApi.submitQuotation(editQuotationId);
+        }
+        navigate(`/admin/quotations/${editQuotationId}`);
+      } else {
+        const { id } = await updaterApi.createQuotation(payload);
+        if (submit) {
+          await updaterApi.updateRfqStatus(rfq.id, "Quoted").catch(() => {});
+          await updaterApi.submitQuotation(id);
+        }
+        navigate(`/admin/quotations/${id}`);
       }
-      navigate(`/admin/quotations/${id}`);
     } catch {
       setSaveMsg("Failed to create quotation. Please check the data and try again.");
     } finally {
@@ -243,11 +281,11 @@ export default function CreateQuotationPage() {
             <ArrowLeft size={15} />
           </button>
           <div>
-            <h1 className="text-xl font-bold text-[var(--text-primary)]">Create Quotation</h1>
+            <h1 className="text-xl font-bold text-[var(--text-primary)]">{editQuotationId ? "Edit Quotation" : "Create Quotation"}</h1>
             <p className="text-[12px] text-[var(--text-muted)]">Based on RFQ — {rfq.productType}</p>
           </div>
         </div>
-        {rfq.status !== "Approved" && (
+        {!editQuotationId && rfq.status !== "Approved" && (
           <div className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 text-[12px] font-medium">
             <AlertCircle size={14} />
             RFQ must be Approved to generate quotation
@@ -286,33 +324,120 @@ export default function CreateQuotationPage() {
 
           {/* ── Product Information (read-only) ──────────────── */}
           <Section title="Product Information" icon={Package}>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              <Field label="Product Type" value={rfq.productType} />
-              <Field label="Material Grade" value={rfq.materialGrade ?? "—"} />
-              <Field label="Quantity" value={rfq.quantity} />
-              <Field label="Delivery Location" value={rfq.deliveryLocation ?? "—"} />
+            <div className="space-y-5">
+
+              {/* Part Details */}
+              <div>
+                <h4 className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2.5">Part Details</h4>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  <Field label="Product Type" value={rfq.productType} />
+                  <Field label="Part Name" value={rfq.partName ?? "—"} />
+                  <Field label="Part Number" value={rfq.partNumber ?? "—"} />
+                  <Field label="Application" value={rfq.application ?? "—"} />
+                  <Field label="Industry" value={rfq.industry ?? "—"} />
+                </div>
+              </div>
+              <div className="border-t border-[var(--border-default)]" />
+
+              {/* Material Details */}
+              <div>
+                <h4 className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2.5">Material Details</h4>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  <Field label="Material Grade" value={rfq.materialGrade ?? "—"} />
+                  <Field label="Material Standard" value={rfq.materialStandard ?? "—"} />
+                  <Field label="Approx Weight" value={rfq.approxWeight != null ? `${rfq.approxWeight} kg` : "—"} />
+                  <Field label="Machining Required" value={rfq.machiningRequired ?? "—"} />
+                  <Field label="Pattern Availability" value={rfq.patternAvailability ?? "—"} />
+                </div>
+              </div>
+              <div className="border-t border-[var(--border-default)]" />
+
+              {/* Quantity Details */}
+              <div>
+                <h4 className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2.5">Quantity Details</h4>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  <Field label="Quantity" value={rfq.quantity} />
+                  <Field label="Prototype Quantity" value={rfq.prototypeQuantity ?? "—"} />
+                  <Field label="Production Quantity" value={rfq.productionQuantity ?? rfq.quantity} />
+                  <Field label="Annual Requirement" value={rfq.annualRequirement ?? "—"} />
+                </div>
+              </div>
+              <div className="border-t border-[var(--border-default)]" />
+
+              {/* Delivery Details */}
+              <div>
+                <h4 className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2.5">Delivery Details</h4>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  <Field label="Delivery Location" value={rfq.deliveryLocation ?? "—"} />
+                  <Field label="Expected Delivery Date" value={rfq.expectedDeliveryDate ? formatDate(rfq.expectedDeliveryDate) : "—"} />
+                  <Field label="Preferred Delivery Terms" value={rfq.preferredDeliveryTerms ?? "—"} />
+                </div>
+              </div>
+
+              {/* Requirements */}
+              {rfq.requirementDetails && (
+                <>
+                  <div className="border-t border-[var(--border-default)]" />
+                  <div>
+                    <h4 className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2.5">Requirements</h4>
+                    <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2.5">
+                      <p className="text-[13px] text-[var(--text-primary)] leading-relaxed whitespace-pre-wrap m-0">{rfq.requirementDetails}</p>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Additional Requirements */}
+              {rfq.additionalRequirements && (
+                <>
+                  <div className="border-t border-[var(--border-default)]" />
+                  <div>
+                    <h4 className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2.5">Additional Requirements</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {rfq.additionalRequirements.split(", ").filter(Boolean).map((r: string) => (
+                        <span key={r} className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium bg-white dark:bg-[var(--bg-surface)] border border-[var(--border-default)] text-[var(--text-primary)]">
+                          <CheckCircle size={11} className="text-emerald-500 shrink-0" />
+                          {r}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Remarks */}
+              {rfq.remarks && (
+                <>
+                  <div className="border-t border-[var(--border-default)]" />
+                  <div>
+                    <h4 className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2.5">Remarks</h4>
+                    <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2.5">
+                      <p className="text-[13px] text-[var(--text-primary)] leading-relaxed whitespace-pre-wrap m-0">{rfq.remarks}</p>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Attachments */}
+              {rfq.files.length > 0 && (
+                <>
+                  <div className="border-t border-[var(--border-default)]" />
+                  <div>
+                    <h4 className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2.5 flex items-center gap-1.5">
+                      <Paperclip size={12} /> Attachments ({rfq.files.length})
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                      {rfq.files.map((f) => (
+                        <span key={f.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[var(--bg-surface-hover)] text-[11px] text-[var(--text-secondary)]">
+                          <FileText size={11} />
+                          {f.fileName}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
-            {rfq.requirementDetails && (
-              <div className="mt-4 pt-4 border-t border-[var(--border-default)]">
-                <div className="text-[11px] text-[var(--text-muted)] font-medium mb-1.5">Requirements</div>
-                <p className="text-[13px] text-[var(--text-primary)] leading-relaxed whitespace-pre-wrap m-0">{rfq.requirementDetails}</p>
-              </div>
-            )}
-            {rfq.files.length > 0 && (
-              <div className="mt-4 pt-4 border-t border-[var(--border-default)]">
-                <div className="text-[11px] text-[var(--text-muted)] font-medium mb-2 flex items-center gap-1.5">
-                  <Paperclip size={12} /> Attachments ({rfq.files.length})
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {rfq.files.map((f) => (
-                    <span key={f.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[var(--bg-surface-hover)] text-[11px] text-[var(--text-secondary)]">
-                      <FileText size={11} />
-                      {f.fileName}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
           </Section>
 
           {/* ── Quotation Items (editable) ───────────────────── */}
@@ -489,12 +614,12 @@ export default function CreateQuotationPage() {
 
             {/* Action buttons */}
             <div className="px-5 pb-5 space-y-2">
-              <button type="button" disabled={saving || !hasItems || rfq.status !== "Approved"} onClick={() => void handleSave(false)}
+              <button type="button" disabled={saving || !hasItems || (!editQuotationId && rfq.status !== "Approved")} onClick={() => void handleSave(false)}
                 className="w-full flex items-center justify-center gap-1.5 h-10 rounded-xl bg-[var(--color-primary)] text-white text-[12px] font-semibold hover:bg-[var(--color-primary-hover)] disabled:opacity-50 transition-all">
                 {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                 Save Draft
               </button>
-              <button type="button" disabled={saving || !hasItems || rfq.status !== "Approved"} onClick={() => void handleSave(true)}
+              <button type="button" disabled={saving || !hasItems || (!editQuotationId && rfq.status !== "Approved")} onClick={() => void handleSave(true)}
                 className="w-full flex items-center justify-center gap-1.5 h-10 rounded-xl border border-[var(--border-default)] text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] disabled:opacity-50 transition-all">
                 <Send size={14} /> Submit for Approval
               </button>

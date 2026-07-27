@@ -95,6 +95,8 @@ export default function RfqEditPage() {
   const [partName, setPartName] = useState("");
   const [partNumber, setPartNumber] = useState("");
   const [application, setApplication] = useState("");
+  const [requirementDetails, setRequirementDetails] = useState("");
+  const [quantity, setQuantity] = useState("");
   const [industry, setIndustry] = useState("");
   const [materialGrade, setMaterialGrade] = useState("");
   const [materialStandard, setMaterialStandard] = useState("");
@@ -144,6 +146,8 @@ export default function RfqEditPage() {
       setPartName(data.partName ?? "");
       setPartNumber(data.partNumber ?? "");
       setApplication(data.application ?? "");
+      setRequirementDetails(data.requirementDetails ?? "");
+      setQuantity(data.quantity ?? "");
       setIndustry(data.industry ?? "");
       setMaterialGrade(data.materialGrade ?? "");
       setMaterialStandard(data.materialStandard ?? "");
@@ -169,9 +173,9 @@ export default function RfqEditPage() {
       await customerApi.updateRfq(id, {
         productType,
         materialGrade: materialGrade || undefined,
-        quantity: productionQty,
+        quantity: quantity || productionQty,
         deliveryLocation: deliveryLocation || undefined,
-        requirementDetails: application,
+        requirementDetails: requirementDetails || undefined,
         partName: partName || undefined,
         partNumber: partNumber || undefined,
         industry: industry || undefined,
@@ -283,6 +287,12 @@ export default function RfqEditPage() {
               <textarea value={application} onChange={(e) => setApplication(e.target.value)} rows={3}
                 className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2.5 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--color-primary)] resize-none" />
             </Field>
+            <div className="mt-5">
+              <Field label="Requirement Details" required>
+                <textarea value={requirementDetails} onChange={(e) => setRequirementDetails(e.target.value)} rows={4}
+                  className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2.5 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--color-primary)] resize-none" />
+              </Field>
+            </div>
           </div>
         </Section>
 

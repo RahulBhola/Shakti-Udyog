@@ -238,14 +238,16 @@ export default function UpdaterRfqDetailPage() {
   const [missing, setMissing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
 
   useEffect(() => {
     updaterApi.rfq(id).then(setRfq).catch(() => setMissing(true));
   }, [id]);
 
-  async function updateStatus(newStatus: string) {
+  async function updateStatus(newStatus: string, note?: string) {
     setBusy(true); setMsg(null);
-    try { const r = await updaterApi.updateRfqStatus(id, newStatus); setMsg(r.message); setRfq(await updaterApi.rfq(id)); }
+    try { const r = await updaterApi.updateRfqStatus(id, newStatus, note); setMsg(r.message); setRfq(await updaterApi.rfq(id)); }
     catch { setMsg("Status update failed."); }
     finally { setBusy(false); }
   }
@@ -342,10 +344,12 @@ export default function UpdaterRfqDetailPage() {
                   <FileEdit size={14} /> Generate Quotation
                 </button>
               )}
-              <button type="button"
-                className="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-[var(--border-default)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all">
-                <MoreHorizontal size={15} />
-              </button>
+              {!["Draft", "Rejected", "Declined", "Cancelled", "Expired"].includes(rfq.status) && (
+                <button type="button" disabled={busy} onClick={() => setShowRejectModal(true)}
+                  className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg border border-red-200 text-red-600 text-xs font-medium hover:bg-red-50 disabled:opacity-50 transition-all">
+                  <XCircle size={14} /> Reject
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -661,6 +665,49 @@ export default function UpdaterRfqDetailPage() {
         </Link>
       </div>
 
+      {/* ── Reject Modal ── */}
+      {showRejectModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-md" onClick={() => { setShowRejectModal(false); setRejectReason(""); }} />
+          <div className="relative w-full max-w-sm mx-4 rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="h-1.5 bg-gradient-to-r from-red-500 to-red-400" />
+            <div className="p-6">
+              <div className="flex items-center gap-4 mb-5">
+                <span className="flex items-center justify-center w-12 h-12 rounded-2xl bg-red-50 dark:bg-red-500/10 text-red-500 shrink-0">
+                  <XCircle size={22} />
+                </span>
+                <div>
+                  <h3 className="text-[16px] font-bold text-[var(--text-primary)] m-0">Reject RFQ</h3>
+                  <p className="text-[12px] text-[var(--text-muted)] m-0 mt-0.5">This will mark the RFQ as rejected.</p>
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <label className="text-[12px] font-medium text-[var(--text-primary)] block mb-1.5">Reason for Rejection</label>
+                <textarea value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} rows={3} placeholder="Explain why this RFQ is being rejected..."
+                  className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2.5 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-red-500 resize-none" />
+              </div>
+
+              <div className="border-t border-[var(--border-default)] mb-4" />
+              <div className="flex items-center justify-end gap-2.5">
+                <button type="button" disabled={busy} onClick={() => { setShowRejectModal(false); setRejectReason(""); }}
+                  className="px-4 h-9 rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all disabled:opacity-50">
+                  Cancel
+                </button>
+                <button type="button" disabled={busy || !rejectReason.trim()} onClick={() => {
+                  void updateStatus("Rejected", rejectReason.trim());
+                  setShowRejectModal(false);
+                  setRejectReason("");
+                }}
+                  className="px-5 h-9 rounded-xl bg-red-500 text-white text-[12px] font-semibold hover:bg-red-600 disabled:opacity-50 transition-all flex items-center gap-1.5 shadow-sm">
+                  {busy ? <Loader2 size={14} className="animate-spin" /> : <XCircle size={14} />}
+                  {busy ? "Rejecting..." : "Reject RFQ"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

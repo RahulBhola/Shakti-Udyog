@@ -88,6 +88,8 @@ export default function AdminQuotationDetailPage() {
   const [missing, setMissing] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
 
   useEffect(() => {
     adminApi.quotation(id).then(setQ).catch(() => setMissing(true));
@@ -141,10 +143,16 @@ export default function AdminQuotationDetailPage() {
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {q.status === "Draft" && (
-            <button type="button" disabled={busy} onClick={() => void doAction(() => updaterApi.submitQuotation(id))}
-              className="inline-flex items-center gap-1.5 px-4 h-8 rounded-lg bg-[var(--color-primary)] text-white text-[12px] font-semibold hover:bg-[var(--color-primary-hover)] disabled:opacity-50 transition-all">
-              {busy ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />} Submit
-            </button>
+            <>
+              <button type="button" onClick={() => navigate(`/admin/quotations/new?editQuotationId=${id}`)}
+                className="inline-flex items-center gap-1.5 px-4 h-8 rounded-lg border border-[var(--border-default)] text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all">
+                <FileEdit size={13} /> Edit
+              </button>
+              <button type="button" disabled={busy} onClick={() => void doAction(() => updaterApi.submitQuotation(id))}
+                className="inline-flex items-center gap-1.5 px-4 h-8 rounded-lg bg-[var(--color-primary)] text-white text-[12px] font-semibold hover:bg-[var(--color-primary-hover)] disabled:opacity-50 transition-all">
+                {busy ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />} Submit
+              </button>
+            </>
           )}
           {q.status === "Pending Approval" && (
             <button type="button" disabled={busy} onClick={() => void doAction(() => adminApi.approveQuotation(id))}
@@ -159,7 +167,7 @@ export default function AdminQuotationDetailPage() {
             </button>
           )}
           {!isTerminal && (
-            <button type="button" disabled={busy} onClick={() => { const r = prompt("Cancellation reason:"); if (r) doAction(() => adminApi.cancelQuotation(id)); }}
+            <button type="button" disabled={busy} onClick={() => setShowCancelModal(true)}
               className="inline-flex items-center gap-1.5 px-3.5 h-8 rounded-lg border border-red-200 text-red-600 text-[12px] font-medium hover:bg-red-50 disabled:opacity-50 transition-all">
               Cancel
             </button>
@@ -317,6 +325,46 @@ export default function AdminQuotationDetailPage() {
           </Section>
         </div>
       </div>
+
+      {/* ── Cancel Modal ── */}
+      {showCancelModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-md" onClick={() => { setShowCancelModal(false); setCancelReason(""); }} />
+          <div className="relative w-full max-w-sm mx-4 rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="h-1.5 bg-gradient-to-r from-red-500 to-red-400" />
+            <div className="p-6">
+              <div className="flex items-center gap-4 mb-5">
+                <span className="flex items-center justify-center w-12 h-12 rounded-2xl bg-red-50 dark:bg-red-500/10 text-red-500 shrink-0">
+                  <XCircle size={22} />
+                </span>
+                <div>
+                  <h3 className="text-[16px] font-bold text-[var(--text-primary)] m-0">Cancel Quotation</h3>
+                  <p className="text-[12px] text-[var(--text-muted)] m-0 mt-0.5">This will cancel the quotation for the customer.</p>
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <label className="text-[12px] font-medium text-[var(--text-primary)] block mb-1.5">Reason for Cancellation</label>
+                <textarea value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} rows={3} placeholder="Explain why this quotation is being cancelled..."
+                  className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2.5 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-red-500 resize-none" />
+              </div>
+
+              <div className="border-t border-[var(--border-default)] mb-4" />
+              <div className="flex items-center justify-end gap-2.5">
+                <button type="button" disabled={busy} onClick={() => { setShowCancelModal(false); setCancelReason(""); }}
+                  className="px-4 h-9 rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all disabled:opacity-50">
+                  Keep
+                </button>
+                <button type="button" disabled={busy || !cancelReason.trim()} onClick={() => { doAction(() => adminApi.cancelQuotation(id, cancelReason.trim())); setShowCancelModal(false); setCancelReason(""); }}
+                  className="px-5 h-9 rounded-xl bg-red-500 text-white text-[12px] font-semibold hover:bg-red-600 disabled:opacity-50 transition-all flex items-center gap-1.5 shadow-sm">
+                  {busy ? <Loader2 size={14} className="animate-spin" /> : <XCircle size={14} />}
+                  {busy ? "Cancelling..." : "Cancel Quotation"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
