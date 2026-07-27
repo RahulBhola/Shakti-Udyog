@@ -155,6 +155,12 @@ export default function AdminQuotationDetailPage() {
               </button>
             </>
           )}
+          {q.status === "Negotiating" && (
+            <button type="button" onClick={() => navigate(`/admin/quotations/new?editQuotationId=${id}`)}
+              className="inline-flex items-center gap-1.5 px-4 h-8 rounded-lg bg-amber-500 text-white text-[12px] font-semibold hover:bg-amber-600 transition-all">
+              <FileEdit size={13} /> Revise & Re-issue
+            </button>
+          )}
           {q.status === "Pending Approval" && (
             <button type="button" disabled={busy} onClick={() => setShowApproveModal(true)}
               className="inline-flex items-center gap-1.5 px-4 h-8 rounded-lg bg-emerald-500 text-white text-[12px] font-semibold hover:bg-emerald-600 disabled:opacity-50 transition-all">

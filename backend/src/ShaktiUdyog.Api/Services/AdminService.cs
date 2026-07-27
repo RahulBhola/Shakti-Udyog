@@ -78,7 +78,8 @@ public class AdminService(
         if (rfq is null) return null;
 
         var draftQuotationId = await db.Quotations
-            .Where(q => q.RfqId == rfq.Id && q.Status == "Draft")
+            .Where(q => q.RfqId == rfq.Id)
+            .OrderByDescending(q => q.CreatedAtUtc)
             .Select(q => (Guid?)q.Id)
             .FirstOrDefaultAsync();
 

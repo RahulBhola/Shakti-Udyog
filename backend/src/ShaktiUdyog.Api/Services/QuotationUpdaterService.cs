@@ -51,7 +51,7 @@ public class QuotationUpdaterService(
     IFileStorageService storage,
     IAuditWriter audit) : IQuotationUpdaterService
 {
-    private static readonly string[] AllowedStatuses = [QuotationStatuses.Draft, QuotationStatuses.PendingApproval];
+    private static readonly string[] AllowedStatuses = [QuotationStatuses.Draft, QuotationStatuses.PendingApproval, QuotationStatuses.Negotiating];
 
     public async Task<PagedResult<QuotationListItemDto>> GetQuotationsAsync(
         int page = 1, int pageSize = 20, string? search = null, string? status = null)
@@ -175,6 +175,12 @@ public class QuotationUpdaterService(
             Id = Guid.NewGuid(), QuotationId = q.Id, RevisionNumber = q.RevisionNumber,
             ChangeNotes = "Quotation updated", ChangedByUserId = userId,
         });
+
+        // Reset to Draft if was in Negotiating so admin can re-submit
+        if (q.Status == QuotationStatuses.Negotiating)
+        {
+            q.Status = QuotationStatuses.Draft;
+        }
 
         try
         {
