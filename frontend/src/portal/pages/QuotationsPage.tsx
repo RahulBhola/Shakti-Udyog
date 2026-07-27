@@ -98,6 +98,8 @@ export function QuotationDetailPage() {
                 <tr><th scope="row">Delivery terms</th><td>{quotation.deliveryTerms ?? "—"}</td></tr>
                 <tr><th scope="row">Freight</th><td>{quotation.freight ?? "—"}</td></tr>
                 <tr><th scope="row">Packing</th><td>{quotation.packing ?? "—"}</td></tr>
+                <tr><th scope="row">Delivery Time</th><td>{quotation.deliveryTime ?? "—"}</td></tr>
+                <tr><th scope="row">Warranty</th><td>{quotation.warranty ?? "—"}</td></tr>
                 <tr><th scope="row">Valid until</th><td>{formatDate(quotation.validUntilUtc)}</td></tr>
                 <tr><th scope="row">Issued</th><td>{formatDate(quotation.createdAtUtc)}</td></tr>
               </tbody>

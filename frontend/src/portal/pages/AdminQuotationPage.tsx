@@ -90,6 +90,7 @@ export default function AdminQuotationDetailPage() {
   const [busy, setBusy] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
+  const [showApproveModal, setShowApproveModal] = useState(false);
 
   useEffect(() => {
     adminApi.quotation(id).then(setQ).catch(() => setMissing(true));
@@ -155,7 +156,7 @@ export default function AdminQuotationDetailPage() {
             </>
           )}
           {q.status === "Pending Approval" && (
-            <button type="button" disabled={busy} onClick={() => void doAction(() => adminApi.approveQuotation(id))}
+            <button type="button" disabled={busy} onClick={() => setShowApproveModal(true)}
               className="inline-flex items-center gap-1.5 px-4 h-8 rounded-lg bg-emerald-500 text-white text-[12px] font-semibold hover:bg-emerald-600 disabled:opacity-50 transition-all">
               {busy ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle size={13} />} Approve
             </button>
@@ -367,7 +368,49 @@ export default function AdminQuotationDetailPage() {
         </div>
       </div>
 
-      {/* ── Cancel Modal ── */}
+            {/* ── Approve Confirmation Modal ── */}
+      {showApproveModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-md" onClick={() => setShowApproveModal(false)} />
+          <div className="relative w-full max-w-md mx-4 rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="h-1.5 bg-gradient-to-r from-emerald-500 to-emerald-400" />
+            <div className="p-6">
+              <div className="flex items-start gap-4 mb-5">
+                <span className="flex items-center justify-center w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-500 shrink-0 mt-1">
+                  <CheckCircle size={22} />
+                </span>
+                <div>
+                  <h3 className="text-[16px] font-bold text-[var(--text-primary)] m-0">Approve Quotation</h3>
+                  <p className="text-[12px] text-[var(--text-muted)] m-0 mt-2 leading-relaxed">
+                    After approval, the customer will be able to <strong>Accept</strong> or <strong>Decline</strong> this quotation from their portal. 
+                    The quotation will be issued to the customer for their review and response.
+                  </p>
+                  <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-500/10 p-3.5">
+                    <p className="text-[12px] text-amber-800 dark:text-amber-300 m-0 leading-relaxed">
+                      <strong>Note:</strong> Customers can accept or decline quotations after they are approved. 
+                      Any changes after approval require cancelling and re-issuing.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-[var(--border-default)] mb-4" />
+              <div className="flex items-center justify-end gap-2.5">
+                <button type="button" disabled={busy} onClick={() => setShowApproveModal(false)}
+                  className="px-4 h-9 rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all disabled:opacity-50">
+                  Cancel
+                </button>
+                <button type="button" disabled={busy} onClick={() => { doAction(() => adminApi.approveQuotation(id)); setShowApproveModal(false); }}
+                  className="px-5 h-9 rounded-xl bg-emerald-500 text-white text-[12px] font-semibold hover:bg-emerald-600 disabled:opacity-50 transition-all flex items-center gap-1.5 shadow-sm">
+                  {busy ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
+                  {busy ? "Approving..." : "Approve & Issue"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+{/* ── Cancel Modal ── */}
       {showCancelModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-md" onClick={() => { setShowCancelModal(false); setCancelReason(""); }} />

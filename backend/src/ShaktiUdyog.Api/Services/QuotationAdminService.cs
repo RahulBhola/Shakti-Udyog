@@ -57,10 +57,19 @@ public class QuotationAdminService(
         var q = await db.Quotations.SingleOrDefaultAsync(x => x.Id == id);
         if (q is null) return null;
         if (!QuotationStatuses.IsValidTransition(q.Status, QuotationStatuses.Approved)) return false;
-        var from = q.Status; q.Status = QuotationStatuses.Approved;
+        var from = q.Status;
+        q.Status = QuotationStatuses.Approved;
         AddHistory(q.Id, from, QuotationStatuses.Approved, userId, "Admin", "Approved by administrator");
         q.ApprovedById = userId;
         db.QuotationApprovals.Add(new QuotationApproval { Id = Guid.NewGuid(), QuotationId = q.Id, ApprovedByUserId = userId, Action = "Approved" });
+
+        // Auto-issue to customer so they can accept/decline
+        if (QuotationStatuses.IsValidTransition(QuotationStatuses.Approved, QuotationStatuses.Issued))
+        {
+            q.Status = QuotationStatuses.Issued;
+            AddHistory(q.Id, QuotationStatuses.Approved, QuotationStatuses.Issued, userId, "Admin", "Quotation issued to customer");
+        }
+
         await db.SaveChangesAsync();
         await audit.WriteAsync("admin.quotation.approved", userId, "Quotation", q.Id.ToString(), ip);
         return true;

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { customerApi, type RfqDetail, type RfqTimelineEntry } from "../../api/customerApi";
+import { customerApi, type RfqDetail, type RfqTimelineEntry, type QuotationListItem } from "../../api/customerApi";
 import { config } from "../../config";
 import { tokenStorage } from "../../auth/tokenStorage";
 import { Loading } from "../../components/ui";
@@ -147,11 +147,16 @@ export default function RfqDetailPage() {
   const [rfq, setRfq] = useState<RfqDetail | null>(null);
   const [timeline, setTimeline] = useState<RfqTimelineEntry[] | null>(null);
   const [missing, setMissing] = useState(false);
+  const [quotation, setQuotation] = useState<QuotationListItem | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     customerApi.rfq(id).then(setRfq).catch(() => setMissing(true));
     customerApi.rfqTimeline(id).then(setTimeline).catch(() => {});
+    customerApi.quotations().then((list) => {
+      const found = list.find((q) => q.rfqId === id);
+      if (found) setQuotation(found);
+    }).catch(() => {});
   }, [id]);
 
   async function submitDraft() {
@@ -275,6 +280,20 @@ export default function RfqDetailPage() {
                   {submitting ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                   Submit Draft
                 </button>
+              </div>
+            )}
+
+            {quotation && !isDraft && ["Quoted","Accepted","Declined"].includes(rfq.status) && (
+              <div className="mt-6 pt-4 border-t border-[var(--border-default)]">
+                <Link to={"/customer/quotations/" + quotation.id}
+                  className="w-full flex items-center justify-center gap-2 px-4 h-10 rounded-lg bg-[var(--color-primary)] text-white text-sm font-semibold hover:bg-[var(--color-primary-hover)] transition-all no-underline">
+                  <FileText size={14} /> View Quotation
+                </Link>
+                {rfq.status === "Quoted" && quotation.status === "Issued" && (
+                  <p className="text-[11px] text-[var(--text-muted)] mt-2 text-center">
+                    You can accept or decline this quotation from the quotation page.
+                  </p>
+                )}
               </div>
             )}
           </SectionCard>
