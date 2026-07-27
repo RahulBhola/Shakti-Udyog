@@ -1,6 +1,6 @@
 # Shakti Udyog — Complete Project Reference
 
-> **Generated:** 2026-07-26  
+> **Generated:** 2026-07-28  
 > **Purpose:** Single source-of-truth for LLM agents working on this project. Read this file instead of exploring the full codebase.
 
 ---
@@ -426,6 +426,7 @@ All endpoints are under `/api/v1/`. Authentication: JWT Bearer.
 | GET | `/api/v1/customer/orders/{id}` | Get order detail |
 | GET | `/api/v1/customer/orders/{id}/timeline` | Get order timeline |
 | POST | `/api/v1/customer/orders/{id}/support-requests` | Raise support request |
+| POST | `/api/v1/customer/orders/{id}/pay-advance` | Submit advance payment proof |
 | GET | `/api/v1/customer/invoices` | List invoices |
 | GET | `/api/v1/customer/invoices/{id}` | Get invoice detail |
 | GET | `/api/v1/customer/documents` | List documents |
@@ -473,6 +474,9 @@ All endpoints are under `/api/v1/`. Authentication: JWT Bearer.
 | PATCH | `/api/v1/admin/quotations/{id}/cancel` | Cancel quotation |
 | PATCH | `/api/v1/admin/quotations/{id}/override-status` | Override status |
 | GET | `/api/v1/admin/quotations/{id}/history` | Get status history |
+| POST | `/api/v1/admin/quotations/{quotationId}/create-order` | Create order from accepted quotation |
+| PATCH | `/api/v1/admin/orders/{orderId}/verify-advance` | Verify advance payment |
+| PATCH | `/api/v1/admin/orders/{orderId}/stage` | Update order production stage |
 | GET | `/api/v1/admin/orders` | List all orders |
 | GET | `/api/v1/admin/orders/{id}` | Get order detail |
 | PATCH | `/api/v1/admin/orders/{id}/approve-update` | Approve order update |
@@ -567,15 +571,15 @@ The database has **60+ entity tables** under SQL Server. Key entity groups:
 | `RfqStatusHistory` | RfqStatusHistory | FromStatus, ToStatus, ChangedByRole, Note |
 | `RfqComment` | RfqComments | AuthorRole, Message, IsCustomerVisible |
 | `RfqAssignment` | RfqAssignments | RfqId, AssignedToUserId, IsActive |
-| `Quotation` | Quotations | QuotationNumber, Subtotal, Tax, Total, Status, ValidUntilUtc, RowVersion |
+| `Quotation` | Quotations | QuotationNumber, Subtotal, Tax, Total, Status, ValidUntilUtc, DeliveryTime, Warranty, RowVersion |
 | `QuotationItem` | QuotationItems | PartNumber, Description, MaterialGrade, UnitPrice, LineTotal |
 | `QuotationRevision` | QuotationRevisions | ChangeNotes, PreviousTotal, NewTotal |
 | `QuotationStatusHistory` | QuotationStatusHistory | FromStatus, ToStatus |
 | `QuotationComment` | QuotationComments | AuthorRole, Message |
 | `QuotationAttachment` | QuotationAttachments | FileName, StorageKey |
 | `QuotationApproval` | QuotationApprovals | Action, Comment |
-| `Order` | Orders | OrderNumber, Status, PurchaseOrderReference, RowVersion |
-| `OrderItem` | OrderItems | PartNumber, Description, MaterialGrade, QuantityOrdered, QuantityProduced, QuantityDispatched |
+| `Order` | Orders | OrderNumber, Status, PurchaseOrderReference, AdvancePercent, AdvanceAmount, AdvancePaid, AdvancePaymentRef, QuotationTotal, PaymentTerms, RowVersion |
+| `OrderItem` | OrderItems | PartNumber, Description, MaterialGrade, Unit, QuantityOrdered, QuantityProduced, QuantityDispatched, UnitRate |
 | `OrderMilestone` | OrderMilestones | StatusCode, CustomerMessage, InternalNote, IsCustomerVisible |
 | `OrderStatusHistory` | OrderStatusHistory | FromStatus, ToStatus |
 | `OrderComment` | OrderComments | AuthorRole, Message |
@@ -666,35 +670,35 @@ All sensitive changes → `AuditLog` (immutable — cannot be modified or delete
 ### RFQ Status Lifecycle
 
 ```
-Draft → Submitted → Received → Under Review → Waiting for Customer → Approved → Quoted → Accepted
+Draft → Submitted → Received → Under Review → Approved → Quoted → Accepted
                                                                          → Rejected          → Declined
                                                                                             → Expired
                                       Any state → Cancelled (terminal)
 ```
 
-States: `Draft`, `Submitted`, `Received`, `Under Review`, `Waiting for Customer`, `Approved`, `Rejected`, `Quoted`, `Accepted`, `Declined`, `Expired`, `Cancelled`
+States: `Draft`, `Submitted`, `Received`, `Under Review`, `Approved`, `Rejected`, `Quoted`, `Accepted`, `Declined`, `Expired`, `Cancelled`
 
 ### Quotation Status Lifecycle
 
 ```
-Draft → Pending Approval → Approved → Issued → Viewed → Negotiating → Accepted
+Draft → Pending Approval → Approved → Issued → Viewed → Negotiating → Accepted → Converted
                              → Draft                                    → Declined
                                                                         → Expired
 Any state → Cancelled (terminal)
 ```
 
-States: `Draft`, `Pending Approval`, `Approved`, `Issued`, `Viewed`, `Negotiating`, `Accepted`, `Declined`, `Expired`, `Cancelled`
+States: `Draft`, `Pending Approval`, `Approved`, `Issued`, `Viewed`, `Negotiating`, `Accepted`, `Converted`, `Declined`, `Expired`, `Cancelled`
 
 ### Order Status Lifecycle (Customer-Visible)
 
 ```
-Confirmed → Pattern / Tooling → In Production → Quality Inspection → Packed → Ready to Dispatch → Dispatched → Delivered → Closed
-                                                                    ↑         ↑                                      → Returned
+Pending Advance → Awaiting Approval → Advance Confirmed → Confirmed → Pattern / Tooling → In Production → Quality Inspection → Packed → Ready to Dispatch → Dispatched → Delivered → Closed
+                                                                                        ↑         ↑                                      → Returned
 Any active state → On Hold → back to previous state
 Any state → Cancelled (terminal)
 ```
 
-Internal codes: `confirmed`, `pattern_development`, `production`, `quality_check`, `packed`, `ready_to_dispatch`, `dispatched`, `delivered`, `on_hold`, `cancelled`, `returned`, `closed`
+Internal codes: `pending_advance`, `awaiting_approval`, `advance_paid`, `confirmed`, `pattern_development`, `production`, `quality_check`, `packed`, `ready_to_dispatch`, `dispatched`, `delivered`, `on_hold`, `cancelled`, `returned`, `closed`
 
 ### Invoice Statuses
 
@@ -716,7 +720,9 @@ Customer submits RFQ
   → Admin/authorized sales approver reviews
   → Quotation issued to customer
   → Customer accepts or declines
-  → Admin confirms order creation
+  → Admin creates order from accepted quotation (with 30% advance)
+  → Customer submits advance payment proof
+  → Admin verifies payment → production starts
   → Data Updater records production milestones
   → Customer receives status and approved documents
   → Invoice issued
@@ -912,6 +918,22 @@ Supported via `[data-theme="light"]` overrides with white backgrounds, darker te
 
 ---
 
+
+### Payment Gateway
+
+**Current:** Manual/offline payment flow is implemented:
+- Customer submits transaction reference number and payment proof
+- Admin verifies payment manually
+- Order advances from `pending_advance → awaiting_approval → advance_paid → confirmed`
+
+**Future Plan:**
+- Integrate Razorpay or Stripe payment gateway for instant UPI/card/NetBanking
+- Webhook-based automatic payment verification (removes manual step)
+- Payment gateway callback marks order as `advance_paid` automatically
+- Customer sees "Pay Now" with embedded checkout instead of manual form
+- Refund/cancel flow through gateway API
+- Planned but not yet implemented — current manual flow is sufficient for B2B high-value transactions
+
 ## 15. Key Code Patterns
 
 ### Adding a New API Endpoint
@@ -997,7 +1019,8 @@ Public forms use a honeypot field (`website`) — hidden from humans, visible to
 | 21 | `AddCommentAuthorAndEditTracking` | Comment authorship + edit tracking |
 | 22 | `AddRfqPriority` | Priority field on RFQ |
 | 23 | `AddProductMaster` | Product master data + attachments |
+| 24 | `AddOrderPaymentFields` | Order advance payment fields + milestone DTOs |
 
 ---
 
-*End of project reference. This file covers all subsystems of the Shakti Udyog platform as of 2026-07-26.*
+*End of project reference. This file covers all subsystems of the Shakti Udyog platform as of 2026-07-28.*

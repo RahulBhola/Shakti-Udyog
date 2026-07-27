@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { customerApi, type QuotationDetail, type QuotationListItem, type QuotationTimelineEntry } from "../../api/customerApi";
 import { EmptyState, Loading } from "../../components/ui";
+import { config } from "../../config";
+import { tokenStorage } from "../../auth/tokenStorage";
 import { formatDate, formatMoney } from "../shared";
 import {
   IndianRupee, Truck, Banknote, CalendarDays, FileText, Package,
@@ -60,7 +62,114 @@ export function QuotationDetailPage() {
     customerApi.quotationTimeline(id).then(setTimeline).catch(() => {});
   }, [id]);
 
-  async function respond() {
+  
+  function printQuotationDoc() {
+    if (!quotation) return;
+    const q = quotation;
+    const items = q.items || [];
+    const formatItem = (n, curr) => {
+      try { return new Intl.NumberFormat("en-IN", { style: "currency", currency: curr, maximumFractionDigits: 0 }).format(n); }
+      catch { return String(n); }
+    };
+    const fmtDate = (d) => d ? new Date(d).toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" }) : "—";
+    const w = window.open("", "_blank");
+    if (!w) return;
+
+    let rows = items.map((i, idx) => `<tr>
+      <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;text-align:center;">${idx + 1}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;"><strong style="font-size:13px;">${i.partNumber}</strong><br><span style="font-size:11px;color:#64748b;">${i.description}</span></td>
+      <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;color:#64748b;">${i.materialGrade || "—"}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;text-align:center;">${i.quantity}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;text-align:center;">${i.unit}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;text-align:right;font-variant-numeric:tabular-nums;">${formatItem(i.unitPrice, q.currency)}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;text-align:right;">${i.taxPercent}%</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:600;font-variant-numeric:tabular-nums;">${formatItem(i.lineTotal, q.currency)}</td>
+    </tr>`).join("");
+
+    let discRow = q.discount > 0 ? `<tr><td style="padding:5px 0;color:#64748b;">Discount</td><td style="padding:5px 0;text-align:right;color:#ef4444;font-weight:500;">\u2212${formatItem(q.discount, q.currency)}</td></tr>` : "";
+
+    w.document.write(`<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>${q.quotationNumber}</title>
+<style>
+  @page { margin: 20mm 15mm; }
+  body { font-family: "Inter", "Segoe UI", Arial, sans-serif; color: #1a1a2e; margin: 0; padding: 40px; font-size: 12px; line-height: 1.5; }
+  .header { display: flex; justify-content: space-between; align-items: start; border-bottom: 3px solid #2563eb; padding-bottom: 20px; margin-bottom: 24px; }
+  .header-left h1 { font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #2563eb; margin: 0 0 4px; }
+  .header-left h2 { font-size: 24px; font-weight: 700; margin: 0; color: #1a1a2e; }
+  .header-right { text-align: right; font-size: 11px; color: #64748b; }
+  .header-right strong { color: #1a1a2e; display: block; font-size: 13px; }
+  .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px; }
+  .meta-box { background: #f8fafc; border-radius: 8px; padding: 14px 18px; border: 1px solid #e2e8f0; }
+  .meta-box h3 { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: #64748b; margin: 0 0 4px; }
+  .meta-box .val { font-size: 15px; font-weight: 600; color: #1a1a2e; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
+  thead th { background: #f1f5f9; text-align: left; padding: 10px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; font-weight: 600; border-bottom: 2px solid #e2e8f0; }
+  .total-table { width: 320px; margin-left: auto; }
+  .total-table td { padding: 6px 0; font-size: 12px; }
+  .total-table .lbl { color: #64748b; }
+  .total-table .val { text-align: right; font-weight: 600; }
+  .grand td { padding-top: 10px; border-top: 2px solid #2563eb; font-size: 15px; font-weight: 700; color: #2563eb; }
+  .terms { margin-top: 28px; padding-top: 20px; border-top: 1px solid #e2e8f0; }
+  .terms h3 { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #64748b; margin: 0 0 8px; }
+  .terms p { font-size: 11px; color: #64748b; margin: 0 0 4px; line-height: 1.6; }
+  .footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #e2e8f0; text-align: center; font-size: 10px; color: #94a3b8; }
+  .badge { display: inline-block; padding: 3px 12px; border-radius: 12px; font-size: 10px; font-weight: 600; background: #f0fdf4; color: #16a34a; }
+</style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-left">
+      <h1>Quotation</h1>
+      <h2>${q.quotationNumber}</h2>
+      <div style="margin-top:6px;"><span class="badge">${q.status}</span></div>
+    </div>
+    <div class="header-right">
+      <strong>Shakti Udyog</strong>
+      Industrial Area, Ludhiana<br>Punjab, India
+    </div>
+  </div>
+
+  <div class="meta-grid">
+    <div class="meta-box"><h3>Customer</h3><div class="val">Customer Name</div></div>
+    <div class="meta-box"><h3>Issue Date</h3><div class="val">${fmtDate(q.createdAtUtc)}</div></div>
+    <div class="meta-box"><h3>Valid Until</h3><div class="val">${fmtDate(q.validUntilUtc)}</div></div>
+    <div class="meta-box"><h3>Revision</h3><div class="val">${q.revisionNumber}</div></div>
+  </div>
+
+  <table>
+    <thead><tr><th style="text-align:center;width:32px;">#</th><th>Part / Description</th><th>Grade</th><th style="text-align:center;">Qty</th><th style="text-align:center;">Unit</th><th style="text-align:right;">Unit Price</th><th style="text-align:right;">GST</th><th style="text-align:right;">Total</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>
+
+  <table class="total-table">
+    <tr><td class="lbl">Subtotal</td><td class="val">${formatItem(q.subtotal, q.currency)}</td></tr>
+    ${discRow}
+    <tr><td class="lbl">GST</td><td class="val">${formatItem(q.tax, q.currency)}</td></tr>
+    <tr class="grand"><td>Grand Total</td><td class="val">${formatItem(q.total, q.currency)}</td></tr>
+  </table>
+
+  <div class="terms">
+    <h3>Terms &amp; Conditions</h3>
+    <p>${q.paymentTerms || "Standard payment terms apply."}</p>
+    <p>Delivery: ${q.deliveryTerms || "As per mutual agreement."}</p>
+    ${q.deliveryTime ? "<p>Delivery Time: " + q.deliveryTime + "</p>" : ""}
+    ${q.warranty ? "<p>Warranty: " + q.warranty + "</p>" : ""}
+  </div>
+
+  ${q.remarks ? '<div class="terms"><h3>Notes</h3><p>' + q.remarks.replace(/\n/g, "<br>") + "</p></div>" : ""}
+
+  <div class="footer">This is a computer-generated quotation. For any queries, contact Shakti Udyog.</div>
+
+  <script>window.onload = function() { window.print(); window.close(); }<\/script>
+</body>
+</html>`);
+    w.document.close();
+  }
+
+async function respond() {
     if (!responding || !quotation) return;
     setBusy(true);
     try {
@@ -86,15 +195,6 @@ export function QuotationDetailPage() {
 
   return (
     <div className="space-y-6 pb-8">
-
-      {/* ── Breadcrumb ── */}
-      <nav className="breadcrumb" aria-label="Breadcrumb">
-        <ol>
-          <li><Link to="/customer/dashboard" style={{ color: "var(--color-primary)" }}>Home</Link></li>
-          <li><Link to="/customer/quotations" style={{ color: "var(--color-primary)" }}>Quotations</Link></li>
-          <li aria-current="page">{quotation.quotationNumber}</li>
-        </ol>
-      </nav>
 
       {/* ── Status message ── */}
       {message && (
@@ -418,15 +518,15 @@ export function QuotationDetailPage() {
                   <FileText size={28} />
                 </span>
               </div>
-              <button type="button"
+              <button type="button" onClick={printQuotationDoc}
                 className="w-full flex items-center justify-center gap-2 h-10 rounded-[10px] bg-[var(--color-primary)] text-white text-[12px] font-semibold hover:bg-[var(--color-primary-hover)] transition-all duration-200">
                 <Download size={14} /> Download PDF
               </button>
-              <button type="button"
+              <button type="button" onClick={printQuotationDoc}
                 className="w-full flex items-center justify-center gap-2 h-9 rounded-[10px] border border-[var(--border-default)] text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all duration-200">
                 <Printer size={14} /> Print Quotation
               </button>
-              <button type="button"
+              <button type="button" onClick={async () => { try { await navigator.share({ title: document.title, url: window.location.href }); } catch { navigator.clipboard?.writeText(window.location.href); } }}
                 className="w-full flex items-center justify-center gap-2 h-9 rounded-[10px] border border-[var(--border-default)] text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all duration-200">
                 <Share2 size={14} /> Share
               </button>
