@@ -14,7 +14,7 @@ import {
 
 const RFQ_STATUSES = [
   "Draft", "Submitted", "Received", "Under Review",
-  "Approved", "Rejected", "Quoted", "Accepted", "Declined", "Expired", "Cancelled",
+  "Approved", "Quoted", "Accepted",
 ];
 
 const STATUS_ICONS: Record<string, any> = {
@@ -242,10 +242,8 @@ export default function RfqDetailPage() {
                   const Icon = STATUS_ICONS[step] ?? Clock;
                   const isDone = i < flowIndex;
                   const isCurrent = i === flowIndex;
-                  if (isDone && step === "Rejected") return null;
+                  if (["Rejected","Declined","Expired","Cancelled"].includes(step) && step !== rfq.status) return null;
                   // Approved and Rejected are mutually exclusive — show only the active one
-                  if (step === "Approved" && rfq.status === "Rejected") return null;
-                  if (step === "Rejected" && rfq.status === "Approved") return null;
                   return (
                     <div key={step} className={`flex gap-2.5 ${isCurrent ? "" : isDone ? "opacity-70" : "opacity-40"}`}>
                       <div className="flex flex-col items-center">
