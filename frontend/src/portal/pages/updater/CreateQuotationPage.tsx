@@ -228,6 +228,8 @@ export default function CreateQuotationPage() {
       if (editQuotationId) {
         await updaterApi.updateQuotation(editQuotationId, payload);
         if (submit) {
+          // Advance RFQ to Quoted and submit the quotation
+          await updaterApi.updateRfqStatus(rfq?.id ?? "", "Quoted").catch(() => {});
           await updaterApi.submitQuotation(editQuotationId);
         }
         navigate(`/admin/quotations/${editQuotationId}`);

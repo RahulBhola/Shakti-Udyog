@@ -338,20 +338,19 @@ export default function UpdaterRfqDetailPage() {
                   <ChevronRight size={14} /> Advance Stage
                 </button>
               )}
-              {rfq.status === "Approved" && (
-                rfq.hasDraftQuotation ? (
-                  <Link to={`/admin/quotations/${rfq.draftQuotationId}`}
-                    className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg border border-amber-200 bg-amber-50 text-amber-700 text-xs font-semibold hover:bg-amber-100 transition-all no-underline hover:no-underline">
-                    <FileEdit size={14} /> View Draft
-                  </Link>
-                ) : (
-                  <button type="button" onClick={() => window.location.assign(`/admin/quotations/new?rfqId=${rfq.id}&companyName=${encodeURIComponent(rfq.companyName)}`)}
-                    className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg bg-emerald-500 text-white text-xs font-semibold hover:bg-emerald-600 transition-all">
-                    <FileEdit size={14} /> Generate Quotation
-                  </button>
-                )
+              {rfq.status === "Approved" && !rfq.hasDraftQuotation && (
+                <button type="button" onClick={() => window.location.assign(`/admin/quotations/new?rfqId=${rfq.id}&companyName=${encodeURIComponent(rfq.companyName)}`)}
+                  className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg bg-emerald-500 text-white text-xs font-semibold hover:bg-emerald-600 transition-all">
+                  <FileEdit size={14} /> Generate Quotation
+                </button>
               )}
-              {!["Draft", "Rejected", "Declined", "Cancelled", "Expired"].includes(rfq.status) && (
+              {rfq.hasDraftQuotation && (
+                <Link to={`/admin/quotations/${rfq.draftQuotationId}`}
+                  className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg border border-amber-200 bg-amber-50 text-amber-700 text-xs font-semibold hover:bg-amber-100 transition-all no-underline hover:no-underline">
+                  <FileEdit size={14} /> {rfq.status === "Approved" ? "View Draft" : "View Quotation"}
+                </Link>
+              )}
+              {!["Draft", "Quoted", "Rejected", "Declined", "Cancelled", "Expired"].includes(rfq.status) && (
                 <button type="button" disabled={busy} onClick={() => setShowRejectModal(true)}
                   className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg border border-red-200 text-red-600 text-xs font-medium hover:bg-red-50 disabled:opacity-50 transition-all">
                   <XCircle size={14} /> Reject
@@ -654,10 +653,10 @@ export default function UpdaterRfqDetailPage() {
 
       {/* ── Sticky Bottom Action Bar ── */}
       <div className="shrink-0 border-t border-[var(--border-default)] bg-[var(--bg-card)] px-6 py-4 flex items-center gap-3">
-        {rfq.status === "Approved" && rfq.hasDraftQuotation ? (
+        {rfq.hasDraftQuotation ? (
           <Link to={`/admin/quotations/${rfq.draftQuotationId}`}
             className="inline-flex items-center gap-1.5 px-5 h-10 rounded-lg border border-amber-200 bg-amber-50 text-amber-700 text-xs font-semibold hover:bg-amber-100 transition-all no-underline hover:no-underline">
-            <FileEdit size={14} /> View Draft Quotation
+            <FileEdit size={14} /> {rfq.status === "Approved" ? "View Draft Quotation" : "View Quotation"}
           </Link>
         ) : rfq.status === "Approved" ? (
           <button type="button" onClick={() => window.location.assign(`/admin/quotations/new?rfqId=${rfq.id}&companyName=${encodeURIComponent(rfq.companyName)}`)}
@@ -665,10 +664,7 @@ export default function UpdaterRfqDetailPage() {
             <FileEdit size={14} /> Generate Quotation
           </button>
         ) : (
-          <button type="button" disabled
-            className="inline-flex items-center gap-1.5 px-5 h-10 rounded-lg bg-[var(--color-primary)] text-white text-xs font-semibold opacity-60 cursor-not-allowed transition-all">
-            <FileEdit size={14} /> Generate Quotation
-          </button>
+          <span />
         )}
         <div className="flex-1" />
         <Link to="/admin/rfqs"
