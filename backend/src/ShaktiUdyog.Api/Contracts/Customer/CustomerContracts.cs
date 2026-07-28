@@ -111,7 +111,8 @@ public record QuotationResponseRequest(
 public record OrderListItemDto(
     Guid Id, string OrderNumber, string Status, string StatusLabel,
     DateTimeOffset PlacedAtUtc, DateTimeOffset? PromisedDispatchDateUtc,
-    int TotalQuantity, DateTimeOffset LastUpdatedAtUtc);
+    int TotalQuantity, DateTimeOffset LastUpdatedAtUtc,
+    string? CompanyName, string? ProductType);
 
 public record OrderDetailDto(
     Guid Id, string OrderNumber, string? PurchaseOrderReference,

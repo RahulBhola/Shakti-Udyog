@@ -136,6 +136,7 @@ export function ProductionBoard() {
   const [companies, setCompanies] = useState<{ id: string; name: string }[]>([]);
 
   // Preferences state
+  const [viewMode, setViewMode] = useState<"orders" | "production">("orders");
   const [prefs, setPrefs] = useState<BoardPreferences>({
     visibleColumns: null, visibleCardFields: null,
     cardSize: "Standard", displayMode: "Standard", columnOrder: null,
@@ -232,43 +233,22 @@ export function ProductionBoard() {
   return (
     <div className="prod-board">
       {/* Header */}
-      <div className="prod-board__header">
-        <h2>Manufacturing Board</h2>
-        <div className="prod-board__header-actions">
-          <span className="prod-board__count">{filteredJobs.length} jobs</span>
-
-          {/* View dropdown */}
-          <div className="prod-board__view-dropdown" ref={viewMenuRef}>
-            <button className="btn btn--ghost" onClick={() => setShowViewMenu((v) => !v)}>
-              View: {prefs.displayMode} / {prefs.cardSize}
-            </button>
-            {showViewMenu && (
-              <div className="prod-board__dropdown-menu">
-                <div className="prod-board__dropdown-section">
-                  <span className="prod-board__dropdown-label">Card Display</span>
-                  {["Compact", "Standard", "Detailed"].map((mode) => (
-                    <button key={mode} className={`prod-board__dropdown-item ${prefs.displayMode === mode ? "prod-board__dropdown-item--active" : ""}`}
-                      onClick={() => { savePrefs({ displayMode: mode, visibleCardFields: toCsv(DISPLAY_MODE_FIELDS[mode]) }); setShowViewMenu(false); }}>
-                      {mode === "Compact" ? "  Compact" : mode === "Standard" ? "  Standard" : "  Detailed"}
-                    </button>
-                  ))}
-                </div>
-                <div className="prod-board__dropdown-divider" />
-                <div className="prod-board__dropdown-section">
-                  <span className="prod-board__dropdown-label">Card Size</span>
-                  {["Compact", "Standard", "Large"].map((size) => (
-                    <button key={size} className={`prod-board__dropdown-item ${prefs.cardSize === size ? "prod-board__dropdown-item--active" : ""}`}
-                      onClick={() => { savePrefs({ cardSize: size }); setShowViewMenu(false); }}>
-                      {size === "Compact" ? "  Compact" : size === "Standard" ? "  Standard" : "  Large"}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+            <div className="prod-board__header">
+        <div className="prod-board__header-left">
+          <h1>Manufacturing Board</h1>
+          <p>Track and manage manufacturing jobs from order to dispatch.</p>
+        </div>
+        <div className="prod-board__header-right">
+          <div className="prod-board__kpi">
+            <div className="prod-board__kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="M2 12h20"/><path d="M12 2v20"/></svg></div>
+            <div><div className="prod-board__kpi-value">{filteredJobs.length}</div><div className="prod-board__kpi-label">Total Jobs</div></div>
           </div>
-
-          <button className="btn btn--ghost" onClick={() => setShowCustomize(true)}>Customize</button>
-          <button className="btn btn--primary" onClick={openCreateModal}>+ New Job</button>
+          <div className="prod-board__segments">
+            <button className={"prod-board__seg-btn" + (viewMode === "orders" ? " prod-board__seg-btn--active" : "")} onClick={() => setViewMode("orders")}>Orders</button>
+            <button className={"prod-board__seg-btn" + (viewMode === "production" ? " prod-board__seg-btn--active" : "")} onClick={() => setViewMode("production")}>Production</button>
+          </div>
+          <button className="prod-board__btn-ghost" onClick={() => setShowCustomize(true)}>Customize</button>
+          <button className="prod-board__btn-primary" onClick={openCreateModal}>+ New Job</button>
         </div>
       </div>
 
@@ -316,6 +296,17 @@ export function ProductionBoard() {
             </div>
           </div>
         ))}
+      </div>
+
+            {/* Bottom Bar */}
+      <div className="prod-board__bottom">
+        <span className="prod-board__bottom-count">Showing {filteredJobs.length} Jobs</span>
+        <div className="prod-board__bottom-legend">
+          <span className="prod-board__legend-item"><span className="prod-board__legend-dot" style={{background:"#dc2626"}}></span>Critical</span>
+          <span className="prod-board__legend-item"><span className="prod-board__legend-dot" style={{background:"#f97316"}}></span>High</span>
+          <span className="prod-board__legend-item"><span className="prod-board__legend-dot" style={{background:"#ca8a04"}}></span>Medium</span>
+          <span className="prod-board__legend-item"><span className="prod-board__legend-dot" style={{background:"#16a34a"}}></span>Low</span>
+        </div>
       </div>
 
       {/* Context Menu */}

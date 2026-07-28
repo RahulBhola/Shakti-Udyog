@@ -106,6 +106,8 @@ export interface OrderListItem {
   promisedDispatchDateUtc: string | null;
   totalQuantity: number;
   lastUpdatedAtUtc: string;
+  companyName: string | null;
+  productType: string | null;
 }
 
 export interface OrderDetail {

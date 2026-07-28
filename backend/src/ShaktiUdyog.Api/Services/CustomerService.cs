@@ -463,7 +463,7 @@ public class CustomerService(
         return orders.Select(o => new OrderListItemDto(
             o.Id, o.OrderNumber, o.Status,
             OrderStatuses.Labels.TryGetValue(o.Status, out var l) ? l.Label : o.Status,
-            o.PlacedAtUtc, o.PromisedDispatchDateUtc, o.TotalQuantity, o.LastUpdatedAtUtc)).ToList();
+            o.PlacedAtUtc, o.PromisedDispatchDateUtc, o.TotalQuantity, o.LastUpdatedAtUtc, null, null)).ToList();
     }
 
     public async Task<OrderDetailDto?> GetOrderAsync(CustomerContext ctx, Guid orderId)
