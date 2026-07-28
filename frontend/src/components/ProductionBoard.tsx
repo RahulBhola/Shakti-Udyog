@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { apiDelete, apiGet, apiPost, apiPut } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import { formatDate } from "../portal/shared";
+import { updaterApi } from "../api/updaterApi";
+import { adminApi } from "../api/adminApi";
 
 /* ── Types ─────────────────────────────────────────────────────────────────── */
 
@@ -43,24 +45,16 @@ interface BoardPreferences {
 /* ── Constants ─────────────────────────────────────────────────────────────── */
 
 const WORKFLOW = [
-  "New RFQs", "Engineering Review", "Quotation Sent", "Customer Approval",
-  "Order Confirmed", "Pattern Design", "Pattern Making", "Material Planning",
-  "Raw Material Ready", "Core Making", "Moulding", "Furnace Charging",
-  "Melting", "Pouring", "Cooling", "Shakeout", "Fettling", "Shot Blasting",
-  "Machining", "Heat Treatment", "Surface Finishing", "Quality Inspection",
-  "Packing", "Ready for Dispatch", "Dispatched",
+  "Pending Advance", "Awaiting Approval", "Advance Paid", "Confirmed",
+  "Pattern Development", "Production", "Quality Check", "Packed",
+  "Ready to Dispatch", "Dispatched", "Delivered"
 ];
 
 const STAGE_COLORS: Record<string, string> = {
-  "New RFQs": "#6366f1", "Engineering Review": "#8b5cf6", "Quotation Sent": "#a78bfa",
-  "Customer Approval": "#c4b5fd", "Order Confirmed": "#22c55e", "Pattern Design": "#14b8a6",
-  "Pattern Making": "#06b6d4", "Material Planning": "#0ea5e9", "Raw Material Ready": "#3b82f6",
-  "Core Making": "#f97316", "Moulding": "#f59e0b", "Furnace Charging": "#ef4444",
-  "Melting": "#dc2626", "Pouring": "#b91c1c", "Cooling": "#64748b",
-  "Shakeout": "#78716c", "Fettling": "#a8a29e", "Shot Blasting": "#57534e",
-  "Machining": "#6366f1", "Heat Treatment": "#d946ef", "Surface Finishing": "#ec4899",
-  "Quality Inspection": "#eab308", "Packing": "#84cc16",
-  "Ready for Dispatch": "#22c55e", "Dispatched": "#10b981",
+  "Pending Advance": "#9ca3af", "Awaiting Approval": "#f59e0b", "Advance Paid": "#22c55e",
+  "Confirmed": "#3b82f6", "Pattern Development": "#8b5cf6", "Production": "#6366f1",
+  "Quality Check": "#a78bfa", "Packed": "#14b8a6",
+  "Ready to Dispatch": "#06b6d4", "Dispatched": "#0ea5e9", "Delivered": "#10b981",
 };
 
 const PRIORITY_COLORS: Record<string, string> = {
@@ -117,6 +111,33 @@ function toCsv(arr: string[] | null): string | null {
   return arr.join(",");
 }
 
+function statusToStage(s: string): string {
+  const map: Record<string, string> = {
+    pending_advance: "Pending Advance", awaiting_approval: "Awaiting Approval",
+    advance_paid: "Advance Paid", confirmed: "Confirmed",
+    pattern_development: "Pattern Development", production: "Production",
+    quality_check: "Quality Check", packed: "Packed",
+    ready_to_dispatch: "Ready to Dispatch", dispatched: "Dispatched", delivered: "Delivered",
+  };
+  return map[s] || "Confirmed";
+}
+
+function stageToStatus(stage: string): string {
+  const map: Record<string, string> = {
+    "Pending Advance": "pending_advance", "Awaiting Approval": "awaiting_approval",
+    "Advance Paid": "advance_paid", "Confirmed": "confirmed",
+    "Pattern Development": "pattern_development", "Production": "production",
+    "Quality Check": "quality_check", "Packed": "packed",
+    "Ready to Dispatch": "ready_to_dispatch", "Dispatched": "dispatched", "Delivered": "delivered",
+  };
+  return map[stage] || "confirmed";
+}
+
+function stageProgress(stage: string): number {
+  const idx = WORKFLOW.indexOf(stage);
+  return idx >= 0 ? Math.round((idx / (WORKFLOW.length - 1)) * 100) : 0;
+}
+
 function remainingDays(dateStr: string | null): number | null {
   if (!dateStr) return null;
   const diff = new Date(dateStr).getTime() - Date.now();
@@ -142,20 +163,37 @@ export function ProductionBoard() {
     cardSize: "Standard", displayMode: "Standard", columnOrder: null,
   });
   const [showCustomize, setShowCustomize] = useState(false);
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; field: string } | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; field: string; jobId?: string } | null>(null);
   const [showViewMenu, setShowViewMenu] = useState(false);
   const viewMenuRef = useRef<HTMLDivElement>(null);
 
-  // Load jobs + preferences
+  // Load data based on view mode
   useEffect(() => {
-    apiGet<ProductionJob[]>("/api/v1/admin/production-board/jobs")
-      .then(setJobs)
-      .catch(() => setJobs([]))
-      .finally(() => setLoading(false));
+    if (viewMode === "orders") {
+      updaterApi.orders(1, 200).then((all) => {
+        const mapped = (all.items || []).map((o) => ({
+          id: o.id, jobNumber: o.orderNumber, castingName: o.productType || o.orderNumber,
+          currentStage: statusToStage(o.status), stagePosition: 0,
+          priority: "Medium", quantity: o.totalQuantity || 0,
+          companyName: o.companyName || "", targetDispatchDateUtc: o.promisedDispatchDateUtc || null,
+          progressPercent: 50, status: "Active", isBlocked: false,
+          partNumber: null, materialGrade: null, drawingNumber: null, patternNumber: null,
+          castingWeight: null, assignedEngineer: null, assignedSupervisor: null,
+          department: null, productionBatch: null, currentMachine: null,
+          orderNumber: o.orderNumber, createdAtUtc: o.placedAtUtc,
+        }));
+        setJobs(mapped);
+      }).catch(() => setJobs([])).finally(() => setLoading(false));
+    } else {
+      apiGet<ProductionJob[]>("/api/v1/admin/production-board/jobs")
+        .then(setJobs)
+        .catch(() => setJobs([]))
+        .finally(() => setLoading(false));
+    }
     apiGet<BoardPreferences>("/api/v1/admin/production-board/preferences")
       .then(setPrefs)
       .catch(() => {});
-  }, []);
+  }, [viewMode]);
 
   // Resolve visible columns — always sorted by WORKFLOW order
   const visibleColumns = parseCsv(prefs.visibleColumns) ?? WORKFLOW;
@@ -196,7 +234,7 @@ export function ProductionBoard() {
     if (!job || job.currentStage === targetStage) { setDraggedJob(null); return; }
     setJobs((prev) => prev.map((j) => j.id === draggedJob ? { ...j, currentStage: targetStage } : j));
     try {
-      await apiPut(`/api/v1/admin/production-board/jobs/${draggedJob}/stage`, { toStage: targetStage, remarks: null });
+      if (viewMode === "orders") { await adminApi.updateOrderStage(draggedJob, stageToStatus(targetStage)); } else { await apiPut(`/api/v1/admin/production-board/jobs/${draggedJob}/stage`, { toStage: targetStage, remarks: null }); };
     } catch {
       setJobs((prev) => prev.map((j) => j.id === draggedJob ? { ...j, currentStage: job.currentStage } : j));
     }
@@ -290,7 +328,7 @@ export function ProductionBoard() {
                   isDragging={draggedJob === job.id}
                   onDragStart={() => handleDragStart(job.id)}
                   onClick={() => setSelectedJob(job)}
-                  onContextMenu={(e, field) => { e.preventDefault(); setContextMenu({ x: e.clientX, y: e.clientY, field }); }}
+                  onContextMenu={(e, jobId) => { e.preventDefault(); const stageIdx = WORKFLOW.indexOf(job.currentStage); setContextMenu({ x: e.clientX, y: e.clientY, field: stageIdx > 0 ? "revert" : "none", jobId }); }}
                 />
               ))}
             </div>
@@ -384,7 +422,7 @@ function ProductionCard({
     <div
       className={`prod-board__card ${sizeClass} ${dragClass} ${blockedClass}`} data-priority={job.priority || "Medium"}
       draggable onDragStart={onDragStart} onClick={onClick}
-      onContextMenu={(e) => onContextMenu(e, "castingName")}
+      onContextMenu={(e) => onContextMenu(e, job.id)}
     >
       {visibleFields.includes("jobNumber") && (
         <div className="prod-board__card-header" onContextMenu={(e) => onContextMenu(e, "jobNumber")}>
