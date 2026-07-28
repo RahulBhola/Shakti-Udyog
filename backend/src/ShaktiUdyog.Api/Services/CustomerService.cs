@@ -404,6 +404,7 @@ public class CustomerService(
         }
 
         // Only the response fields change — amounts and terms are untouchable here.
+        var previousStatus = quotation.Status;
         if (request.Response == "negotiate")
         {
             quotation.Status = QuotationStatuses.Negotiating;
@@ -415,6 +416,21 @@ public class CustomerService(
         quotation.CustomerResponseComment = request.Comment;
         quotation.CustomerRespondedAtUtc = DateTimeOffset.UtcNow;
         quotation.RespondedByUserId = ctx.UserId;
+
+        // Record status change in history timeline
+        db.QuotationStatusHistories.Add(new QuotationStatusHistory
+        {
+            Id = Guid.NewGuid(),
+            QuotationId = quotation.Id,
+            FromStatus = previousStatus,
+            ToStatus = quotation.Status,
+            ChangedByUserId = ctx.UserId,
+            ChangedByRole = "Customer",
+            Note = request.Response == "negotiate" ? "Customer requested revision"
+                : request.Response == "accept" ? "Customer accepted the quotation"
+                : "Customer declined the quotation",
+            CreatedAtUtc = DateTimeOffset.UtcNow,
+        });
 
         var rfq = await db.Rfqs.SingleOrDefaultAsync(r => r.Id == quotation.RfqId);
         if (rfq is not null)
