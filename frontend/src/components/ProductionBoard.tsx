@@ -394,7 +394,11 @@ export function ProductionBoard() {
 
       {/* Detail Panel */}
       {selectedJob && (
-        <ProductionJobDetailPanel job={selectedJob} onClose={() => setSelectedJob(null)} />
+        viewMode === "orders" ? (
+          <OrderDetailPanel job={selectedJob} onClose={() => setSelectedJob(null)} onMaximize={() => { window.location.href = "/admin/orders/" + selectedJob.id; }} />
+        ) : (
+          <ProductionJobDetailPanel job={selectedJob} onClose={() => setSelectedJob(null)} />
+        )
       )}
     </div>
   );
@@ -933,6 +937,63 @@ function CommentsTab({ jobId, detail, onRefresh }: { jobId: string; detail: JobD
           <button className="btn btn--primary btn--sm" disabled={!message.trim() || posting} onClick={() => void handlePost()}>
             {posting ? "Posting…" : "Add Comment"}
           </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Order Detail Panel ────────────────────────────────────────────────── */
+function OrderDetailPanel({ job, onClose, onMaximize }: { job: ProductionJob; onClose: () => void; onMaximize: () => void }) {
+  const stageIdx = WORKFLOW.indexOf(job.currentStage);
+  return (
+    <div className="prod-board__detail-overlay" onClick={onClose}>
+      <div className="prod-board__detail-panel" onClick={(e) => e.stopPropagation()}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"20px 24px",borderBottom:"1px solid #f1f5f9"}}>
+          <div>
+            <h2 style={{fontSize:"16px",fontWeight:700,margin:0,color:"#111827"}}>{job.jobNumber}</h2>
+            <p style={{fontSize:"13px",color:"#6b7280",margin:"4px 0 0"}}>{job.castingName}</p>
+          </div>
+          <button onClick={onClose} style={{width:"32px",height:"32px",borderRadius:"8px",border:"1px solid #e5e7eb",background:"#fff",cursor:"pointer",fontSize:"16px",display:"flex",alignItems:"center",justifyContent:"center",color:"#6b7280"}}>&times;</button>
+        </div>
+        <div style={{padding:"20px 24px"}}>
+          {/* Status badge */}
+          <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"20px"}}>
+            <span style={{width:"10px",height:"10px",borderRadius:"50%",background:STAGE_COLORS[job.currentStage] || "#6b7280"}} />
+            <span style={{fontSize:"13px",fontWeight:600,color:"#111827"}}>{job.currentStage}</span>
+            <span style={{fontSize:"11px",color:"#9ca3af",marginLeft:"auto"}}>Stage {stageIdx + 1} of {WORKFLOW.length}</span>
+          </div>
+
+          {/* Progress bar */}
+          <div style={{height:"4px",background:"#f1f5f9",borderRadius:"2px",marginBottom:"24px",overflow:"hidden"}}>
+            <div style={{height:"100%",width:Math.round((stageIdx + 1) / WORKFLOW.length * 100) + "%",background:"#2563eb",borderRadius:"2px"}} />
+          </div>
+
+          {/* Details grid */}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"16px",marginBottom:"24px"}}>
+            <div><span style={{fontSize:"10px",textTransform:"uppercase",letterSpacing:"0.5px",color:"#9ca3af",fontWeight:600}}>Customer</span><p style={{fontSize:"13px",fontWeight:600,color:"#111827",margin:"4px 0 0"}}>{job.companyName || "—"}</p></div>
+            <div><span style={{fontSize:"10px",textTransform:"uppercase",letterSpacing:"0.5px",color:"#9ca3af",fontWeight:600}}>Quantity</span><p style={{fontSize:"13px",fontWeight:600,color:"#111827",margin:"4px 0 0"}}>{job.quantity} pcs</p></div>
+            <div><span style={{fontSize:"10px",textTransform:"uppercase",letterSpacing:"0.5px",color:"#9ca3af",fontWeight:600}}>Priority</span><p style={{fontSize:"13px",fontWeight:600,color:"#111827",margin:"4px 0 0"}}>{job.priority || "Medium"}</p></div>
+            <div><span style={{fontSize:"10px",textTransform:"uppercase",letterSpacing:"0.5px",color:"#9ca3af",fontWeight:600}}>Weight</span><p style={{fontSize:"13px",fontWeight:600,color:"#111827",margin:"4px 0 0"}}>{job.castingWeight ? job.castingWeight + " kg" : "—"}</p></div>
+            {job.targetDispatchDateUtc && <div><span style={{fontSize:"10px",textTransform:"uppercase",letterSpacing:"0.5px",color:"#9ca3af",fontWeight:600}}>Target Dispatch</span><p style={{fontSize:"13px",fontWeight:600,color:"#111827",margin:"4px 0 0"}}>{formatDate(job.targetDispatchDateUtc)}</p></div>}
+          </div>
+
+          {/* Status progression timeline */}
+          <div style={{borderTop:"1px solid #f1f5f9",paddingTop:"20px",marginBottom:"20px"}}>
+            <h4 style={{fontSize:"11px",textTransform:"uppercase",letterSpacing:"0.5px",color:"#9ca3af",margin:"0 0 12px",fontWeight:600}}>Order Progress</h4>
+            <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
+              {WORKFLOW.slice(0, stageIdx + 1).map((s, i) => (
+                <div key={s} style={{display:"flex",alignItems:"center",gap:"10px"}}>
+                  <div style={{width:"8px",height:"8px",borderRadius:"50%",background:STAGE_COLORS[s] || "#6b7280",flexShrink:0}} />
+                  <span style={{fontSize:"12px",color:i === stageIdx ? "#111827" : "#6b7280",fontWeight:i === stageIdx ? 600 : 400}}>{s}</span>
+                  {i === stageIdx && <span style={{fontSize:"10px",color:"#2563eb",fontWeight:600,marginLeft:"auto"}}>Current</span>}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div style={{padding:"16px 24px",borderTop:"1px solid #f1f5f9",display:"flex",gap:"8px"}}>
+          <button className="prod-board__btn-primary" onClick={onMaximize} style={{flex:1}}>Open Full Details</button>
         </div>
       </div>
     </div>

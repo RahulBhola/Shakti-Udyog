@@ -991,6 +991,15 @@ ul, ol { padding-left: 1.25rem; }
 }
 
 /* Issue Detail Panel */
+.prod-board__detail-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  justify-content: flex-end;
+  z-index: 100;
+}
+
 .jira-board__detail-overlay {
   position: fixed;
   inset: 0;
@@ -999,6 +1008,16 @@ ul, ol { padding-left: 1.25rem; }
   display: flex;
   justify-content: flex-end;
   z-index: 100;
+}
+
+.prod-board__detail-panel {
+  width: 440px;
+  max-width: 90vw;
+  background: #fff;
+  border-left: 1px solid #e5e7eb;
+  overflow-y: auto;
+  animation: slideIn 0.2s ease-out;
+  box-shadow: -4px 0 20px rgba(0,0,0,.08);
 }
 
 .jira-board__detail-panel {
