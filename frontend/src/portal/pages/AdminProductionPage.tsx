@@ -9,22 +9,9 @@ export default function AdminProductionPage() {
 
   return (
     <>
-      <div className="prod-page__header">
-        <h1>Manufacturing</h1>
-        <div className="prod-page__tabs">
-          <button
-            className={`prod-page__tab ${view === "board" ? "prod-page__tab--active" : ""}`}
-            onClick={() => setView("board")}
-          >
-            Board
-          </button>
-          <button
-            className={`prod-page__tab ${view === "dashboard" ? "prod-page__tab--active" : ""}`}
-            onClick={() => setView("dashboard")}
-          >
-            Dashboard
-          </button>
-        </div>
+      <div style={{display:"flex",gap:"8px",marginBottom:"16px"}}>
+        <button style={{padding:"6px 16px",borderRadius:"8px",fontSize:"12px",fontWeight:600,border:"1px solid #e5e7eb",background:view === "board" ? "#2563eb" : "#fff",color:view === "board" ? "#fff" : "#374151",cursor:"pointer"}} onClick={() => setView("board")}>Board</button>
+        <button style={{padding:"6px 16px",borderRadius:"8px",fontSize:"12px",fontWeight:600,border:"1px solid #e5e7eb",background:view === "dashboard" ? "#2563eb" : "#fff",color:view === "dashboard" ? "#fff" : "#374151",cursor:"pointer"}} onClick={() => setView("dashboard")}>Dashboard</button>
       </div>
       {view === "board" && <ProductionBoard />}
       {view === "dashboard" && <ProductionDashboard />}

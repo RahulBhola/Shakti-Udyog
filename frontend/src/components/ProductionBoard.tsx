@@ -382,7 +382,7 @@ function ProductionCard({
 
   return (
     <div
-      className={`prod-board__card ${sizeClass} ${dragClass} ${blockedClass}`}
+      className={`prod-board__card ${sizeClass} ${dragClass} ${blockedClass}`} data-priority={job.priority || "Medium"}
       draggable onDragStart={onDragStart} onClick={onClick}
       onContextMenu={(e) => onContextMenu(e, "castingName")}
     >
@@ -392,7 +392,7 @@ function ProductionCard({
           {visibleFields.includes("priority") && job.priority && (
             <span className="prod-board__card-priority" style={{ color: PRIORITY_COLORS[job.priority] || "#6b7280" }}
               onContextMenu={(e) => onContextMenu(e, "priority")}>
-              {job.priority === "Critical" ? " !!!" : job.priority === "High" ? " !!" : job.priority === "Medium" ? " !" : ""}
+              {job.priority}
             </span>
           )}
         </div>
