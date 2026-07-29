@@ -82,7 +82,8 @@ public record UpdateRfqRequest(
 public record QuotationListItemDto(
     Guid Id, string QuotationNumber, int RevisionNumber, Guid RfqId, string ProductType,
     decimal Total, string Currency, string Status,
-    DateTimeOffset? ValidUntilUtc, DateTimeOffset CreatedAtUtc);
+    DateTimeOffset? ValidUntilUtc, DateTimeOffset CreatedAtUtc,
+    string? CompanyName, int ItemCount, string? PaymentTerms, string? DeliveryTime);
 
 public record QuotationDetailDto(
     Guid Id, string QuotationNumber, int RevisionNumber, Guid RfqId, string ProductType,

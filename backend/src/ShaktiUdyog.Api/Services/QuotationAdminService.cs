@@ -36,7 +36,7 @@ public class QuotationAdminService(
         if (!string.IsNullOrWhiteSpace(status)) query = query.Where(q => q.Status == status);
         var total = await query.CountAsync();
         var items = await query.OrderByDescending(q => q.CreatedAtUtc).Skip((page - 1) * pageSize).Take(pageSize)
-            .Select(q => new QuotationListItemDto(q.Id, q.QuotationNumber, q.RevisionNumber, q.RfqId, q.Rfq.ProductType, q.Total, q.Currency, q.Status, q.ValidUntilUtc, q.CreatedAtUtc))
+            .Select(q => new QuotationListItemDto(q.Id, q.QuotationNumber, q.RevisionNumber, q.RfqId, q.Rfq.ProductType, q.Total, q.Currency, q.Status, q.ValidUntilUtc, q.CreatedAtUtc, q.Rfq.CompanyName, q.Items.Count, q.PaymentTerms, q.DeliveryTime))
             .ToListAsync();
         return new PagedResult<QuotationListItemDto>(items, page, pageSize, total);
     }

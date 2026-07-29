@@ -362,7 +362,8 @@ public class CustomerService(
             .OrderByDescending(q => q.CreatedAtUtc)
             .Select(q => new QuotationListItemDto(
                 q.Id, q.QuotationNumber, q.RevisionNumber, q.RfqId, q.Rfq.ProductType, q.Total, q.Currency,
-                q.Status, q.ValidUntilUtc, q.CreatedAtUtc))
+                q.Status, q.ValidUntilUtc, q.CreatedAtUtc,
+                q.Rfq.CompanyName, q.Items.Count, q.PaymentTerms, q.DeliveryTime))
             .ToListAsync();
 
     public async Task<QuotationDetailDto?> GetQuotationAsync(CustomerContext ctx, Guid quotationId) =>

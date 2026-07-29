@@ -57,6 +57,10 @@ export interface QuotationListItem {
   status: string;
   validUntilUtc: string | null;
   createdAtUtc: string;
+  companyName: string | null;
+  itemCount: number;
+  paymentTerms: string | null;
+  deliveryTime: string | null;
 }
 
 export interface QuotationItem {

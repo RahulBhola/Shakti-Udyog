@@ -74,7 +74,8 @@ public class QuotationUpdaterService(
             .Skip((page - 1) * pageSize).Take(pageSize)
             .Select(q => new QuotationListItemDto(
                 q.Id, q.QuotationNumber, q.RevisionNumber, q.RfqId, q.Rfq.ProductType,
-                q.Total, q.Currency, q.Status, q.ValidUntilUtc, q.CreatedAtUtc))
+                q.Total, q.Currency, q.Status, q.ValidUntilUtc, q.CreatedAtUtc,
+                q.Rfq.CompanyName, q.Items.Count, q.PaymentTerms, q.DeliveryTime))
             .ToListAsync();
         return new PagedResult<QuotationListItemDto>(items, page, pageSize, total);
     }
