@@ -952,6 +952,10 @@ function OrderDetailPanel({ job, onClose, onMaximize }: { job: ProductionJob; on
   const [newComment, setNewComment] = useState("");
   const [posting, setPosting] = useState(false);
 
+  useEffect(() => {
+    updaterApi.getOrderComments(job.id).then(setComments).catch(() => {});
+  }, [job.id]);
+
   async function handlePostComment() {
     if (!newComment.trim() || posting) return;
     setPosting(true);
@@ -1015,7 +1019,10 @@ function OrderDetailPanel({ job, onClose, onMaximize }: { job: ProductionJob; on
               <div key={i} style={{display:"flex",gap:"10px",marginBottom:"10px"}}>
                 <div style={{width:"28px",height:"28px",borderRadius:"8px",background:"#eef2ff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"11px",fontWeight:700,color:"#4f46e5",flexShrink:0}}>{c.authorRole.charAt(0)}</div>
                 <div style={{flex:1}}>
-                  <div style={{fontSize:"12px",fontWeight:600,color:"#111827"}}>{c.authorRole}</div>
+                  <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
+                    <span style={{fontSize:"12px",fontWeight:600,color:"#111827"}}>{c.authorRole}</span>
+                    <span style={{fontSize:"10px",color:"#9ca3af"}}>{new Date(c.createdAtUtc).toLocaleString("en-IN",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})}</span>
+                  </div>
                   <p style={{fontSize:"12px",color:"#6b7280",margin:"2px 0 0"}}>{c.message}</p>
                 </div>
               </div>

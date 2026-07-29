@@ -45,17 +45,6 @@ function formatDateTime(value: string | null | undefined): string {
   });
 }
 
-async function handlePostOrderComment() {
-  if (!newOrderComment.trim() || postingComment) return;
-  setPostingComment(true);
-  try {
-    await updaterApi.addOrderComment(id, newOrderComment.trim());
-    setOrderComments(prev => [...prev, {authorRole: "Admin", message: newOrderComment.trim(), createdAtUtc: new Date().toISOString()}]);
-    setNewOrderComment("");
-  } catch {}
-  setPostingComment(false);
-}
-
 /* ── Workflow stages ───────────────────────────────────────────── */
 
 const WORKFLOW = [
@@ -128,6 +117,17 @@ export default function AdminOrderDetailPage() {
   const [orderComments, setOrderComments] = useState<{authorRole: string; message: string; createdAtUtc: string}[]>([]);
   const [newOrderComment, setNewOrderComment] = useState("");
   const [postingComment, setPostingComment] = useState(false);
+
+  async function handlePostOrderComment() {
+    if (!newOrderComment.trim() || postingComment) return;
+    setPostingComment(true);
+    try {
+      await updaterApi.addOrderComment(id, newOrderComment.trim());
+      setOrderComments(prev => [...prev, {authorRole: "Admin", message: newOrderComment.trim(), createdAtUtc: new Date().toISOString()}]);
+      setNewOrderComment("");
+    } catch {}
+    setPostingComment(false);
+  }
 
   useEffect(() => {
     if (!id) return;
