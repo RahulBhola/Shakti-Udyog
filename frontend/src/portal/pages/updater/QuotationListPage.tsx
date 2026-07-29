@@ -5,9 +5,8 @@ import type { Paged, QuotationListItem } from "../../../api/customerApi";
 import { Loading } from "../../../components/ui";
 import { formatDate, formatMoney } from "../../shared";
 import {
-  FileText, Search, Plus, Eye, Download, MoreHorizontal,
+  FileText, Search, Plus,
   Clock, CheckCircle, XCircle, ChevronLeft, ChevronRight,
-  FileEdit
 } from "lucide-react";
 
 /* ── Status config ── */
@@ -182,22 +181,6 @@ export default function QuotationListPage() {
                     {/* Right: Status + Actions */}
                     <div className="flex flex-col items-end gap-2 shrink-0 w-[110px]">
                       <span className={`inline-flex items-center px-3 py-1 rounded-full text-[11px] font-semibold ${sc.bg} ${sc.text}`}>{sc.label}</span>
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={(e) => { e.stopPropagation(); navigate(`/admin/quotations/${q.id}`); }}
-                          className="flex items-center justify-center w-7 h-7 rounded-md text-[var(--text-muted)] hover:text-[var(--color-primary)] hover:bg-[var(--bg-surface)] transition-all">
-                          <Eye size={13} />
-                        </button>
-                        <button onClick={(e) => { e.stopPropagation(); navigate(`/admin/quotations/new?editQuotationId=${q.id}`); }}
-                          className="flex items-center justify-center w-7 h-7 rounded-md text-[var(--text-muted)] hover:text-[var(--color-primary)] hover:bg-[var(--bg-surface)] transition-all">
-                          <FileEdit size={13} />
-                        </button>
-                        <button className="flex items-center justify-center w-7 h-7 rounded-md text-[var(--text-muted)] hover:text-[var(--color-primary)] hover:bg-[var(--bg-surface)] transition-all">
-                          <Download size={13} />
-                        </button>
-                        <button className="flex items-center justify-center w-7 h-7 rounded-md text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] transition-all">
-                          <MoreHorizontal size={13} />
-                        </button>
-                      </div>
                     </div>
                   </div>
                 </div>
