@@ -226,7 +226,8 @@ export function ProductionBoard() {
   }, {});
 
   // Drag & drop
-  const handleDragStart = useCallback((jobId: string) => setDraggedJob(jobId), []);
+  const dragRef = useRef<string | null>(null);
+  const handleDragStart = useCallback((jobId: string) => { setDraggedJob(jobId); dragRef.current = jobId; }, []);
 
   const handleDrop = useCallback(async (targetStage: string) => {
     if (!draggedJob) return;
@@ -239,7 +240,7 @@ export function ProductionBoard() {
       setJobs((prev) => prev.map((j) => j.id === draggedJob ? { ...j, currentStage: job.currentStage } : j));
     }
     setDraggedJob(null);
-  }, [draggedJob, jobs]);
+  }, [draggedJob, jobs, viewMode]);
 
   // Save preferences
   const savePrefs = useCallback(async (partial: Partial<BoardPreferences>) => {

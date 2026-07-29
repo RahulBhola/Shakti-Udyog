@@ -282,7 +282,8 @@ public class AdminService(
         var from = order.Status;
         order.Status = newStage;
         order.LastUpdatedAtUtc = DateTimeOffset.UtcNow;
-        order.Milestones.Add(new OrderMilestone
+        await db.SaveChangesAsync();
+        db.OrderMilestones.Add(new OrderMilestone
         {
             Id = Guid.NewGuid(), OrderId = order.Id, StatusCode = newStage,
             CustomerMessage = OrderStatuses.ProgressionLabels.TryGetValue(newStage, out var label) ? label : newStage.Replace("_", " "),
