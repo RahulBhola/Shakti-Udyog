@@ -425,7 +425,36 @@ export default function AdminOrderDetailPage() {
         </div>
       </div>
 
-      {/* ── Milestone Confirmation Modal ──────────────────── */}
+      {/* ── Comments ──────────────────── */}
+      <div className="rounded-[16px] border border-[var(--border-default)] bg-[var(--bg-card)] shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-[var(--border-default)] flex items-center gap-2.5 bg-[var(--bg-surface)]/50">
+          <MessageSquare size={15} className="text-[var(--color-primary)]" />
+          <h3 className="text-sm font-semibold text-[var(--text-primary)] m-0">Activity &amp; Comments</h3>
+        </div>
+        <div className="p-5">
+          {orderComments.length === 0 && <p className="text-[13px] text-[var(--text-muted)] mb-4">No comments yet.</p>}
+          <div className="space-y-4 mb-4">
+            {orderComments.map((co, i) => (
+              <div key={i} className="flex gap-3">
+                <div className="w-7 h-7 rounded-lg bg-[var(--color-primary)]/10 flex items-center justify-center text-[11px] font-bold text-[var(--color-primary)] shrink-0 mt-0.5">{co.authorRole ? co.authorRole.charAt(0) : "?"}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2"><span className="text-[12px] font-semibold text-[var(--text-primary)]">{co.authorRole}</span><span className="text-[10px] text-[var(--text-muted)]">{formatDateTime(co.createdAtUtc)}</span></div>
+                  <p className="text-[13px] text-[var(--text-secondary)] mt-1 m-0">{co.message}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <input type="text" value={newOrderComment} onChange={(e) => setNewOrderComment(e.target.value)}
+              placeholder="Add a comment..." onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handlePostOrderComment(); } }}
+              className="flex-1 h-9 px-3 rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--color-primary)]" />
+            <button onClick={handlePostOrderComment} disabled={!newOrderComment.trim() || postingComment}
+              className="px-4 h-9 rounded-lg bg-[var(--color-primary)] text-white text-[12px] font-semibold hover:bg-[var(--color-primary-hover)] disabled:opacity-50 transition-all">Send</button>
+          </div>
+        </div>
+      </div>
+
+            {/* ── Milestone Confirmation Modal ──────────────────── */}
       <ConfirmActionModal
         open={milestoneModal !== null}
         title={`Advance to ${milestoneModal?.label ?? ""}`}
