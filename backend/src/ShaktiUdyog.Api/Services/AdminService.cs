@@ -278,7 +278,7 @@ public class AdminService(
     {
         var order = await db.Orders.SingleOrDefaultAsync(o => o.Id == orderId);
         if (order is null) return null;
-        if (!OrderStatuses.IsValidTransition(order.Status, newStage)) return false;
+        if (!OrderStatuses.IsValidTransition(order.Status, newStage) && !OrderStatuses.IsValidTransition(newStage, order.Status)) return false;
         var from = order.Status;
         order.Status = newStage;
         order.LastUpdatedAtUtc = DateTimeOffset.UtcNow;
