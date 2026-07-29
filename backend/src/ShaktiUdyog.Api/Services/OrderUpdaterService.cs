@@ -17,11 +17,13 @@ public interface IOrderUpdaterService
     Task<bool?> CreateShipmentAsync(Guid id, CreateShipmentRequest request, Guid userId, string? ip);
     Task UploadDocumentAsync(Guid id, IFormFile file, string category, Guid userId, string? ip);
     Task<bool?> AddCommentAsync(Guid id, OrderCommentRequest request, Guid userId, string role, string? ip);
+    Task<IReadOnlyList<OrderCommentResponseDto>> GetCommentsAsync(Guid id);
 }
 
 public record MilestoneRequest(string StatusCode, string? CustomerMessage, string? InternalNote);
 public record CreateShipmentRequest(string? Transporter, string? TrackingNumber, DateTimeOffset? DispatchDateUtc, DateTimeOffset? EstimatedArrivalUtc);
 public record OrderCommentRequest(string Message, bool IsCustomerVisible = true);
+public record OrderCommentResponseDto(string AuthorRole, string Message, DateTimeOffset CreatedAtUtc);
 
 public class OrderUpdaterService(
     AppDbContext db,
@@ -92,6 +94,15 @@ public class OrderUpdaterService(
         db.Documents.Add(new Document { Id = Guid.NewGuid(), CompanyId = Guid.Empty, OrderId = id, Title = file.FileName, Category = category, FileName = file.FileName, ContentType = file.ContentType, SizeBytes = stored.SizeBytes, StorageKey = stored.StorageKey, IsCustomerVisible = true });
         await db.SaveChangesAsync();
         await audit.WriteAsync("updater.order.document_uploaded", userId, "Document", id.ToString(), ip);
+    }
+
+    public async Task<IReadOnlyList<OrderCommentResponseDto>> GetCommentsAsync(Guid id)
+    {
+        return await db.OrderComments
+            .Where(c => c.OrderId == id)
+            .OrderByDescending(c => c.CreatedAtUtc)
+            .Select(c => new OrderCommentResponseDto(c.AuthorRole, c.Message, c.CreatedAtUtc))
+            .ToListAsync();
     }
 
     public async Task<bool?> AddCommentAsync(Guid id, OrderCommentRequest request, Guid userId, string role, string? ip)

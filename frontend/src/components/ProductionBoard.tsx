@@ -844,6 +844,8 @@ function CommentsTab({ jobId, detail, onRefresh }: { jobId: string; detail: JobD
   const { user } = useAuth();
   const [message, setMessage] = useState("");
   const [posting, setPosting] = useState(false);
+
+
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
   const [saving, setSaving] = useState(false);
@@ -946,6 +948,20 @@ function CommentsTab({ jobId, detail, onRefresh }: { jobId: string; detail: JobD
 /* ── Order Detail Panel ────────────────────────────────────────────────── */
 function OrderDetailPanel({ job, onClose, onMaximize }: { job: ProductionJob; onClose: () => void; onMaximize: () => void }) {
   const stageIdx = WORKFLOW.indexOf(job.currentStage);
+  const [comments, setComments] = useState<{authorRole: string; message: string; createdAtUtc: string}[]>([]);
+  const [newComment, setNewComment] = useState("");
+  const [posting, setPosting] = useState(false);
+
+  async function handlePostComment() {
+    if (!newComment.trim() || posting) return;
+    setPosting(true);
+    try {
+      await updaterApi.addOrderComment(job.id, newComment.trim());
+      setComments(prev => [...prev, {authorRole: "Admin", message: newComment.trim(), createdAtUtc: new Date().toISOString()}]);
+      setNewComment("");
+    } catch {}
+    setPosting(false);
+  }
   return (
     <div className="prod-board__detail-overlay" onClick={onClose}>
       <div className="prod-board__detail-panel" onClick={(e) => e.stopPropagation()}>
@@ -991,9 +1007,29 @@ function OrderDetailPanel({ job, onClose, onMaximize }: { job: ProductionJob; on
               ))}
             </div>
           </div>
+        {/* Comments section */}
+          <div style={{borderTop:"1px solid #f1f5f9",paddingTop:"20px",marginBottom:"12px"}}>
+            <h4 style={{fontSize:"11px",textTransform:"uppercase",letterSpacing:"0.5px",color:"#9ca3af",margin:"0 0 12px",fontWeight:600}}>Activity & Comments</h4>
+            {comments.length === 0 && <p style={{fontSize:"12px",color:"#9ca3af",margin:"0 0 12px"}}>No comments yet.</p>}
+            {comments.map((c, i) => (
+              <div key={i} style={{display:"flex",gap:"10px",marginBottom:"10px"}}>
+                <div style={{width:"28px",height:"28px",borderRadius:"8px",background:"#eef2ff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"11px",fontWeight:700,color:"#4f46e5",flexShrink:0}}>{c.authorRole.charAt(0)}</div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:"12px",fontWeight:600,color:"#111827"}}>{c.authorRole}</div>
+                  <p style={{fontSize:"12px",color:"#6b7280",margin:"2px 0 0"}}>{c.message}</p>
+                </div>
+              </div>
+            ))}
+            <div style={{display:"flex",gap:"8px",marginTop:"8px"}}>
+              <input type="text" value={newComment} onChange={(e) => setNewComment(e.target.value)} placeholder="Add a comment..." onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handlePostComment(); } }}
+                style={{flex:1,height:"36px",borderRadius:"8px",border:"1px solid #e5e7eb",padding:"0 12px",fontSize:"12px",outline:"none",fontFamily:"inherit"}} />
+              <button onClick={handlePostComment} disabled={!newComment.trim() || posting}
+                style={{height:"36px",padding:"0 12px",borderRadius:"8px",border:"none",background:newComment.trim() ? "#2563eb" : "#e5e7eb",color:newComment.trim() ? "#fff" : "#9ca3af",fontSize:"12px",fontWeight:600,cursor:newComment.trim() ? "pointer" : "default"}}>Send</button>
+            </div>
+          </div>
         </div>
-        <div style={{padding:"16px 24px",borderTop:"1px solid #f1f5f9",display:"flex",gap:"8px"}}>
-          <button className="prod-board__btn-primary" onClick={onMaximize} style={{flex:1}}>Open Full Details</button>
+        <div style={{padding:"12px 24px",borderTop:"1px solid #f1f5f9",display:"flex",gap:"8px"}}>
+          <button className="prod-board__btn-ghost" onClick={onMaximize} style={{flex:1}}>View Full Details</button>
         </div>
       </div>
     </div>

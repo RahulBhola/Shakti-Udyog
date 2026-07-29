@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Package, Calendar, MapPin, FileText, Truck, CheckCircle2, Clock, Loader2 } from "lucide-react";
+import { ArrowLeft, Package, Calendar, MapPin, FileText, Truck, CheckCircle2, Clock, Loader2, MessageSquare } from "lucide-react";
 import { updaterApi } from "../../api/updaterApi";
 import type { OrderDetail } from "../../api/customerApi";
 import { ConfirmActionModal } from "./orders/ConfirmModal";
@@ -43,6 +43,17 @@ function formatDateTime(value: string | null | undefined): string {
     year: "numeric", month: "short", day: "numeric",
     hour: "2-digit", minute: "2-digit",
   });
+}
+
+async function handlePostOrderComment() {
+  if (!newOrderComment.trim() || postingComment) return;
+  setPostingComment(true);
+  try {
+    await updaterApi.addOrderComment(id, newOrderComment.trim());
+    setOrderComments(prev => [...prev, {authorRole: "Admin", message: newOrderComment.trim(), createdAtUtc: new Date().toISOString()}]);
+    setNewOrderComment("");
+  } catch {}
+  setPostingComment(false);
 }
 
 /* ── Workflow stages ───────────────────────────────────────────── */
@@ -114,6 +125,9 @@ export default function AdminOrderDetailPage() {
   const [actionBusy, setActionBusy] = useState(false);
   const [actionMsg, setActionMsg] = useState<string | null>(null);
   const [milestoneModal, setMilestoneModal] = useState<{ nextStatus: string; label: string } | null>(null);
+  const [orderComments, setOrderComments] = useState<{authorRole: string; message: string; createdAtUtc: string}[]>([]);
+  const [newOrderComment, setNewOrderComment] = useState("");
+  const [postingComment, setPostingComment] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -123,6 +137,7 @@ export default function AdminOrderDetailPage() {
       .then((o) => setOrder(o))
       .catch((e) => setError(e.message ?? "Order not found"))
       .finally(() => setLoading(false));
+    updaterApi.getOrderComments(id).then(setOrderComments).catch(() => {});
   }, [id]);
 
   // Open milestone confirmation modal

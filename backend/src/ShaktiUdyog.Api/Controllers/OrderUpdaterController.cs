@@ -51,6 +51,13 @@ public class OrderUpdaterController(IOrderUpdaterService service) : ControllerBa
         return Ok(new MessageResponse("Document uploaded."));
     }
 
+    [HttpGet("orders/{id:guid}/comments")]
+    public async Task<IActionResult> GetComments(Guid id)
+    {
+        var comments = await service.GetCommentsAsync(id);
+        return Ok(comments);
+    }
+
     [HttpPost("orders/{id:guid}/comments")]
     public async Task<IActionResult> AddComment(Guid id, OrderCommentRequest request)
     {
