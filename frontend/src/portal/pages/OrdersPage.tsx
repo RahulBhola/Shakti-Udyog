@@ -8,6 +8,7 @@ import {
 } from "../../api/customerApi";
 import { EmptyState, Loading } from "../../components/ui";
 import { Panel, StatusBadge, formatDate, formatMoney } from "../shared";
+import { apiDownload } from "../../api/client";
 
 export function OrderListPage() {
   const [orders, setOrders] = useState<OrderListItem[] | null>(null);
@@ -224,10 +225,10 @@ export function OrderDetailPage() {
             <div className="table-scroll">
               <table className="data-table">
                 <tbody>
-                  <tr><th scope="row">Invoice</th><td>{order.commercial.invoiceNumber}</td></tr>
+                  <tr><th scope="row">Invoice</th><td style={{ fontWeight: 600 }}>{order.commercial.invoiceNumber}</td></tr>
                   <tr><th scope="row">Invoice date</th><td>{formatDate(order.commercial.invoiceDateUtc)}</td></tr>
                   <tr><th scope="row">Due date</th><td>{formatDate(order.commercial.dueDateUtc)}</td></tr>
-                  <tr><th scope="row">Total</th><td>{formatMoney(order.commercial.total)}</td></tr>
+                  <tr><th scope="row">Total</th><td style={{ fontWeight: 600 }}>{formatMoney(order.commercial.total)}</td></tr>
                   <tr><th scope="row">Paid</th><td>{formatMoney(order.commercial.amountPaid)}</td></tr>
                   <tr><th scope="row">Balance</th><td><strong>{formatMoney(order.commercial.balanceDue)}</strong></td></tr>
                   <tr><th scope="row">Payment status</th><td>{order.commercial.paymentStatus && <StatusBadge status={order.commercial.paymentStatus} />}</td></tr>
@@ -237,6 +238,9 @@ export function OrderDetailPage() {
           ) : (
             <p className="placeholder-note">No invoice has been issued for this order yet.</p>
           )}
+          <div className="quick-actions" style={{ marginTop: "1rem" }}>
+            <Link className="btn btn--primary" to="/customer/invoices">View all invoices →</Link>
+          </div>
         </Panel>
 
         <Panel title="Documents">
@@ -244,15 +248,21 @@ export function OrderDetailPage() {
             <p className="placeholder-note">No documents shared for this order yet.</p>
           ) : (
             <div className="list-rows">
-              {order.documents.map((d) => (
-                <div className="list-row" key={d.id}>
-                  <div className="list-row__main">
-                    <div className="list-row__title">{d.title}</div>
-                    <div className="list-row__meta">{d.category}</div>
+              {order.documents.map((d) => {
+                const docExt = d.fileName?.split(".").pop()?.toLowerCase() ?? "";
+                return (
+                  <div className="list-row" key={d.id}>
+                    <div className="list-row__main">
+                      <div className="list-row__title">{d.title || d.fileName}</div>
+                      <div className="list-row__meta">{d.category} · {(d.sizeBytes / 1024).toFixed(1)} KB</div>
+                    </div>
+                    <button className="btn btn--ghost" style={{ padding: "0.2rem 0.6rem", fontSize: "var(--fs-xs)", color: "var(--c-ink)", cursor: "pointer" }}
+                      onClick={() => void apiDownload(customerApi.downloadDocument(d.id), d.title || d.fileName || "document")}>
+                      Download
+                    </button>
                   </div>
-                  <Link to="/customer/documents">Open</Link>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </Panel>
