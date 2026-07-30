@@ -1242,7 +1242,7 @@ export default function ProfilePage() {
                 <div style={{ position: "relative" }}>
                   <input id="sp-current" name="currentPassword" type={showCurrentPw ? "text" : "password"} autoComplete="current-password" required style={{ ...inputStyle, paddingRight: 40 }} />
                   <button type="button" onClick={() => setShowCurrentPw(v => !v)} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: colors.textSecondary, padding: 4, display: "flex" }}>
-                    {showCurrentPw ? <IconEyeOff /> : <IconEye />}
+                    {showCurrentPw ? <IconEye /> : <IconEyeOff />}
                   </button>
                 </div>
               </div>
@@ -1251,7 +1251,7 @@ export default function ProfilePage() {
                 <div style={{ position: "relative" }}>
                   <input id="sp-new" name="newPassword" type={showNewPw ? "text" : "password"} autoComplete="new-password" required minLength={12} style={{ ...inputStyle, paddingRight: 40 }} />
                   <button type="button" onClick={() => setShowNewPw(v => !v)} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: colors.textSecondary, padding: 4, display: "flex" }}>
-                    {showNewPw ? <IconEyeOff /> : <IconEye />}
+                    {showNewPw ? <IconEye /> : <IconEyeOff />}
                   </button>
                 </div>
                 <p style={{ margin: "4px 0 0", fontSize: 12, color: colors.textMuted }}>12+ characters with upper, lower, digit, and symbol.</p>
@@ -1261,7 +1261,7 @@ export default function ProfilePage() {
                 <div style={{ position: "relative" }}>
                   <input id="sp-confirm" name="confirmPassword" type={showConfirmPw ? "text" : "password"} autoComplete="new-password" required minLength={12} style={{ ...inputStyle, paddingRight: 40 }} />
                   <button type="button" onClick={() => setShowConfirmPw(v => !v)} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: colors.textSecondary, padding: 4, display: "flex" }}>
-                    {showConfirmPw ? <IconEyeOff /> : <IconEye />}
+                    {showConfirmPw ? <IconEye /> : <IconEyeOff />}
                   </button>
                 </div>
               </div>
