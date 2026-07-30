@@ -26,10 +26,6 @@ const adminSections: NavSection[] = [
     items: [{ label: "Manufacturing Board", href: "/admin/production" }],
   },
   {
-    label: "Documents",
-    items: [{ label: "Upload Center", href: "/admin/documents" }],
-  },
-  {
     label: "Finance",
     items: [{ label: "Invoices", href: "/admin/invoices" }],
   },

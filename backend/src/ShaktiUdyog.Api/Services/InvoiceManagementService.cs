@@ -19,6 +19,7 @@ public interface IInvoiceManagementService
     // Admin
     Task<bool> ApproveInvoiceAsync(Guid id, Guid userId, string? ip);
     Task<bool> CancelInvoiceAsync(Guid id, string reason, Guid userId, string? ip);
+    Task<bool> DeleteInvoiceAsync(Guid id, Guid userId, string? ip);
     Task<bool> VerifyPaymentAsync(Guid paymentId, Guid userId, string? ip);
     Task<bool> RejectPaymentAsync(Guid paymentId, string reason, Guid userId, string? ip);
     Task<CreditNote> CreateCreditNoteAsync(Guid invoiceId, decimal total, string reason, Guid userId, string? ip);
@@ -106,6 +107,28 @@ public class InvoiceManagementService(AppDbContext db, IAuditWriter audit) : IIn
         db.InvoiceStatusHistories.Add(new InvoiceStatusHistory { Id = Guid.NewGuid(), InvoiceId = id, FromStatus = inv.Status, ToStatus = InvoiceStatuses.Cancelled, ChangedByUserId = userId, ChangedByRole = "Admin", Note = reason });
         await db.SaveChangesAsync();
         await audit.WriteAsync("admin.invoice.cancelled", userId, "Invoice", id.ToString(), ip);
+        return true;
+    }
+
+    public async Task<bool> DeleteInvoiceAsync(Guid id, Guid userId, string? ip)
+    {
+        var inv = await db.Invoices.FindAsync(id);
+        if (inv is null) return false;
+
+        // Delete associated document if any
+        if (inv.DocumentId is not null)
+        {
+            var doc = await db.Documents.FindAsync(inv.DocumentId.Value);
+            if (doc is not null)
+            {
+                doc.IsDeleted = true;
+                doc.DeletedAtUtc = DateTimeOffset.UtcNow;
+            }
+        }
+
+        db.Invoices.Remove(inv);
+        await db.SaveChangesAsync();
+        await audit.WriteAsync("admin.invoice.deleted", userId, "Invoice", id.ToString(), ip);
         return true;
     }
 

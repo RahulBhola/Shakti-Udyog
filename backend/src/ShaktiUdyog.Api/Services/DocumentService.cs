@@ -10,7 +10,7 @@ public interface IDocumentService
 {
     Task<List<Document>> GetAllAsync(string? search, string? category);
     Task<Document?> GetAsync(Guid id);
-    Task<Document> UploadAsync(Guid companyId, string title, string category, IFormFile file, Guid? folderId, bool isCustomerVisible, Guid userId, string? ip);
+    Task<Document> UploadAsync(Guid companyId, string title, string category, IFormFile file, Guid? folderId, bool isCustomerVisible, Guid userId, string? ip, Guid? orderId = null);
     Task<bool> UpdateAsync(Guid id, string title, string? tags, Guid userId, string? ip);
     Task<bool> DeleteAsync(Guid id);
     Task<bool> RestoreAsync(Guid id);
@@ -40,7 +40,7 @@ public class DocumentService(AppDbContext db, IFileStorageService storage, IAudi
 
     public async Task<Document?> GetAsync(Guid id) => await db.Documents.Include(d => d.Versions).SingleOrDefaultAsync(d => d.Id == id);
 
-    public async Task<Document> UploadAsync(Guid companyId, string title, string category, IFormFile file, Guid? folderId, bool isCustomerVisible, Guid userId, string? ip)
+    public async Task<Document> UploadAsync(Guid companyId, string title, string category, IFormFile file, Guid? folderId, bool isCustomerVisible, Guid userId, string? ip, Guid? orderId = null)
     {
         await using var stream = file.OpenReadStream();
         var stored = await storage.SaveAsync(stream, file.FileName, file.ContentType);
@@ -49,6 +49,7 @@ public class DocumentService(AppDbContext db, IFileStorageService storage, IAudi
             Id = Guid.NewGuid(), CompanyId = companyId, Title = title, Category = category,
             FileName = file.FileName, ContentType = file.ContentType, SizeBytes = stored.SizeBytes,
             StorageKey = stored.StorageKey, FolderId = folderId, IsCustomerVisible = isCustomerVisible,
+            OrderId = orderId,
         };
         doc.Versions.Add(new DocumentVersion
         {

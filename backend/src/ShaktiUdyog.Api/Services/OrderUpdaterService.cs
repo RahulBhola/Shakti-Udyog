@@ -48,13 +48,36 @@ public class OrderUpdaterService(
 
     public async Task<OrderDetailDto?> GetOrderAsync(Guid id)
     {
-        var o = await db.Orders.Include(x => x.Items).Include(x => x.Shipments).SingleOrDefaultAsync(x => x.Id == id);
+        var o = await db.Orders
+            .Include(x => x.Items)
+            .Include(x => x.Shipments)
+            .Include(x => x.Milestones)
+            .SingleOrDefaultAsync(x => x.Id == id);
         if (o is null) return null;
+
         var (label, desc) = OrderStatuses.Labels.TryGetValue(o.Status, out var l) ? l : (o.Status, "");
-        return new OrderDetailDto(o.Id, o.OrderNumber, o.PurchaseOrderReference, o.Status, label, desc, o.PlacedAtUtc, o.PromisedDispatchDateUtc, o.DeliveryAddress, o.LastUpdatedAtUtc,
-            o.Items.Select(i => new OrderItemDto(i.Id, i.PartNumber, i.Description, i.MaterialGrade, i.DrawingRevision, i.Unit, i.QuantityOrdered, i.QuantityProduced, i.QuantityDispatched, i.UnitRate)).ToList(),
-            o.Shipments.Select(s => new ShipmentDto(s.Id, s.Transporter, s.TrackingNumber, s.DispatchDateUtc, s.EstimatedArrivalUtc, s.DeliveredAtUtc, s.ProofOfDeliveryDocumentId != null)).ToList(),
-            null, [],
+
+        // Load commercial data from invoices
+        var latestInvoice = await db.Invoices
+            .Where(i => i.OrderId == id)
+            .OrderByDescending(i => i.IssueDateUtc)
+            .Select(i => new OrderCommercialDto(i.InvoiceNumber, i.IssueDateUtc, i.DueDateUtc, i.Total, i.AmountPaid, i.BalanceDue, i.Status))
+            .FirstOrDefaultAsync();
+
+        // Load order-linked documents
+        var documents = await db.Documents
+            .Where(d => d.OrderId == id && !d.IsDeleted && d.Category != "Invoice")
+            .OrderByDescending(d => d.CreatedAtUtc)
+            .Select(d => new DocumentListItemDto(d.Id, d.Title, d.Category, d.FileName, d.SizeBytes, o.OrderNumber, d.CreatedAtUtc))
+            .ToListAsync();
+
+        return new OrderDetailDto(o.Id, o.OrderNumber, o.PurchaseOrderReference, o.Status, label, desc,
+            o.PlacedAtUtc, o.PromisedDispatchDateUtc, o.DeliveryAddress, o.LastUpdatedAtUtc,
+            o.Items.Select(i => new OrderItemDto(i.Id, i.PartNumber, i.Description, i.MaterialGrade,
+                i.DrawingRevision, i.Unit, i.QuantityOrdered, i.QuantityProduced, i.QuantityDispatched, i.UnitRate)).ToList(),
+            o.Shipments.Select(s => new ShipmentDto(s.Id, s.Transporter, s.TrackingNumber,
+                s.DispatchDateUtc, s.EstimatedArrivalUtc, s.DeliveredAtUtc, s.ProofOfDeliveryDocumentId != null)).ToList(),
+            latestInvoice, documents,
             o.AdvancePercent, o.AdvanceAmount, o.AdvancePaid, o.AdvancePaidAtUtc,
             o.AdvancePaymentRef, o.AdvanceVerifiedAtUtc,
             o.QuotationTotal, o.PaymentTerms, o.QuotationId,

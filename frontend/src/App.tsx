@@ -70,7 +70,6 @@ const AdminReportsPage = lazy(() => import("./portal/pages/AdminReportsPage"));
 const AdminSettingsPage = lazy(() => import("./portal/pages/AdminSettingsPage"));
 const AdminProductionPage = lazy(() => import("./portal/pages/AdminProductionPage"));
 const AdminInvoiceManagePage = lazy(() => import("./portal/pages/AdminInvoiceManagePage"));
-const AdminDocumentsPage = lazy(() => import("./portal/pages/AdminDocumentsPage"));
 const AdminProductPage = lazy(() => import("./portal/pages/AdminProductPage"));
 const AdminProductDetailPage = lazy(() => import("./portal/pages/AdminProductDetailPage"));
 const AdminCategoryPage = lazy(() => import("./portal/pages/AdminCategoryPage"));
@@ -165,8 +164,6 @@ function App() {
               <Route path="orders/:id" element={<AdminOrderDetailPage />} />
               {/* Production */}
               <Route path="production" element={<AdminProductionPage />} />
-              {/* Documents */}
-              <Route path="documents" element={<AdminDocumentsPage />} />
               {/* Finance */}
               <Route path="invoices" element={<AdminInvoiceManagePage />} />
               <Route path="invoices/new" element={<AdminInvoiceCreatePage />} />

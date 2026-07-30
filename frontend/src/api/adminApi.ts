@@ -57,8 +57,69 @@ export const adminApi = {
     return apiGet<Paged<InvoiceListItem>>(`${base}/invoices?${params}`);
   },
   invoice: (id: string) => apiGet<InvoiceDetail>(`${base}/invoices/${id}`),
+  invoiceDownloadUrl: (id: string) => `${base}/invoices/${id}/download`,
   createInvoice: (payload: { orderId?: string; companyId: string; subtotal: number; tax: number; total: number; issueDate: string; dueDate?: string; currency: string }) =>
     apiPost<InvoiceDetail>(`${base}/invoices`, payload),
+  cancelInvoice: (id: string, reason: string) =>
+    apiPatch<{ message: string }>(`${base}/invoices/${id}/cancel`, reason),
+  deleteInvoice: (id: string) =>
+    apiDelete<{ message: string }>(`${base}/invoices/${id}`),
+  approveInvoice: (id: string) =>
+    apiPatch<{ message: string }>(`${base}/invoices/${id}/approve`, {}),
+
+  // ── Order Invoices (Upload via Upload Center) ─────────────────────────
+  /** Upload an invoice PDF + create invoice record, linked to an order. */
+  uploadOrderInvoice: (orderId: string, payload: {
+    invoiceNumber: string;
+    total: number;
+    subtotal: number;
+    tax: number;
+    issueDate: string;
+    dueDate?: string;
+    notes?: string;
+    paymentTerms?: string;
+    file: File;
+  }) => {
+    const fd = new FormData();
+    fd.append("invoiceNumber", payload.invoiceNumber);
+    fd.append("total", String(payload.total));
+    fd.append("subtotal", String(payload.subtotal));
+    fd.append("tax", String(payload.tax));
+    fd.append("issueDate", payload.issueDate);
+    if (payload.dueDate) fd.append("dueDate", payload.dueDate);
+    if (payload.notes) fd.append("notes", payload.notes);
+    if (payload.paymentTerms) fd.append("paymentTerms", payload.paymentTerms);
+    fd.append("file", payload.file);
+    return apiUpload<{ invoiceId: string; documentId: string; invoiceNumber: string; message: string }>(
+      `${base}/orders/${orderId}/invoices`, fd
+    );
+  },
+  /** List invoices for a specific order. */
+  orderInvoices: (orderId: string) =>
+    apiGet<{
+      id: string; invoiceNumber: string; issueDateUtc: string; dueDateUtc: string | null;
+      total: number; amountPaid: number; balanceDue: number; currency: string; status: string;
+      documentId: string | null; hasPdf: boolean;
+    }[]>(`${base}/orders/${orderId}/invoices`),
+
+  // ── Payments ──────────────────────────────────────────────────────────
+  pendingPayments: () =>
+    apiGet<{
+      id: string; paymentReference: string; method: string; amount: number;
+      paymentDateUtc: string; status: string; createdAtUtc: string;
+      invoiceId: string; invoiceNumber: string; companyName: string;
+    }[]>(`${base}/payments/pending`),
+  verifyPayment: (paymentId: string) =>
+    apiPatch<{ message: string }>(`${base}/payments/${paymentId}/verify`, {}),
+  rejectPayment: (paymentId: string, reason: string) =>
+    apiPatch<{ message: string }>(`${base}/payments/${paymentId}/reject`, reason),
+
+  // ── Financial Dashboard ───────────────────────────────────────────────
+  financialDashboard: () =>
+    apiGet<{
+      outstandingAmount: number; collectedAmount: number; pendingVerification: number;
+      overdueInvoices: number; invoicesThisMonth: number; paymentsThisMonth: number;
+    }>(`${base}/financial-dashboard`),
 
   // ---- Products -----------------------------------------------------------
   products: () => apiGet<AdminProduct[]>(`${base}/products`),

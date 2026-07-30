@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Package, Calendar, MapPin, FileText, Truck, CheckCircle2, Clock, Loader2, MessageSquare } from "lucide-react";
+import { ArrowLeft, Package, Calendar, MapPin, FileText, Truck, CheckCircle2, Clock, Loader2, MessageSquare, Download, Upload, Plus } from "lucide-react";
 import { updaterApi } from "../../api/updaterApi";
+import { adminApi } from "../../api/adminApi";
+import { apiDownload } from "../../api/client";
 import type { OrderDetail } from "../../api/customerApi";
 import { ConfirmActionModal } from "./orders/ConfirmModal";
 
@@ -118,6 +120,30 @@ export default function AdminOrderDetailPage() {
   const [newOrderComment, setNewOrderComment] = useState("");
   const [postingComment, setPostingComment] = useState(false);
 
+  // ── Invoice state ──
+  const [orderInvoices, setOrderInvoices] = useState<any[]>([]);
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [invoiceBusy, setInvoiceBusy] = useState(false);
+  const [invoiceMsg, setInvoiceMsg] = useState<string | null>(null);
+  const [invoiceForm, setInvoiceForm] = useState({
+    invoiceNumber: "",
+    subtotal: "",
+    tax: "",
+    total: "",
+    issueDate: new Date().toISOString().split("T")[0],
+    dueDate: "",
+    notes: "",
+    paymentTerms: "",
+    file: null as File | null,
+  });
+
+  // ── Document upload state ──
+  const [showDocModal, setShowDocModal] = useState(false);
+  const [docBusy, setDocBusy] = useState(false);
+  const [docMsg, setDocMsg] = useState<string | null>(null);
+  const [docCategory, setDocCategory] = useState("Inspection Report");
+  const [docFile, setDocFile] = useState<File | null>(null);
+
   async function handlePostOrderComment() {
     if (!newOrderComment.trim() || postingComment) return;
     setPostingComment(true);
@@ -129,6 +155,75 @@ export default function AdminOrderDetailPage() {
     setPostingComment(false);
   }
 
+  // ── Invoice upload handler ──
+  const ALLOWED_DOC_EXTENSIONS = [".pdf", ".dwg", ".dxf", ".step", ".stp", ".iges", ".igs", ".jpg", ".jpeg", ".png", ".zip"];
+
+  function isAllowedFileType(file: File, allowed: string[]): boolean {
+    const ext = "." + file.name.split(".").pop()?.toLowerCase();
+    return allowed.includes(ext);
+  }
+
+  async function handleUploadInvoice() {
+    if (!invoiceForm.file || !invoiceForm.invoiceNumber || !invoiceForm.total || !invoiceForm.subtotal || !invoiceForm.tax) return;
+    if (!isAllowedFileType(invoiceForm.file, [".pdf"])) {
+      setInvoiceMsg("❌ Only PDF files are allowed for invoices.");
+      return;
+    }
+    setInvoiceBusy(true);
+    setInvoiceMsg(null);
+    try {
+      const result = await adminApi.uploadOrderInvoice(id, {
+        invoiceNumber: invoiceForm.invoiceNumber,
+        subtotal: Number(invoiceForm.subtotal),
+        tax: Number(invoiceForm.tax),
+        total: Number(invoiceForm.total),
+        issueDate: new Date(invoiceForm.issueDate).toISOString(),
+        dueDate: invoiceForm.dueDate ? new Date(invoiceForm.dueDate).toISOString() : undefined,
+        notes: invoiceForm.notes || undefined,
+        paymentTerms: invoiceForm.paymentTerms || undefined,
+        file: invoiceForm.file,
+      });
+      setInvoiceMsg(`✅ Invoice ${result.invoiceNumber} uploaded and sent to customer.`);
+      setShowInvoiceModal(false);
+      setInvoiceForm({
+        invoiceNumber: "", subtotal: "", tax: "", total: "",
+        issueDate: new Date().toISOString().split("T")[0],
+        dueDate: "", notes: "", paymentTerms: "", file: null,
+      });
+      // Refresh invoices
+      adminApi.orderInvoices(id).then(setOrderInvoices).catch(() => {});
+    } catch {
+      setInvoiceMsg("❌ Failed to upload invoice. Please try again.");
+    } finally {
+      setInvoiceBusy(false);
+    }
+  }
+
+  // ── Document upload handler ──
+  async function handleUploadDocument() {
+    if (!docFile) return;
+    if (!isAllowedFileType(docFile, ALLOWED_DOC_EXTENSIONS)) {
+      setDocMsg("❌ Unsupported file format. Allowed: PDF, DWG, DXF, STEP, STP, IGES, IGS, JPG, PNG, ZIP.");
+      return;
+    }
+    setDocBusy(true);
+    setDocMsg(null);
+    try {
+      await updaterApi.uploadOrderDocument(id, docFile, docCategory);
+      setDocMsg(`✅ ${docCategory} uploaded successfully.`);
+      setShowDocModal(false);
+      setDocFile(null);
+      setDocCategory("Inspection Report");
+      // Refresh order to show new document
+      const o = await updaterApi.order(id);
+      setOrder(o);
+    } catch {
+      setDocMsg("❌ Failed to upload document.");
+    } finally {
+      setDocBusy(false);
+    }
+  }
+
   useEffect(() => {
     if (!id) return;
     setLoading(true);
@@ -138,6 +233,7 @@ export default function AdminOrderDetailPage() {
       .catch((e) => setError(e.message ?? "Order not found"))
       .finally(() => setLoading(false));
     updaterApi.getOrderComments(id).then(setOrderComments).catch(() => {});
+    adminApi.orderInvoices(id).then(setOrderInvoices).catch(() => {});
   }, [id]);
 
   // Open milestone confirmation modal
@@ -346,26 +442,93 @@ export default function AdminOrderDetailPage() {
           )}
 
           {/* Documents */}
-          {order.documents && order.documents.length > 0 && (
-            <Section title={`Documents (${order.documents.length})`}>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {order.documents.map((doc) => (
-                  <div key={doc.id} className="flex items-center gap-3 rounded-xl border border-[var(--border-default)] p-3.5 hover:bg-[var(--bg-surface-hover)] transition-all cursor-pointer">
-                    <span className="flex items-center justify-center w-10 h-10 rounded-lg bg-[#EFF6FF] text-[#2563EB] shrink-0">
+          <Section title={`Documents (${order.documents?.length ?? 0})`}>
+            {order.documents && order.documents.length > 0 ? (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                  {order.documents.map((doc) => (
+                    <div key={doc.id} className="flex items-center gap-3 rounded-xl border border-[var(--border-default)] p-3.5 hover:bg-[var(--bg-surface-hover)] transition-all">
+                      <span className="flex items-center justify-center w-10 h-10 rounded-lg bg-[#EFF6FF] text-[#2563EB] shrink-0">
+                        <FileText size={18} />
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[12px] font-medium text-[var(--text-primary)] truncate">{doc.title || doc.fileName}</span>
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-[var(--bg-surface)] text-[var(--text-muted)] shrink-0">{doc.category}</span>
+                        </div>
+                        <div className="text-[11px] text-[var(--text-muted)] mt-0.5">
+                          {(doc.sizeBytes / 1024).toFixed(1)} KB · {formatDate(doc.createdAtUtc)}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <p className="text-[13px] text-[var(--text-muted)] text-center py-3">No documents uploaded yet.</p>
+            )}
+            <button type="button" onClick={() => setShowDocModal(true)}
+              className="w-full flex items-center justify-center gap-1.5 px-4 h-9 rounded-lg border border-dashed border-[var(--border-default)] text-[12px] font-medium text-[var(--text-muted)] hover:text-[var(--color-primary)] hover:border-[var(--color-primary)]/30 transition-all">
+              <Upload size={14} /> Upload Document
+            </button>
+          </Section>
+
+          {/* Invoices */}
+          <Section title={`Invoices (${orderInvoices.length})`}>
+            {orderInvoices.length === 0 ? (
+              <div className="text-center py-6">
+                <p className="text-[13px] text-[var(--text-muted)] mb-3">No invoices uploaded yet.</p>
+                <button type="button" onClick={() => setShowInvoiceModal(true)}
+                  className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg bg-[var(--color-primary)] text-white text-[12px] font-semibold hover:bg-[var(--color-primary-hover)] transition-all">
+                  <Upload size={14} /> Upload Invoice
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {orderInvoices.map((inv) => (
+                  <div key={inv.id} className="flex items-center gap-3 rounded-xl border border-[var(--border-default)] p-3.5 hover:bg-[var(--bg-surface-hover)] transition-all">
+                    <span className="flex items-center justify-center w-10 h-10 rounded-lg bg-emerald-500/10 text-emerald-500 shrink-0">
                       <FileText size={18} />
                     </span>
                     <div className="flex-1 min-w-0">
-                      <div className="text-[12px] font-medium text-[var(--text-primary)] truncate">{doc.title || doc.fileName}</div>
-                      <div className="text-[11px] text-[var(--text-muted)]">
-                        {doc.category} · {(doc.sizeBytes / 1024).toFixed(1)} KB
+                      <div className="flex items-center gap-2">
+                        <span className="text-[13px] font-semibold text-[var(--text-primary)]">{inv.invoiceNumber}</span>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                          inv.status === "Issued" ? "bg-amber-500/10 text-amber-400" :
+                          inv.status === "Paid" ? "bg-emerald-500/10 text-emerald-400" :
+                          "bg-slate-500/10 text-slate-400"
+                        }`}>{inv.status}</span>
                       </div>
-                      <div className="text-[10px] text-[var(--text-muted)]">{formatDate(doc.createdAtUtc)}</div>
+                      <div className="text-[11px] text-[var(--text-muted)] mt-0.5">
+                        ₹{inv.total.toLocaleString()} · Due {formatDate(inv.dueDateUtc)} · Balance ₹{inv.balanceDue.toLocaleString()}
+                      </div>
                     </div>
+                    {inv.hasPdf && (
+                      <button onClick={(e) => { e.stopPropagation(); void apiDownload(adminApi.invoiceDownloadUrl(inv.id), `${inv.invoiceNumber}.pdf`); }}
+                        className="flex items-center justify-center w-8 h-8 rounded-lg text-[var(--text-muted)] hover:text-[var(--color-primary)] hover:bg-[var(--bg-surface)] transition-all"
+                        title="Download PDF">
+                        <Download size={14} />
+                      </button>
+                    )}
+                    <button onClick={(e) => {
+                      e.stopPropagation();
+                      if (window.confirm(`Delete invoice ${inv.invoiceNumber}? This cannot be undone.`)) {
+                        adminApi.deleteInvoice(inv.id).then(() => adminApi.orderInvoices(id).then(setOrderInvoices)).catch(() => {});
+                      }
+                    }}
+                      className="flex items-center justify-center w-8 h-8 rounded-lg text-[var(--text-muted)] hover:text-red-500 hover:bg-red-500/10 transition-all"
+                      title="Delete Invoice">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                    </button>
                   </div>
                 ))}
+                <button type="button" onClick={() => setShowInvoiceModal(true)}
+                  className="w-full flex items-center justify-center gap-1.5 px-4 h-9 rounded-lg border border-dashed border-[var(--border-default)] text-[12px] font-medium text-[var(--text-muted)] hover:text-[var(--color-primary)] hover:border-[var(--color-primary)]/30 transition-all">
+                  <Plus size={14} /> Upload Another Invoice
+                </button>
               </div>
-            </Section>
-          )}
+            )}
+          </Section>
         </div>
 
         {/* ── Right sidebar ─────────────────────────────────── */}
@@ -408,9 +571,13 @@ export default function AdminOrderDetailPage() {
           {/* Quick Actions */}
           <Section title="Quick Links">
             <div className="space-y-2">
+              <button type="button" onClick={() => setShowInvoiceModal(true)}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all">
+                <Upload size={14} /> Send Invoice to Customer
+              </button>
               <button type="button" onClick={() => navigate("/admin/invoices")}
                 className="w-full text-left px-3 py-2 rounded-lg text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-colors">
-                View Invoices →
+                View All Invoices →
               </button>
               <button type="button" onClick={() => navigate("/admin/production")}
                 className="w-full text-left px-3 py-2 rounded-lg text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-colors">
@@ -465,6 +632,189 @@ export default function AdminOrderDetailPage() {
         onConfirm={confirmMilestoneAdvance}
         onCancel={() => setMilestoneModal(null)}
       />
+
+      {/* ── Invoice Upload Modal ─────────────────────────── */}
+      {showInvoiceModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-md" onClick={() => { setShowInvoiceModal(false); setInvoiceMsg(null); }} />
+          <div className="relative w-full max-w-lg mx-4 rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="h-1.5 bg-gradient-to-r from-emerald-500 to-emerald-400" />
+            <div className="p-6">
+              <div className="flex items-start gap-4 mb-5">
+                <span className="flex items-center justify-center w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-500 shrink-0 mt-1">
+                  <Upload size={22} />
+                </span>
+                <div>
+                  <h3 className="text-[16px] font-bold text-[var(--text-primary)] m-0">Send Invoice to Customer</h3>
+                  <p className="text-[12px] text-[var(--text-muted)] m-0 mt-1 leading-relaxed">
+                    Upload the invoice PDF. It will be visible to the customer in their portal immediately.
+                  </p>
+                </div>
+              </div>
+
+              {invoiceMsg && (
+                <div className={`mb-4 px-4 py-2.5 rounded-xl text-[13px] font-medium ${
+                  invoiceMsg.includes("✅") ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400" : "bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400"
+                }`}>{invoiceMsg}</div>
+              )}
+
+              <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+                {/* Invoice number */}
+                <div>
+                  <label className="text-[12px] font-medium text-[var(--text-primary)] block mb-1">Invoice Number *</label>
+                  <input type="text" value={invoiceForm.invoiceNumber} onChange={(e) => setInvoiceForm(f => ({ ...f, invoiceNumber: e.target.value }))}
+                    placeholder="e.g. INV-20260729-001"
+                    className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2.5 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--color-primary)]" />
+                </div>
+
+                {/* Financial fields */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className="text-[12px] font-medium text-[var(--text-primary)] block mb-1">Subtotal *</label>
+                    <input type="number" value={invoiceForm.subtotal} onChange={(e) => setInvoiceForm(f => ({ ...f, subtotal: e.target.value }))}
+                      className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2.5 text-[13px] text-[var(--text-primary)] outline-none focus:border-[var(--color-primary)]" />
+                  </div>
+                  <div>
+                    <label className="text-[12px] font-medium text-[var(--text-primary)] block mb-1">Tax *</label>
+                    <input type="number" value={invoiceForm.tax} onChange={(e) => setInvoiceForm(f => ({ ...f, tax: e.target.value }))}
+                      className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2.5 text-[13px] text-[var(--text-primary)] outline-none focus:border-[var(--color-primary)]" />
+                  </div>
+                  <div>
+                    <label className="text-[12px] font-medium text-[var(--text-primary)] block mb-1">Total *</label>
+                    <input type="number" value={invoiceForm.total} onChange={(e) => setInvoiceForm(f => ({ ...f, total: e.target.value }))}
+                      className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2.5 text-[13px] text-[var(--text-primary)] outline-none focus:border-[var(--color-primary)]" />
+                  </div>
+                </div>
+
+                {/* Dates */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[12px] font-medium text-[var(--text-primary)] block mb-1">Issue Date *</label>
+                    <input type="date" value={invoiceForm.issueDate} onChange={(e) => setInvoiceForm(f => ({ ...f, issueDate: e.target.value }))}
+                      className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2.5 text-[13px] text-[var(--text-primary)] outline-none focus:border-[var(--color-primary)]" />
+                  </div>
+                  <div>
+                    <label className="text-[12px] font-medium text-[var(--text-primary)] block mb-1">Due Date</label>
+                    <input type="date" value={invoiceForm.dueDate} onChange={(e) => setInvoiceForm(f => ({ ...f, dueDate: e.target.value }))}
+                      className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2.5 text-[13px] text-[var(--text-primary)] outline-none focus:border-[var(--color-primary)]" />
+                  </div>
+                </div>
+
+                {/* Payment terms */}
+                <div>
+                  <label className="text-[12px] font-medium text-[var(--text-primary)] block mb-1">Payment Terms</label>
+                  <input type="text" value={invoiceForm.paymentTerms} onChange={(e) => setInvoiceForm(f => ({ ...f, paymentTerms: e.target.value }))}
+                    placeholder="e.g. 30 days"
+                    className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2.5 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--color-primary)]" />
+                </div>
+
+                {/* Notes */}
+                <div>
+                  <label className="text-[12px] font-medium text-[var(--text-primary)] block mb-1">Notes</label>
+                  <textarea value={invoiceForm.notes} onChange={(e) => setInvoiceForm(f => ({ ...f, notes: e.target.value }))} rows={2}
+                    placeholder="Optional notes for the customer"
+                    className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2.5 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--color-primary)] resize-none" />
+                </div>
+
+                {/* File upload */}
+                <div>
+                  <label className="text-[12px] font-medium text-[var(--text-primary)] block mb-1">Invoice PDF *</label>
+                  <input type="file" accept=".pdf,application/pdf" onChange={(e) => {
+                    const f = e.target.files?.[0] ?? null;
+                    setInvoiceForm(prev => ({ ...prev, file: f }));
+                  }}
+                    className="w-full text-[13px] text-[var(--text-primary)] file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-[12px] file:font-semibold file:bg-[var(--color-primary)]/10 file:text-[var(--color-primary)] hover:file:bg-[var(--color-primary)]/20 file:cursor-pointer" />
+                  <p className="text-[11px] text-[var(--text-muted)] mt-1">Supported: <strong>PDF</strong> only</p>
+                </div>
+              </div>
+
+              <div className="border-t border-[var(--border-default)] my-4" />
+              <div className="flex items-center justify-end gap-2.5">
+                <button type="button" disabled={invoiceBusy} onClick={() => { setShowInvoiceModal(false); setInvoiceMsg(null); }}
+                  className="px-4 h-9 rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all disabled:opacity-50">
+                  Cancel
+                </button>
+                <button type="button" disabled={invoiceBusy || !invoiceForm.file || !invoiceForm.invoiceNumber || !invoiceForm.total}
+                  onClick={handleUploadInvoice}
+                  className="px-5 h-9 rounded-xl bg-emerald-500 text-white text-[12px] font-semibold hover:bg-emerald-600 disabled:opacity-50 transition-all flex items-center gap-1.5 shadow-sm">
+                  {invoiceBusy ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+                  {invoiceBusy ? "Uploading..." : "Upload & Send to Customer"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Document Upload Modal ────────────────────────── */}
+      {showDocModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-md" onClick={() => { setShowDocModal(false); setDocMsg(null); }} />
+          <div className="relative w-full max-w-md mx-4 rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="h-1.5 bg-gradient-to-r from-blue-500 to-blue-400" />
+            <div className="p-6">
+              <div className="flex items-start gap-4 mb-5">
+                <span className="flex items-center justify-center w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-500/10 text-blue-500 shrink-0 mt-1">
+                  <FileText size={22} />
+                </span>
+                <div>
+                  <h3 className="text-[16px] font-bold text-[var(--text-primary)] m-0">Upload Document</h3>
+                  <p className="text-[12px] text-[var(--text-muted)] m-0 mt-1 leading-relaxed">
+                    Upload inspection reports, certificates, packing lists, or other order documents.
+                  </p>
+                </div>
+              </div>
+
+              {docMsg && (
+                <div className={`mb-4 px-4 py-2.5 rounded-xl text-[13px] font-medium ${
+                  docMsg.includes("✅") ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400" : "bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400"
+                }`}>{docMsg}</div>
+              )}
+
+              <div className="space-y-4">
+                {/* Category */}
+                <div>
+                  <label className="text-[12px] font-medium text-[var(--text-primary)] block mb-1">Document Type *</label>
+                  <select value={docCategory} onChange={(e) => setDocCategory(e.target.value)}
+                    className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2.5 text-[13px] text-[var(--text-primary)] outline-none focus:border-[var(--color-primary)]">
+                    <option value="Inspection Report">Inspection Report</option>
+                    <option value="Certificate">Certificate</option>
+                    <option value="Packing List">Packing List</option>
+                    <option value="Delivery Challan">Delivery Challan</option>
+                    <option value="Drawing">Drawing</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+
+                {/* File */}
+                <div>
+                  <label className="text-[12px] font-medium text-[var(--text-primary)] block mb-1">File *</label>
+                  <input type="file" accept=".pdf,.dwg,.dxf,.step,.stp,.iges,.igs,.jpg,.jpeg,.png,.zip" onChange={(e) => setDocFile(e.target.files?.[0] ?? null)}
+                    className="w-full text-[13px] text-[var(--text-primary)] file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-[12px] file:font-semibold file:bg-[var(--color-primary)]/10 file:text-[var(--color-primary)] hover:file:bg-[var(--color-primary)]/20 file:cursor-pointer" />
+                  <p className="text-[11px] text-[var(--text-muted)] mt-1">Supported: <strong>PDF, DWG, DXF, STEP, STP, IGES, IGS, JPG, PNG, ZIP</strong></p>
+                </div>
+
+                <p className="text-[11px] text-[var(--text-muted)]">
+                  Uploaded documents are visible to the customer in their portal.
+                </p>
+              </div>
+
+              <div className="border-t border-[var(--border-default)] my-4" />
+              <div className="flex items-center justify-end gap-2.5">
+                <button type="button" disabled={docBusy} onClick={() => { setShowDocModal(false); setDocMsg(null); }}
+                  className="px-4 h-9 rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all disabled:opacity-50">
+                  Cancel
+                </button>
+                <button type="button" disabled={docBusy || !docFile} onClick={handleUploadDocument}
+                  className="px-5 h-9 rounded-xl bg-blue-500 text-white text-[12px] font-semibold hover:bg-blue-600 disabled:opacity-50 transition-all flex items-center gap-1.5 shadow-sm">
+                  {docBusy ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+                  {docBusy ? "Uploading..." : "Upload Document"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
