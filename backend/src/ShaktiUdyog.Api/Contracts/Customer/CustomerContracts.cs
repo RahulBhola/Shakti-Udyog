@@ -196,7 +196,8 @@ public record PagedResult<T>(IReadOnlyList<T> Items, int Page, int PageSize, int
 
 public record ProfileDto(
     string Email, string? FullName, string? PhoneNumber,
-    CompanyProfileDto? Company, bool MfaEnabled);
+    CompanyProfileDto? Company, bool MfaEnabled,
+    DateTimeOffset? AccountCreatedAtUtc = null);
 
 public record CompanyProfileDto(
     string Name, string? AddressLine1, string? City, string? State,
@@ -210,3 +211,164 @@ public record UpdateProfileRequest(
 public record ChangePasswordRequest(
     [Required] string CurrentPassword,
     [Required, MinLength(12)] string NewPassword);
+
+// ---- Expanded Company -------------------------------------------------------
+
+public record CompanyDetailDto(
+    Guid Id,
+    string Name,
+    string? LegalBusinessName,
+    string? BusinessType,
+    string? Industry,
+    string? Website,
+    string? CompanyEmail,
+    string? CompanyPhone,
+    string? PurchaseEmail,
+    string? AccountsEmail,
+    string? RegisteredAddress,
+    string? FactoryAddress,
+    string? City,
+    string? State,
+    string? Country,
+    string? PinCode,
+    string? GstNumber,
+    string? PanNumber,
+    string? CinNumber,
+    string? MsmeNumber,
+    string? PreferredCurrency,
+    string? PreferredPaymentMethod,
+    string? PreferredCommunication,
+    string? PreferredLanguage,
+    string? CompanyLogoUrl,
+    string VerificationStatus,
+    DateTimeOffset? VerificationSubmittedOn,
+    DateTimeOffset? VerifiedOn,
+    bool GstVerified,
+    bool EmailVerified,
+    bool PhoneVerified);
+
+public record UpdateCompanyRequest(
+    [StringLength(300)] string? LegalBusinessName,
+    [StringLength(100)] string? BusinessType,
+    [StringLength(200)] string? Industry,
+    [StringLength(500)] string? Website,
+    [StringLength(254)] string? CompanyEmail,
+    [StringLength(30)] string? CompanyPhone,
+    [StringLength(254)] string? PurchaseEmail,
+    [StringLength(254)] string? AccountsEmail,
+    [StringLength(500)] string? RegisteredAddress,
+    [StringLength(500)] string? FactoryAddress,
+    [StringLength(150)] string? City,
+    [StringLength(150)] string? State,
+    [StringLength(100)] string? Country,
+    [StringLength(20)] string? PinCode,
+    [StringLength(30)] string? GstNumber,
+    [StringLength(20)] string? PanNumber,
+    [StringLength(30)] string? CinNumber,
+    [StringLength(30)] string? MsmeNumber,
+    [StringLength(10)] string? PreferredCurrency,
+    [StringLength(100)] string? PreferredPaymentMethod,
+    [StringLength(100)] string? PreferredCommunication,
+    [StringLength(50)] string? PreferredLanguage);
+
+// ---- Contact Persons --------------------------------------------------------
+
+public record ContactPersonDto(
+    Guid Id,
+    string FullName,
+    string Designation,
+    string? Department,
+    string Email,
+    string Phone,
+    bool IsPrimary,
+    DateTimeOffset CreatedAtUtc);
+
+public record CreateContactPersonRequest(
+    [Required, StringLength(200)] string FullName,
+    [Required, StringLength(150)] string Designation,
+    [StringLength(150)] string? Department,
+    [Required, StringLength(254)] string Email,
+    [Required, StringLength(30)] string Phone,
+    bool IsPrimary = false);
+
+public record UpdateContactPersonRequest(
+    [StringLength(200)] string? FullName,
+    [StringLength(150)] string? Designation,
+    [StringLength(150)] string? Department,
+    [StringLength(254)] string? Email,
+    [StringLength(30)] string? Phone,
+    bool? IsPrimary = null);
+
+// ---- Company Addresses ------------------------------------------------------
+
+public record CompanyAddressDto(
+    Guid Id,
+    string AddressType,
+    string Address,
+    string? City,
+    string? State,
+    string? Country,
+    string? PinCode,
+    bool IsPrimary,
+    DateTimeOffset CreatedAtUtc);
+
+public record CreateCompanyAddressRequest(
+    [Required, StringLength(50)] string AddressType,
+    [Required, StringLength(500)] string Address,
+    [StringLength(150)] string? City,
+    [StringLength(150)] string? State,
+    [StringLength(100)] string? Country,
+    [StringLength(20)] string? PinCode,
+    bool IsPrimary = false);
+
+public record UpdateCompanyAddressRequest(
+    [StringLength(50)] string? AddressType,
+    [StringLength(500)] string? Address,
+    [StringLength(150)] string? City,
+    [StringLength(150)] string? State,
+    [StringLength(100)] string? Country,
+    [StringLength(20)] string? PinCode,
+    bool? IsPrimary = null);
+
+// ---- Company Documents ------------------------------------------------------
+
+public record CompanyDocumentDto(
+    Guid Id,
+    string DocumentType,
+    string FileName,
+    long SizeBytes,
+    string Status,
+    string? Remarks,
+    DateTimeOffset UploadedAtUtc);
+
+public record UploadDocumentResponse(
+    Guid Id,
+    string DocumentType,
+    string FileName,
+    string Message);
+
+// ---- Security ---------------------------------------------------------------
+
+public record ActiveSessionDto(
+    Guid Id,
+    string? DeviceName,
+    string? IpAddress,
+    DateTimeOffset CreatedAtUtc,
+    DateTimeOffset? LastUsedAtUtc,
+    bool IsCurrent);
+
+public record LoginHistoryEntryDto(
+    string? IpAddress,
+    string? UserAgent,
+    bool Succeeded,
+    DateTimeOffset OccurredAtUtc);
+
+public record SecurityInfoDto(
+    bool MfaEnabled,
+    IReadOnlyList<ActiveSessionDto> ActiveSessions,
+    IReadOnlyList<LoginHistoryEntryDto> RecentLoginHistory);
+
+public record MfaSetupResponse(
+    bool Enabled,
+    string? SecretKey,
+    string? QrCodeUrl);

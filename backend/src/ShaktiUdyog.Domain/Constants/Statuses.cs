@@ -192,6 +192,17 @@ public static class PaymentStatuses
     public static readonly IReadOnlyList<string> All = [PendingVerification, Verified, Rejected];
 }
 
+public static class VerificationStatuses
+{
+    public const string Pending = "Pending";
+    public const string Submitted = "Submitted";
+    public const string UnderReview = "Under Review";
+    public const string Verified = "Verified";
+    public const string Rejected = "Rejected";
+
+    public static readonly IReadOnlyList<string> All = [Pending, Submitted, UnderReview, Verified, Rejected];
+}
+
 public static class DocumentCategories
 {
     public const string InspectionReport = "Inspection Report";

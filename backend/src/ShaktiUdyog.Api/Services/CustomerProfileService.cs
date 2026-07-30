@@ -36,9 +36,11 @@ public class CustomerProfileService(
                 c.GstNumber, c.DeliveryAddresses))
             .SingleOrDefaultAsync();
 
+        var mfaEnabled = await userManager.GetTwoFactorEnabledAsync(user);
+
         return new ProfileDto(
             user.Email ?? string.Empty, user.FullName, user.PhoneNumber, company,
-            MfaEnabled: false); // MFA arrives in a later milestone
+            mfaEnabled, user.CreatedAtUtc);
     }
 
     public async Task<bool> UpdateProfileAsync(CustomerContext ctx, UpdateProfileRequest request, string? ip)

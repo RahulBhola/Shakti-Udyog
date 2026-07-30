@@ -25,6 +25,11 @@ public class CustomerController(
     ICustomerContextService contextService,
     ICustomerService customerService,
     ICustomerProfileService profileService,
+    ICustomerCompanyService companyService,
+    ICustomerContactService contactService,
+    ICustomerAddressService addressService,
+    ICustomerDocumentService documentService,
+    ICustomerSecurityService securityService,
     AppDbContext db,
     IFileStorageService storage) : ControllerBase
 {
@@ -436,6 +441,223 @@ public class CustomerController(
         return succeeded
             ? Ok(new MessageResponse("Password changed. Other sessions have been signed out."))
             : BadRequest(new MessageResponse(error ?? "Password change failed."));
+    }
+
+    // ---- Company ---------------------------------------------------------------
+
+    [HttpGet("company")]
+    [ProducesResponseType<CompanyDetailDto>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetCompany()
+    {
+        var (ctx, failure) = await RequireContextAsync();
+        if (failure is not null) return failure;
+        var company = await companyService.GetCompanyAsync(ctx!);
+        return company is null ? NotFound() : Ok(company);
+    }
+
+    [HttpPut("company")]
+    [ProducesResponseType<MessageResponse>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> UpdateCompany(UpdateCompanyRequest request)
+    {
+        var (ctx, failure) = await RequireContextAsync();
+        if (failure is not null) return failure;
+        var updated = await companyService.UpdateCompanyAsync(ctx!, request, ClientIp);
+        return updated ? Ok(new MessageResponse("Company information updated.")) : NotFound();
+    }
+
+    [HttpPost("company/submit-verification")]
+    [ProducesResponseType<MessageResponse>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> SubmitVerification()
+    {
+        var (ctx, failure) = await RequireContextAsync();
+        if (failure is not null) return failure;
+        var submitted = await companyService.SubmitVerificationAsync(ctx!, ClientIp);
+        return submitted ? Ok(new MessageResponse("Verification documents submitted for review.")) : NotFound();
+    }
+
+    // ---- Contact Persons -------------------------------------------------------
+
+    [HttpGet("contacts")]
+    [ProducesResponseType<IReadOnlyList<ContactPersonDto>>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetContacts()
+    {
+        var (ctx, failure) = await RequireContextAsync();
+        if (failure is not null) return failure;
+        return Ok(await contactService.GetContactsAsync(ctx!));
+    }
+
+    [HttpPost("contacts")]
+    [ProducesResponseType<ContactPersonDto>(StatusCodes.Status201Created)]
+    public async Task<IActionResult> CreateContact(CreateContactPersonRequest request)
+    {
+        var (ctx, failure) = await RequireContextAsync();
+        if (failure is not null) return failure;
+        var contact = await contactService.CreateContactAsync(ctx!, request, ClientIp);
+        return contact is null ? NotFound() : CreatedAtAction(nameof(GetContacts), new { id = contact.Id }, contact);
+    }
+
+    [HttpPut("contacts/{id:guid}")]
+    [ProducesResponseType<ContactPersonDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateContact(Guid id, UpdateContactPersonRequest request)
+    {
+        var (ctx, failure) = await RequireContextAsync();
+        if (failure is not null) return failure;
+        var contact = await contactService.UpdateContactAsync(ctx!, id, request, ClientIp);
+        return contact is null ? NotFound() : Ok(contact);
+    }
+
+    [HttpDelete("contacts/{id:guid}")]
+    [ProducesResponseType<MessageResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteContact(Guid id)
+    {
+        var (ctx, failure) = await RequireContextAsync();
+        if (failure is not null) return failure;
+        return await contactService.DeleteContactAsync(ctx!, id, ClientIp)
+            ? Ok(new MessageResponse("Contact deleted."))
+            : NotFound();
+    }
+
+    // ---- Addresses -------------------------------------------------------------
+
+    [HttpGet("addresses")]
+    [ProducesResponseType<IReadOnlyList<CompanyAddressDto>>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAddresses()
+    {
+        var (ctx, failure) = await RequireContextAsync();
+        if (failure is not null) return failure;
+        return Ok(await addressService.GetAddressesAsync(ctx!));
+    }
+
+    [HttpPost("addresses")]
+    [ProducesResponseType<CompanyAddressDto>(StatusCodes.Status201Created)]
+    public async Task<IActionResult> CreateAddress(CreateCompanyAddressRequest request)
+    {
+        var (ctx, failure) = await RequireContextAsync();
+        if (failure is not null) return failure;
+        var address = await addressService.CreateAddressAsync(ctx!, request, ClientIp);
+        return address is null ? NotFound() : CreatedAtAction(nameof(GetAddresses), new { id = address.Id }, address);
+    }
+
+    [HttpPut("addresses/{id:guid}")]
+    [ProducesResponseType<CompanyAddressDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateAddress(Guid id, UpdateCompanyAddressRequest request)
+    {
+        var (ctx, failure) = await RequireContextAsync();
+        if (failure is not null) return failure;
+        var address = await addressService.UpdateAddressAsync(ctx!, id, request, ClientIp);
+        return address is null ? NotFound() : Ok(address);
+    }
+
+    [HttpDelete("addresses/{id:guid}")]
+    [ProducesResponseType<MessageResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteAddress(Guid id)
+    {
+        var (ctx, failure) = await RequireContextAsync();
+        if (failure is not null) return failure;
+        return await addressService.DeleteAddressAsync(ctx!, id, ClientIp)
+            ? Ok(new MessageResponse("Address deleted."))
+            : NotFound();
+    }
+
+    // ---- Company Documents -----------------------------------------------------
+
+    [HttpGet("documents/company")]
+    [ProducesResponseType<IReadOnlyList<CompanyDocumentDto>>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetCompanyDocuments()
+    {
+        var (ctx, failure) = await RequireContextAsync();
+        if (failure is not null) return failure;
+        return Ok(await documentService.GetDocumentsAsync(ctx!));
+    }
+
+    [HttpPost("documents/company/upload")]
+    [RequestSizeLimit(11 * 1024 * 1024)]
+    [ProducesResponseType<UploadDocumentResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> UploadCompanyDocument([FromForm] string documentType, IFormFile file)
+    {
+        var (ctx, failure) = await RequireContextAsync();
+        if (failure is not null) return failure;
+        try
+        {
+            var result = await documentService.UploadDocumentAsync(ctx!, documentType, file, ClientIp);
+            return result is null ? NotFound() : Ok(result);
+        }
+        catch (FileValidationException ex)
+        {
+            return BadRequest(new MessageResponse(ex.Message));
+        }
+    }
+
+    [HttpGet("documents/company/{id:guid}/download")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DownloadCompanyDocument(Guid id)
+    {
+        var (ctx, failure) = await RequireContextAsync();
+        if (failure is not null) return failure;
+        var file = await documentService.DownloadDocumentAsync(ctx!, id, ClientIp);
+        return file is null ? NotFound() : file;
+    }
+
+    [HttpDelete("documents/company/{id:guid}")]
+    [ProducesResponseType<MessageResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteCompanyDocument(Guid id)
+    {
+        var (ctx, failure) = await RequireContextAsync();
+        if (failure is not null) return failure;
+        return await documentService.DeleteDocumentAsync(ctx!, id, ClientIp)
+            ? Ok(new MessageResponse("Document deleted."))
+            : NotFound();
+    }
+
+    // ---- Security --------------------------------------------------------------
+
+    [HttpGet("security")]
+    [ProducesResponseType<SecurityInfoDto>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetSecurityInfo()
+    {
+        var (ctx, failure) = await RequireContextAsync();
+        if (failure is not null) return failure;
+        return Ok(await securityService.GetSecurityInfoAsync(ctx!));
+    }
+
+    [HttpPost("security/change-password")]
+    [EnableRateLimiting("auth")]
+    [ProducesResponseType<MessageResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> SecurityChangePassword(ChangePasswordRequest request)
+    {
+        var (ctx, failure) = await RequireContextAsync();
+        if (failure is not null) return failure;
+        var result = await securityService.ChangePasswordAsync(ctx!, request, ClientIp);
+        return result
+            ? Ok(new MessageResponse("Password changed. Other sessions have been signed out."))
+            : BadRequest(new MessageResponse("Password change failed. Check current password."));
+    }
+
+    [HttpPost("security/enable-mfa")]
+    [ProducesResponseType<MfaSetupResponse>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> EnableMfa()
+    {
+        var (ctx, failure) = await RequireContextAsync();
+        if (failure is not null) return failure;
+        return Ok(await securityService.SetupMfaAsync(ctx!, ClientIp));
+    }
+
+    [HttpPost("security/disable-mfa")]
+    [ProducesResponseType<MessageResponse>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> DisableMfa()
+    {
+        var (ctx, failure) = await RequireContextAsync();
+        if (failure is not null) return failure;
+        var disabled = await securityService.DisableMfaAsync(ctx!, ClientIp);
+        return disabled ? Ok(new MessageResponse("MFA disabled.")) : NotFound();
     }
 }
 

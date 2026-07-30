@@ -246,6 +246,182 @@ export interface Profile {
     deliveryAddresses: string | null;
   } | null;
   mfaEnabled: boolean;
+  accountCreatedAtUtc: string | null;
+}
+
+// ---- Profile: Company -------------------------------------------------------
+
+export interface CompanyDetail {
+  id: string;
+  name: string;
+  legalBusinessName: string | null;
+  businessType: string | null;
+  industry: string | null;
+  website: string | null;
+  companyEmail: string | null;
+  companyPhone: string | null;
+  purchaseEmail: string | null;
+  accountsEmail: string | null;
+  registeredAddress: string | null;
+  factoryAddress: string | null;
+  city: string | null;
+  state: string | null;
+  country: string | null;
+  pinCode: string | null;
+  gstNumber: string | null;
+  panNumber: string | null;
+  cinNumber: string | null;
+  msmeNumber: string | null;
+  preferredCurrency: string | null;
+  preferredPaymentMethod: string | null;
+  preferredCommunication: string | null;
+  preferredLanguage: string | null;
+  companyLogoUrl: string | null;
+  verificationStatus: string;
+  verificationSubmittedOn: string | null;
+  verifiedOn: string | null;
+  gstVerified: boolean;
+  emailVerified: boolean;
+  phoneVerified: boolean;
+}
+
+export interface UpdateCompanyRequest {
+  legalBusinessName?: string;
+  businessType?: string;
+  industry?: string;
+  website?: string;
+  companyEmail?: string;
+  companyPhone?: string;
+  purchaseEmail?: string;
+  accountsEmail?: string;
+  registeredAddress?: string;
+  factoryAddress?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  pinCode?: string;
+  gstNumber?: string;
+  panNumber?: string;
+  cinNumber?: string;
+  msmeNumber?: string;
+  preferredCurrency?: string;
+  preferredPaymentMethod?: string;
+  preferredCommunication?: string;
+  preferredLanguage?: string;
+}
+
+// ---- Profile: Contact Persons ------------------------------------------------
+
+export interface ContactPerson {
+  id: string;
+  fullName: string;
+  designation: string;
+  department: string | null;
+  email: string;
+  phone: string;
+  isPrimary: boolean;
+  createdAtUtc: string;
+}
+
+export interface CreateContactPersonRequest {
+  fullName: string;
+  designation: string;
+  department?: string;
+  email: string;
+  phone: string;
+  isPrimary?: boolean;
+}
+
+export interface UpdateContactPersonRequest {
+  fullName?: string;
+  designation?: string;
+  department?: string;
+  email?: string;
+  phone?: string;
+  isPrimary?: boolean;
+}
+
+// ---- Profile: Company Addresses ----------------------------------------------
+
+export interface CompanyAddress {
+  id: string;
+  addressType: string;
+  address: string;
+  city: string | null;
+  state: string | null;
+  country: string | null;
+  pinCode: string | null;
+  isPrimary: boolean;
+  createdAtUtc: string;
+}
+
+export interface CreateCompanyAddressRequest {
+  addressType: string;
+  address: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  pinCode?: string;
+  isPrimary?: boolean;
+}
+
+export interface UpdateCompanyAddressRequest {
+  addressType?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  pinCode?: string;
+  isPrimary?: boolean;
+}
+
+// ---- Profile: Company Documents ----------------------------------------------
+
+export interface CompanyDocument {
+  id: string;
+  documentType: string;
+  fileName: string;
+  sizeBytes: number;
+  status: string;
+  remarks: string | null;
+  uploadedAtUtc: string;
+}
+
+export interface UploadDocumentResponse {
+  id: string;
+  documentType: string;
+  fileName: string;
+  message: string;
+}
+
+// ---- Profile: Security -------------------------------------------------------
+
+export interface SecurityInfo {
+  mfaEnabled: boolean;
+  activeSessions: ActiveSession[];
+  recentLoginHistory: LoginHistoryEntry[];
+}
+
+export interface ActiveSession {
+  id: string;
+  deviceName: string | null;
+  ipAddress: string | null;
+  createdAtUtc: string;
+  lastUsedAtUtc: string | null;
+  isCurrent: boolean;
+}
+
+export interface LoginHistoryEntry {
+  ipAddress: string | null;
+  userAgent: string | null;
+  succeeded: boolean;
+  occurredAtUtc: string;
+}
+
+export interface MfaSetupResponse {
+  enabled: boolean;
+  secretKey: string | null;
+  qrCodeUrl: string | null;
 }
 
 /* ---- Calls ------------------------------------------------------------------ */
@@ -334,4 +510,53 @@ export const customerApi = {
     apiPatch<{ message: string }>(`${base}/profile`, payload),
   changePassword: (currentPassword: string, newPassword: string) =>
     apiPost<{ message: string }>(`${base}/profile/change-password`, { currentPassword, newPassword }),
+
+  // ---- Company ---------------------------------------------------------------
+
+  companyDetail: () => apiGet<CompanyDetail>(`${base}/company`),
+  updateCompany: (payload: UpdateCompanyRequest) =>
+    apiPut<{ message: string }>(`${base}/company`, payload),
+  submitCompanyVerification: () =>
+    apiPost<{ message: string }>(`${base}/company/submit-verification`),
+
+  // ---- Contact Persons -------------------------------------------------------
+
+  contacts: () => apiGet<ContactPerson[]>(`${base}/contacts`),
+  createContact: (payload: CreateContactPersonRequest) =>
+    apiPost<ContactPerson>(`${base}/contacts`, payload),
+  updateContact: (id: string, payload: UpdateContactPersonRequest) =>
+    apiPut<ContactPerson>(`${base}/contacts/${id}`, payload),
+  deleteContact: (id: string) =>
+    apiDelete<{ message: string }>(`${base}/contacts/${id}`),
+
+  // ---- Company Addresses -----------------------------------------------------
+
+  addresses: () => apiGet<CompanyAddress[]>(`${base}/addresses`),
+  createAddress: (payload: CreateCompanyAddressRequest) =>
+    apiPost<CompanyAddress>(`${base}/addresses`, payload),
+  updateAddress: (id: string, payload: UpdateCompanyAddressRequest) =>
+    apiPut<CompanyAddress>(`${base}/addresses/${id}`, payload),
+  deleteAddress: (id: string) =>
+    apiDelete<{ message: string }>(`${base}/addresses/${id}`),
+
+  // ---- Company Documents -----------------------------------------------------
+
+  companyDocuments: () => apiGet<CompanyDocument[]>(`${base}/documents/company`),
+  uploadCompanyDocument: (documentType: string, file: File) => {
+    const form = new FormData();
+    form.append("documentType", documentType);
+    form.append("file", file);
+    return apiUpload<UploadDocumentResponse>(`${base}/documents/company/upload`, form);
+  },
+  downloadCompanyDocument: (id: string) => `${base}/documents/company/${id}/download`,
+  deleteCompanyDocument: (id: string) =>
+    apiDelete<{ message: string }>(`${base}/documents/company/${id}`),
+
+  // ---- Security --------------------------------------------------------------
+
+  securityInfo: () => apiGet<SecurityInfo>(`${base}/security`),
+  securityChangePassword: (currentPassword: string, newPassword: string) =>
+    apiPost<{ message: string }>(`${base}/security/change-password`, { currentPassword, newPassword }),
+  enableMfa: () => apiPost<MfaSetupResponse>(`${base}/security/enable-mfa`),
+  disableMfa: () => apiPost<{ message: string }>(`${base}/security/disable-mfa`),
 };

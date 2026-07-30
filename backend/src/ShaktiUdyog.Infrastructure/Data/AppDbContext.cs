@@ -67,6 +67,9 @@ public DbSet<KanbanTask> KanbanTasks => Set<KanbanTask>();
     public DbSet<ProductionDepartment> ProductionDepartments => Set<ProductionDepartment>();
     public DbSet<ProductionMachine> ProductionMachines => Set<ProductionMachine>();
     public DbSet<UserBoardPreference> UserBoardPreferences => Set<UserBoardPreference>();
+    public DbSet<ContactPerson> ContactPersons => Set<ContactPerson>();
+    public DbSet<CompanyAddress> CompanyAddresses => Set<CompanyAddress>();
+    public DbSet<CompanyDocument> CompanyDocuments => Set<CompanyDocument>();
     public DbSet<ProductMaster> ProductMasters => Set<ProductMaster>();
     public DbSet<ProductMasterAttachment> ProductMasterAttachments => Set<ProductMasterAttachment>();
 
@@ -117,13 +120,80 @@ public DbSet<KanbanTask> KanbanTasks => Set<KanbanTask>();
         {
             entity.ToTable("Companies");
             entity.Property(c => c.Name).HasMaxLength(200).IsRequired();
+            entity.Property(c => c.LegalBusinessName).HasMaxLength(300);
+            entity.Property(c => c.BusinessType).HasMaxLength(100);
+            entity.Property(c => c.Industry).HasMaxLength(200);
+            entity.Property(c => c.Website).HasMaxLength(500);
+            entity.Property(c => c.CompanyEmail).HasMaxLength(254);
+            entity.Property(c => c.CompanyPhone).HasMaxLength(30);
+            entity.Property(c => c.PurchaseEmail).HasMaxLength(254);
+            entity.Property(c => c.AccountsEmail).HasMaxLength(254);
             entity.Property(c => c.AddressLine1).HasMaxLength(300);
+            entity.Property(c => c.FactoryAddress).HasMaxLength(500);
             entity.Property(c => c.City).HasMaxLength(150);
             entity.Property(c => c.State).HasMaxLength(150);
             entity.Property(c => c.PostalCode).HasMaxLength(20);
+            entity.Property(c => c.PinCode).HasMaxLength(20);
             entity.Property(c => c.Country).HasMaxLength(100);
             entity.Property(c => c.GstNumber).HasMaxLength(30);
+            entity.Property(c => c.PANNumber).HasMaxLength(20);
+            entity.Property(c => c.CINNumber).HasMaxLength(30);
+            entity.Property(c => c.MSMENumber).HasMaxLength(30);
+            entity.Property(c => c.PreferredCurrency).HasMaxLength(10);
+            entity.Property(c => c.PreferredPaymentMethod).HasMaxLength(100);
+            entity.Property(c => c.PreferredCommunication).HasMaxLength(100);
+            entity.Property(c => c.PreferredLanguage).HasMaxLength(50);
+            entity.Property(c => c.CompanyLogoUrl).HasMaxLength(1000);
+            entity.Property(c => c.VerificationStatus).HasMaxLength(30);
             entity.Property(c => c.DeliveryAddresses).HasMaxLength(4000);
+            entity.HasOne(c => c.VerifiedBy).WithMany()
+                .HasForeignKey(c => c.VerifiedByUserId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        builder.Entity<ContactPerson>(entity =>
+        {
+            entity.ToTable("ContactPersons");
+            entity.Property(cp => cp.FullName).HasMaxLength(200).IsRequired();
+            entity.Property(cp => cp.Designation).HasMaxLength(150).IsRequired();
+            entity.Property(cp => cp.Department).HasMaxLength(150);
+            entity.Property(cp => cp.Email).HasMaxLength(254).IsRequired();
+            entity.Property(cp => cp.Phone).HasMaxLength(30).IsRequired();
+            entity.HasIndex(cp => cp.CompanyId);
+            entity.HasOne(cp => cp.Company).WithMany(c => c.ContactPersons)
+                .HasForeignKey(cp => cp.CompanyId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<CompanyAddress>(entity =>
+        {
+            entity.ToTable("CompanyAddresses");
+            entity.Property(ca => ca.AddressType).HasMaxLength(50).IsRequired();
+            entity.Property(ca => ca.Address).HasMaxLength(500).IsRequired();
+            entity.Property(ca => ca.City).HasMaxLength(150);
+            entity.Property(ca => ca.State).HasMaxLength(150);
+            entity.Property(ca => ca.Country).HasMaxLength(100);
+            entity.Property(ca => ca.PinCode).HasMaxLength(20);
+            entity.HasIndex(ca => ca.CompanyId);
+            entity.HasOne(ca => ca.Company).WithMany(c => c.Addresses)
+                .HasForeignKey(ca => ca.CompanyId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<CompanyDocument>(entity =>
+        {
+            entity.ToTable("CompanyDocuments");
+            entity.Property(cd => cd.DocumentType).HasMaxLength(100).IsRequired();
+            entity.Property(cd => cd.FileName).HasMaxLength(255).IsRequired();
+            entity.Property(cd => cd.ContentType).HasMaxLength(127);
+            entity.Property(cd => cd.StorageKey).HasMaxLength(200).IsRequired();
+            entity.Property(cd => cd.Status).HasMaxLength(30);
+            entity.Property(cd => cd.Remarks).HasMaxLength(500);
+            entity.HasIndex(cd => cd.StorageKey).IsUnique();
+            entity.HasIndex(cd => cd.CompanyId);
+            entity.HasOne(cd => cd.Company).WithMany(c => c.Documents)
+                .HasForeignKey(cd => cd.CompanyId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         builder.Entity<RfqFile>(entity =>
