@@ -285,7 +285,23 @@ public class AdminController(IAdminService adminService, AppDbContext db, UserMa
         var invoicesByStatus = await db.Invoices.GroupBy(i => i.Status).Select(g => new { name = g.Key, value = g.Count() }).ToListAsync();
         var now = DateTimeOffset.UtcNow;
         var monthlyRfqs = await db.Rfqs.Where(r => r.CreatedAtUtc >= now.AddMonths(-12)).GroupBy(r => new { r.CreatedAtUtc.Year, r.CreatedAtUtc.Month }).Select(g => new { year = g.Key.Year, month = g.Key.Month, count = g.Count() }).OrderBy(x => x.year).ThenBy(x => x.month).ToListAsync();
-        return Ok(new { ordersByStatus, invoicesByStatus, monthlyRfqs });
+
+        // Last 12 calendar months (incl. current), zero-filled so the trend has a continuous line.
+        var start = new DateTimeOffset(new DateTime(now.Year, now.Month, 1), now.Offset);
+        var months = Enumerable.Range(0, 12).Select(i => start.AddMonths(i - 11)).ToList();
+        var revenueByMonth = await db.Invoices
+            .Where(i => i.Status != InvoiceStatuses.Draft && i.IssueDateUtc >= start.AddMonths(-11))
+            .GroupBy(i => new { i.IssueDateUtc.Year, i.IssueDateUtc.Month })
+            .Select(g => new { g.Key.Year, g.Key.Month, revenue = g.Sum(x => x.Total) })
+            .ToListAsync();
+        var monthlyRevenue = months.Select(m => new
+        {
+            year = m.Year,
+            month = m.Month,
+            revenue = revenueByMonth.FirstOrDefault(r => r.Year == m.Year && r.Month == m.Month)?.revenue ?? 0,
+        }).ToList();
+
+        return Ok(new { ordersByStatus, invoicesByStatus, monthlyRfqs, monthlyRevenue });
     }
 }
 

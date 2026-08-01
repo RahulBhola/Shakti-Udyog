@@ -120,6 +120,53 @@ function DoughnutChartCard({ data, gradients, title, subtitle }: DoughnutChartPr
 /*  Exported chart components                                         */
 /* ------------------------------------------------------------------ */
 
+/* ------------------------------------------------------------------ */
+/*  Horizontal bar breakdown (clearer than a doughnut for statuses)    */
+/* ------------------------------------------------------------------ */
+
+const STATUS_BAR_COLORS = [CHART.blue[0], CHART.purple[0], CHART.green[0], CHART.orange[0], CHART.red[0], CHART.amber[0]];
+
+export function OrdersStatusChart({ data }: { data?: { name: string; value: number }[] }) {
+  if (!data || data.length === 0) {
+    return (
+      <ChartCard title="Orders by Status" subtitle="Current order distribution">
+        <div className="flex items-center justify-center h-[140px] text-sm text-[var(--text-secondary)]">No data available</div>
+      </ChartCard>
+    );
+  }
+
+  const total = data.reduce((s, d) => s + d.value, 0);
+  const max = Math.max(...data.map((d) => d.value), 1);
+  const sorted = [...data].sort((a, b) => b.value - a.value);
+
+  return (
+    <ChartCard title="Orders by Status" subtitle="Current order distribution">
+      <div className="space-y-3">
+        {sorted.map((item, i) => {
+          const pct = total > 0 ? (item.value / total) * 100 : 0;
+          return (
+            <div key={item.name}>
+              <div className="flex items-center justify-between gap-2 text-[12px] mb-1">
+                <span className="text-[var(--text-secondary)] truncate">{item.name}</span>
+                <span className="text-[var(--text-primary)] font-semibold tabular-nums whitespace-nowrap">
+                  {item.value} · {pct.toFixed(0)}%
+                </span>
+              </div>
+              <div className="h-2 rounded-full bg-[var(--bg-surface-hover)] overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-700"
+                  style={{ width: `${(item.value / max) * 100}%`, background: STATUS_BAR_COLORS[i % STATUS_BAR_COLORS.length] }}
+                />
+              </div>
+            </div>
+          );
+        })}
+        <div className="pt-1 text-[11px] text-[var(--text-muted)]">Total: <span className="font-semibold text-[var(--text-primary)]">{total}</span> orders</div>
+      </div>
+    </ChartCard>
+  );
+}
+
 export function OrdersPieChart({ data }: { data?: { name: string; value: number }[] }) {
   return (
     <DoughnutChartCard
@@ -153,7 +200,7 @@ export function MonthlyBarChart({ data }: { data?: { year: number; month: number
     );
   }
 
-  const chartData = data.map(d => ({ name: `${d.year}-${String(d.month).padStart(2, "0")}`, count: d.count }));
+  const chartData = data.map(d => ({ name: new Date(d.year, d.month - 1).toLocaleString("en", { month: "short" }), count: d.count }));
   const maxCount = Math.max(...chartData.map(d => d.count), 1);
 
   return (
@@ -181,26 +228,56 @@ export function MonthlyBarChart({ data }: { data?: { year: number; month: number
 /*  Revenue Line Chart                                                 */
 /* ------------------------------------------------------------------ */
 
-export function RevenueLineChart() {
-  const data = [
-    { name: "Jan", revenue: 0 }, { name: "Feb", revenue: 0 }, { name: "Mar", revenue: 0 },
-    { name: "Apr", revenue: 0 }, { name: "May", revenue: 0 }, { name: "Jun", revenue: 0 }, { name: "Jul", revenue: 0 },
-  ];
+const inr = (v: number) =>
+  new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(v);
+
+const inrCompact = (v: number) => {
+  if (v >= 1_000_000) return `₹${(v / 1_000_000).toFixed(1)}M`;
+  if (v >= 1_000) return `₹${(v / 1_000).toFixed(0)}k`;
+  return `₹${v}`;
+};
+
+const RevenueTooltip = ({ active, payload, label }: any) => {
+  if (!active || !payload || !payload.length) return null;
+  return (
+    <div className={`${TOOLTIP_CLASS} !p-2.5`} style={{ background: "var(--bg-card)" }}>
+      <div className="font-semibold text-[var(--text-primary)] mb-0.5 text-xs">{label}</div>
+      <div className="flex items-center gap-2 text-[var(--text-secondary)] text-xs">
+        Revenue: <span className="font-semibold text-[var(--text-primary)]">{inr(payload[0].value)}</span>
+      </div>
+    </div>
+  );
+};
+
+export function RevenueLineChart({ data }: { data?: { year: number; month: number; revenue: number }[] }) {
+  if (!data || data.length === 0) {
+    return (
+      <ChartCard title="Revenue Trend" subtitle="Monthly billed revenue">
+        <div className="flex items-center justify-center h-[140px] text-sm text-[var(--text-secondary)]">No data available</div>
+      </ChartCard>
+    );
+  }
+
+  const chartData = data.map(d => ({
+    name: new Date(d.year, d.month - 1).toLocaleString("en", { month: "short" }),
+    revenue: d.revenue,
+  }));
+  const maxRevenue = Math.max(...chartData.map(d => d.revenue), 0);
 
   return (
-    <ChartCard title="Revenue Trend" subtitle="Monthly revenue (placeholder)">
+    <ChartCard title="Revenue Trend" subtitle="Monthly billed revenue">
       <ResponsiveContainer width="100%" height={140}>
-        <LineChart data={data} margin={{ top: 4, right: 4, left: -12, bottom: 0 }}>
+        <LineChart data={chartData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id="revG" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="var(--color-primary)" stopOpacity={0.15} />
+              <stop offset="0%" stopColor="var(--color-primary)" stopOpacity={0.18} />
               <stop offset="100%" stopColor="var(--color-primary)" stopOpacity={0} />
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border-default)" vertical={false} />
-          <XAxis dataKey="name" tick={{ fontSize: 9, fill: "var(--text-muted)" }} axisLine={{ stroke: "var(--border-default)" }} tickLine={false} />
-          <YAxis tick={{ fontSize: 9, fill: "var(--text-muted)" }} axisLine={false} tickLine={false} />
-          <Tooltip content={<CustomTooltip />} />
+          <XAxis dataKey="name" tick={{ fontSize: 9, fill: "var(--text-muted)" }} axisLine={{ stroke: "var(--border-default)" }} tickLine={false} interval={1} />
+          <YAxis tick={{ fontSize: 9, fill: "var(--text-muted)" }} axisLine={false} tickLine={false} tickFormatter={(v: number) => inrCompact(v)} domain={[0, (dataMax: number) => Math.max(Math.ceil(dataMax * 1.1 / 1000) * 1000, 1)]} width={44} />
+          <Tooltip content={<RevenueTooltip />} />
           <Area type="monotone" dataKey="revenue" fill="url(#revG)" stroke="none" />
           <Line type="monotone" dataKey="revenue" stroke="var(--color-primary)" strokeWidth={2.5} dot={{ r: 3, fill: "var(--color-primary)", stroke: "var(--bg-card)", strokeWidth: 2 }} activeDot={{ r: 5, fill: "var(--color-primary)", stroke: "var(--bg-card)", strokeWidth: 2 }} animationBegin={300} animationDuration={800} animationEasing="ease-out" />
         </LineChart>

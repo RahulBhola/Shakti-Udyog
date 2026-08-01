@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { apiGet } from "../../api/client";
 import { Loading } from "../../components/ui";
 import { DashboardCard, DashboardHeader, QuickAction } from "../../components/dashboard";
-import { OrdersPieChart, InvoicesPieChart, MonthlyBarChart, RevenueLineChart } from "../../components/AdminCharts";
+import { OrdersStatusChart, InvoicesPieChart, MonthlyBarChart, RevenueLineChart } from "../../components/AdminCharts";
 import { UserCheck, ClipboardList, ShoppingCart, Truck, Wallet, Users, Building2, FileSearch, BarChart3 } from "lucide-react";
 
 /* ------------------------------------------------------------------ */
@@ -19,6 +19,7 @@ interface ChartData {
   ordersByStatus: { name: string; value: number }[];
   invoicesByStatus: { name: string; value: number }[];
   monthlyRfqs: { year: number; month: number; count: number }[];
+  monthlyRevenue: { year: number; month: number; revenue: number }[];
 }
 
 /* ------------------------------------------------------------------ */
@@ -126,12 +127,12 @@ export default function AdminDashboardPage() {
       <div>
         <h2 className="text-[26px] font-bold tracking-tight text-[var(--text-primary)] m-0 mb-4">Analytics</h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <OrdersPieChart data={charts?.ordersByStatus} />
+          <OrdersStatusChart data={charts?.ordersByStatus} />
           <InvoicesPieChart data={charts?.invoicesByStatus} />
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
           <MonthlyBarChart data={charts?.monthlyRfqs} />
-          <RevenueLineChart />
+          <RevenueLineChart data={charts?.monthlyRevenue} />
         </div>
       </div>
     </div>
