@@ -350,7 +350,7 @@ export default function UpdaterRfqDetailPage() {
                   <FileEdit size={14} /> {rfq.status === "Approved" ? "View Draft" : "View Quotation"}
                 </Link>
               )}
-              {!["Draft", "Quoted", "Rejected", "Declined", "Cancelled", "Expired"].includes(rfq.status) && (
+              {!["Draft", "Quoted", "Accepted", "Rejected", "Declined", "Cancelled", "Expired"].includes(rfq.status) && (
                 <button type="button" disabled={busy} onClick={() => setShowRejectModal(true)}
                   className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg border border-red-200 text-red-600 text-xs font-medium hover:bg-red-50 disabled:opacity-50 transition-all">
                   <XCircle size={14} /> Reject

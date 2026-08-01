@@ -123,7 +123,7 @@ export default function AdminQuotationDetailPage() {
   if (!q) return <div className="flex items-center justify-center py-24"><Loader2 size={24} className="animate-spin text-[var(--text-muted)]" /></div>;
 
   const currentIdx = WORKFLOW_ORDER[q.status] ?? -1;
-  const isTerminal = ["Accepted", "Declined", "Expired", "Cancelled"].includes(q.status);
+  const isTerminal = ["Accepted", "Converted", "Declined", "Expired", "Cancelled"].includes(q.status);
 
   return (
     <div className="space-y-6 pb-8">
