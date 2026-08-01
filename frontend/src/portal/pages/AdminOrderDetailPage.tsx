@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { ArrowLeft, Package, Calendar, MapPin, FileText, Truck, CheckCircle2, Clock, Loader2, MessageSquare, Download, Upload, Plus } from "lucide-react";
 import { updaterApi } from "../../api/updaterApi";
 import { adminApi } from "../../api/adminApi";
@@ -315,6 +315,12 @@ export default function AdminOrderDetailPage() {
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          {order.quotationId && (
+            <Link to={`/admin/quotations/${order.quotationId}`}
+              className="inline-flex items-center gap-1.5 px-4 h-8 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-secondary)] text-[12px] font-medium hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all no-underline hover:no-underline">
+              <FileText size={13} /> View Quotation
+            </Link>
+          )}
           {!isTerminal && (
             <button type="button" onClick={handleAdvanceMilestone} disabled={actionBusy}
               className="inline-flex items-center gap-1.5 px-4 h-8 rounded-lg bg-[var(--color-primary)] text-white text-[12px] font-semibold hover:bg-[var(--color-primary-hover)] transition-all disabled:opacity-50">

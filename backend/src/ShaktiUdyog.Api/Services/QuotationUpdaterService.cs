@@ -84,7 +84,7 @@ public class QuotationUpdaterService(
     {
         var q = await db.Quotations.Include(x => x.Items.OrderBy(i => i.LineNumber)).SingleOrDefaultAsync(x => x.Id == id);
         if (q is null) return null;
-        return MapDetail(q);
+        return await MapDetailAsync(q);
     }
 
     public async Task<Guid> CreateQuotationAsync(CreateQuotationRequest request, Guid userId, string? ip)
@@ -253,14 +253,23 @@ public class QuotationUpdaterService(
         return new QuotationCommentDto(comment.Id, comment.Message, comment.AuthorRole, comment.IsCustomerVisible, comment.CreatedAtUtc);
     }
 
-    private static QuotationDetailDto MapDetail(Quotation q) => new(
-        q.Id, q.QuotationNumber, q.RevisionNumber, q.RfqId, q.Rfq?.ProductType ?? "",
-        q.Subtotal, q.Tax, q.Discount, q.Total,
-        q.Currency, q.PaymentTerms, q.DeliveryTerms, q.Freight, q.Packing, q.Remarks,
-        q.DeliveryTime, q.Warranty,
-        q.Status, q.CustomerResponseComment, q.CustomerRespondedAtUtc,
-        q.ValidUntilUtc, q.DocumentId, q.CreatedAtUtc,
-        q.Items.Select(i => new QuotationItemDto(
-            i.LineNumber, i.PartNumber, i.Description, i.MaterialGrade,
-            i.Quantity, i.Unit, i.UnitPrice, i.TaxPercent, i.LineTotal)).ToList());
+    private async Task<QuotationDetailDto> MapDetailAsync(Quotation q)
+    {
+        var order = await db.Orders
+            .Where(o => o.QuotationId == q.Id)
+            .Select(o => new { o.Id, o.OrderNumber })
+            .FirstOrDefaultAsync();
+
+        return new QuotationDetailDto(
+            q.Id, q.QuotationNumber, q.RevisionNumber, q.RfqId, q.Rfq?.ProductType ?? "",
+            q.Subtotal, q.Tax, q.Discount, q.Total,
+            q.Currency, q.PaymentTerms, q.DeliveryTerms, q.Freight, q.Packing, q.Remarks,
+            q.DeliveryTime, q.Warranty,
+            q.Status, q.CustomerResponseComment, q.CustomerRespondedAtUtc,
+            q.ValidUntilUtc, q.DocumentId, q.CreatedAtUtc,
+            order?.Id, order?.OrderNumber,
+            q.Items.Select(i => new QuotationItemDto(
+                i.LineNumber, i.PartNumber, i.Description, i.MaterialGrade,
+                i.Quantity, i.Unit, i.UnitPrice, i.TaxPercent, i.LineTotal)).ToList());
+    }
 }

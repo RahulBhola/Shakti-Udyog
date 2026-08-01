@@ -93,6 +93,7 @@ public record QuotationDetailDto(
     string? DeliveryTime, string? Warranty,
     string Status, string? CustomerResponseComment, DateTimeOffset? CustomerRespondedAtUtc,
     DateTimeOffset? ValidUntilUtc, Guid? DocumentId, DateTimeOffset CreatedAtUtc,
+    Guid? OrderId, string? OrderNumber,
     IReadOnlyList<QuotationItemDto> Items);
 
 public record QuotationItemDto(

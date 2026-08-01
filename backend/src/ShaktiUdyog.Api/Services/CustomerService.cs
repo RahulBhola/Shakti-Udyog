@@ -369,20 +369,31 @@ public class CustomerService(
                 q.Rfq.CompanyName, q.Items.Count, q.PaymentTerms, q.DeliveryTime))
             .ToListAsync();
 
-    public async Task<QuotationDetailDto?> GetQuotationAsync(CustomerContext ctx, Guid quotationId) =>
-        await db.Quotations
-            .Where(q => q.Id == quotationId && ctx.CompanyIds.Contains(q.CompanyId) && q.Status != QuotationStatuses.Draft)
-            .Select(q => new QuotationDetailDto(
-                q.Id, q.QuotationNumber, q.RevisionNumber, q.RfqId, q.Rfq.ProductType,
-                q.Subtotal, q.Tax, q.Discount, q.Total, q.Currency,
-                q.PaymentTerms, q.DeliveryTerms, q.Freight, q.Packing, q.Remarks,
-                q.DeliveryTime, q.Warranty,
-                q.Status, q.CustomerResponseComment, q.CustomerRespondedAtUtc,
-                q.ValidUntilUtc, q.DocumentId, q.CreatedAtUtc,
-                q.Items.OrderBy(i => i.LineNumber).Select(i => new QuotationItemDto(
-                    i.LineNumber, i.PartNumber, i.Description, i.MaterialGrade,
-                    i.Quantity, i.Unit, i.UnitPrice, i.TaxPercent, i.LineTotal)).ToList()))
+    public async Task<QuotationDetailDto?> GetQuotationAsync(CustomerContext ctx, Guid quotationId)
+    {
+        var q = await db.Quotations
+            .Where(x => x.Id == quotationId && ctx.CompanyIds.Contains(x.CompanyId) && x.Status != QuotationStatuses.Draft)
+            .Include(x => x.Items)
             .SingleOrDefaultAsync();
+        if (q is null) return null;
+
+        var order = await db.Orders
+            .Where(o => o.QuotationId == q.Id)
+            .Select(o => new { o.Id, o.OrderNumber })
+            .FirstOrDefaultAsync();
+
+        return new QuotationDetailDto(
+            q.Id, q.QuotationNumber, q.RevisionNumber, q.RfqId, q.Rfq?.ProductType ?? "",
+            q.Subtotal, q.Tax, q.Discount, q.Total, q.Currency,
+            q.PaymentTerms, q.DeliveryTerms, q.Freight, q.Packing, q.Remarks,
+            q.DeliveryTime, q.Warranty,
+            q.Status, q.CustomerResponseComment, q.CustomerRespondedAtUtc,
+            q.ValidUntilUtc, q.DocumentId, q.CreatedAtUtc,
+            order?.Id, order?.OrderNumber,
+            q.Items.OrderBy(i => i.LineNumber).Select(i => new QuotationItemDto(
+                i.LineNumber, i.PartNumber, i.Description, i.MaterialGrade,
+                i.Quantity, i.Unit, i.UnitPrice, i.TaxPercent, i.LineTotal)).ToList());
+    }
 
     /// <returns>null = not found/not visible; false = not in a respondable state; true = recorded.</returns>
     public async Task<bool?> RespondToQuotationAsync(

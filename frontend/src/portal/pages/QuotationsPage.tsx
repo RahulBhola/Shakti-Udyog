@@ -538,6 +538,14 @@ async function respond() {
             className="flex items-center justify-center gap-2 h-11 rounded-[16px] border border-dashed border-[var(--border-default)] text-[13px] font-medium text-[var(--color-primary)] hover:bg-[var(--bg-surface-hover)] hover:border-[var(--color-primary)]/30 transition-all no-underline hover:no-underline">
             <FileText size={15} /> View Originating RFQ
           </Link>
+
+          {/* Generated Order */}
+          {quotation.orderId && (
+            <Link to={`/customer/orders/${quotation.orderId}`}
+              className="flex items-center justify-center gap-2 h-11 rounded-[16px] border border-dashed border-[var(--border-default)] text-[13px] font-medium text-[var(--color-primary)] hover:bg-[var(--bg-surface-hover)] hover:border-[var(--color-primary)]/30 transition-all no-underline hover:no-underline">
+              <Package size={15} /> View Generated Order {quotation.orderNumber ? `· ${quotation.orderNumber}` : ""}
+            </Link>
+          )}
         </div>
       </div>
 

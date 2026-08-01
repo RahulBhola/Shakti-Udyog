@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { adminApi } from "../../api/adminApi";
 import { updaterApi } from "../../api/updaterApi";
 import type { QuotationDetail as QD, QuotationTimelineEntry } from "../../api/customerApi";
@@ -178,6 +178,12 @@ export default function AdminQuotationDetailPage() {
               className="inline-flex items-center gap-1.5 px-4 h-8 rounded-lg bg-emerald-500 text-white text-[12px] font-semibold hover:bg-emerald-600 disabled:opacity-50 transition-all">
               {busy ? <Loader2 size={13} className="animate-spin" /> : <Package size={13} />} Create Order
             </button>
+          )}
+          {q.orderId && (
+            <Link to={`/admin/orders/${q.orderId}`}
+              className="inline-flex items-center gap-1.5 px-4 h-8 rounded-lg bg-emerald-500 text-white text-[12px] font-semibold hover:bg-emerald-600 transition-all no-underline hover:no-underline">
+              <Package size={13} /> View Order {q.orderNumber ? `· ${q.orderNumber}` : ""}
+            </Link>
           )}
           {!isTerminal && (
             <button type="button" disabled={busy} onClick={() => setShowCancelModal(true)}

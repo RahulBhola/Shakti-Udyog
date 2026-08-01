@@ -90,6 +90,8 @@ export interface QuotationDetail extends QuotationListItem {
   customerResponseComment: string | null;
   customerRespondedAtUtc: string | null;
   documentId: string | null;
+  orderId: string | null;
+  orderNumber: string | null;
   items: QuotationItem[];
 }
 
@@ -118,6 +120,7 @@ export interface OrderDetail {
   id: string;
   orderNumber: string;
   purchaseOrderReference: string | null;
+  quotationId: string | null;
   status: string;
   statusLabel: string;
   statusDescription: string;
