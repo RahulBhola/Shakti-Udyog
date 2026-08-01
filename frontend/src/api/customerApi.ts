@@ -168,6 +168,7 @@ export interface TimelineEntry {
 
 export interface OrderComment {
   authorRole: string;
+  authorName: string | null;
   message: string;
   createdAtUtc: string;
 }

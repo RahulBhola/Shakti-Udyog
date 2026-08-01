@@ -23,7 +23,7 @@ public interface IOrderUpdaterService
 public record MilestoneRequest(string StatusCode, string? CustomerMessage, string? InternalNote);
 public record CreateShipmentRequest(string? Transporter, string? TrackingNumber, DateTimeOffset? DispatchDateUtc, DateTimeOffset? EstimatedArrivalUtc);
 public record OrderCommentRequest(string Message, bool IsCustomerVisible = true);
-public record OrderCommentResponseDto(string AuthorRole, string Message, DateTimeOffset CreatedAtUtc);
+public record OrderCommentResponseDto(string AuthorRole, string? AuthorName, string Message, DateTimeOffset CreatedAtUtc);
 
 public class OrderUpdaterService(
     AppDbContext db,
@@ -121,11 +121,16 @@ public class OrderUpdaterService(
 
     public async Task<IReadOnlyList<OrderCommentResponseDto>> GetCommentsAsync(Guid id)
     {
-        return await db.OrderComments
-            .Where(c => c.OrderId == id)
-            .OrderByDescending(c => c.CreatedAtUtc)
-            .Select(c => new OrderCommentResponseDto(c.AuthorRole, c.Message, c.CreatedAtUtc))
-            .ToListAsync();
+        return await (from c in db.OrderComments
+                      join u in db.Users on c.AuthorUserId equals u.Id into authors
+                      from u in authors.DefaultIfEmpty()
+                      where c.OrderId == id
+                      orderby c.CreatedAtUtc descending
+                      select new OrderCommentResponseDto(
+                          c.AuthorRole,
+                          u != null ? u.FullName : null,
+                          c.Message,
+                          c.CreatedAtUtc)).ToListAsync();
     }
 
     public async Task<bool?> AddCommentAsync(Guid id, OrderCommentRequest request, Guid userId, string role, string? ip)

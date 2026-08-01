@@ -226,12 +226,8 @@ export function OrderDetailPage() {
     setPostingComment(true);
     try {
       await customerApi.addOrderComment(id, message);
-      setComments((prev) => [...prev, {
-        authorRole: "Customer",
-        message,
-        createdAtUtc: new Date().toISOString(),
-      }]);
       setNewComment("");
+      customerApi.orderComments(id).then(setComments).catch(() => {});
     } catch {
       // silently drop on transient failure; the refresh on reload will reconcile
     } finally {
@@ -524,11 +520,12 @@ export function OrderDetailPage() {
                     ? "bg-[var(--color-primary)]/10 text-[var(--color-primary)]"
                     : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                 }`}>
-                  {c.authorRole ? c.authorRole.charAt(0) : "?"}
+                  {(c.authorName || c.authorRole || "?").charAt(0)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[12px] font-semibold text-[var(--text-primary)]">{c.authorRole}</span>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[12px] font-semibold text-[var(--text-primary)]">{c.authorName || c.authorRole || "Staff"}</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-[var(--bg-surface)] text-[var(--text-muted)]">{c.authorRole}</span>
                     <span className="text-[10px] text-[var(--text-muted)]">{formatDateTime(c.createdAtUtc)}</span>
                   </div>
                   <p className="text-[13px] text-[var(--text-secondary)] mt-1 m-0 break-words whitespace-pre-wrap">{c.message}</p>

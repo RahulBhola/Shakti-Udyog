@@ -550,11 +550,16 @@ public class CustomerService(
             return null;
         }
 
-        return await db.OrderComments
-            .Where(c => c.OrderId == orderId && c.IsCustomerVisible)
-            .OrderBy(c => c.CreatedAtUtc)
-            .Select(c => new OrderCommentResponseDto(c.AuthorRole, c.Message, c.CreatedAtUtc))
-            .ToListAsync();
+        return await (from c in db.OrderComments
+                      join u in db.Users on c.AuthorUserId equals u.Id into authors
+                      from u in authors.DefaultIfEmpty()
+                      where c.OrderId == orderId && c.IsCustomerVisible
+                      orderby c.CreatedAtUtc
+                      select new OrderCommentResponseDto(
+                          c.AuthorRole,
+                          u != null ? u.FullName : null,
+                          c.Message,
+                          c.CreatedAtUtc)).ToListAsync();
     }
 
     /// <summary>Posts a customer-visible comment on an order owned by the caller's company.</summary>

@@ -131,7 +131,7 @@ export const updaterApi = {
     form.append("category", category);
     return apiUpload<{ message: string }>(`${base}/orders/${id}/documents`, form);
   },
-  getOrderComments: (id: string) => apiGet<{authorRole: string; message: string; createdAtUtc: string}[]>(`${base}/orders/${id}/comments`),
+  getOrderComments: (id: string) => apiGet<{authorRole: string; authorName: string | null; message: string; createdAtUtc: string}[]>(`${base}/orders/${id}/comments`),
   addOrderComment: (id: string, message: string) =>
     apiPost<{ message: string }>(`${base}/orders/${id}/comments`, { message, isCustomerVisible: true }),
 };

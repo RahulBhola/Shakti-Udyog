@@ -116,7 +116,7 @@ export default function AdminOrderDetailPage() {
   const [actionBusy, setActionBusy] = useState(false);
   const [actionMsg, setActionMsg] = useState<string | null>(null);
   const [milestoneModal, setMilestoneModal] = useState<{ nextStatus: string; label: string } | null>(null);
-  const [orderComments, setOrderComments] = useState<{authorRole: string; message: string; createdAtUtc: string}[]>([]);
+  const [orderComments, setOrderComments] = useState<{authorRole: string; authorName: string | null; message: string; createdAtUtc: string}[]>([]);
   const [newOrderComment, setNewOrderComment] = useState("");
   const [postingComment, setPostingComment] = useState(false);
 
@@ -149,8 +149,8 @@ export default function AdminOrderDetailPage() {
     setPostingComment(true);
     try {
       await updaterApi.addOrderComment(id, newOrderComment.trim());
-      setOrderComments(prev => [...prev, {authorRole: "Admin", message: newOrderComment.trim(), createdAtUtc: new Date().toISOString()}]);
       setNewOrderComment("");
+      updaterApi.getOrderComments(id).then(setOrderComments).catch(() => {});
     } catch {}
     setPostingComment(false);
   }
@@ -603,10 +603,14 @@ export default function AdminOrderDetailPage() {
           <div className="space-y-4 mb-4">
             {orderComments.map((co, i) => (
               <div key={i} className="flex gap-3">
-                <div className="w-7 h-7 rounded-lg bg-[var(--color-primary)]/10 flex items-center justify-center text-[11px] font-bold text-[var(--color-primary)] shrink-0 mt-0.5">{co.authorRole ? co.authorRole.charAt(0) : "?"}</div>
+                <div className="w-7 h-7 rounded-lg bg-[var(--color-primary)]/10 flex items-center justify-center text-[11px] font-bold text-[var(--color-primary)] shrink-0 mt-0.5">{(co.authorName || co.authorRole || "?").charAt(0)}</div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2"><span className="text-[12px] font-semibold text-[var(--text-primary)]">{co.authorRole}</span><span className="text-[10px] text-[var(--text-muted)]">{formatDateTime(co.createdAtUtc)}</span></div>
-                  <p className="text-[13px] text-[var(--text-secondary)] mt-1 m-0">{co.message}</p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[12px] font-semibold text-[var(--text-primary)]">{co.authorName || co.authorRole || "Staff"}</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-[var(--bg-surface)] text-[var(--text-muted)]">{co.authorRole}</span>
+                    <span className="text-[10px] text-[var(--text-muted)]">{formatDateTime(co.createdAtUtc)}</span>
+                  </div>
+                  <p className="text-[13px] text-[var(--text-secondary)] mt-1 m-0 break-words whitespace-pre-wrap">{co.message}</p>
                 </div>
               </div>
             ))}
