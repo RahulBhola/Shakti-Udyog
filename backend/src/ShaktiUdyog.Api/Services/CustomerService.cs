@@ -10,6 +10,7 @@ using ShaktiUdyog.Infrastructure.Storage;
 namespace ShaktiUdyog.Api.Services;
 
 public record AdvancePaymentRequest(string PaymentRef);
+public record CustomerCommentRequest(string Message);
 
 
 /// <summary>
@@ -38,6 +39,8 @@ public interface ICustomerService
     Task<IReadOnlyList<OrderListItemDto>> GetOrdersAsync(CustomerContext ctx);
     Task<OrderDetailDto?> GetOrderAsync(CustomerContext ctx, Guid orderId);
     Task<IReadOnlyList<TimelineEntryDto>?> GetOrderTimelineAsync(CustomerContext ctx, Guid orderId);
+    Task<IReadOnlyList<OrderCommentResponseDto>?> GetOrderCommentsAsync(CustomerContext ctx, Guid orderId);
+    Task<bool?> AddOrderCommentAsync(CustomerContext ctx, Guid orderId, string message, string? ip);
     Task<Guid?> CreateSupportRequestAsync(CustomerContext ctx, Guid orderId, SupportRequestRequest request, string? ip);
     Task<bool?> SubmitAdvancePaymentAsync(CustomerContext ctx, Guid orderId, AdvancePaymentRequest request, string? ip);
 
@@ -532,6 +535,50 @@ public class CustomerService(
             m.StatusCode,
             OrderStatuses.Labels.TryGetValue(m.StatusCode, out var l) ? l.Label : m.StatusCode,
             m.CustomerMessage, m.ActorType, m.OccurredAtUtc)).ToList();
+    }
+
+    /// <summary>
+    /// Customer-visible conversation on an order. Only comments marked
+    /// customer-visible are returned; internal staff notes stay hidden. Returns
+    /// null (→ 404) when the order doesn't belong to the caller's company.
+    /// </summary>
+    public async Task<IReadOnlyList<OrderCommentResponseDto>?> GetOrderCommentsAsync(CustomerContext ctx, Guid orderId)
+    {
+        var exists = await db.Orders.AnyAsync(o => o.Id == orderId && ctx.CompanyIds.Contains(o.CompanyId));
+        if (!exists)
+        {
+            return null;
+        }
+
+        return await db.OrderComments
+            .Where(c => c.OrderId == orderId && c.IsCustomerVisible)
+            .OrderBy(c => c.CreatedAtUtc)
+            .Select(c => new OrderCommentResponseDto(c.AuthorRole, c.Message, c.CreatedAtUtc))
+            .ToListAsync();
+    }
+
+    /// <summary>Posts a customer-visible comment on an order owned by the caller's company.</summary>
+    public async Task<bool?> AddOrderCommentAsync(CustomerContext ctx, Guid orderId, string message, string? ip)
+    {
+        var order = await db.Orders.SingleOrDefaultAsync(o =>
+            o.Id == orderId && ctx.CompanyIds.Contains(o.CompanyId));
+        if (order is null)
+        {
+            return null;
+        }
+
+        db.OrderComments.Add(new OrderComment
+        {
+            Id = Guid.NewGuid(),
+            OrderId = order.Id,
+            AuthorUserId = ctx.UserId,
+            AuthorRole = "Customer",
+            IsCustomerVisible = true,
+            Message = message.Trim(),
+        });
+        await db.SaveChangesAsync();
+        await audit.WriteAsync("customer.order.comment_added", ctx.UserId, "OrderComment", order.Id.ToString(), ip);
+        return true;
     }
 
         public async Task<bool?> SubmitAdvancePaymentAsync(CustomerContext ctx, Guid orderId, AdvancePaymentRequest request, string? ip)

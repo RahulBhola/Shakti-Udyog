@@ -251,6 +251,29 @@ public class CustomerController(
         return timeline is null ? NotFound() : Ok(timeline);
     }
 
+    /// <summary>Customer-visible order conversation; internal staff notes excluded.</summary>
+    [HttpGet("orders/{id:guid}/comments")]
+    [ProducesResponseType<IReadOnlyList<OrderCommentResponseDto>>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetOrderComments(Guid id)
+    {
+        var (ctx, failure) = await RequireContextAsync();
+        if (failure is not null) return failure;
+        var comments = await customerService.GetOrderCommentsAsync(ctx!, id);
+        return comments is null ? NotFound() : Ok(comments);
+    }
+
+    [HttpPost("orders/{id:guid}/comments")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> AddOrderComment(Guid id, CustomerCommentRequest request)
+    {
+        var (ctx, failure) = await RequireContextAsync();
+        if (failure is not null) return failure;
+        var result = await customerService.AddOrderCommentAsync(ctx!, id, request.Message, ClientIp);
+        return result is null ? NotFound() : Ok(new MessageResponse("Comment added."));
+    }
+
     [HttpPost("orders/{id:guid}/pay-advance")]
     public async Task<IActionResult> PayAdvance(Guid id, [FromBody] AdvancePaymentRequest request)
     {

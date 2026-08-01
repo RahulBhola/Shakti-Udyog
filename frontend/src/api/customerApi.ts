@@ -166,6 +166,12 @@ export interface TimelineEntry {
   occurredAtUtc: string;
 }
 
+export interface OrderComment {
+  authorRole: string;
+  message: string;
+  createdAtUtc: string;
+}
+
 export interface InvoiceListItem {
   id: string;
   invoiceNumber: string;
@@ -465,6 +471,9 @@ export const customerApi = {
   orders: () => apiGet<OrderListItem[]>(`${base}/orders`),
   order: (id: string) => apiGet<OrderDetail>(`${base}/orders/${id}`),
   orderTimeline: (id: string) => apiGet<TimelineEntry[]>(`${base}/orders/${id}/timeline`),
+  orderComments: (id: string) => apiGet<OrderComment[]>(`${base}/orders/${id}/comments`),
+  addOrderComment: (id: string, message: string) =>
+    apiPost<{ message: string }>(`${base}/orders/${id}/comments`, { message }),
   createSupportRequest: (orderId: string, subject: string, message: string) =>
     apiPost<{ id: string }>(`${base}/orders/${orderId}/support-requests`, { subject, message }),
 
