@@ -11,7 +11,7 @@ namespace ShaktiUdyog.Api.Services;
 public interface IInvoiceManagementService
 {
     // Data Updater
-    Task<PagedResult<InvoiceListItemDto>> GetInvoicesAsync(int page, int pageSize, string? status);
+    Task<PagedResult<InvoiceListItemDto>> GetInvoicesAsync(int page, int pageSize, string? status, string? search);
     Task<InvoiceDetailDto?> GetInvoiceAsync(Guid id);
     Task<InvoiceDetailDto> CreateInvoiceAsync(CreateInvoiceRequest request, Guid userId, string? ip);
     Task<bool> RecordPaymentAsync(Guid invoiceId, RecordPaymentRequest request, Guid userId, string? ip);
@@ -32,19 +32,28 @@ public interface IInvoiceManagementService
 public record RecordPaymentRequest(decimal Amount, string Method, string PaymentReference, DateTimeOffset PaymentDate);
 public class InvoiceManagementService(AppDbContext db, IAuditWriter audit) : IInvoiceManagementService
 {
-    public async Task<PagedResult<InvoiceListItemDto>> GetInvoicesAsync(int page, int pageSize, string? status)
+    public async Task<PagedResult<InvoiceListItemDto>> GetInvoicesAsync(int page, int pageSize, string? status, string? search)
     {
         page = Math.Max(1, page); pageSize = Math.Clamp(pageSize, 1, 100);
         var query = db.Invoices.AsQueryable();
         if (!string.IsNullOrWhiteSpace(status)) query = query.Where(i => i.Status == status);
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim();
+            query = query.Where(i =>
+                i.InvoiceNumber.Contains(term) ||
+                (i.Order != null && i.Order.OrderNumber.Contains(term)) ||
+                (i.Company != null && i.Company.Name.Contains(term)));
+        }
         var total = await query.CountAsync();
         var items = await query.OrderByDescending(i => i.IssueDateUtc).Skip((page - 1) * pageSize).Take(pageSize)
-            .Select(i => new InvoiceListItemDto(i.Id, i.InvoiceNumber, i.Order!.OrderNumber, i.IssueDateUtc, i.DueDateUtc, i.Total, i.AmountPaid, i.BalanceDue, i.Currency, i.Status)).ToListAsync();
+            .Select(i => new InvoiceListItemDto(i.Id, i.InvoiceNumber, i.Order!.OrderNumber, i.IssueDateUtc, i.DueDateUtc, i.Total, i.AmountPaid, i.BalanceDue, i.Currency, i.Status, i.Company != null ? i.Company.Name : null)).ToListAsync();
         return new PagedResult<InvoiceListItemDto>(items, page, pageSize, total);
     }
 
     public async Task<InvoiceDetailDto?> GetInvoiceAsync(Guid id) => await db.Invoices.Where(i => i.Id == id)
-        .Include(i => i.Items).Select(i => new InvoiceDetailDto(i.Id, i.InvoiceNumber, i.Order!.OrderNumber, i.IssueDateUtc, i.DueDateUtc, i.Subtotal, i.Tax, i.Total, i.AmountPaid, i.BalanceDue, i.Currency, i.Status, i.DocumentId,
+        .Include(i => i.Items).Select(i => new InvoiceDetailDto(i.Id, i.InvoiceNumber, i.Order!.OrderNumber, i.IssueDateUtc, i.DueDateUtc, i.Subtotal, i.Tax, i.Total, i.AmountPaid, i.BalanceDue, i.Currency, i.Status, i.DocumentId, i.Company != null ? i.Company.Name : null,
+            i.Items.Select(it => new InvoiceItemDto(it.Id, it.Description, it.HsnSacCode, it.Quantity, it.Unit, it.UnitPrice, it.TaxPercent, it.LineTotal)).ToList(),
             db.Payments.Where(p => p.InvoiceId == i.Id).Select(p => new PaymentDto(p.Id, p.PaymentReference, p.Method, p.Amount, p.PaymentDateUtc, p.Status, p.CreatedAtUtc)).ToList())).SingleOrDefaultAsync();
 
     public async Task<InvoiceDetailDto> CreateInvoiceAsync(CreateInvoiceRequest request, Guid userId, string? ip)

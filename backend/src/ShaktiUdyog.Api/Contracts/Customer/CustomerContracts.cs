@@ -160,13 +160,18 @@ public record SupportRequestRequest(
 public record InvoiceListItemDto(
     Guid Id, string InvoiceNumber, string? OrderNumber, DateTimeOffset IssueDateUtc,
     DateTimeOffset? DueDateUtc, decimal Total, decimal AmountPaid, decimal BalanceDue,
-    string Currency, string Status);
+    string Currency, string Status, string? CompanyName);
 
 public record InvoiceDetailDto(
     Guid Id, string InvoiceNumber, string? OrderNumber, DateTimeOffset IssueDateUtc,
     DateTimeOffset? DueDateUtc, decimal Subtotal, decimal Tax, decimal Total,
     decimal AmountPaid, decimal BalanceDue, string Currency, string Status,
-    Guid? DocumentId, IReadOnlyList<PaymentDto> Payments);
+    Guid? DocumentId, string? CompanyName,
+    IReadOnlyList<InvoiceItemDto> Items, IReadOnlyList<PaymentDto> Payments);
+
+public record InvoiceItemDto(
+    Guid Id, string Description, string? HsnSacCode, int Quantity, string Unit,
+    decimal UnitPrice, decimal TaxPercent, decimal LineTotal);
 
 public record PaymentDto(
     Guid Id, string PaymentReference, string Method, decimal Amount,

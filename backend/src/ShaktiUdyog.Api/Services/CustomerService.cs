@@ -653,7 +653,7 @@ public class CustomerService(
             .Select(i => new InvoiceListItemDto(
                 i.Id, i.InvoiceNumber, i.Order != null ? i.Order.OrderNumber : null,
                 i.IssueDateUtc, i.DueDateUtc, i.Total, i.AmountPaid, i.BalanceDue,
-                i.Currency, i.Status))
+                i.Currency, i.Status, i.Company != null ? i.Company.Name : null))
             .ToListAsync();
 
     public async Task<InvoiceDetailDto?> GetInvoiceAsync(CustomerContext ctx, Guid invoiceId) =>
@@ -663,6 +663,8 @@ public class CustomerService(
                 i.Id, i.InvoiceNumber, i.Order != null ? i.Order.OrderNumber : null,
                 i.IssueDateUtc, i.DueDateUtc, i.Subtotal, i.Tax, i.Total,
                 i.AmountPaid, i.BalanceDue, i.Currency, i.Status, i.DocumentId,
+                i.Company != null ? i.Company.Name : null,
+                i.Items.Select(it => new InvoiceItemDto(it.Id, it.Description, it.HsnSacCode, it.Quantity, it.Unit, it.UnitPrice, it.TaxPercent, it.LineTotal)).ToList(),
                 db.Payments.Where(p => p.InvoiceId == i.Id)
                     .OrderByDescending(p => p.CreatedAtUtc)
                     .Select(p => new PaymentDto(

@@ -31,6 +31,10 @@ public static class DevPortalSeeder
             return;
         }
 
+        // Runs regardless of whether the demo company is already seeded, so the
+        // invoice detail view always has a line item.
+        await EnsureDemoInvoiceItemAsync(db, logger);
+
         if (await db.Companies.AnyAsync(c => c.Name == CompanyName))
         {
             return;
@@ -273,6 +277,17 @@ public static class DevPortalSeeder
             BalanceDue = 143075m,
             Status = InvoiceStatuses.PartiallyPaid,
         };
+        invoice.Items.Add(new InvoiceItem
+        {
+            Id = Guid.NewGuid(),
+            Description = "Grey Iron Casting body — [demo]",
+            HsnSacCode = "7325",
+            Quantity = 500,
+            Unit = "pcs",
+            UnitPrice = 485m,
+            TaxPercent = 18m,
+            LineTotal = 242500m,
+        });
         db.Invoices.Add(invoice);
         db.Invoices.Add(new Invoice
         {
@@ -363,5 +378,40 @@ public static class DevPortalSeeder
 
         await db.SaveChangesAsync();
         logger.LogWarning("Seeded DEVELOPMENT demo customer '{Email}' with demo portal data. Do not use in production.", CustomerEmail);
+    }
+
+    /// <summary>
+    /// Idempotent: ensures the demo invoice (INV-DEMO-0002) has a single line
+    /// item so the admin invoice detail view shows an item row. Runs on every
+    /// Development startup, even when the demo company is already seeded.
+    /// </summary>
+    private static async Task EnsureDemoInvoiceItemAsync(AppDbContext db, ILogger logger)
+    {
+        var invoice = await db.Invoices.FirstOrDefaultAsync(i => i.InvoiceNumber == "INV-DEMO-0002");
+        if (invoice is null)
+        {
+            // Not seeded yet; the fresh-seed path attaches the item itself.
+            return;
+        }
+
+        if (await db.InvoiceItems.AnyAsync(it => it.InvoiceId == invoice.Id))
+        {
+            return;
+        }
+
+        db.InvoiceItems.Add(new InvoiceItem
+        {
+            Id = Guid.NewGuid(),
+            InvoiceId = invoice.Id,
+            Description = "Grey Iron Casting body — [demo]",
+            HsnSacCode = "7325",
+            Quantity = 500,
+            Unit = "pcs",
+            UnitPrice = 485m,
+            TaxPercent = 18m,
+            LineTotal = 242500m,
+        });
+        await db.SaveChangesAsync();
+        logger.LogInformation("Seeded a single demo line item on invoice {InvoiceNumber}.", invoice.InvoiceNumber);
     }
 }
