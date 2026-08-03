@@ -46,6 +46,12 @@ For a complete project overview without exploring the full codebase, read:
 
 This file documents every subsystem: routes, endpoints, entities, auth, workflows, UI theme, security rules, and code patterns.
 
+Before restyling or building any portal list/table page (Invoices, Quotations, Orders, RFQs, Payments, etc.), read:
+
+`docs/ui-styling.md`
+
+This is the source of truth for the premium ERP list UI (theme tokens, `.inv-*` class inventory in `frontend/src/portal/pages/erpListView.css`, the canonical list-page structure, badge tones, and responsive behavior). Reuse that shared stylesheet instead of duplicating per-page CSS.
+
 ## Initial Implementation Order
 
 1. Project setup, database, migrations, configuration, and Swagger
