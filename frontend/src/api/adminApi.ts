@@ -178,6 +178,8 @@ export const adminApi = {
     apiPost<AdminCategory>(`${base}/categories`, payload),
   updateCategory: (id: string, payload: { name: string; description?: string; displayOrder: number; isVisible: boolean }) =>
     apiPut<{ message: string }>(`${base}/categories/${id}`, payload),
+  deleteCategory: (id: string) =>
+    apiDelete<{ message: string }>(`${base}/categories/${id}`),
 
   // ---- Industries ---------------------------------------------------------
   industries: () => apiGet<AdminIndustry[]>(`${base}/industries`),

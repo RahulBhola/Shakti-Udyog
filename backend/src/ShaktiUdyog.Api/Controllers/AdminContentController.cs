@@ -28,6 +28,7 @@ public class AdminContentController(IAdminContentService service) : ControllerBa
     [HttpGet("categories")] public async Task<IActionResult> GetCategories() => Ok(await service.GetAllCategoriesAsync());
     [HttpPost("categories")] public async Task<IActionResult> CreateCategory(CreateCategoryRequest request) { var c = await service.CreateCategoryAsync(request.Name, request.Slug, request.Description, request.ParentId); return CreatedAtAction(nameof(GetCategories), null, c); }
     [HttpPut("categories/{id:guid}")] public async Task<IActionResult> UpdateCategory(Guid id, UpdateCategoryRequest request) => Ok(await service.UpdateCategoryAsync(id, request.Name, request.Description, request.DisplayOrder, request.IsVisible) ? new { message = "Category updated." } : NotFound());
+    [HttpDelete("categories/{id:guid}")] public async Task<IActionResult> DeleteCategory(Guid id) => Ok(await service.DeleteCategoryAsync(id) ? new { message = "Category deleted." } : NotFound());
 
     // ---- Industries --------------------------------------------------------
     [HttpGet("industries")] public async Task<IActionResult> GetIndustries() => Ok(await service.GetAllIndustriesAsync());

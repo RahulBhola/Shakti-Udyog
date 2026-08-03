@@ -6,6 +6,7 @@ import { Loading } from "../../components/ui";
 import { tokenStorage } from "../../auth/tokenStorage";
 import { config } from "../../config";
 import ProductDrawer from "./products/ProductDrawer";
+import { ConfirmDialog } from "./ConfirmDialog";
 import {
   Package, Plus, Download, Search, RefreshCw, Eye, MoreVertical,
   ChevronLeft, ChevronRight, X, Copy, Archive, Trash2, FileEdit,
@@ -79,7 +80,8 @@ export default function AdminProductPage() {
   const [statusFilter, setStatusFilter] = useState("All");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [openMenu, setOpenMenu] = useState<{ id: string; dir: "up" | "down" } | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<ProductMasterListItem | null>(null);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -184,12 +186,16 @@ export default function AdminProductPage() {
             </button>
             <div className="inv-menu-wrap" onMouseDown={(e) => e.stopPropagation()}>
               <button className="inv-icon-btn" title="More" aria-label="More actions"
-                aria-expanded={openMenu === p.id}
-                onClick={() => setOpenMenu((m) => (m === p.id ? null : p.id))}>
+                aria-expanded={openMenu?.id === p.id}
+                onClick={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const dir = window.innerHeight - rect.bottom < 260 ? "up" : "down";
+                  setOpenMenu((m) => (m && m.id === p.id ? null : { id: p.id, dir }));
+                }}>
                 <MoreVertical size={16} />
               </button>
-              {openMenu === p.id && (
-                <div className="inv-menu">
+              {openMenu?.id === p.id && (
+                <div className={`inv-menu ${openMenu.dir === "up" ? "inv-menu--up" : ""}`}>
                   <button className="inv-menu__item" onClick={() => { setOpenMenu(null); navigate(`/admin/products/${p.id}`); }}>
                     <Eye size={15} /> View
                   </button>
@@ -203,7 +209,7 @@ export default function AdminProductPage() {
                   <button className="inv-menu__item" onClick={() => { setOpenMenu(null); void handleArchive(p.id); }}>
                     <Archive size={15} /> Archive
                   </button>
-                  <button className="inv-menu__item inv-menu__item--danger" onClick={() => { setOpenMenu(null); void handleDelete(p.id); }}>
+                  <button className="inv-menu__item inv-menu__item--danger" onClick={() => { setOpenMenu(null); setConfirmDelete(p); }}>
                     <Trash2 size={15} /> Delete
                   </button>
                 </div>
@@ -370,6 +376,20 @@ export default function AdminProductPage() {
 
       {/* Add product drawer */}
       <ProductDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} onSave={handleCreateProduct} categories={categories} />
+
+      {/* Delete confirmation */}
+      <ConfirmDialog
+        open={!!confirmDelete}
+        title="Delete this product?"
+        message={confirmDelete ? `"${confirmDelete.productName}" will be removed from the catalog. This cannot be undone.` : ""}
+        confirmLabel="Delete"
+        onCancel={() => setConfirmDelete(null)}
+        onConfirm={() => {
+          const p = confirmDelete;
+          setConfirmDelete(null);
+          if (p) void handleDelete(p.id);
+        }}
+      />
     </div>
   );
 }

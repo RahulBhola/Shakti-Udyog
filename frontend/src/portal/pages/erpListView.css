@@ -364,6 +364,10 @@
   background: var(--bg-card);
   box-shadow: var(--shadow-lg);
 }
+.inv-menu--up {
+  top: auto;
+  bottom: calc(100% + 6px);
+}
 .inv-menu__item {
   display: flex;
   align-items: center;

@@ -18,6 +18,7 @@ public interface IAdminContentService
     Task<List<Category>> GetAllCategoriesAsync();
     Task<Category> CreateCategoryAsync(string name, string? slug, string? description, Guid? parentId);
     Task<bool> UpdateCategoryAsync(Guid id, string name, string? description, int displayOrder, bool isVisible);
+    Task<bool> DeleteCategoryAsync(Guid id);
 
     // Industries
     Task<List<Industry>> GetAllIndustriesAsync();
@@ -113,6 +114,22 @@ public class AdminContentService(AppDbContext db, IAuditWriter audit) : IAdminCo
         var c = await db.Categories.FindAsync(id);
         if (c is null) return false;
         c.Name = name; c.Description = description; c.DisplayOrder = displayOrder; c.IsVisible = isVisible;
+        await db.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> DeleteCategoryAsync(Guid id)
+    {
+        var c = await db.Categories.FindAsync(id);
+        if (c is null) return false;
+
+        // Detach products and child categories so the delete succeeds.
+        var products = await db.Products.Where(p => p.CategoryId == id).ToListAsync();
+        foreach (var p in products) p.CategoryId = null;
+        var children = await db.Categories.Where(x => x.ParentId == id).ToListAsync();
+        foreach (var child in children) child.ParentId = null;
+
+        db.Categories.Remove(c);
         await db.SaveChangesAsync();
         return true;
     }

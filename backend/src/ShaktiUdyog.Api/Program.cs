@@ -249,6 +249,7 @@ using (var scope = app.Services.CreateScope())
             {
                 var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
                 await DevAdminSeeder.SeedAsync(userManager, app.Configuration["DevAdmin:Password"], db, logger);
+                await DevEngineerSeeder.SeedAsync(userManager, app.Configuration["DevEngineer:Password"], logger);
                 await DevPortalSeeder.SeedAsync(db, userManager, app.Configuration["DevCustomer:Password"], logger);
             }
 
