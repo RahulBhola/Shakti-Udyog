@@ -10,11 +10,14 @@ export function DashboardHeader({ onRefresh, refreshing }: DashboardHeaderProps)
   return (
     <header className="flex items-center justify-between">
       <div>
-        <h1 className="text-[40px] font-bold tracking-tight text-[var(--text-primary)] m-0 leading-none">
+        <h1 className="text-[32px] lg:text-[40px] font-bold tracking-tight text-[var(--text-primary)] m-0 leading-none">
           Welcome back, Administrator 👋
         </h1>
         <p className="text-sm text-[var(--text-secondary)] mt-2 m-0">
           Here's what's happening with your business today.
+        </p>
+        <p className="text-[12px] font-medium text-[var(--text-muted)] mt-1.5 m-0">
+          {new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
         </p>
       </div>
 

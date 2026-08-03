@@ -1,9 +1,10 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, type ReactNode } from "react";
+import { Link } from "react-router-dom";
 import { apiGet } from "../../api/client";
 import { Loading } from "../../components/ui";
 import { DashboardCard, DashboardHeader, QuickAction } from "../../components/dashboard";
 import { OrdersStatusChart, InvoicesPieChart, MonthlyBarChart, RevenueLineChart } from "../../components/AdminCharts";
-import { UserCheck, ClipboardList, ShoppingCart, Truck, Wallet, Users, Building2, FileSearch, BarChart3 } from "lucide-react";
+import { UserCheck, ClipboardList, ShoppingCart, Truck, Wallet, Users, Building2, FileSearch, BarChart3, ArrowRight } from "lucide-react";
 
 /* ------------------------------------------------------------------ */
 /*  Type definitions                                                   */
@@ -32,18 +33,36 @@ interface KpiDef {
   icon: typeof UserCheck;
   color: "blue" | "green" | "purple" | "teal" | "orange" | "pink" | "yellow" | "indigo";
   href: string;
+  hint: string;
 }
 
 const kpiMetrics: KpiDef[] = [
-  { key: "totalCustomers", label: "Total Customers", icon: UserCheck, color: "blue", href: "/admin/users" },
-  { key: "activeCustomers", label: "Active Customers", icon: UserCheck, color: "green", href: "/admin/users" },
-  { key: "pendingRfqs", label: "Pending RFQs", icon: ClipboardList, color: "purple", href: "/admin/rfqs" },
-  { key: "approvedRfqs", label: "Approved RFQs", icon: ClipboardList, color: "teal", href: "/admin/rfqs" },
-  { key: "pendingQuotations", label: "Pending Quotations", icon: ClipboardList, color: "indigo", href: "/admin/quotations" },
-  { key: "ordersInProduction", label: "Orders in Production", icon: ShoppingCart, color: "orange", href: "/admin/orders" },
-  { key: "ordersDispatched", label: "Orders Dispatched", icon: Truck, color: "pink", href: "/admin/orders" },
-  { key: "pendingPayments", label: "Pending Payments", icon: Wallet, color: "yellow", href: "/admin/invoices" },
+  { key: "totalCustomers", label: "Total Customers", icon: UserCheck, color: "blue", href: "/admin/users", hint: "Total registered accounts" },
+  { key: "activeCustomers", label: "Active Customers", icon: UserCheck, color: "green", href: "/admin/users", hint: "Verified & active" },
+  { key: "pendingRfqs", label: "Pending RFQs", icon: ClipboardList, color: "purple", href: "/admin/rfqs", hint: "Awaiting review" },
+  { key: "approvedRfqs", label: "Approved RFQs", icon: ClipboardList, color: "teal", href: "/admin/rfqs", hint: "Approved & ready" },
+  { key: "pendingQuotations", label: "Pending Quotations", icon: ClipboardList, color: "indigo", href: "/admin/quotations", hint: "Awaiting response" },
+  { key: "ordersInProduction", label: "Orders in Production", icon: ShoppingCart, color: "orange", href: "/admin/orders", hint: "Currently in the foundry" },
+  { key: "ordersDispatched", label: "Orders Dispatched", icon: Truck, color: "pink", href: "/admin/orders", hint: "Shipped to customers" },
+  { key: "pendingPayments", label: "Pending Payments", icon: Wallet, color: "yellow", href: "/admin/invoices", hint: "Awaiting approval" },
 ];
+
+const financeKpis = [
+  { label: "Total Revenue", value: 0, prefix: "₹", icon: Wallet, color: "teal" as const, href: "/admin/invoices", hint: "Total invoiced to date" },
+  { label: "Outstanding Balance", value: 0, prefix: "₹", icon: Wallet, color: "orange" as const, href: "/admin/invoices", hint: "Open receivables" },
+];
+
+// Literal classes so Tailwind can generate them (no dynamic arbitrary values)
+const colorClassMap: Record<string, string> = {
+  blue: "text-[var(--kpi-blue)]", green: "text-[var(--kpi-green)]", purple: "text-[var(--kpi-purple)]",
+  teal: "text-[var(--kpi-teal)]", orange: "text-[var(--kpi-orange)]", pink: "text-[var(--kpi-pink)]",
+  yellow: "text-[var(--kpi-yellow)]", indigo: "text-[var(--kpi-indigo)]",
+};
+const bgClassMap: Record<string, string> = {
+  blue: "bg-[var(--kpi-blue-bg)]", green: "bg-[var(--kpi-green-bg)]", purple: "bg-[var(--kpi-purple-bg)]",
+  teal: "bg-[var(--kpi-teal-bg)]", orange: "bg-[var(--kpi-orange-bg)]", pink: "bg-[var(--kpi-pink-bg)]",
+  yellow: "bg-[var(--kpi-yellow-bg)]", indigo: "bg-[var(--kpi-indigo-bg)]",
+};
 
 const quickActions = [
   { title: "Manage Users", description: "Add, edit, or manage user accounts", icon: Users, href: "/admin/users" },
@@ -51,6 +70,30 @@ const quickActions = [
   { title: "Audit Logs", description: "Review system activity and history logs", icon: FileSearch, href: "/admin/audit-logs" },
   { title: "Reports", description: "View detailed business reports and analytics", icon: BarChart3, href: "/admin/reports" },
 ];
+
+/* ------------------------------------------------------------------ */
+/*  Small helpers                                                      */
+/* ------------------------------------------------------------------ */
+
+function SectionHeader({ title, action }: { title: string; action?: ReactNode }) {
+  return (
+    <div className="flex items-center justify-between">
+      <div>
+        <div className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1">Overview</div>
+        <h2 className="text-[22px] font-bold tracking-tight text-[var(--text-primary)] m-0 leading-none">{title}</h2>
+      </div>
+      {action}
+    </div>
+  );
+}
+
+function ViewAllLink({ href }: { href: string }) {
+  return (
+    <Link to={href} className="inline-flex items-center gap-1 text-[12px] font-semibold text-[var(--color-primary)] hover:underline no-underline hover:no-underline">
+      View all <ArrowRight size={13} />
+    </Link>
+  );
+}
 
 /* ------------------------------------------------------------------ */
 /*  Page component                                                     */
@@ -97,26 +140,44 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-6">
       {/* Welcome Header */}
       <DashboardHeader onRefresh={handleRefresh} refreshing={refreshing} />
 
-      {/* 8 KPI cards: 2 rows of 4 */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {kpiMetrics.slice(0, 4).map((m) => (
-          <DashboardCard key={m.key} icon={m.icon} label={m.label} value={data[m.key] as number} href={m.href} />
-        ))}
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {kpiMetrics.slice(4, 8).map((m) => (
-          <DashboardCard key={m.key} icon={m.icon} label={m.label} value={data[m.key] as number} href={m.href} />
-        ))}
+      {/* Financial Overview */}
+      <div>
+        <SectionHeader title="Financial Overview" action={<ViewAllLink href="/admin/invoices" />} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+          <DashboardCard icon={financeKpis[0].icon} label={financeKpis[0].label} value={data.totalRevenue}
+            prefix={financeKpis[0].prefix} hint={financeKpis[0].hint} href={financeKpis[0].href}
+            iconColorClass={colorClassMap.teal} iconBgClass={bgClassMap.teal} />
+          <DashboardCard icon={financeKpis[1].icon} label={financeKpis[1].label} value={data.outstandingBalance}
+            prefix={financeKpis[1].prefix} hint={financeKpis[1].hint} href={financeKpis[1].href}
+            iconColorClass={colorClassMap.orange} iconBgClass={bgClassMap.orange} />
+        </div>
       </div>
 
-      {/* Quick Actions: 4 in a row */}
+      {/* Business KPI cards: 2 rows of 4 */}
       <div>
-        <h2 className="text-[26px] font-bold tracking-tight text-[var(--text-primary)] m-0 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <SectionHeader title="Business Overview" action={<ViewAllLink href="/admin/orders" />} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+          {kpiMetrics.slice(0, 4).map((m) => (
+            <DashboardCard key={m.key} icon={m.icon} label={m.label} value={data[m.key] as number}
+              hint={m.hint} href={m.href} iconColorClass={colorClassMap[m.color]} iconBgClass={bgClassMap[m.color]} />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+          {kpiMetrics.slice(4, 8).map((m) => (
+            <DashboardCard key={m.key} icon={m.icon} label={m.label} value={data[m.key] as number}
+              hint={m.hint} href={m.href} iconColorClass={colorClassMap[m.color]} iconBgClass={bgClassMap[m.color]} />
+          ))}
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div>
+        <SectionHeader title="Quick Actions" action={<ViewAllLink href="/admin/reports" />} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
           {quickActions.map((a) => (
             <QuickAction key={a.title} icon={a.icon} title={a.title} description={a.description} href={a.href} />
           ))}
@@ -125,8 +186,8 @@ export default function AdminDashboardPage() {
 
       {/* Charts: 2x2 grid */}
       <div>
-        <h2 className="text-[26px] font-bold tracking-tight text-[var(--text-primary)] m-0 mb-4">Analytics</h2>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <SectionHeader title="Analytics" action={<ViewAllLink href="/admin/reports" />} />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
           <OrdersStatusChart data={charts?.ordersByStatus} />
           <InvoicesPieChart data={charts?.invoicesByStatus} />
         </div>

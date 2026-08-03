@@ -16,6 +16,7 @@ export interface DashboardCardProps {
     label?: string;
   };
   prefix?: string;
+  hint?: string;
 }
 
 const iconColorMap: Record<string, string> = {
@@ -31,7 +32,7 @@ const iconBgMap: Record<string, string> = {
 };
 
 export function DashboardCard({
-  icon: Icon, label, value, href, iconColorClass, iconBgClass, trend, prefix,
+  icon: Icon, label, value, href, iconColorClass, iconBgClass, trend, prefix, hint,
 }: DashboardCardProps) {
   const colorClass = iconColorClass ?? iconColorMap.blue;
   const bgClass = iconBgClass ?? iconBgMap.blue;
@@ -40,12 +41,15 @@ export function DashboardCard({
     <div
       className={cn(
         "relative flex flex-col rounded-[18px] border border-[var(--border-default)]",
-        "bg-[var(--bg-card)] p-5",
+        "bg-[var(--bg-card)] p-5 pt-[18px]",
         "shadow-sm",
         "transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg",
-        "h-full",
+        "h-full overflow-hidden",
       )}
     >
+      {/* Colored top accent strip */}
+      <span aria-hidden="true" className={cn("absolute top-0 left-0 right-0 h-[3px]", bgClass)} />
+
       <div className="flex items-center gap-3 mb-2.5">
         <span className={cn("flex items-center justify-center w-10 h-10 rounded-xl shrink-0", bgClass)}>
           <Icon size={19} className={cn("shrink-0", colorClass)} aria-hidden="true" />
@@ -68,6 +72,7 @@ export function DashboardCard({
         <AnimatedCounter value={value} />
       </div>
       <div className="text-sm font-medium text-[var(--text-secondary)]">{label}</div>
+      {hint && <div className="text-[12px] text-[var(--text-muted)] mt-1.5">{hint}</div>}
       {trend?.label && <div className="text-[12px] text-[var(--text-muted)] mt-1.5">{trend.label}</div>}
     </div>
   );
