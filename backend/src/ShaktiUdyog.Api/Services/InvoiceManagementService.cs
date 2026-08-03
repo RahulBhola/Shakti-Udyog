@@ -47,7 +47,7 @@ public class InvoiceManagementService(AppDbContext db, IAuditWriter audit) : IIn
         }
         var total = await query.CountAsync();
         var items = await query.OrderByDescending(i => i.IssueDateUtc).Skip((page - 1) * pageSize).Take(pageSize)
-            .Select(i => new InvoiceListItemDto(i.Id, i.Order!.Id, i.InvoiceNumber, i.Order!.OrderNumber, i.IssueDateUtc, i.DueDateUtc, i.Total, i.AmountPaid, i.BalanceDue, i.Currency, i.Status, i.Company != null ? i.Company.Name : null, i.Company != null ? i.Company.CompanyLogoUrl : null)).ToListAsync();
+            .Select(i => new InvoiceListItemDto(i.Id, i.Order!.Id, i.InvoiceNumber, i.Order!.OrderNumber, i.IssueDateUtc, i.DueDateUtc, i.Total, i.AmountPaid, i.BalanceDue, i.Currency, i.Status, i.Company != null ? i.Company.Name : null, i.Company != null ? i.Company.CompanyLogoUrl : null, i.Company != null ? i.Company.CompanyEmail : null, i.Company != null ? i.Company.CompanyPhone : null)).ToListAsync();
         return new PagedResult<InvoiceListItemDto>(items, page, pageSize, total);
     }
 

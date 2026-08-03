@@ -195,7 +195,10 @@
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  min-width: 1080px;
+  /* Fixed layout lets the table compress to its container width so columns
+     resize (rather than forcing a horizontal scrollbar) when the sidebar
+     expands. Content overflows are clipped/truncated per cell. */
+  table-layout: fixed;
 }
 .inv-table thead th {
   text-align: left;
@@ -219,7 +222,7 @@
 .inv-table tbody tr:hover { background: rgba(59, 130, 246, 0.07); }
 .inv-table tbody tr.inv-row--selected { background: rgba(59, 130, 246, 0.1); }
 .inv-table tbody td {
-  padding: 16px;
+  padding: 18px 16px;
   border-bottom: 1px solid var(--border-default);
   vertical-align: middle;
   font-size: 13px;
@@ -236,7 +239,20 @@
 }
 
 /* customer cell */
-.inv-customer { display: flex; align-items: center; gap: 12px; min-width: 200px; }
+.inv-customer { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.inv-customer > div { min-width: 0; overflow: hidden; }
+/* Truncate long text inside table cells so fixed-layout columns stay tidy */
+.inv-table .inv-customer__contact,
+.inv-table .inv-sub,
+.inv-table .inv-link,
+.inv-table .inv-customer__name,
+.inv-table .inv-amount__paid,
+.inv-table .inv-amount__balance {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
 .inv-avatar {
   width: 42px;
   height: 42px;
@@ -260,8 +276,9 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
 }
-.inv-customer__contact { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.inv-customer__contact { font-size: 12px; color: var(--text-muted); margin-top: 2px; min-width: 0; }
 
 /* order / invoice links */
 .inv-link {
@@ -269,9 +286,14 @@
   font-weight: 600;
   text-decoration: none;
   white-space: nowrap;
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
 }
 .inv-link:hover { text-decoration: underline; }
-.inv-sub { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+.inv-sub { display: block; font-size: 12px; color: var(--text-muted); margin-top: 3px; }
 
 /* date cell */
 .inv-date { font-weight: 600; color: var(--text-primary); white-space: nowrap; }

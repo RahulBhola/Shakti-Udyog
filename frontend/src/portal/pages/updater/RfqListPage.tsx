@@ -354,6 +354,17 @@ export default function UpdaterRfqListPage() {
         <div className="inv-table-wrap">
           <div className="inv-scroll">
             <table className="inv-table">
+              <colgroup>
+                <col style={{ width: 40 }} />
+                <col style={{ width: 52 }} />
+                <col style={{ width: "14%" }} />
+                <col style={{ width: "22%" }} />
+                <col style={{ width: "8%" }} />
+                <col style={{ width: "10%" }} />
+                <col style={{ width: "10%" }} />
+                <col style={{ width: "12%" }} />
+                <col style={{ width: 90 }} />
+              </colgroup>
               <thead>
                 <tr>
                   <th style={{ width: 40 }}>

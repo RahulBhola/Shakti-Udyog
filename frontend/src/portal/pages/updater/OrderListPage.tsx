@@ -325,6 +325,15 @@ export default function UpdaterOrderListPage() {
         <div className="inv-table-wrap">
           <div className="inv-scroll">
             <table className="inv-table">
+              <colgroup>
+                <col style={{ width: "16%" }} />
+                <col style={{ width: "22%" }} />
+                <col style={{ width: "9%" }} />
+                <col style={{ width: "15%" }} />
+                <col style={{ width: "14%" }} />
+                <col style={{ width: "12%" }} />
+                <col style={{ width: 90 }} />
+              </colgroup>
               <thead>
                 <tr>
                   <th>Order Number</th>

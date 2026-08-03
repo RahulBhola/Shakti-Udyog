@@ -190,6 +190,8 @@ export interface InvoiceListItem {
   status: string;
   companyName: string | null;
   companyLogoUrl: string | null;
+  companyEmail: string | null;
+  companyPhone: string | null;
 }
 
 export interface InvoiceDetail extends InvoiceListItem {

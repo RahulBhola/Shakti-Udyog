@@ -283,7 +283,12 @@ export default function AdminInvoiceManagePage() {
         <td>
           <div className="inv-customer">
             <Avatar companyName={inv.companyName} logoUrl={inv.companyLogoUrl} />
-            <div className="inv-customer__name" title={inv.companyName ?? undefined}>{inv.companyName ?? "—"}</div>
+            <div>
+              <div className="inv-customer__name" title={inv.companyName ?? undefined}>{inv.companyName ?? "—"}</div>
+              <div className="inv-customer__contact" title={inv.companyEmail ?? inv.companyPhone ?? undefined}>
+                {inv.companyEmail ?? inv.companyPhone ?? "—"}
+              </div>
+            </div>
           </div>
         </td>
         <td>
@@ -357,6 +362,7 @@ export default function AdminInvoiceManagePage() {
             <div>
               <div className="inv-customer__name">{inv.companyName ?? "—"}</div>
               <div className="inv-sub">{inv.invoiceNumber}</div>
+              <div className="inv-customer__contact">{inv.companyEmail ?? inv.companyPhone ?? "—"}</div>
             </div>
           </div>
           <InvoiceBadge status={inv.status} />
@@ -518,6 +524,17 @@ export default function AdminInvoiceManagePage() {
         <div className="inv-table-wrap">
           <div className="inv-scroll">
             <table className="inv-table">
+              <colgroup>
+                <col style={{ width: 40 }} />
+                <col style={{ width: "21%" }} />
+                <col style={{ width: "12%" }} />
+                <col style={{ width: "11%" }} />
+                <col style={{ width: "11%" }} />
+                <col style={{ width: "15%" }} />
+                <col style={{ width: "10%" }} />
+                <col style={{ width: "10%" }} />
+                <col style={{ width: 90 }} />
+              </colgroup>
               <thead>
                 <tr>
                   <th style={{ width: 40 }}><input type="checkbox" className="inv-check" checked={allSelected} onChange={toggleAll} aria-label="Select all" /></th>
