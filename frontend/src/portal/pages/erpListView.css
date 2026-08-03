@@ -432,6 +432,54 @@
 .inv-card__value { font-size: 13px; font-weight: 600; color: var(--text-primary); }
 .inv-card__footer { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-top: 14px; }
 
+/* Status dot + misc (users) */
+.inv-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.inv-badge--green .inv-dot { box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15); }
+.inv-badge--red .inv-dot { box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15); }
+.inv-table tbody tr.inv-row--self { background: rgba(59, 130, 246, 0.05); }
+.inv-menu__item:disabled { opacity: 0.45; cursor: not-allowed; }
+.inv-menu__item:disabled:hover { background: transparent; color: var(--text-secondary); }
+
+/* ---- Modal (e.g. user details) -------------------------------------- */
+.inv-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(2, 6, 23, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.inv-modal {
+  width: 100%;
+  max-width: 520px;
+  border-radius: 16px;
+  border: 1px solid var(--border-input);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+.inv-modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--border-default);
+}
+.inv-modal__title { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+.inv-modal__body { padding: 20px; display: flex; flex-direction: column; gap: 14px; max-height: 60vh; overflow-y: auto; }
+.inv-modal__row { display: flex; gap: 12px; align-items: flex-start; }
+.inv-modal__row-label {
+  width: 110px; flex-shrink: 0;
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+  color: var(--text-muted); padding-top: 2px;
+}
+.inv-modal__row-value { font-size: 13px; color: var(--text-secondary); word-break: break-word; }
+.inv-modal__foot { padding: 14px 20px; border-top: 1px solid var(--border-default); display: flex; justify-content: flex-end; gap: 10px; }
+
 /* ---- Responsive: collapse table → cards on mobile ------------------ */
 @media (max-width: 900px) {
   .inv-table-wrap { display: none; }

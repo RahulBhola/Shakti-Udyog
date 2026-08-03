@@ -50,8 +50,36 @@ public class AdminController(IAdminService adminService, AppDbContext db, UserMa
     [HttpGet("users")]
     public async Task<IActionResult> GetUsers()
     {
-        var users = await userManager.Users.OrderByDescending(u => u.CreatedAtUtc).Select(u => new { u.Id, u.Email, u.FullName, u.PhoneNumber, u.IsActive, u.CreatedAtUtc }).ToListAsync();
-        return Ok(users);
+        var userRoles = await db.UserRoles.ToListAsync();
+        var roleNames = await db.Roles.Select(r => new { r.Id, r.Name }).ToListAsync();
+        var roleNameById = roleNames.ToDictionary(r => r.Id, r => r.Name);
+        var rolesByUser = userRoles
+            .GroupBy(ur => ur.UserId)
+            .ToDictionary(
+                g => g.Key,
+                g => g.Select(ur => roleNameById.TryGetValue(ur.RoleId, out var n) ? n! : Roles.Customer).ToList());
+
+        var users = await userManager.Users
+            .OrderByDescending(u => u.CreatedAtUtc)
+            .Select(u => new { u.Id, u.Email, u.FullName, u.PhoneNumber, u.IsActive, u.CreatedAtUtc, u.LastLoginAtUtc, u.CompanyName })
+            .ToListAsync();
+
+        var result = users.Select(u =>
+        {
+            var roles = rolesByUser.TryGetValue(u.Id, out var rs) ? rs : new List<string>();
+            var role = roles.Contains(Roles.Admin) ? Roles.Admin
+                : roles.Contains(Roles.DataUpdater) ? Roles.DataUpdater
+                : roles.Contains(Roles.Engineer) ? Roles.Engineer
+                : roles.Count > 0 ? roles[0]
+                : Roles.Customer;
+            return new
+            {
+                u.Id, u.Email, u.FullName, u.PhoneNumber, u.IsActive,
+                u.CreatedAtUtc, u.LastLoginAtUtc, u.CompanyName,
+                Role = role
+            };
+        });
+        return Ok(result);
     }
 
     [HttpPatch("users/{id:guid}/toggle-active")]
