@@ -1,90 +1,65 @@
-import { useCallback, useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
 import { updaterApi, type UpdaterRfqListItem } from "../../../api/updaterApi";
 import type { Paged } from "../../../api/customerApi";
-import { Loading } from "../../../components/ui";
+import { EmptyState, Loading } from "../../../components/ui";
 import { tokenStorage } from "../../../auth/tokenStorage";
 import { config } from "../../../config";
 import { formatDate } from "../../shared";
 import {
-  Search, Plus, Download, Eye, ExternalLink, X,
-  FileText, Clock, CheckCircle, AlertCircle, XCircle,
-  ChevronRight, RotateCcw, MoreHorizontal, FileEdit,
+  Search, RefreshCw, ChevronLeft, ChevronRight, X, Download,
+  Eye, MoreVertical, FileText, Clock, CheckCircle, AlertCircle,
+  XCircle, FileEdit, Package,
 } from "lucide-react";
+import "../erpListView.css";
 
-/* ------------------------------------------------------------------ */
-/*  Status badge color map                                             */
-/* ------------------------------------------------------------------ */
+const STATUS_FILTERS = ["All", "Draft", "Received", "Under Review", "Approved", "Quoted", "Accepted", "Rejected", "Cancelled"];
+const PRIORITY_FILTERS = ["All", "Low", "Medium", "High", "Urgent"];
+const PAGE_SIZES = [10, 20, 50];
 
-const statusConfig: Record<string, { label: string; bg: string; text: string; dot: string }> = {
-  Draft:           { label: "Draft",           bg: "bg-[#F1F5F9]",   text: "text-[#64748B]",     dot: "bg-[#94A3B8]" },
-  Received:        { label: "Received",        bg: "bg-[#EFF6FF]",   text: "text-[#2563EB]",     dot: "bg-[#3B82F6]" },
-  "Under Review":  { label: "Under Review",    bg: "bg-[#FFF7ED]",   text: "text-[#F97316]",     dot: "bg-[#F97316]" },
-  Approved:        { label: "Approved",        bg: "bg-[#F0FDF4]",   text: "text-[#22C55E]",     dot: "bg-[#22C55E]" },
-  Quoted:          { label: "Quoted",          bg: "bg-[#EEF2FF]",   text: "text-[#6366F1]",     dot: "bg-[#6366F1]" },
-  Accepted:        { label: "Accepted",        bg: "bg-[#F0FDF4]",   text: "text-[#16A34A]",     dot: "bg-[#16A34A]" },
-  Rejected:        { label: "Rejected",        bg: "bg-[#FEF2F2]",   text: "text-[#EF4444]",     dot: "bg-[#EF4444]" },
-  Cancelled:       { label: "Cancelled",       bg: "bg-[#F8FAFC]",   text: "text-[#94A3B8]",     dot: "bg-[#CBD5E1]" },
-  Expired:         { label: "Expired",         bg: "bg-[#F8FAFC]",   text: "text-[#94A3B8]",     dot: "bg-[#CBD5E1]" },
-};
+/* ---- helpers ------------------------------------------------------- */
 
-function getStatusConfig(status: string) {
-  return statusConfig[status] ?? { label: status, bg: "bg-[#F1F5F9]", text: "text-[#64748B]", dot: "bg-[#94A3B8]" };
+function rfqNo(id: string): string {
+  return `RFQ-${id.slice(0, 8).toUpperCase()}`;
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const cfg = getStatusConfig(status);
-  return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${cfg.bg} ${cfg.text}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
-      {cfg.label}
-    </span>
-  );
+function statusTone(status: string): string {
+  switch (status) {
+    case "Accepted":
+    case "Approved": return "green";
+    case "Rejected":
+    case "Cancelled": return "red";
+    case "Under Review": return "orange";
+    case "Quoted": return "purple";
+    case "Draft":
+    case "Received": return "blue";
+    case "Expired": return "gray";
+    default: return "gray";
+  }
 }
 
-/* ------------------------------------------------------------------ */
-/*  Priority badge                                                     */
-/* ------------------------------------------------------------------ */
+function priorityTone(priority: string): string {
+  switch (priority) {
+    case "High":
+    case "Urgent": return "red";
+    case "Medium": return "orange";
+    default: return "gray";
+  }
+}
+
+function RfqBadge({ status }: { status: string }) {
+  return <span className={`inv-badge inv-badge--${statusTone(status)}`}>{status}</span>;
+}
 
 function PriorityBadge({ priority }: { priority: string }) {
-  const colors: Record<string, string> = {
-    Low: "bg-[#F1F5F9] text-[#64748B]",
-    Medium: "bg-[#FFF7ED] text-[#F97316]",
-    High: "bg-[#FEF2F2] text-[#EF4444]",
-    Urgent: "bg-[#FEF2F2] text-[#DC2626] ring-1 ring-red-300",
-  };
-  return (
-    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${colors[priority] ?? colors.Medium}`}>
-      {priority}
-    </span>
-  );
+  return <span className={`inv-badge inv-badge--${priorityTone(priority)}`}>{priority}</span>;
 }
 
-/*  Summary card                                                       */
-/* ------------------------------------------------------------------ */
-
-function SummaryCard({ icon: Icon, label, value, color }: { icon: any; label: string; value: number; color: string }) {
-  return (
-    <div className="flex items-center gap-3 rounded-[14px] border border-[var(--border-default)] bg-[var(--bg-card)] p-3.5 shadow-sm h-[76px]">
-      <span className={`flex items-center justify-center w-10 h-10 rounded-xl shrink-0 ${color}/10`}>
-        <Icon size={18} className={color} />
-      </span>
-      <div className="min-w-0">
-        <div className="text-[22px] font-bold text-[var(--text-primary)] leading-none tabular-nums">{value}</div>
-        <div className="text-[12px] text-[var(--text-secondary)] mt-0.5">{label}</div>
-      </div>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  CSV export                                                         */
-/* ------------------------------------------------------------------ */
-
+/*  CSV export                                                        */
 function exportToCsv(items: UpdaterRfqListItem[]) {
   const headers = ["RFQ No.", "Customer", "Product", "Quantity", "Status", "Date", "Files", "Assigned"];
   const rows = items.map((r) => [
-    `RFQ-${r.id.slice(0, 8).toUpperCase()}`,
+    rfqNo(r.id),
     r.companyName ?? "Unknown",
     r.productType,
     r.quantity,
@@ -93,8 +68,8 @@ function exportToCsv(items: UpdaterRfqListItem[]) {
     String(r.fileCount),
     r.assignedToUserId ? "Yes" : "No",
   ]);
-
-  const csv = [headers, ...rows].map((row) => row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(",")).join("\n");
+  const esc = (v: string) => `"${String(v).replace(/"/g, '""')}"`;
+  const csv = [headers.join(","), ...rows.map((row) => row.map(esc).join(","))].join("\n");
   const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -106,53 +81,62 @@ function exportToCsv(items: UpdaterRfqListItem[]) {
   URL.revokeObjectURL(url);
 }
 
-/* ------------------------------------------------------------------ */
-/*  Thumbnail image for list                                            */
-/* ------------------------------------------------------------------ */
-
+/*  Thumbnail image (auth-fetched)                                    */
 function ListRfqImage({ rfqId, fileId }: { rfqId: string; fileId: string }) {
   const [url, setUrl] = useState<string | null>(null);
   useEffect(() => {
     let cancelled = false;
+    let objectUrl: string | null = null;
     const token = tokenStorage.getAccessToken();
     fetch(`${config.apiBaseUrl}/api/v1/updater/rfqs/${rfqId}/files/${fileId}/download`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {}, credentials: "include",
     }).then((r) => { if (!r.ok) throw new Error(); return r.blob(); })
-      .then((blob) => { if (!cancelled) setUrl(URL.createObjectURL(blob)); })
+      .then((blob) => { if (!cancelled) { objectUrl = URL.createObjectURL(blob); setUrl(objectUrl); } })
       .catch(() => {});
-    return () => { cancelled = true; if (url) URL.revokeObjectURL(url); };
+    return () => { cancelled = true; if (objectUrl) URL.revokeObjectURL(objectUrl); };
   }, [rfqId, fileId]);
-  if (!url) return <div className="w-10 h-10 rounded-lg bg-[var(--bg-surface)] animate-pulse shrink-0" />;
-  return <img src={url} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0" />;
+  if (!url) return <span className="inv-avatar" style={{ background: "var(--bg-surface-hover)" }} />;
+  return <img src={url} alt="" className="inv-avatar" style={{ objectFit: "cover" }} />;
 }
 
-/* ------------------------------------------------------------------ */
-/*  Main page                                                          */
-/* ------------------------------------------------------------------ */
+/* ---- main page ----------------------------------------------------- */
 
 export default function UpdaterRfqListPage() {
   const navigate = useNavigate();
+
   const [data, setData] = useState<Paged<UpdaterRfqListItem> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
-  const [priorityFilter, setPriorityFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [priorityFilter, setPriorityFilter] = useState("All");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-
-  const pageSize = 20;
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
 
   const load = useCallback(() => {
-    updaterApi.rfqs(page, pageSize, search || undefined, statusFilter || undefined)
+    updaterApi.rfqs(page, pageSize, search || undefined, statusFilter === "All" ? undefined : statusFilter)
       .then(setData)
       .catch((e: Error) => setError(e.message));
-  }, [page, search, statusFilter]);
-
+  }, [page, pageSize, search, statusFilter]);
   useEffect(load, [load]);
+  useEffect(() => { setPage(1); }, [search, statusFilter, pageSize]);
+
+  // Close the row menu on outside click
+  useEffect(() => {
+    if (!openMenu) return;
+    const onDown = () => setOpenMenu(null);
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [openMenu]);
 
   const totalPages = data ? Math.max(1, Math.ceil(data.totalCount / data.pageSize)) : 1;
 
-  // Compute RFQ-specific summary from data
+  // Priority is a client-side refinement on the current page (no backend param)
+  const filteredItems = data?.items.filter((r) => priorityFilter === "All" || r.priority === priorityFilter) ?? [];
+
+  // RFQ-specific summary from the current page (preserving existing behaviour)
   const allStatuses = data?.items.map((r) => r.status) ?? [];
   const totalRfqs = data?.totalCount ?? 0;
   const newCount = allStatuses.filter((s) => s === "Received").length;
@@ -164,309 +148,292 @@ export default function UpdaterRfqListPage() {
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
   };
-
   const toggleSelectAll = () => {
     if (!data) return;
-    if (selectedIds.size === data.items.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(data.items.map((r) => r.id)));
+    setSelectedIds((prev) => (prev.size === filteredItems.length ? new Set() : new Set(filteredItems.map((r) => r.id))));
+  };
+  const allSelected = filteredItems.length > 0 && selectedIds.size === filteredItems.length;
+
+  const clearFilters = () => { setSearchInput(""); setSearch(""); setStatusFilter("All"); setPriorityFilter("All"); setPage(1); };
+  const hasFilters = !!search || statusFilter !== "All" || priorityFilter !== "All";
+
+  const kpis = [
+    { label: "Total RFQs", value: totalRfqs, hint: "All requests", icon: FileText, color: "var(--kpi-blue)", bg: "var(--kpi-blue-bg)", glow: "rgba(59,130,246,0.25)" },
+    { label: "Received", value: newCount, hint: "New requests", icon: Clock, color: "var(--kpi-blue)", bg: "var(--kpi-blue-bg)", glow: "rgba(59,130,246,0.22)" },
+    { label: "Under Review", value: reviewCount, hint: "In review", icon: AlertCircle, color: "var(--kpi-orange)", bg: "var(--kpi-orange-bg)", glow: "rgba(249,115,22,0.22)" },
+    { label: "Quoted", value: quotedCount, hint: "Quotations sent", icon: FileEdit, color: "var(--kpi-purple)", bg: "var(--kpi-purple-bg)", glow: "rgba(167,139,250,0.22)" },
+    { label: "Accepted", value: acceptedCount, hint: "Accepted", icon: CheckCircle, color: "var(--kpi-green)", bg: "var(--kpi-green-bg)", glow: "rgba(34,197,94,0.22)" },
+    { label: "Rejected", value: rejectedCount, hint: "Rejected", icon: XCircle, color: "var(--color-danger)", bg: "rgba(239,68,68,0.10)", glow: "rgba(239,68,68,0.22)" },
+  ];
+
+  const openRfq = (r: UpdaterRfqListItem) => navigate(`/admin/rfqs/${r.id}`);
+
+  const renderThumb = (r: UpdaterRfqListItem) => {
+    if (r.firstFileId && r.firstFileContentType?.startsWith("image/")) {
+      return <ListRfqImage rfqId={r.id} fileId={r.firstFileId} />;
     }
+    if (r.fileCount > 0) {
+      return <span className="inv-avatar" style={{ background: "var(--bg-surface-hover)" }}><FileText size={16} /></span>;
+    }
+    return <span className="inv-avatar" style={{ background: "var(--bg-surface)" }} />;
   };
 
-  const clearFilters = () => { setSearch(""); setStatusFilter(""); setPriorityFilter(""); setPage(1); };
-  const filteredItems = data?.items.filter((r) => !priorityFilter || r.priority === priorityFilter) ?? [];
+  const renderRow = (r: UpdaterRfqListItem) => {
+    return (
+      <tr key={r.id} onClick={() => openRfq(r)}>
+        <td onClick={(e) => e.stopPropagation()}>
+          <input type="checkbox" className="inv-check" checked={selectedIds.has(r.id)} onChange={() => toggleSelect(r.id)} aria-label="Select RFQ" />
+        </td>
+        <td>{renderThumb(r)}</td>
+        <td>
+          <span className="inv-link" role="link" tabIndex={0}
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); openRfq(r); } }}>
+            {rfqNo(r.id)}
+          </span>
+          <div className="inv-sub">{formatDate(r.createdAtUtc)}</div>
+        </td>
+        <td>
+          <div className="inv-customer">
+            <span className="inv-avatar">{initials(r.companyName)}</span>
+            <div>
+              <div className="inv-customer__name" title={r.companyName ?? undefined}>{r.companyName ?? "Unknown"}</div>
+              <div className="inv-customer__contact">{r.productType}</div>
+            </div>
+          </div>
+        </td>
+        <td>
+          <div className="inv-amount__total" style={{ fontSize: 15 }}>{r.quantity}</div>
+        </td>
+        <td>
+          {r.assignedToUserId ? (
+            <div className="inv-customer__name" style={{ fontSize: 13 }}>Assigned</div>
+          ) : (
+            <span className="inv-sub">—</span>
+          )}
+        </td>
+        <td><PriorityBadge priority={r.priority} /></td>
+        <td><RfqBadge status={r.status} /></td>
+        <td>
+          <div className="inv-actions" onClick={(e) => e.stopPropagation()}>
+            <button className="inv-icon-btn" title="View" aria-label="View" onClick={() => openRfq(r)}>
+              <Eye size={16} />
+            </button>
+            <div className="inv-menu-wrap" onMouseDown={(e) => e.stopPropagation()}>
+              <button className="inv-icon-btn" title="More" aria-label="More actions"
+                aria-expanded={openMenu === r.id}
+                onClick={() => setOpenMenu((m) => (m === r.id ? null : r.id))}>
+                <MoreVertical size={16} />
+              </button>
+              {openMenu === r.id && (
+                <div className="inv-menu">
+                  <button className="inv-menu__item" onClick={() => { setOpenMenu(null); openRfq(r); }}>
+                    <Eye size={15} /> View Details
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </td>
+      </tr>
+    );
+  };
+
+  const renderCard = (r: UpdaterRfqListItem) => {
+    return (
+      <div key={r.id} className="inv-card" onClick={() => openRfq(r)}>
+        <div className="inv-card__top">
+          <div className="inv-card__customer">
+            <span className="inv-avatar">{initials(r.companyName)}</span>
+            <div>
+              <div className="inv-customer__name">{r.companyName ?? "Unknown"}</div>
+              <div className="inv-sub inv-link">{rfqNo(r.id)}</div>
+            </div>
+          </div>
+          <RfqBadge status={r.status} />
+        </div>
+        <div className="inv-card__body">
+          <div className="inv-card__cell">
+            <span className="inv-card__label">Product</span>
+            <span className="inv-card__value">{r.productType}</span>
+          </div>
+          <div className="inv-card__cell">
+            <span className="inv-card__label">Quantity</span>
+            <span className="inv-card__value">{r.quantity}</span>
+          </div>
+          <div className="inv-card__cell">
+            <span className="inv-card__label">Date</span>
+            <span className="inv-card__value">{formatDate(r.createdAtUtc)}</span>
+          </div>
+          <div className="inv-card__cell">
+            <span className="inv-card__label">Priority</span>
+            <span className="inv-card__value"><PriorityBadge priority={r.priority} /></span>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
-    <div className="flex flex-col gap-5">
-
-      {/* ── Header ── */}
-      <div className="flex items-center justify-between">
+    <div className="inv-page">
+      {/* Header */}
+      <div className="inv-header">
         <div>
-          <h1 className="text-[32px] font-bold tracking-tight text-[var(--text-primary)] m-0 leading-none">RFQs</h1>
-          <p className="text-sm text-[var(--text-secondary)] mt-1.5 m-0">
-            Manage customer Requests for Quotation.
-          </p>
+          <h1 className="inv-header__title">RFQs</h1>
+          <p className="inv-header__subtitle">Manage customer Requests for Quotation.</p>
         </div>
-        <div className="flex items-center gap-2.5">
-          {/* Search input */}
-          <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
-            <input
-              type="text"
-              placeholder="Search RFQs..."
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-              className="w-56 h-9 pl-9 pr-3 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-all duration-200"
-            />
-            {search && (
-              <button type="button" onClick={() => { setSearch(""); setPage(1); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)]">
-                <X size={14} />
-              </button>
-            )}
-          </div>
-
-          {/* View options */}
-
-          {/* Export button */}
-          <button
-            type="button"
-            onClick={() => { if (data) exportToCsv(data.items); }}
-            className="flex items-center gap-1.5 px-3.5 h-9 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all duration-200"
-          >
-            <Download size={14} />
-            Export
+        <div className="inv-header__actions">
+          <button className="inv-btn" onClick={() => { if (data) exportToCsv(data.items); }} title="Export visible RFQs to Excel">
+            <Download size={16} /> Export Excel
           </button>
         </div>
       </div>
 
-      {/* ── RFQ Summary Cards ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        <SummaryCard icon={FileText} label="Total RFQs" value={totalRfqs} color="text-[var(--color-primary)]" />
-        <SummaryCard icon={Clock} label="Received" value={newCount} color="text-[#3B82F6]" />
-        <SummaryCard icon={AlertCircle} label="Under Review" value={reviewCount} color="text-[#F97316]" />
-        <SummaryCard icon={FileEdit} label="Quoted" value={quotedCount} color="text-[#6366F1]" />
-        <SummaryCard icon={CheckCircle} label="Accepted" value={acceptedCount} color="text-[#22C55E]" />
-        <SummaryCard icon={XCircle} label="Rejected" value={rejectedCount} color="text-[#EF4444]" />
+      {/* KPI cards */}
+      <div className="inv-kpi-grid">
+        {kpis.map((k) => (
+          <div key={k.label} className="inv-kpi"
+            style={{ "--inv-kpi-color": k.color, "--inv-kpi-bg": k.bg, "--inv-kpi-glow": k.glow } as CSSProperties}>
+            <span className="inv-kpi__icon"><k.icon size={20} /></span>
+            <span className="inv-kpi__value">{k.value.toLocaleString()}</span>
+            <span className="inv-kpi__label">{k.label}</span>
+            <span className="inv-kpi__hint">{k.hint}</span>
+          </div>
+        ))}
       </div>
 
-      {/* ── Filter Toolbar ── */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-          className="h-8 px-3 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[11px] text-[var(--text-primary)] outline-none focus:border-[var(--color-primary)]">
-          <option value="">All Statuses</option>
-          <option>Draft</option><option>Received</option><option>Under Review</option>
-          <option>Approved</option><option>Quoted</option><option>Accepted</option>
-          <option>Rejected</option><option>Cancelled</option>
-        </select>
-        <select value={priorityFilter} onChange={(e) => { setPriorityFilter(e.target.value); setPage(1); }}
-          className="h-8 px-3 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[11px] text-[var(--text-primary)] outline-none focus:border-[var(--color-primary)]">
-          <option value="">All Priorities</option>
-          <option>Low</option><option>Medium</option><option>High</option><option>Urgent</option>
-        </select>
-        <button type="button" onClick={load}
-          className="flex items-center gap-1.5 px-3.5 h-8 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[11px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all">
-          <RotateCcw size={13} /> Refresh
-        </button>
-        {(search || statusFilter || priorityFilter) && (
-          <button type="button" onClick={clearFilters}
-            className="text-[11px] font-medium text-[var(--color-primary)] hover:underline px-2">Clear filters</button>
-        )}
-        {selectedIds.size > 0 && (
-          <span className="text-[11px] text-[var(--text-muted)] ml-auto">{selectedIds.size} selected</span>
-        )}
-      </div>
-
-      {/* ── Error / Empty / Loading ── */}
-      {error && (
-        <div className="flex items-center justify-center min-h-[200px]">
-          <div className="rounded-xl border border-red-200 bg-red-50 p-5 text-center max-w-sm">
-            <AlertCircle size={24} className="text-red-400 mx-auto mb-2" />
-            <div className="text-sm font-semibold text-red-600 mb-1">RFQs unavailable</div>
-            <p className="text-[12px] text-[var(--text-secondary)]">{error}</p>
-            <button type="button" onClick={load} className="mt-2 px-3 py-1.5 rounded-lg bg-red-600 text-white text-xs font-semibold hover:bg-red-700 transition-colors">Retry</button>
+      {/* Search & filter bar */}
+      <div className="inv-filterbar">
+        <div className="inv-field" style={{ flex: "1 1 240px" }}>
+          <label className="inv-field__label">Search</label>
+          <div style={{ position: "relative" }}>
+            <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
+            <input
+              className="inv-input" style={{ paddingLeft: 32 }} type="search" value={searchInput}
+              placeholder="Search RFQs..."
+              aria-label="Search RFQs"
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") setSearch(searchInput.trim()); }}
+            />
           </div>
         </div>
-      )}
 
-      {!data && !error && <div className="py-10"><Loading label="Loading RFQs" /></div>}
-
-      {data && filteredItems.length === 0 && !error && (
-        <div className="flex flex-col items-center justify-center py-16">
-          <FileText size={48} className="text-[var(--text-muted)] mb-4 opacity-50" />
-          <h3 className="text-lg font-semibold text-[var(--text-primary)] m-0">No RFQs found</h3>
-          <p className="text-sm text-[var(--text-secondary)] mt-1 mb-4">
-            {search || statusFilter ? "Try adjusting your search or filters." : "Create your first RFQ to get started."}
-          </p>
-          {search || statusFilter ? (
-            <button type="button" onClick={clearFilters} className="flex items-center gap-1.5 px-4 h-9 rounded-lg bg-[var(--color-primary)] text-white text-xs font-semibold hover:bg-[var(--color-primary-hover)] transition-all">
-              <RotateCcw size={13} />
-              Clear Filters
-            </button>
-          ) : (
-            <span className="flex items-center gap-1.5 px-4 h-9 rounded-lg bg-[var(--border-default)] text-[var(--text-muted)] text-xs font-semibold cursor-not-allowed">
-              <Plus size={15} />
-              Create RFQ
-            </span>
-          )}
+        <div className="inv-field">
+          <label className="inv-field__label">Status</label>
+          <select className="inv-select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+            {STATUS_FILTERS.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
         </div>
-      )}
 
-      {/* ── Data Table ── */}
+        <div className="inv-field">
+          <label className="inv-field__label">Priority</label>
+          <select className="inv-select" value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)}>
+            {PRIORITY_FILTERS.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
+
+        <button className="inv-btn inv-btn--icon" title="Refresh" aria-label="Refresh" onClick={load}>
+          <RefreshCw size={16} />
+        </button>
+        <button className="inv-btn" onClick={() => { if (data) exportToCsv(data.items); }} title="Export visible RFQs to Excel">
+          <Download size={14} /> Export
+        </button>
+        {hasFilters && (
+          <button className="inv-btn" title="Clear filters" onClick={clearFilters}>
+            <X size={14} /> Clear
+          </button>
+        )}
+      </div>
+
+      {/* Desktop table */}
       {data && filteredItems.length > 0 && (
-        <div className="rounded-[16px] border border-[var(--border-default)] bg-[var(--bg-card)] overflow-hidden shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-[13px]">
+        <div className="inv-table-wrap">
+          <div className="inv-scroll">
+            <table className="inv-table">
               <thead>
-                <tr className="border-b border-[var(--border-default)] bg-[var(--bg-app)]">
-                  <th className="w-10 px-3 py-3 text-left">
-                    <input
-                      type="checkbox"
-                      checked={filteredItems.length > 0 && selectedIds.size === filteredItems.length}
-                      onChange={toggleSelectAll}
-                      className="rounded border-[var(--border-default)] accent-[var(--color-primary)]"
-                    />
+                <tr>
+                  <th style={{ width: 40 }}>
+                    <input type="checkbox" className="inv-check" checked={allSelected} onChange={toggleSelectAll} aria-label="Select all" />
                   </th>
-                  <th className="w-16 px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">Image</th>
-                  <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">RFQ No.</th>
-                  <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">Customer</th>
-                  <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">Product</th>
-                  <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">Qty</th>
-                  <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">Date</th>
-                  <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">Assigned</th>
-                  <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">Priority</th>
-                  <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">Status</th>
-                  <th className="px-3 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">Actions</th>
+                  <th style={{ width: 52 }}>Image</th>
+                  <th>RFQ No.</th>
+                  <th>Customer</th>
+                  <th>Qty</th>
+                  <th>Assigned</th>
+                  <th>Priority</th>
+                  <th>Status</th>
+                  <th style={{ textAlign: "right" }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredItems.map((r) => (
-                  <tr
-                    key={r.id}
-                    className="border-b border-[var(--border-default)] hover:bg-[var(--bg-surface-hover)] transition-colors duration-150 cursor-pointer"
-                    onClick={() => navigate(`/admin/rfqs/${r.id}`)}
-                  >
-                    <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.has(r.id)}
-                        onChange={() => toggleSelect(r.id)}
-                        className="rounded border-[var(--border-default)] accent-[var(--color-primary)]"
-                      />
-                    </td>
-                    <td className="px-3 py-3">
-                      {r.firstFileId && r.firstFileContentType?.startsWith("image/") ? (
-                        <ListRfqImage rfqId={r.id} fileId={r.firstFileId} />
-                      ) : r.fileCount > 0 ? (
-                        <div className="w-10 h-10 rounded-lg bg-[var(--bg-surface-hover)] flex items-center justify-center shrink-0">
-                          <FileText size={14} className="text-[var(--text-muted)]" />
-                        </div>
-                      ) : (
-                        <div className="w-10 h-10 rounded-lg bg-[var(--bg-surface)] shrink-0" />
-                      )}
-                    </td>
-                    <td className="px-3 py-3">
-                      <span className="font-mono text-[12px] font-medium text-[var(--color-primary)]">
-                        RFQ-{r.id.slice(0, 8).toUpperCase()}
-                      </span>
-                    </td>
-                    <td className="px-3 py-3">
-                      <div className="flex items-center gap-2">
-                        <span className="flex items-center justify-center w-7 h-7 rounded-full bg-[var(--color-primary)]/10 text-[11px] font-bold text-[var(--color-primary)] shrink-0">
-                          {(r.companyName ?? "?").charAt(0).toUpperCase()}
-                        </span>
-                        <div className="min-w-0">
-                          <div className="text-[13px] font-medium text-[var(--text-primary)] truncate max-w-[140px]">
-                            {r.companyName ?? "Unknown"}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-3 py-3 text-[var(--text-primary)]">{r.productType}</td>
-                    <td className="px-3 py-3 text-[var(--text-primary)] font-medium tabular-nums">{r.quantity}</td>
-                    <td className="px-3 py-3 text-[12px] text-[var(--text-secondary)] whitespace-nowrap">{formatDate(r.createdAtUtc)}</td>
-                    <td className="px-3 py-3">
-                      {r.assignedToUserId ? (
-                        <span className="inline-flex items-center gap-1 text-[12px] text-[var(--text-secondary)]">
-                          <span className="w-5 h-5 rounded-full bg-[var(--color-primary)]/10 text-[10px] font-bold text-[var(--color-primary)] flex items-center justify-center">E</span>
-                          Assigned
-                        </span>
-                      ) : (
-                        <span className="text-[12px] text-[var(--text-muted)]">—</span>
-                      )}
-                    </td>
-                    <td className="px-3 py-3">
-                      <PriorityBadge priority={r.priority} />
-                    </td>
-                    <td className="px-3 py-3">
-                      <StatusBadge status={r.status} />
-                    </td>
-                    <td className="px-3 py-3 text-right" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center justify-end gap-1">
-                        <button
-                          type="button"
-                          onClick={() => navigate(`/admin/rfqs/${r.id}`)}
-                          className="flex items-center justify-center w-7 h-7 rounded-md text-[var(--text-muted)] hover:text-[var(--color-primary)] hover:bg-[var(--bg-surface-hover)] transition-all"
-                          title="View details"
-                        >
-                          <Eye size={14} />
-                        </button>
-                        <Link
-                          to={`/admin/rfqs/${r.id}`}
-                          onClick={(e) => e.stopPropagation()}
-                          className="flex items-center justify-center w-7 h-7 rounded-md text-[var(--text-muted)] hover:text-[var(--color-primary)] hover:bg-[var(--bg-surface-hover)] transition-all no-underline"
-                          title="Open"
-                        >
-                          <ExternalLink size={14} />
-                        </Link>
-                        <div className="relative group">
-                          <button
-                            type="button"
-                            className="flex items-center justify-center w-7 h-7 rounded-md text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all"
-                            title="More"
-                          >
-                            <MoreHorizontal size={14} />
-                          </button>
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                {filteredItems.map((r) => renderRow(r))}
               </tbody>
             </table>
-          </div>
-
-          {/* ── Pagination ── */}
-          <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--border-default)]">
-            <div className="text-[12px] text-[var(--text-muted)]">
-              Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, data.totalCount)} of {data.totalCount}
-            </div>
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                disabled={page <= 1}
-                onClick={() => setPage((p) => p - 1)}
-                className="px-3 py-1.5 rounded-lg text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] disabled:opacity-40 disabled:pointer-events-none transition-all duration-200"
-              >
-                Previous
-              </button>
-              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                const start = Math.max(1, Math.min(page - 2, totalPages - 4));
-                const p = start + i;
-                if (p > totalPages) return null;
-                return (
-                  <button
-                    key={p}
-                    type="button"
-                    onClick={() => setPage(p)}
-                    className={`w-8 h-8 rounded-lg text-[12px] font-medium transition-all duration-200 ${
-                      p === page
-                        ? "bg-[var(--color-primary)] text-white"
-                        : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)]"
-                    }`}
-                  >
-                    {p}
-                  </button>
-                );
-              })}
-              <button
-                type="button"
-                disabled={page >= totalPages}
-                onClick={() => setPage((p) => p + 1)}
-                className="px-3 py-1.5 rounded-lg text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] disabled:opacity-40 disabled:pointer-events-none transition-all duration-200"
-              >
-                Next
-              </button>
-            </div>
           </div>
         </div>
       )}
 
+      {/* Mobile cards */}
+      <div className="inv-mobile">
+        {!data && !error && <Loading label="Loading RFQs" />}
+        {data && filteredItems.length === 0 && !error && <div className="inv-status">No RFQs found.</div>}
+        {filteredItems.map((r) => renderCard(r))}
       </div>
+
+      {/* Errors / loading / empty (desktop) */}
+      {error && <EmptyState title="RFQs unavailable" text={error} />}
+      {!data && !error && <div className="inv-status"><Loading label="Loading RFQs" /></div>}
+      {data && filteredItems.length === 0 && !error && (
+        <div className="inv-status">
+          <Package size={40} style={{ opacity: 0.4, marginBottom: 12 }} />
+          <div>{hasFilters ? "No RFQs match the current filters." : "No RFQs found."}</div>
+        </div>
+      )}
+
+      {/* Pagination */}
+      <div className="inv-pagination">
+        <span className="inv-pagination__info">
+          {selectedIds.size > 0
+            ? `${selectedIds.size} selected`
+            : data ? `Showing ${data.items.length} of ${data.totalCount} RFQs` : ""}
+        </span>
+
+        <div className="inv-field" style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <label className="inv-field__label" style={{ margin: 0 }}>Rows</label>
+          <select className="inv-select" style={{ width: "auto", padding: "7px 34px 7px 10px" }}
+            value={pageSize} onChange={(e) => setPageSize(Number(e.target.value))}>
+            {PAGE_SIZES.map((n) => <option key={n} value={n}>{n}</option>)}
+          </select>
+        </div>
+
+        <button className="inv-page-btn" disabled={page <= 1} onClick={() => setPage((p) => p - 1)} aria-label="Previous page">
+          <ChevronLeft size={16} />
+        </button>
+
+        {Array.from({ length: totalPages }, (_, i) => i + 1)
+          .filter((n) => n === 1 || n === totalPages || Math.abs(n - page) <= 1)
+          .reduce<ReactNode[]>((acc, n, idx, arr) => {
+            if (idx > 0 && n - arr[idx - 1] > 1) acc.push(<span key={`e${n}`} style={{ color: "var(--text-muted)", padding: "0 2px" }}>…</span>);
+            acc.push(
+              <button key={n} className={`inv-page-btn ${n === page ? "inv-page-btn--active" : ""}`}
+                onClick={() => setPage(n)}>{n}</button>,
+            );
+            return acc;
+          }, [])}
+
+        <button className="inv-page-btn" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} aria-label="Next page">
+          <ChevronRight size={16} />
+        </button>
+      </div>
+    </div>
   );
+}
+
+function initials(name: string | null): string {
+  if (!name) return "?";
+  return name.trim().split(/\s+/).slice(0, 2).map((w) => w.charAt(0).toUpperCase()).join("") || "?";
 }
