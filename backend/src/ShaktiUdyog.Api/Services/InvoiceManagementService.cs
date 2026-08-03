@@ -70,7 +70,7 @@ public class InvoiceManagementService(AppDbContext db, IAuditWriter audit) : IIn
             Status = InvoiceStatuses.Issued,
         };
         db.Invoices.Add(invoice);
-        db.InvoiceStatusHistories.Add(new InvoiceStatusHistory { Id = Guid.NewGuid(), InvoiceId = invoice.Id, FromStatus = "New", ToStatus = InvoiceStatuses.Issued, ChangedByUserId = userId, ChangedByRole = "DataUpdater", Note = "Invoice created" });
+        db.InvoiceStatusHistories.Add(new InvoiceStatusHistory { Id = Guid.NewGuid(), InvoiceId = invoice.Id, FromStatus = "New", ToStatus = InvoiceStatuses.Issued, ChangedByUserId = userId, ChangedByRole = "Engineer", Note = "Invoice created" });
         await db.SaveChangesAsync();
         await audit.WriteAsync("updater.invoice.created", userId, "Invoice", invoice.Id.ToString(), ip);
         return (await GetInvoiceAsync(invoice.Id))!;
@@ -91,7 +91,7 @@ public class InvoiceManagementService(AppDbContext db, IAuditWriter audit) : IIn
         invoice.AmountPaid += request.Amount;
         invoice.BalanceDue = invoice.Total - invoice.AmountPaid;
         invoice.Status = invoice.BalanceDue <= 0 ? InvoiceStatuses.Paid : InvoiceStatuses.PartiallyPaid;
-        db.InvoiceStatusHistories.Add(new InvoiceStatusHistory { Id = Guid.NewGuid(), InvoiceId = invoiceId, FromStatus = invoice.Status, ToStatus = invoice.Status, ChangedByUserId = userId, ChangedByRole = "DataUpdater", Note = $"Payment recorded: {request.Amount}" });
+        db.InvoiceStatusHistories.Add(new InvoiceStatusHistory { Id = Guid.NewGuid(), InvoiceId = invoiceId, FromStatus = invoice.Status, ToStatus = invoice.Status, ChangedByUserId = userId, ChangedByRole = "Engineer", Note = $"Payment recorded: {request.Amount}" });
         await db.SaveChangesAsync();
         await audit.WriteAsync("updater.payment.recorded", userId, "Payment", payment.Id.ToString(), ip);
         return true;

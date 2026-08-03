@@ -7,9 +7,8 @@ namespace ShaktiUdyog.Domain.Constants;
 public static class Roles
 {
     public const string Admin = "Admin";
-    public const string DataUpdater = "DataUpdater";
     public const string Engineer = "Engineer";
     public const string Customer = "Customer";
 
-    public static readonly IReadOnlyList<string> All = [Admin, DataUpdater, Engineer, Customer];
+    public static readonly IReadOnlyList<string> All = [Admin, Engineer, Customer];
 }

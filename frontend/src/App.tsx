@@ -155,7 +155,7 @@ function App() {
             <Route
               path="/admin"
               element={
-                <ProtectedRoute roles={[Roles.Admin, Roles.DataUpdater]}><AdminLayout /></ProtectedRoute>
+                <ProtectedRoute roles={[Roles.Admin, Roles.Engineer]}><AdminLayout /></ProtectedRoute>
               }>
               <Route index element={<Navigate to="/admin/dashboard" replace />} />
               <Route path="dashboard" element={<AdminDashboardPage />} />

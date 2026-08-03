@@ -175,7 +175,7 @@ App.tsx (BrowserRouter)
   ├── /login, /signup, /auth/callback, /unauthorized
   ├── /customer/* (ProtectedRoute: Customer role)
   │   └── CustomerLayout → customer portal pages
-  └── /admin/* (ProtectedRoute: Admin or DataUpdater role)
+  └── /admin/* (ProtectedRoute: Admin or Engineer role)
       └── AdminLayout → admin/updater portal pages
 ```
 
@@ -257,13 +257,12 @@ A single fetch wrapper (`client.ts`) handles:
 | Role | Description |
 |------|-------------|
 | `Admin` | Full system access, user management, approvals, audit logs |
-| `DataUpdater` | Content and operations staff — manages RFQs, orders, products |
-| `Engineer` | Engineering role (limited scope) |
+| `Engineer` | Content and operations staff — manages RFQs, orders, products, production jobs |
 | `Customer` | Portal users — own company's RFQs, orders, invoices, documents |
 
 ### Permissions (Fine-Grained)
 
-| Permission | Admin | DataUpdater | Customer |
+| Permission | Admin | Engineer | Customer |
 |-----------|-------|-------------|----------|
 | `users.manage` | ✅ | ❌ | ❌ |
 | `roles.manage` | ✅ | ❌ | ❌ |
@@ -283,7 +282,6 @@ A single fetch wrapper (`client.ts`) handles:
 | Policy Name | Required Roles |
 |-------------|---------------|
 | `AdminOnly` | Admin |
-| `DataUpdaterOnly` | DataUpdater, Admin |
 | `EngineerOnly` | Engineer, Admin |
 | `CustomerOnly` | Customer |
 
@@ -349,7 +347,7 @@ Requires `Customer` role.
 
 ### Admin Portal (`/admin/*`)
 
-Requires `Admin` or `DataUpdater` role.
+Requires `Admin` or `Engineer` role.
 
 | Route | Page | Role Access |
 |-------|------|-------------|
@@ -439,7 +437,7 @@ All endpoints are under `/api/v1/`. Authentication: JWT Bearer.
 | PATCH | `/api/v1/customer/profile` | Update profile |
 | POST | `/api/v1/customer/profile/change-password` | Change password |
 
-### Data Updater Endpoints (Requires DataUpdater or Admin role)
+### Engineer Endpoints (Requires Engineer or Admin role)
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|

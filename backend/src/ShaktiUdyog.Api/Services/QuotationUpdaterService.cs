@@ -208,7 +208,7 @@ public class QuotationUpdaterService(
         {
             Id = Guid.NewGuid(), QuotationId = q.Id,
             FromStatus = from, ToStatus = QuotationStatuses.PendingApproval,
-            ChangedByUserId = userId, ChangedByRole = "DataUpdater",
+            ChangedByUserId = userId, ChangedByRole = "Engineer",
         });
         await db.SaveChangesAsync();
         await audit.WriteAsync("updater.quotation.submitted", userId, "Quotation", q.Id.ToString(), ip);

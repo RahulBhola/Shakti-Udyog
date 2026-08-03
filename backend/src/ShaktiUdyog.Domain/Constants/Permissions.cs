@@ -42,7 +42,7 @@ public static class Permissions
 
 /// <summary>
 /// Default role → permission grants, per the capability matrix in requirements
-/// §13. Admin holds every permission. DataUpdater holds assigned-scope
+/// §13. Admin holds every permission. Engineer holds assigned-scope
 /// operational permissions; invoice/payment permissions are admin-grantable
 /// per-user in a later milestone, not defaults. Customers act only on their
 /// own company's records, which is enforced by data isolation rather than
@@ -54,7 +54,7 @@ public static class RolePermissions
         new Dictionary<string, IReadOnlyList<string>>
         {
             [Roles.Admin] = Permissions.All,
-            [Roles.DataUpdater] =
+            [Roles.Engineer] =
             [
                 Permissions.ContentEdit,
                 Permissions.RfqReadAssigned,

@@ -13,15 +13,15 @@ using ShaktiUdyog.Infrastructure.Storage;
 namespace ShaktiUdyog.Api.Controllers;
 
 /// <summary>
-/// Data Updater portal API for RFQ management (Milestone 4 RFQ spec). All
-/// endpoints require the DataUpdater role (or Admin). Access is not scoped
+/// Engineer portal API for RFQ management (Milestone 4 RFQ spec). All
+/// endpoints require the Engineer role (or Admin). Access is not scoped
 /// to a specific company — staff see all RFQs.
 /// </summary>
 [ApiController]
 [Route("api/v1/updater")]
-[Authorize(Policy = AuthPolicies.DataUpdaterOnly)]
-public class DataUpdaterController(
-    IDataUpdaterService updaterService,
+[Authorize(Policy = AuthPolicies.EngineerOnly)]
+public class EngineerController(
+    IEngineerService updaterService,
     AppDbContext db,
     IFileStorageService storage) : ControllerBase
 {
@@ -33,7 +33,7 @@ public class DataUpdaterController(
         ?? throw new UnauthorizedAccessException());
 
     private string UserRole =>
-        HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "DataUpdater";
+        HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "Engineer";
 
     // ---- Dashboard ----------------------------------------------------------
 

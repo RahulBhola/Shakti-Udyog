@@ -195,7 +195,7 @@ function ProfileAvatar({ initials, displayName }: { initials: string; displayNam
 
   const roleLabel =
     user?.roles.includes("Admin") ? "Administrator"
-    : user?.roles.includes("DataUpdater") ? "Data Updater"
+    : user?.roles.includes("Engineer") ? "Engineer"
     : "User";
 
   return (

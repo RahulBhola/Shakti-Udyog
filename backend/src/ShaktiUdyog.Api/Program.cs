@@ -109,13 +109,11 @@ builder.Services.AddAuthorization(options =>
         options.AddPolicy(name, p => p.RequireRole(roles));
 
     AddRolePolicy(AuthPolicies.AdminOnly, Roles.Admin);
-    AddRolePolicy(AuthPolicies.DataUpdaterOnly, Roles.DataUpdater, Roles.Admin);
     AddRolePolicy(AuthPolicies.EngineerOnly, Roles.Engineer, Roles.Admin);
     AddRolePolicy(AuthPolicies.CustomerOnly, Roles.Customer);
 
     // Milestone 1 aliases.
     AddRolePolicy(AuthPolicies.RequireAdmin, Roles.Admin);
-    AddRolePolicy(AuthPolicies.RequireDataUpdater, Roles.DataUpdater, Roles.Admin);
     AddRolePolicy(AuthPolicies.RequireCustomer, Roles.Customer);
 });
 
@@ -166,7 +164,7 @@ builder.Services.AddScoped<ICustomerContactService, CustomerContactService>();
 builder.Services.AddScoped<ICustomerAddressService, CustomerAddressService>();
 builder.Services.AddScoped<ICustomerDocumentService, CustomerDocumentService>();
 builder.Services.AddScoped<ICustomerSecurityService, CustomerSecurityService>();
-builder.Services.AddScoped<IDataUpdaterService, DataUpdaterService>();
+builder.Services.AddScoped<IEngineerService, EngineerService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<IQuotationUpdaterService, QuotationUpdaterService>();
 builder.Services.AddScoped<IQuotationAdminService, QuotationAdminService>();
@@ -240,6 +238,9 @@ using (var scope = app.Services.CreateScope())
         {
             var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
             await RoleSeeder.SeedAsync(roleManager);
+
+            // One-time migration: replace the retired "DataUpdater" role with "Engineer".
+            await RoleMigration.MigrateDataUpdaterToEngineerAsync(db);
 
             if (app.Environment.IsDevelopment())
             {

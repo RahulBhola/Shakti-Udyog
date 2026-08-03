@@ -9,7 +9,7 @@ using ShaktiUdyog.Infrastructure.Data;
 
 namespace ShaktiUdyog.Api.Services;
 
-public interface IDataUpdaterService
+public interface IEngineerService
 {
     Task<UpdaterDashboardDto> GetDashboardAsync();
     Task<PagedResult<UpdaterRfqListItemDto>> GetRfqsAsync(int page = 1, int pageSize = 20, string? search = null, string? status = null);
@@ -21,9 +21,9 @@ public interface IDataUpdaterService
 
 public record UpdaterDashboardDto(int PendingRfqs, int PendingQuotations, int OrdersInProduction, int OrdersAwaitingShipment);
 
-public class DataUpdaterService(
+public class EngineerService(
     AppDbContext db,
-    IAuditWriter audit) : IDataUpdaterService
+    IAuditWriter audit) : IEngineerService
 {
     // ---- Dashboard ---------------------------------------------------------
 
@@ -145,7 +145,7 @@ public class DataUpdaterService(
             FromStatus = from,
             ToStatus = request.NewStatus,
             ChangedByUserId = userId,
-            ChangedByRole = "DataUpdater",
+            ChangedByRole = "Engineer",
             Note = request.Note,
             CreatedAtUtc = now,
         });

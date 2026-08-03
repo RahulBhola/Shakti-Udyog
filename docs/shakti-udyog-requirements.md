@@ -597,7 +597,7 @@ core_entities:
   users:
     purpose: "Identity, contact details, login status, last login, and security settings."
   roles:
-    values: [Admin, DataUpdater, Customer]
+    values: [Admin, Engineer, Customer]
   permissions:
     purpose: "Fine-grained actions such as product.publish, quote.edit, order.status.update, and user.manage."
   companies:
@@ -866,7 +866,7 @@ authentication_requirements:
 ```yaml
 authorization_requirements:
   model: "Role-based access control with permission policies in ASP.NET Core."
-  roles: [Admin, DataUpdater, Customer]
+  roles: [Admin, Engineer, Customer]
   essential_policies:
     - users.manage
     - roles.manage

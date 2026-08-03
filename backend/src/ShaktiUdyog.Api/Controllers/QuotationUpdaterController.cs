@@ -9,7 +9,7 @@ namespace ShaktiUdyog.Api.Controllers;
 
 [ApiController]
 [Route("api/v1/updater")]
-[Authorize(Policy = AuthPolicies.DataUpdaterOnly)]
+[Authorize(Policy = AuthPolicies.EngineerOnly)]
 public class QuotationUpdaterController(IQuotationUpdaterService service) : ControllerBase
 {
     private string? ClientIp => HttpContext.Connection.RemoteIpAddress?.ToString();
@@ -67,7 +67,7 @@ public class QuotationUpdaterController(IQuotationUpdaterService service) : Cont
     [HttpPost("quotations/{id:guid}/comments")]
     public async Task<IActionResult> AddComment(Guid id, AddCommentRequest request)
     {
-        var role = HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "DataUpdater";
+        var role = HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "Engineer";
         var result = await service.AddCommentAsync(id, request, UserId, role, ClientIp);
         return result is null ? NotFound() : StatusCode(201, result);
     }

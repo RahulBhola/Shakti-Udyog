@@ -68,7 +68,6 @@ public class AdminController(IAdminService adminService, AppDbContext db, UserMa
         {
             var roles = rolesByUser.TryGetValue(u.Id, out var rs) ? rs : new List<string>();
             var role = roles.Contains(Roles.Admin) ? Roles.Admin
-                : roles.Contains(Roles.DataUpdater) ? Roles.DataUpdater
                 : roles.Contains(Roles.Engineer) ? Roles.Engineer
                 : roles.Count > 0 ? roles[0]
                 : Roles.Customer;

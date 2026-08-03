@@ -40,7 +40,7 @@ interface Filters {
 const EMPTY_FILTERS: Filters = {
   name: "", email: "", phone: "", role: "All", status: "All", company: "All", joinedFrom: "", joinedTo: "",
 };
-const ROLES = ["Admin", "DataUpdater", "Engineer", "Customer"];
+const ROLES = ["Admin", "Engineer", "Customer"];
 const PAGE_SIZES = [10, 20, 50];
 
 /* ------------------------------------------------------------------ */
@@ -56,7 +56,6 @@ function roleInfo(role: string | null | undefined): { label: string; tone: strin
   const r = role?.trim() || "Customer";
   switch (r) {
     case "Admin": return { label: "Administrator", tone: "blue" };
-    case "DataUpdater": return { label: "Data Updater", tone: "green" };
     case "Engineer": return { label: "Engineer", tone: "orange" };
     case "Customer": return { label: "Customer", tone: "gray" };
     default: return { label: r, tone: "gray" };

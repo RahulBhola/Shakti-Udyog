@@ -9,7 +9,7 @@ namespace ShaktiUdyog.Api.Controllers;
 
 [ApiController]
 [Route("api/v1/updater")]
-[Authorize(Policy = AuthPolicies.DataUpdaterOnly)]
+[Authorize(Policy = AuthPolicies.EngineerOnly)]
 public class OrderUpdaterController(IOrderUpdaterService service) : ControllerBase
 {
     private string? ClientIp => HttpContext.Connection.RemoteIpAddress?.ToString();
@@ -17,7 +17,7 @@ public class OrderUpdaterController(IOrderUpdaterService service) : ControllerBa
         HttpContext.User.FindFirst("sub")?.Value
         ?? HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
         ?? throw new UnauthorizedAccessException());
-    private string UserRole => HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "DataUpdater";
+    private string UserRole => HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "Engineer";
 
     [HttpGet("orders")]
     public async Task<IActionResult> GetOrders([FromQuery] int page = 1, [FromQuery] int pageSize = 20, [FromQuery] string? search = null, [FromQuery] string? status = null)

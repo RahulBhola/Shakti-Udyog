@@ -12,8 +12,7 @@ export function LoginPage() {
   useEffect(() => {
     if (!user) return;
     const role = user.roles[0];
-    const target = role === "Admin" ? "/admin/dashboard"
-      : role === "DataUpdater" ? "/admin/dashboard"
+    const target = role === "Admin" || role === "Engineer" ? "/admin/dashboard"
       : "/customer/dashboard";
     navigate(target, { replace: true });
   }, [user, navigate]);

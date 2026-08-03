@@ -83,7 +83,7 @@ export function Sidebar({ sections, onLogout }: SidebarProps) {
 
   const roleLabel =
     user?.roles.includes("Admin") ? "Administrator"
-    : user?.roles.includes("DataUpdater") ? "Data Updater"
+    : user?.roles.includes("Engineer") ? "Engineer"
     : "User";
 
   const displayName = user?.fullName ?? user?.email ?? "User";

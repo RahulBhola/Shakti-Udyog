@@ -9,13 +9,11 @@ namespace ShaktiUdyog.Domain.Constants;
 public static class AuthPolicies
 {
     public const string AdminOnly = "AdminOnly";
-    public const string DataUpdaterOnly = "DataUpdaterOnly";
     public const string EngineerOnly = "EngineerOnly";
     public const string CustomerOnly = "CustomerOnly";
 
     // Milestone 1 aliases, kept so existing registrations stay valid.
     public const string RequireAdmin = "RequireAdmin";
-    public const string RequireDataUpdater = "RequireDataUpdater";
     public const string RequireCustomer = "RequireCustomer";
 
     public const string PermissionPolicyPrefix = "permission:";

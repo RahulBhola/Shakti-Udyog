@@ -27,11 +27,11 @@ public class InvoiceManagementController(
     // ---- Data Updater Invoices --------------------------------------------
 
     [HttpGet("updater/invoices")]
-    [Authorize(Policy = AuthPolicies.DataUpdaterOnly)]
+    [Authorize(Policy = AuthPolicies.EngineerOnly)]
     public async Task<IActionResult> GetUpdaterInvoices([FromQuery] int page = 1, [FromQuery] int pageSize = 20, [FromQuery] string? status = null, [FromQuery] string? search = null) => Ok(await service.GetInvoicesAsync(page, pageSize, status, search));
 
     [HttpPost("updater/invoices")]
-    [Authorize(Policy = AuthPolicies.DataUpdaterOnly)]
+    [Authorize(Policy = AuthPolicies.EngineerOnly)]
     public async Task<IActionResult> CreateUpdaterInvoice(CreateInvoiceRequest request)
     {
         var inv = await service.CreateInvoiceAsync(request, UserId, ClientIp);
@@ -39,14 +39,14 @@ public class InvoiceManagementController(
     }
 
     [HttpPut("updater/invoices/{id:guid}")]
-    [Authorize(Policy = AuthPolicies.DataUpdaterOnly)]
+    [Authorize(Policy = AuthPolicies.EngineerOnly)]
     public async Task<IActionResult> UpdateUpdaterInvoice(Guid id, CreateInvoiceRequest request)
     {
         return (await service.GetInvoiceAsync(id)) is null ? NotFound() : Ok(new { message = "Invoice updated." });
     }
 
     [HttpPost("updater/payments")]
-    [Authorize(Policy = AuthPolicies.DataUpdaterOnly)]
+    [Authorize(Policy = AuthPolicies.EngineerOnly)]
     public async Task<IActionResult> RecordPayment(Guid invoiceId, RecordPaymentRequest request)
     {
         return await service.RecordPaymentAsync(invoiceId, request, UserId, ClientIp)
