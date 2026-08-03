@@ -13,7 +13,45 @@ export interface AdminProduct {
 export interface AdminCategory { id: string; name: string; slug: string | null; description: string | null; parentId: string | null; displayOrder: number; isVisible: boolean; }
 export interface AdminIndustry { id: string; name: string; description: string | null; exampleComponents: string | null; isActive: boolean; displayOrder: number; }
 
+/** Admin RFQ detail (mirrors UpdaterRfqDetailDto). */
+export interface UpdaterRfqDetail {
+  id: string;
+  companyId: string;
+  fullName: string;
+  companyName: string;
+  email: string;
+  phone: string;
+  productType: string;
+  materialGrade: string | null;
+  quantity: string;
+  deliveryLocation: string | null;
+  requirementDetails: string;
+  status: string;
+  isDraft: boolean;
+  createdAtUtc: string;
+  priority: string;
+  files: { id: string; fileName: string; contentType: string; sizeBytes: number; uploadedAtUtc: string }[];
+  partName: string | null;
+  partNumber: string | null;
+  industry: string | null;
+  application: string | null;
+  materialStandard: string | null;
+  approxWeight: number | null;
+  machiningRequired: string | null;
+  patternAvailability: string | null;
+  prototypeQuantity: string | null;
+  productionQuantity: string | null;
+  annualRequirement: string | null;
+  expectedDeliveryDate: string | null;
+  preferredDeliveryTerms: string | null;
+  additionalRequirements: string | null;
+  remarks: string | null;
+}
+
 export const adminApi = {
+  // ---- RFQs ---------------------------------------------------------------
+  rfq: (id: string) => apiGet<UpdaterRfqDetail>(`${base}/rfqs/${id}`),
+
   // ---- Quotations ---------------------------------------------------------
   quotations: (page = 1, pageSize = 20, search?: string, status?: string) => {
     const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });

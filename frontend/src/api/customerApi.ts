@@ -178,6 +178,7 @@ export interface OrderComment {
 
 export interface InvoiceListItem {
   id: string;
+  orderId: string;
   invoiceNumber: string;
   orderNumber: string | null;
   issueDateUtc: string;

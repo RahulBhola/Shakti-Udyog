@@ -158,12 +158,12 @@ public record SupportRequestRequest(
 // ---- Invoices & payments ----------------------------------------------------
 
 public record InvoiceListItemDto(
-    Guid Id, string InvoiceNumber, string? OrderNumber, DateTimeOffset IssueDateUtc,
+    Guid Id, Guid OrderId, string InvoiceNumber, string? OrderNumber, DateTimeOffset IssueDateUtc,
     DateTimeOffset? DueDateUtc, decimal Total, decimal AmountPaid, decimal BalanceDue,
     string Currency, string Status, string? CompanyName);
 
 public record InvoiceDetailDto(
-    Guid Id, string InvoiceNumber, string? OrderNumber, DateTimeOffset IssueDateUtc,
+    Guid Id, Guid OrderId, string InvoiceNumber, string? OrderNumber, DateTimeOffset IssueDateUtc,
     DateTimeOffset? DueDateUtc, decimal Subtotal, decimal Tax, decimal Total,
     decimal AmountPaid, decimal BalanceDue, string Currency, string Status,
     Guid? DocumentId, string? CompanyName,

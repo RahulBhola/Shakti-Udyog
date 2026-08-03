@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, Package, Calendar, MapPin, FileText, Truck, CheckCircle2, Clock, Loader2, MessageSquare, Download, Upload, Plus } from "lucide-react";
+import { ArrowLeft, Package, Calendar, MapPin, FileText, Truck, CheckCircle2, Clock, Loader2, MessageSquare, Download, Upload, Plus, ChevronDown, ChevronUp } from "lucide-react";
 import { updaterApi } from "../../api/updaterApi";
 import { adminApi } from "../../api/adminApi";
 import { apiDownload } from "../../api/client";
-import type { OrderDetail } from "../../api/customerApi";
+import type { OrderDetail, InvoiceDetail } from "../../api/customerApi";
 import { ConfirmActionModal } from "./orders/ConfirmModal";
 
 /* ── Status badge ──────────────────────────────────────────────── */
@@ -122,6 +122,8 @@ export default function AdminOrderDetailPage() {
 
   // ── Invoice state ──
   const [orderInvoices, setOrderInvoices] = useState<any[]>([]);
+  const [invDetail, setInvDetail] = useState<Record<string, InvoiceDetail | "loading">>({});
+  const [invOpen, setInvOpen] = useState<Record<string, boolean>>({});
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [invoiceBusy, setInvoiceBusy] = useState(false);
   const [invoiceMsg, setInvoiceMsg] = useState<string | null>(null);
@@ -196,6 +198,17 @@ export default function AdminOrderDetailPage() {
       setInvoiceMsg("❌ Failed to upload invoice. Please try again.");
     } finally {
       setInvoiceBusy(false);
+    }
+  }
+
+  // ── Expandable invoice detail handler ──
+  function toggleInvDetail(invId: string) {
+    setInvOpen((p) => ({ ...p, [invId]: !p[invId] }));
+    if (!invDetail[invId]) {
+      setInvDetail((p) => ({ ...p, [invId]: "loading" }));
+      adminApi.invoice(invId)
+        .then((d) => setInvDetail((p) => ({ ...p, [invId]: d })))
+        .catch(() => {});
     }
   }
 
@@ -292,7 +305,6 @@ export default function AdminOrderDetailPage() {
   }
 
   const currentIndex = WORKFLOW_ORDER[order.status] ?? -1;
-  const workflowKeys = WORKFLOW.map((w) => w.key);
   const isTerminal = ["cancelled", "delivered", "closed", "returned"].includes(order.status);
 
   return (
@@ -348,7 +360,6 @@ export default function AdminOrderDetailPage() {
             const Icon = stage.icon;
             const isCompleted = i < currentIndex;
             const isCurrent = i === currentIndex;
-            const isPending = i > currentIndex;
             return (
               <div key={stage.key} className="flex items-center gap-0 flex-1 min-w-0">
                 <div className="flex flex-col items-center gap-1.5 min-w-0">
@@ -491,43 +502,111 @@ export default function AdminOrderDetailPage() {
               </div>
             ) : (
               <div className="space-y-3">
-                {orderInvoices.map((inv) => (
-                  <div key={inv.id} className="flex items-center gap-3 rounded-xl border border-[var(--border-default)] p-3.5 hover:bg-[var(--bg-surface-hover)] transition-all">
-                    <span className="flex items-center justify-center w-10 h-10 rounded-lg bg-emerald-500/10 text-emerald-500 shrink-0">
-                      <FileText size={18} />
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[13px] font-semibold text-[var(--text-primary)]">{inv.invoiceNumber}</span>
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                          inv.status === "Issued" ? "bg-amber-500/10 text-amber-400" :
-                          inv.status === "Paid" ? "bg-emerald-500/10 text-emerald-400" :
-                          "bg-slate-500/10 text-slate-400"
-                        }`}>{inv.status}</span>
-                      </div>
-                      <div className="text-[11px] text-[var(--text-muted)] mt-0.5">
-                        ₹{inv.total.toLocaleString()} · Due {formatDate(inv.dueDateUtc)} · Balance ₹{inv.balanceDue.toLocaleString()}
-                      </div>
-                    </div>
-                    {inv.hasPdf && (
-                      <button onClick={(e) => { e.stopPropagation(); void apiDownload(adminApi.invoiceDownloadUrl(inv.id), `${inv.invoiceNumber}.pdf`); }}
-                        className="flex items-center justify-center w-8 h-8 rounded-lg text-[var(--text-muted)] hover:text-[var(--color-primary)] hover:bg-[var(--bg-surface)] transition-all"
-                        title="Download PDF">
-                        <Download size={14} />
+                {orderInvoices.map((inv) => {
+                  const open = !!invOpen[inv.id];
+                  const det = invDetail[inv.id];
+                  return (
+                    <div key={inv.id} className="rounded-xl border border-[var(--border-default)] overflow-hidden">
+                      <button type="button" onClick={() => toggleInvDetail(inv.id)}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-[var(--bg-surface-hover)] transition-all">
+                        <span className="flex items-center justify-center w-10 h-10 rounded-lg bg-emerald-500/10 text-emerald-500 shrink-0">
+                          <FileText size={18} />
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[13px] font-semibold text-[var(--text-primary)]">{inv.invoiceNumber}</span>
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                              inv.status === "Issued" ? "bg-amber-500/10 text-amber-400" :
+                              inv.status === "Paid" ? "bg-emerald-500/10 text-emerald-400" :
+                              "bg-slate-500/10 text-slate-400"
+                            }`}>{inv.status}</span>
+                          </div>
+                          <div className="text-[11px] text-[var(--text-muted)] mt-0.5">
+                            ₹{inv.total.toLocaleString()} · Due {formatDate(inv.dueDateUtc)} · Balance ₹{inv.balanceDue.toLocaleString()}
+                          </div>
+                        </div>
+                        <span className="text-[var(--text-muted)] shrink-0">{open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}</span>
                       </button>
-                    )}
-                    <button onClick={(e) => {
-                      e.stopPropagation();
-                      if (window.confirm(`Delete invoice ${inv.invoiceNumber}? This cannot be undone.`)) {
-                        adminApi.deleteInvoice(inv.id).then(() => adminApi.orderInvoices(id).then(setOrderInvoices)).catch(() => {});
-                      }
-                    }}
-                      className="flex items-center justify-center w-8 h-8 rounded-lg text-[var(--text-muted)] hover:text-red-500 hover:bg-red-500/10 transition-all"
-                      title="Delete Invoice">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
-                    </button>
-                  </div>
-                ))}
+
+                      {open && (
+                        <div className="px-4 pb-4 pt-1 border-t border-[var(--border-default)]">
+                          {det === "loading" || det === undefined ? (
+                            <div className="flex items-center justify-center py-6">
+                              <Loader2 size={18} className="animate-spin text-[var(--text-muted)]" />
+                            </div>
+                          ) : (
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-3">
+                              <div>
+                                <h4 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2">Line items</h4>
+                                {det.items.length === 0 ? (
+                                  <p className="text-[13px] text-[var(--text-muted)]">No line items recorded.</p>
+                                ) : (
+                                  <table className="w-full text-[12px]">
+                                    <thead>
+                                      <tr className="border-b border-[var(--border-default)] text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
+                                        <th className="text-left py-1.5 pr-3">Item</th>
+                                        <th className="text-right py-1.5 pr-3">Qty</th>
+                                        <th className="text-right py-1.5 pr-3">Rate</th>
+                                        <th className="text-right py-1.5">Amount</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {det.items.map((it) => (
+                                        <tr key={it.id} className="border-b border-[var(--border-default)] last:border-0">
+                                          <td className="py-2 pr-3">{it.description}{it.hsnSacCode ? ` · HSN ${it.hsnSacCode}` : ""}</td>
+                                          <td className="py-2 pr-3 text-right tabular-nums">{it.quantity} {it.unit}</td>
+                                          <td className="py-2 pr-3 text-right tabular-nums">{it.unitPrice.toLocaleString()}</td>
+                                          <td className="py-2 text-right tabular-nums font-medium">{it.lineTotal.toLocaleString()}</td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                )}
+                              </div>
+                              <div>
+                                <h4 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2">Payments</h4>
+                                {det.payments.length === 0 ? (
+                                  <p className="text-[13px] text-[var(--text-muted)]">No payments recorded.</p>
+                                ) : (
+                                  <div className="space-y-2">
+                                    {det.payments.map((p) => (
+                                      <div key={p.id} className="flex items-center justify-between rounded-lg border border-[var(--border-default)] px-3 py-2">
+                                        <div>
+                                          <div className="text-[13px] font-medium text-[var(--text-primary)]">₹{p.amount.toLocaleString()} · {p.method}</div>
+                                          <div className="text-[11px] text-[var(--text-muted)]">Ref {p.paymentReference} · {formatDate(p.paymentDateUtc)}</div>
+                                        </div>
+                                        <span className="text-[11px] text-[var(--text-muted)]">{p.status}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="mt-4 flex items-center gap-2">
+                            {inv.hasPdf && (
+                              <button type="button"
+                                onClick={() => void apiDownload(adminApi.invoiceDownloadUrl(inv.id), `${inv.invoiceNumber}.pdf`)}
+                                className="inline-flex items-center gap-1.5 px-4 h-8 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all">
+                                <Download size={14} /> Download PDF
+                              </button>
+                            )}
+                            <button type="button"
+                              onClick={() => {
+                                if (window.confirm(`Delete invoice ${inv.invoiceNumber}? This cannot be undone.`)) {
+                                  adminApi.deleteInvoice(inv.id).then(() => adminApi.orderInvoices(id).then(setOrderInvoices)).catch(() => {});
+                                }
+                              }}
+                              className="inline-flex items-center gap-1.5 px-4 h-8 rounded-lg border border-red-500/20 bg-red-500/5 text-red-500 text-[12px] font-medium hover:bg-red-500/10 transition-all">
+                              Delete Invoice
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
                 <button type="button" onClick={() => setShowInvoiceModal(true)}
                   className="w-full flex items-center justify-center gap-1.5 px-4 h-9 rounded-lg border border-dashed border-[var(--border-default)] text-[12px] font-medium text-[var(--text-muted)] hover:text-[var(--color-primary)] hover:border-[var(--color-primary)]/30 transition-all">
                   <Plus size={14} /> Upload Another Invoice

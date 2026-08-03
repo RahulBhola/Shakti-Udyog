@@ -34,6 +34,7 @@ public static class DevPortalSeeder
         // Runs regardless of whether the demo company is already seeded, so the
         // invoice detail view always has a line item.
         await EnsureDemoInvoiceItemAsync(db, logger);
+        await EnsureDemoOrderQuotationLinkAsync(db, logger);
 
         if (await db.Companies.AnyAsync(c => c.Name == CompanyName))
         {
@@ -145,6 +146,7 @@ public static class DevPortalSeeder
         {
             Id = Guid.NewGuid(),
             OrderNumber = "SO-DEMO-0001",
+            QuotationId = quotation.Id,
             CompanyId = company.Id,
             PurchaseOrderReference = "[Demo PO-4521]",
             Status = OrderStatuses.Production,
@@ -413,5 +415,30 @@ public static class DevPortalSeeder
         });
         await db.SaveChangesAsync();
         logger.LogInformation("Seeded a single demo line item on invoice {InvoiceNumber}.", invoice.InvoiceNumber);
+    }
+
+    /// <summary>
+    /// Idempotent: links the demo order (SO-DEMO-0001) to its quotation
+    /// (QT-DEMO-0001) when the link is missing, so the admin "Deal" page can
+    /// render the full RFQ → Quotation → Order chain for demo data. Runs on
+    /// every Development startup, even when the demo company is already seeded.
+    /// </summary>
+    private static async Task EnsureDemoOrderQuotationLinkAsync(AppDbContext db, ILogger logger)
+    {
+        var order = await db.Orders.FirstOrDefaultAsync(o => o.OrderNumber == "SO-DEMO-0001");
+        if (order is null || order.QuotationId != null)
+        {
+            return;
+        }
+
+        var quotation = await db.Quotations.FirstOrDefaultAsync(q => q.QuotationNumber == "QT-DEMO-0001");
+        if (quotation is null)
+        {
+            return;
+        }
+
+        order.QuotationId = quotation.Id;
+        await db.SaveChangesAsync();
+        logger.LogInformation("Linked demo order {OrderNumber} to quotation {QuotationNumber}.", order.OrderNumber, quotation.QuotationNumber);
     }
 }

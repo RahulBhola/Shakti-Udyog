@@ -95,7 +95,7 @@ export default function AdminInvoiceManagePage() {
           {data.items.map((inv) => {
             const overdue = isOverdue(inv);
             return (
-              <Link key={inv.id} to={`/admin/invoices/${inv.id}`} className="row-link">
+              <Link key={inv.id} to={`/admin/deals/${inv.orderId}?invoice=${inv.id}`} className="row-link">
                 <div className="list-row" style={overdue ? { borderLeft: "4px solid var(--c-error)" } : undefined}>
                   <div className="list-row__main">
                     <div className="list-row__title">
