@@ -110,25 +110,33 @@ export default function AdminDealPage() {
     adminApi.orderInvoices(orderId).then(setInvoices).catch(() => {});
   }, [orderId]);
 
+  // Open an invoice: mark it open and fetch its detail if not cached yet.
+  const openInvoice = (invId: string) => {
+    setOpen((prev) => ({ ...prev, [invId]: true }));
+    if (!detail[invId]) {
+      setDetail((prev) => ({ ...prev, [invId]: "loading" }));
+      adminApi.invoice(invId)
+        .then((d) => setDetail((prev) => ({ ...prev, [invId]: d })))
+        .catch(() => setDetail((prev) => {
+          const next = { ...prev };
+          delete next[invId];
+          return next;
+        }));
+    }
+  };
+
   // Auto-open the invoice the dashboard deep-linked to.
   useEffect(() => {
     if (requestedInvoice && invoices.some((i) => i.id === requestedInvoice)) {
-      setOpen((prev) => ({ ...prev, [requestedInvoice]: true }));
+      openInvoice(requestedInvoice);
     }
   }, [requestedInvoice, invoices]);
 
   const toggleInvoice = (inv: OrderInvoiceSummary) => {
-    const isOpen = open[inv.id];
-    setOpen((prev) => ({ ...prev, [inv.id]: !isOpen }));
-    if (!isOpen && !detail[inv.id]) {
-      setDetail((prev) => ({ ...prev, [inv.id]: "loading" }));
-      adminApi.invoice(inv.id)
-        .then((d) => setDetail((prev) => ({ ...prev, [inv.id]: d })))
-        .catch(() => setDetail((prev) => {
-          const next = { ...prev };
-          delete next[inv.id];
-          return next;
-        }));
+    if (open[inv.id]) {
+      setOpen((prev) => ({ ...prev, [inv.id]: false }));
+    } else {
+      openInvoice(inv.id);
     }
   };
 
