@@ -10,7 +10,7 @@ import { apiDownload } from "../../api/client";
 import type { Paged, InvoiceListItem } from "../../api/customerApi";
 import { EmptyState, Loading } from "../../components/ui";
 import { formatDate } from "../shared";
-import "./AdminInvoiceManagePage.css";
+import "./erpListView.css";
 
 const STATUS_FILTERS = ["All", "Issued", "Partially Paid", "Paid", "Overdue", "Cancelled"];
 const PAYMENT_FILTERS = ["All", "Paid", "Unpaid", "Partially Paid", "Overdue"];

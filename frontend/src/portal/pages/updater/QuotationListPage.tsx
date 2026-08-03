@@ -1,225 +1,333 @@
-import { useCallback, useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
 import { updaterApi } from "../../../api/updaterApi";
 import type { Paged, QuotationListItem } from "../../../api/customerApi";
-import { Loading } from "../../../components/ui";
-import { formatDate, formatMoney } from "../../shared";
+import { EmptyState, Loading } from "../../../components/ui";
+import { formatDate } from "../../shared";
 import {
-  FileText, Search, Plus,
-  Clock, CheckCircle, XCircle, ChevronLeft, ChevronRight,
+  FileText, Search, RefreshCw, ChevronLeft, ChevronRight, X,
+  ClipboardList, CheckCircle, Clock, XCircle,
 } from "lucide-react";
+import "../erpListView.css";
 
-/* ── Status config ── */
-const statusColor: Record<string, { bg: string; text: string; border: string; label: string }> = {
-  Draft: { bg: "bg-blue-500/10", text: "text-blue-400", border: "border-l-blue-500", label: "Draft" },
-  "Pending Approval": { bg: "bg-amber-500/10", text: "text-amber-400", border: "border-l-amber-500", label: "Pending" },
-  Approved: { bg: "bg-emerald-500/10", text: "text-emerald-400", border: "border-l-emerald-500", label: "Approved" },
-  Issued: { bg: "bg-orange-500/10", text: "text-orange-400", border: "border-l-orange-500", label: "Issued" },
-  Viewed: { bg: "bg-purple-500/10", text: "text-purple-400", border: "border-l-purple-500", label: "Viewed" },
-  Negotiating: { bg: "bg-amber-500/10", text: "text-amber-400", border: "border-l-amber-500", label: "Negotiating" },
-  Accepted: { bg: "bg-emerald-500/10", text: "text-emerald-400", border: "border-l-emerald-500", label: "Accepted" },
-  Converted: { bg: "bg-purple-500/10", text: "text-purple-400", border: "border-l-purple-500", label: "Converted" },
-  Declined: { bg: "bg-red-500/10", text: "text-red-400", border: "border-l-red-500", label: "Declined" },
-  Expired: { bg: "bg-slate-500/10", text: "text-slate-400", border: "border-l-slate-500", label: "Expired" },
-  Cancelled: { bg: "bg-red-500/10", text: "text-red-400", border: "border-l-red-500", label: "Cancelled" },
-};
+const STATUS_FILTERS = [
+  "All", "Draft", "Pending Approval", "Approved", "Issued",
+  "Accepted", "Converted", "Declined", "Cancelled",
+];
+const PAGE_SIZES = [10, 20, 50];
 
-function getStatus(s: string) {
-  return statusColor[s] ?? { bg: "bg-slate-500/10", text: "text-slate-400", border: "border-l-slate-500", label: s };
+/* ---- helpers ------------------------------------------------------- */
+
+function formatTime(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
 }
+
+function money(value: number | null | undefined, currency = "INR"): string {
+  if (value === null || value === undefined) return "—";
+  return new Intl.NumberFormat("en-IN", { style: "currency", currency, maximumFractionDigits: 2 }).format(value);
+}
+
+function statusTone(status: string): string {
+  switch (status) {
+    case "Accepted":
+    case "Approved": return "green";
+    case "Declined":
+    case "Cancelled": return "red";
+    case "Pending Approval":
+    case "Issued":
+    case "Negotiating": return "orange";
+    case "Viewed":
+    case "Converted": return "purple";
+    case "Draft": return "blue";
+    case "Expired": return "gray";
+    default: return "gray";
+  }
+}
+
+function QuotationBadge({ status }: { status: string }) {
+  return <span className={`inv-badge inv-badge--${statusTone(status)}`}>{status.replaceAll("_", " ")}</span>;
+}
+
+/* ---- main page ----------------------------------------------------- */
 
 export default function QuotationListPage() {
   const navigate = useNavigate();
+
   const [data, setData] = useState<Paged<QuotationListItem> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
+
+  // Client-side status refinement on the current page
+  const [quickStatus, setQuickStatus] = useState("All");
 
   const load = useCallback(() => {
-    updaterApi.quotations(page, 20, search || undefined, statusFilter || undefined)
+    updaterApi.quotations(page, pageSize, search || undefined, statusFilter === "All" ? undefined : statusFilter)
       .then(setData).catch((e: Error) => setError(e.message));
-  }, [page, search, statusFilter]);
-
+  }, [page, pageSize, search, statusFilter]);
   useEffect(load, [load]);
+  useEffect(() => { setPage(1); }, [search, statusFilter, pageSize]);
+
+  const visible = useMemo(() => {
+    const items = data?.items ?? [];
+    if (quickStatus === "All") return items;
+    return items.filter((q) => q.status === quickStatus);
+  }, [data, quickStatus]);
 
   const totalPages = data ? Math.max(1, Math.ceil(data.totalCount / data.pageSize)) : 1;
-  const allStatuses = data?.items.map((r) => r.status) ?? [];
+
+  // Page-scoped KPI counts (preserving existing behaviour)
+  const pageStatuses = data?.items.map((r) => r.status) ?? [];
   const total = data?.totalCount ?? 0;
-  const accepted = allStatuses.filter((s) => s === "Accepted" || s === "Converted").length;
-  const pending = allStatuses.filter((s) => s === "Draft" || s === "Pending Approval" || s === "Issued" || s === "Negotiating").length;
-  const cancelled = allStatuses.filter((s) => s === "Cancelled" || s === "Declined" || s === "Expired").length;
+  const accepted = pageStatuses.filter((s) => s === "Accepted" || s === "Converted").length;
+  const pending = pageStatuses.filter((s) => s === "Draft" || s === "Pending Approval" || s === "Issued" || s === "Negotiating").length;
+  const cancelled = pageStatuses.filter((s) => s === "Cancelled" || s === "Declined" || s === "Expired").length;
+
+  const clearFilters = () => {
+    setSearchInput(""); setSearch(""); setStatusFilter("All"); setQuickStatus("All");
+  };
+  const hasActiveFilter = search !== "" || statusFilter !== "All" || quickStatus !== "All";
+
+  const kpis = [
+    { label: "Total Quotations", value: total, hint: "This Month view", icon: ClipboardList, color: "var(--kpi-blue)", bg: "var(--kpi-blue-bg)", glow: "rgba(59,130,246,0.25)" },
+    { label: "Accepted", value: accepted, hint: "Accepted & converted", icon: CheckCircle, color: "var(--kpi-green)", bg: "var(--kpi-green-bg)", glow: "rgba(34,197,94,0.22)" },
+    { label: "Pending", value: pending, hint: "Draft / issued / negotiating", icon: Clock, color: "var(--kpi-orange)", bg: "var(--kpi-orange-bg)", glow: "rgba(249,115,22,0.22)" },
+    { label: "Cancelled", value: cancelled, hint: "Cancelled / declined / expired", icon: XCircle, color: "var(--color-danger)", bg: "rgba(239,68,68,0.10)", glow: "rgba(239,68,68,0.22)" },
+  ];
+
+  const openQuotation = (q: QuotationListItem) => navigate(`/admin/quotations/${q.id}`);
+
+  const renderRow = (q: QuotationListItem) => {
+    return (
+      <tr key={q.id} onClick={() => openQuotation(q)}>
+        <td>
+          <span className="inv-link" role="link" tabIndex={0}
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); openQuotation(q); } }}
+          >
+            {q.quotationNumber}
+          </span>
+          <span className="inv-sub">
+            Rev.{q.revisionNumber}{q.rfqId ? " · linked to RFQ" : ""}
+          </span>
+        </td>
+        <td>
+          <div className="inv-customer">
+            <span className="inv-avatar">{initials(q.companyName)}</span>
+            <div>
+              <div className="inv-customer__name" title={q.companyName ?? undefined}>{q.companyName ?? "—"}</div>
+              <div className="inv-customer__contact">{q.productType}</div>
+            </div>
+          </div>
+        </td>
+        <td>
+          <div className="inv-amount">
+            <span className="inv-amount__total">{money(q.total, q.currency)}</span>
+            <span className="inv-amount__balance">{q.itemCount} {q.itemCount === 1 ? "item" : "items"}</span>
+          </div>
+        </td>
+        <td>
+          <div className="inv-date">{formatDate(q.validUntilUtc)}</div>
+          <div className="inv-time">Valid till</div>
+        </td>
+        <td>
+          <div className="inv-date">{formatDate(q.createdAtUtc)}</div>
+          <div className="inv-time">{formatTime(q.createdAtUtc)}</div>
+        </td>
+        <td>
+          <div className="inv-sub" style={{ marginTop: 0 }}>
+            {q.paymentTerms?.split("\n")[0] ? `Pay: ${q.paymentTerms.split("\n")[0]}` : "Pay: —"}
+          </div>
+          <div className="inv-time" style={{ marginTop: 3 }}>Delivery: {q.deliveryTime || "—"}</div>
+        </td>
+        <td><QuotationBadge status={q.status} /></td>
+      </tr>
+    );
+  };
+
+  const renderCard = (q: QuotationListItem) => {
+    return (
+      <div key={q.id} className="inv-card" onClick={() => openQuotation(q)}>
+        <div className="inv-card__top">
+          <div className="inv-card__customer">
+            <span className="inv-avatar">{initials(q.companyName)}</span>
+            <div>
+              <div className="inv-customer__name">{q.companyName ?? "—"}</div>
+              <div className="inv-sub">{q.quotationNumber} · Rev.{q.revisionNumber}</div>
+            </div>
+          </div>
+          <QuotationBadge status={q.status} />
+        </div>
+        <div className="inv-card__body">
+          <div className="inv-card__cell">
+            <span className="inv-card__label">Product</span>
+            <span className="inv-card__value">{q.productType}</span>
+          </div>
+          <div className="inv-card__cell">
+            <span className="inv-card__label">Amount</span>
+            <span className="inv-card__value">{money(q.total, q.currency)}</span>
+          </div>
+          <div className="inv-card__cell">
+            <span className="inv-card__label">Valid Till</span>
+            <span className="inv-card__value">{formatDate(q.validUntilUtc)}</span>
+          </div>
+          <div className="inv-card__cell">
+            <span className="inv-card__label">Created</span>
+            <span className="inv-card__value">{formatDate(q.createdAtUtc)}</span>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
-    <div className="space-y-6">
-
-      {/* ── Header ── */}
-      <div className="flex items-center justify-between">
+    <div className="inv-page">
+      {/* Page header (no create action) */}
+      <div className="inv-header">
         <div>
-          <div className="text-[12px] text-[var(--text-muted)] mb-1">Admin / Quotations</div>
-          <h1 className="text-[28px] font-bold tracking-tight text-[var(--text-primary)] m-0 leading-none">Quotations</h1>
+          <h1 className="inv-header__title">Quotations</h1>
+          <p className="inv-header__subtitle">Track and manage every customer quotation across the sales cycle.</p>
         </div>
-        <button onClick={() => navigate("/admin/quotations/new")}
-          className="flex items-center gap-2 px-5 h-10 rounded-[12px] bg-[var(--color-primary)] text-white text-[13px] font-semibold hover:bg-[var(--color-primary-hover)] transition-all shadow-sm">
-          <Plus size={16} /> New Quotation
-        </button>
       </div>
 
-      {/* ── KPI Cards ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {[
-          { label: "Total Quotations", value: total, icon: FileText, color: "text-[var(--color-primary)]", bg: "bg-[var(--color-primary)]/10" },
-          { label: "Accepted", value: accepted, icon: CheckCircle, color: "text-emerald-400", bg: "bg-emerald-500/10" },
-          { label: "Pending", value: pending, icon: Clock, color: "text-amber-400", bg: "bg-amber-500/10" },
-          { label: "Cancelled", value: cancelled, icon: XCircle, color: "text-red-400", bg: "bg-red-500/10" },
-        ].map((k) => (
-          <div key={k.label} className="rounded-[16px] border border-[var(--border-default)] bg-[var(--bg-card)] p-5 shadow-sm hover:shadow-md hover:border-[var(--color-primary)]/20 transition-all duration-200">
-            <div className="flex items-center gap-3 mb-3">
-              <span className={`flex items-center justify-center w-9 h-9 rounded-[10px] ${k.bg} ${k.color}`}>
-                <k.icon size={16} />
-              </span>
-              <span className="text-[11px] font-medium uppercase tracking-wider text-[var(--text-muted)]">{k.label}</span>
-            </div>
-            <span className="text-[24px] font-bold text-[var(--text-primary)] tabular-nums">{k.value}</span>
+      {/* KPI cards */}
+      <div className="inv-kpi-grid">
+        {kpis.map((k) => (
+          <div key={k.label} className="inv-kpi"
+            style={{ "--inv-kpi-color": k.color, "--inv-kpi-bg": k.bg, "--inv-kpi-glow": k.glow } as CSSProperties}>
+            <span className="inv-kpi__icon"><k.icon size={20} /></span>
+            <span className="inv-kpi__value">{k.value}</span>
+            <span className="inv-kpi__label">{k.label}</span>
+            <span className="inv-kpi__hint">{k.hint}</span>
           </div>
         ))}
       </div>
 
-      {/* ── Filter Bar ── */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <div className="flex items-center gap-2 bg-[var(--bg-card)] border border-[var(--border-default)] rounded-[10px] px-3.5 h-9 w-64 shadow-sm">
-          <Search size={14} className="text-[var(--text-muted)] shrink-0" />
-          <input type="text" placeholder="Search quotation no, customer, item..." value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            className="bg-transparent border-none outline-none text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] w-full" />
+      {/* Search & filter bar */}
+      <div className="inv-filterbar">
+        <div className="inv-field" style={{ flex: "1 1 260px" }}>
+          <label className="inv-field__label">Search</label>
+          <div style={{ position: "relative" }}>
+            <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
+            <input
+              className="inv-input" style={{ paddingLeft: 32 }} type="search" value={searchInput}
+              placeholder="Quotation no, customer, item..."
+              aria-label="Search quotations"
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") setSearch(searchInput.trim()); }}
+            />
+          </div>
         </div>
-        <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-          className="h-9 px-3 rounded-[10px] border border-[var(--border-default)] bg-[var(--bg-card)] text-[12px] text-[var(--text-primary)] outline-none focus:border-[var(--color-primary)]">
-          <option value="">All Statuses</option>
-          <option value="Draft">Draft</option>
-          <option value="Pending Approval">Pending Approval</option>
-          <option value="Approved">Approved</option>
-          <option value="Issued">Issued</option>
-          <option value="Accepted">Accepted</option>
-          <option value="Converted">Converted</option>
-          <option value="Declined">Declined</option>
-          <option value="Cancelled">Cancelled</option>
-        </select>
+
+        <div className="inv-field">
+          <label className="inv-field__label">Status</label>
+          <select className="inv-select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+            {STATUS_FILTERS.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
+
+        <div className="inv-field">
+          <label className="inv-field__label">Quick Filter</label>
+          <select className="inv-select" value={quickStatus} onChange={(e) => setQuickStatus(e.target.value)}>
+            {STATUS_FILTERS.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
+
+        <button className="inv-btn inv-btn--icon" title="Refresh" aria-label="Refresh" onClick={load}>
+          <RefreshCw size={16} />
+        </button>
+        {hasActiveFilter && (
+          <button className="inv-btn" title="Clear filters" onClick={clearFilters}>
+            <X size={14} /> Clear
+          </button>
+        )}
       </div>
 
-      {/* ── Content ── */}
-      {error && (
-        <div className="flex items-center justify-center min-h-[200px] rounded-[16px] border border-red-500/20 bg-red-500/5 p-8">
-          <p className="text-[13px] text-red-400">{error}</p>
+      {/* Desktop table */}
+      {data && visible.length > 0 && (
+        <div className="inv-table-wrap">
+          <div className="inv-scroll">
+            <table className="inv-table">
+              <thead>
+                <tr>
+                  <th>Quotation No</th>
+                  <th>Customer</th>
+                  <th>Amount</th>
+                  <th>Valid Till</th>
+                  <th>Created</th>
+                  <th>Payment / Delivery</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {visible.map((q) => renderRow(q))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
-      {!data && !error && <div className="py-10"><Loading label="Loading quotations" /></div>}
-      {data && data.items.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-20 rounded-[16px] border border-dashed border-[var(--border-default)]">
-          <FileText size={48} className="text-[var(--text-muted)] opacity-30 mb-4" />
-          <h3 className="text-lg font-semibold text-[var(--text-primary)] m-0">No Quotations Found</h3>
-          <p className="text-sm text-[var(--text-secondary)] mt-1 mb-4">Create your first quotation to get started.</p>
-          <button onClick={() => navigate("/admin/quotations/new")}
-            className="flex items-center gap-2 px-4 h-9 rounded-[10px] bg-[var(--color-primary)] text-white text-[12px] font-semibold hover:bg-[var(--color-primary-hover)] transition-all">
-            <Plus size={14} /> New Quotation
-          </button>
+
+      {/* Mobile cards */}
+      <div className="inv-mobile">
+        {visible.length === 0 && !error && !data && <Loading label="Loading quotations" />}
+        {visible.length === 0 && !error && data && data.items.length === 0 && (
+          <div className="inv-status">No quotations found.</div>
+        )}
+        {visible.map((q) => renderCard(q))}
+      </div>
+
+      {/* Errors / empty (desktop) */}
+      {error && <EmptyState title="Quotations unavailable" text={error} />}
+      {!data && !error && <div className="inv-status"><Loading label="Loading quotations" /></div>}
+      {data && visible.length === 0 && !error && (
+        <div className="inv-status">
+          <FileText size={40} style={{ opacity: 0.4, marginBottom: 12 }} />
+          <div>No quotations match the current filters.</div>
         </div>
       )}
 
-      {/* ── Quotation Cards ── */}
-      {data && data.items.length > 0 && (
-        <>
-        <div className="hidden lg:flex items-center px-5 py-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
-          <div className="flex-1 min-w-0 pl-2">Quotation / Customer</div>
-          <div className="w-[120px] text-right">Amount</div>
-          <div className="w-[120px] text-right">Valid Till</div>
-          <div className="w-[160px] text-right">Payment / Delivery</div>
-          <div className="w-[110px] text-right">Status</div>
+      {/* Pagination */}
+      <div className="inv-pagination">
+        <span className="inv-pagination__info">
+          {data ? `Showing ${data.items.length} of ${data.totalCount} quotations` : ""}
+        </span>
+
+        <div className="inv-field" style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <label className="inv-field__label" style={{ margin: 0 }}>Rows</label>
+          <select className="inv-select" style={{ width: "auto", padding: "7px 34px 7px 10px" }}
+            value={pageSize} onChange={(e) => setPageSize(Number(e.target.value))}>
+            {PAGE_SIZES.map((n) => <option key={n} value={n}>{n}</option>)}
+          </select>
         </div>
-        <div className="space-y-3">
-          {data.items.map((q) => {
-            const sc = getStatus(q.status);
-            return (
-              <div key={q.id} onClick={() => navigate(`/admin/quotations/${q.id}`)}
-                className={`group rounded-[16px] border border-[var(--border-default)] bg-[var(--bg-card)] shadow-sm hover:bg-[#182234] hover:shadow-md hover:border-[var(--color-primary)]/20 transition-all duration-200 cursor-pointer border-l-[3px] ${sc.border} overflow-hidden`}>
-                <div className="p-5">
-                  <div className="flex items-start gap-6">
-                    {/* Left: Icon + Number */}
-                    <div className="flex items-start gap-3 min-w-0 flex-1">
-                      <span className="flex items-center justify-center w-10 h-10 rounded-[10px] bg-[var(--color-primary)]/10 text-[var(--color-primary)] shrink-0 mt-0.5">
-                        <FileText size={18} />
-                      </span>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-[14px] font-bold text-[var(--text-primary)]">{q.quotationNumber}</span>
-                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-[var(--bg-surface)] text-[var(--text-muted)]">Rev.{q.revisionNumber}</span>
-                        </div>
-                        <div className="text-[12px] font-medium text-[var(--text-secondary)]">{q.companyName || "—"}</div>
-                        <div className="text-[12px] text-[var(--text-muted)] mt-0.5">{q.productType}</div>
-                      </div>
-                    </div>
 
-                    {/* Amount */}
-                    <div className="hidden sm:block text-right shrink-0 w-[120px]">
-                      <div className="text-[16px] font-bold text-[var(--text-primary)] tabular-nums">{formatMoney(q.total, q.currency)}</div>
-                      <div className="text-[11px] text-[var(--text-muted)] mt-0.5">{q.itemCount} {q.itemCount === 1 ? "item" : "items"}</div>
-                    </div>
+        <button className="inv-page-btn" disabled={page <= 1} onClick={() => setPage((p) => p - 1)} aria-label="Previous page">
+          <ChevronLeft size={16} />
+        </button>
 
-                    {/* Dates */}
-                    <div className="hidden md:block shrink-0 text-right w-[120px]">
-                      <div className="text-[12px] text-[var(--text-secondary)]">Valid Till</div>
-                      <div className="text-[13px] font-medium text-[var(--text-primary)]">{formatDate(q.validUntilUtc)}</div>
-                      <div className="text-[11px] text-[var(--text-muted)] mt-1">{new Date(q.createdAtUtc).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}</div>
-                    </div>
-
-                    {/* Terms */}
-                    <div className="hidden lg:block shrink-0 w-[160px]">
-                      <div className="text-[11px] text-[var(--text-muted)]">Payment: <span className="text-[var(--text-secondary)] font-medium">{q.paymentTerms?.split("\n")[0] || "—"}</span></div>
-                      <div className="text-[11px] text-[var(--text-muted)] mt-1">Delivery: <span className="text-[var(--text-secondary)] font-medium">{q.deliveryTime || "—"}</span></div>
-                    </div>
-
-                    {/* Right: Status + Actions */}
-                    <div className="flex flex-col items-end gap-2 shrink-0 w-[110px]">
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-[11px] font-semibold ${sc.bg} ${sc.text}`}>{sc.label}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+        {Array.from({ length: totalPages }, (_, i) => i + 1)
+          .filter((n) => n === 1 || n === totalPages || Math.abs(n - page) <= 1)
+          .reduce<ReactNode[]>((acc, n, idx, arr) => {
+            if (idx > 0 && n - arr[idx - 1] > 1) acc.push(<span key={`e${n}`} style={{ color: "var(--text-muted)", padding: "0 2px" }}>…</span>);
+            acc.push(
+              <button key={n} className={`inv-page-btn ${n === page ? "inv-page-btn--active" : ""}`}
+                onClick={() => setPage(n)}>{n}</button>,
             );
-          })}
-        </div>
-        </>
-      )}
+            return acc;
+          }, [])}
 
-      {/* ── Pagination ── */}
-      {data && data.items.length > 0 && (
-        <div className="flex items-center justify-between pt-2">
-          <div className="text-[12px] text-[var(--text-muted)]">
-            Showing {data.items.length > 0 ? (page - 1) * data.pageSize + 1 : 0}–{Math.min(page * data.pageSize, data.totalCount)} of {data.totalCount}
-          </div>
-          <div className="flex items-center gap-2">
-            <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)}
-              className="flex items-center justify-center w-8 h-8 rounded-lg text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] disabled:opacity-40 transition-all">
-              <ChevronLeft size={14} />
-            </button>
-            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-              const start = Math.max(1, Math.min(page - 2, totalPages - 4));
-              const p = start + i;
-              if (p > totalPages) return null;
-              return (
-                <button key={p} onClick={() => setPage(p)}
-                  className={`w-8 h-8 rounded-lg text-[12px] font-medium transition-all ${p === page ? "bg-[var(--color-primary)] text-white" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)]"}`}>
-                  {p}
-                </button>
-              );
-            })}
-            <button disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}
-              className="flex items-center justify-center w-8 h-8 rounded-lg text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] disabled:opacity-40 transition-all">
-              <ChevronRight size={14} />
-            </button>
-          </div>
-        </div>
-      )}
+        <button className="inv-page-btn" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} aria-label="Next page">
+          <ChevronRight size={16} />
+        </button>
+      </div>
     </div>
   );
+}
+
+function initials(name: string | null): string {
+  if (!name) return "?";
+  return name.trim().split(/\s+/).slice(0, 2).map((w) => w.charAt(0).toUpperCase()).join("") || "?";
 }
