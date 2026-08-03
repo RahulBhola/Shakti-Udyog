@@ -236,6 +236,9 @@ using (var scope = app.Services.CreateScope())
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         if (await db.Database.CanConnectAsync())
         {
+            // Apply any pending schema migrations so tables always exist on startup.
+            await db.Database.MigrateAsync();
+
             var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
             await RoleSeeder.SeedAsync(roleManager);
 

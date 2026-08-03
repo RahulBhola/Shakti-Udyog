@@ -72,10 +72,19 @@ public DbSet<KanbanTask> KanbanTasks => Set<KanbanTask>();
     public DbSet<CompanyDocument> CompanyDocuments => Set<CompanyDocument>();
     public DbSet<ProductMaster> ProductMasters => Set<ProductMaster>();
     public DbSet<ProductMasterAttachment> ProductMasterAttachments => Set<ProductMasterAttachment>();
+    public DbSet<SystemSetting> SystemSettings => Set<SystemSetting>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+
+        builder.Entity<SystemSetting>(entity =>
+        {
+            entity.ToTable("SystemSettings");
+            entity.HasKey(s => s.Key);
+            entity.Property(s => s.Key).HasMaxLength(100).IsRequired();
+            entity.Property(s => s.Value).HasMaxLength(4000);
+        });
 
         builder.Entity<RefreshToken>(entity =>
         {

@@ -160,6 +160,10 @@ export const adminApi = {
       overdueInvoices: number; invoicesThisMonth: number; paymentsThisMonth: number;
     }>(`${base}/financial-dashboard`),
 
+  // ---- Settings ------------------------------------------------------------
+  settings: () => apiGet<Record<string, string>>(`${base}/settings`),
+  updateSettings: (values: Record<string, string>) => apiPut<{ message: string }>(`${base}/settings`, values),
+
   // ---- Products -----------------------------------------------------------
   products: () => apiGet<AdminProduct[]>(`${base}/products`),
   product: (id: string) => apiGet<AdminProduct>(`${base}/products/${id}`),

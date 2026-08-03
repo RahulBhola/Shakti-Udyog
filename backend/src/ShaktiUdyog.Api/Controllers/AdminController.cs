@@ -91,6 +91,44 @@ public class AdminController(IAdminService adminService, AppDbContext db, UserMa
         return Ok(new { message = user.IsActive ? "User activated." : "User deactivated." });
     }
 
+    // ---- Settings -------------------------------------------------------------
+
+    [HttpGet("settings")]
+    public async Task<IActionResult> GetSettings()
+    {
+        var settings = await db.SystemSettings.AsNoTracking().ToDictionaryAsync(s => s.Key, s => s.Value);
+        return Ok(settings);
+    }
+
+    [HttpPut("settings")]
+    public async Task<IActionResult> UpdateSettings([FromBody] Dictionary<string, string?> updates)
+    {
+        if (updates == null || updates.Count == 0)
+        {
+            return BadRequest(new { message = "No settings provided." });
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        foreach (var (key, value) in updates)
+        {
+            if (string.IsNullOrWhiteSpace(key)) continue;
+
+            var existing = await db.SystemSettings.FirstOrDefaultAsync(s => s.Key == key);
+            if (existing is null)
+            {
+                db.SystemSettings.Add(new SystemSetting { Key = key, Value = value, UpdatedByUserId = UserId, UpdatedAtUtc = now });
+            }
+            else
+            {
+                existing.Value = value;
+                existing.UpdatedByUserId = UserId;
+                existing.UpdatedAtUtc = now;
+            }
+        }
+        await db.SaveChangesAsync();
+        return Ok(new { message = "Settings saved." });
+    }
+
     // ---- Companies -----------------------------------------------------------
 
     [HttpGet("companies")]
