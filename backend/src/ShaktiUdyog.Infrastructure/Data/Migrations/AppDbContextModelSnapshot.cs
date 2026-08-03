@@ -1322,7 +1322,7 @@ namespace ShaktiUdyog.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("KanbanTasks");
+                    b.ToTable("KanbanTasks", (string)null);
                 });
 
             modelBuilder.Entity("ShaktiUdyog.Domain.Entities.Notification", b =>

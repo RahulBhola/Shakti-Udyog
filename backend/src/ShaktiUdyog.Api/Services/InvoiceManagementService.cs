@@ -47,7 +47,7 @@ public class InvoiceManagementService(AppDbContext db, IAuditWriter audit) : IIn
         }
         var total = await query.CountAsync();
         var items = await query.OrderByDescending(i => i.IssueDateUtc).Skip((page - 1) * pageSize).Take(pageSize)
-            .Select(i => new InvoiceListItemDto(i.Id, i.Order!.Id, i.InvoiceNumber, i.Order!.OrderNumber, i.IssueDateUtc, i.DueDateUtc, i.Total, i.AmountPaid, i.BalanceDue, i.Currency, i.Status, i.Company != null ? i.Company.Name : null)).ToListAsync();
+            .Select(i => new InvoiceListItemDto(i.Id, i.Order!.Id, i.InvoiceNumber, i.Order!.OrderNumber, i.IssueDateUtc, i.DueDateUtc, i.Total, i.AmountPaid, i.BalanceDue, i.Currency, i.Status, i.Company != null ? i.Company.Name : null, i.Company != null ? i.Company.CompanyLogoUrl : null)).ToListAsync();
         return new PagedResult<InvoiceListItemDto>(items, page, pageSize, total);
     }
 
@@ -188,7 +188,10 @@ public class InvoiceManagementService(AppDbContext db, IAuditWriter audit) : IIn
         var outstanding = await db.Invoices.Where(i => i.Status == "Issued" || i.Status == "Partially Paid" || i.Status == "Overdue").SumAsync(i => i.BalanceDue);
         var collected = await db.Invoices.SumAsync(i => i.AmountPaid);
         var pendingVerification = await db.Payments.CountAsync(p => p.Status == "Pending Verification");
-        var overdue = await db.Invoices.CountAsync(i => i.Status == "Overdue" || (i.Status == "Issued" && i.DueDateUtc != null && i.DueDateUtc < DateTimeOffset.UtcNow));
+        var now = DateTimeOffset.UtcNow;
+        var overdue = await db.Invoices.CountAsync(i => i.Status == "Overdue" ||
+            (i.BalanceDue > 0 && i.DueDateUtc != null && i.DueDateUtc < now &&
+             (i.Status == "Issued" || i.Status == "Partially Paid")));
         var invoicesThisMonth = await db.Invoices.CountAsync(i => i.IssueDateUtc.Year == DateTimeOffset.UtcNow.Year && i.IssueDateUtc.Month == DateTimeOffset.UtcNow.Month);
         var paymentsThisMonth = await db.Payments.CountAsync(p => p.CreatedAtUtc.Year == DateTimeOffset.UtcNow.Year && p.CreatedAtUtc.Month == DateTimeOffset.UtcNow.Month);
         return new { outstandingAmount = outstanding, collectedAmount = collected, pendingVerification, overdueInvoices = overdue, invoicesThisMonth, paymentsThisMonth };

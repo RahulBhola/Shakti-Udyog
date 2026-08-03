@@ -160,7 +160,7 @@ public record SupportRequestRequest(
 public record InvoiceListItemDto(
     Guid Id, Guid OrderId, string InvoiceNumber, string? OrderNumber, DateTimeOffset IssueDateUtc,
     DateTimeOffset? DueDateUtc, decimal Total, decimal AmountPaid, decimal BalanceDue,
-    string Currency, string Status, string? CompanyName);
+    string Currency, string Status, string? CompanyName, string? CompanyLogoUrl);
 
 public record InvoiceDetailDto(
     Guid Id, Guid OrderId, string InvoiceNumber, string? OrderNumber, DateTimeOffset IssueDateUtc,

@@ -106,6 +106,7 @@
 .admin-portal-layout {
   display: flex;
   min-height: 100vh;
+  width: 100%;
   background: var(--bg-app);
 }
 
@@ -143,6 +144,14 @@
   gap: 20px;
   align-content: start;
   background: var(--bg-app);
+  /* Let the content grid shrink below its children's intrinsic width so it
+     reflows to fill the space beside the sidebar as the sidebar resizes. */
+  min-width: 0;
+}
+/* Allow each content block to shrink so wide children (tables, toolbars)
+   reflow inside their own containers instead of forcing a rightward shift. */
+.portal__content > * {
+  min-width: 0;
 }
 .portal__content h1,
 .portal__content h2,
