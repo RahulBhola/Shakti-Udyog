@@ -11,7 +11,7 @@ namespace ShaktiUdyog.Api.Services;
 
 public interface IOrderUpdaterService
 {
-    Task<PagedResult<OrderListItemDto>> GetOrdersAsync(int page, int pageSize, string? search, string? status);
+    Task<PagedResult<OrderListItemDto>> GetOrdersAsync(int page, int pageSize, string? search, string? status, Guid? companyId = null);
     Task<OrderDetailDto?> GetOrderAsync(Guid id);
     Task<bool?> UpdateMilestoneAsync(Guid id, MilestoneRequest request, Guid userId, string? ip);
     Task<bool?> CreateShipmentAsync(Guid id, CreateShipmentRequest request, Guid userId, string? ip);
@@ -31,10 +31,12 @@ public class OrderUpdaterService(
     INotificationService notifications,
     IAuditWriter audit) : IOrderUpdaterService
 {
-    public async Task<PagedResult<OrderListItemDto>> GetOrdersAsync(int page, int pageSize, string? search, string? status)
+    public async Task<PagedResult<OrderListItemDto>> GetOrdersAsync(int page, int pageSize, string? search, string? status, Guid? companyId = null)
     {
         page = Math.Max(1, page); pageSize = Math.Clamp(pageSize, 1, 100);
         var query = db.Orders.AsQueryable();
+        if (companyId.HasValue)
+            query = query.Where(o => o.CompanyId == companyId.Value);
         if (!string.IsNullOrWhiteSpace(search))
             query = query.Where(o => o.OrderNumber.Contains(search.Trim()));
         if (!string.IsNullOrWhiteSpace(status))

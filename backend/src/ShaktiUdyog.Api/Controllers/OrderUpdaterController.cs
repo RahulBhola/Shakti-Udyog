@@ -20,8 +20,8 @@ public class OrderUpdaterController(IOrderUpdaterService service) : ControllerBa
     private string UserRole => HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "Engineer";
 
     [HttpGet("orders")]
-    public async Task<IActionResult> GetOrders([FromQuery] int page = 1, [FromQuery] int pageSize = 20, [FromQuery] string? search = null, [FromQuery] string? status = null)
-        => Ok(await service.GetOrdersAsync(page, pageSize, search, status));
+    public async Task<IActionResult> GetOrders([FromQuery] int page = 1, [FromQuery] int pageSize = 20, [FromQuery] string? search = null, [FromQuery] string? status = null, [FromQuery] Guid? companyId = null)
+        => Ok(await service.GetOrdersAsync(page, pageSize, search, status, companyId));
 
     [HttpGet("orders/{id:guid}")]
     public async Task<IActionResult> GetOrder(Guid id)

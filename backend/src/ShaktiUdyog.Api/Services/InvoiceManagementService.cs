@@ -11,7 +11,7 @@ namespace ShaktiUdyog.Api.Services;
 public interface IInvoiceManagementService
 {
     // Data Updater
-    Task<PagedResult<InvoiceListItemDto>> GetInvoicesAsync(int page, int pageSize, string? status, string? search);
+    Task<PagedResult<InvoiceListItemDto>> GetInvoicesAsync(int page, int pageSize, string? status, string? search, Guid? companyId = null);
     Task<InvoiceDetailDto?> GetInvoiceAsync(Guid id);
     Task<InvoiceDetailDto> CreateInvoiceAsync(CreateInvoiceRequest request, Guid userId, string? ip);
     Task<bool> RecordPaymentAsync(Guid invoiceId, RecordPaymentRequest request, Guid userId, string? ip);
@@ -32,10 +32,11 @@ public interface IInvoiceManagementService
 public record RecordPaymentRequest(decimal Amount, string Method, string PaymentReference, DateTimeOffset PaymentDate);
 public class InvoiceManagementService(AppDbContext db, IAuditWriter audit) : IInvoiceManagementService
 {
-    public async Task<PagedResult<InvoiceListItemDto>> GetInvoicesAsync(int page, int pageSize, string? status, string? search)
+    public async Task<PagedResult<InvoiceListItemDto>> GetInvoicesAsync(int page, int pageSize, string? status, string? search, Guid? companyId = null)
     {
         page = Math.Max(1, page); pageSize = Math.Clamp(pageSize, 1, 100);
         var query = db.Invoices.AsQueryable();
+        if (companyId.HasValue) query = query.Where(i => i.CompanyId == companyId.Value);
         if (!string.IsNullOrWhiteSpace(status)) query = query.Where(i => i.Status == status);
         if (!string.IsNullOrWhiteSpace(search))
         {

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Eye, MoreVertical, Download, FileSpreadsheet, FileText, RefreshCw,
   CalendarRange, Search, ChevronLeft, ChevronRight, AlertTriangle, BadgeCheck,
@@ -103,6 +103,8 @@ interface Finance {
 
 export default function AdminInvoiceManagePage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const companyId = searchParams.get("company") ?? "";
 
   const [data, setData] = useState<Paged<InvoiceListItem> | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -128,8 +130,8 @@ export default function AdminInvoiceManagePage() {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
 
   const load = useCallback(() => {
-    adminApi.invoices(page, pageSize, status, search).then(setData).catch((e: Error) => setError(e.message));
-  }, [page, pageSize, status, search]);
+    adminApi.invoices(page, pageSize, status, search, companyId || undefined).then(setData).catch((e: Error) => setError(e.message));
+  }, [page, pageSize, status, search, companyId]);
   useEffect(load, [load]);
 
   useEffect(() => {
@@ -518,6 +520,16 @@ export default function AdminInvoiceManagePage() {
           </button>
         )}
       </div>
+
+      {/* Company scope indicator */}
+      {companyId && (
+        <div className="inv-filterbar" style={{ padding: "10px 16px", alignItems: "center", gap: 10 }}>
+          <span className="inv-badge inv-badge--blue">Filtered by company</span>
+          <button className="inv-btn" onClick={() => navigate("/admin/invoices")}>
+            <X size={14} /> Clear company filter
+          </button>
+        </div>
+      )}
 
       {/* Desktop table */}
       {data && visible.length > 0 && (

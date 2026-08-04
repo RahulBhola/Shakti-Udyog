@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type CSSProperties, type ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { updaterApi } from "../../../api/updaterApi";
 import type { OrderListItem, Paged } from "../../../api/customerApi";
 import { EmptyState, Loading } from "../../../components/ui";
@@ -65,6 +65,8 @@ function DaysTag({ date }: { date: string | null | undefined }) {
 
 export default function UpdaterOrderListPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const companyId = searchParams.get("company") ?? "";
 
   const [data, setData] = useState<Paged<OrderListItem> | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -83,11 +85,11 @@ export default function UpdaterOrderListPage() {
     qualityCheck: number; readyToDispatch: number; delivered: number;
   } | null>(null);
 
-  const load = useCallback(async (p: number, s: string, st: string) => {
+  const load = useCallback(async (p: number, s: string, st: string, cid: string) => {
     setLoading(true);
     setError(null);
     try {
-      const result = await updaterApi.orders(p, pageSize, s || undefined, st || undefined);
+      const result = await updaterApi.orders(p, pageSize, s || undefined, st || undefined, cid || undefined);
       setData(result);
     } catch (e: any) {
       setError(e.message ?? "Failed to load orders");
@@ -116,7 +118,7 @@ export default function UpdaterOrderListPage() {
     }
   }, []);
 
-  useEffect(() => { load(page, search, statusFilter); }, [page, search, statusFilter, load]);
+  useEffect(() => { load(page, search, statusFilter, companyId); }, [page, search, statusFilter, companyId, load]);
   useEffect(() => { loadStats(); }, [loadStats]);
   useEffect(() => { setPage(1); }, [search, statusFilter, pageSize]);
   // Close the row menu on outside click
@@ -129,7 +131,7 @@ export default function UpdaterOrderListPage() {
 
   const totalPages = data ? Math.max(1, Math.ceil(data.totalCount / data.pageSize)) : 1;
 
-  const handleRefresh = () => { load(page, search, statusFilter); loadStats(); };
+  const handleRefresh = () => { load(page, search, statusFilter, companyId); loadStats(); };
 
   const handleExport = () => {
     if (!data?.items.length) return;
@@ -319,6 +321,16 @@ export default function UpdaterOrderListPage() {
           </button>
         )}
       </div>
+
+      {/* Company scope indicator */}
+      {companyId && (
+        <div className="inv-filterbar" style={{ padding: "10px 16px", alignItems: "center", gap: 10 }}>
+          <span className="inv-badge inv-badge--blue">Filtered by company</span>
+          <button className="inv-btn" onClick={() => navigate("/admin/orders")}>
+            <X size={14} /> Clear company filter
+          </button>
+        </div>
+      )}
 
       {/* Desktop table */}
       {data && data.items.length > 0 && (

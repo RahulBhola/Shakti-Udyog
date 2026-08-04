@@ -12,7 +12,7 @@ namespace ShaktiUdyog.Api.Services;
 public interface IEngineerService
 {
     Task<UpdaterDashboardDto> GetDashboardAsync();
-    Task<PagedResult<UpdaterRfqListItemDto>> GetRfqsAsync(int page = 1, int pageSize = 20, string? search = null, string? status = null);
+    Task<PagedResult<UpdaterRfqListItemDto>> GetRfqsAsync(int page = 1, int pageSize = 20, string? search = null, string? status = null, Guid? companyId = null);
     Task<UpdaterRfqDetailDto?> GetRfqAsync(Guid rfqId);
     Task<bool?> UpdateRfqStatusAsync(Guid rfqId, RfqStatusChangeRequest request, Guid userId, string? ip);
     Task<RfqCommentDto?> AddRfqCommentAsync(Guid rfqId, RfqCommentRequest request, Guid userId, string role, string? ip);
@@ -39,12 +39,15 @@ public class EngineerService(
     // ---- RFQ list -----------------------------------------------------------
 
     public async Task<PagedResult<UpdaterRfqListItemDto>> GetRfqsAsync(
-        int page = 1, int pageSize = 20, string? search = null, string? status = null)
+        int page = 1, int pageSize = 20, string? search = null, string? status = null, Guid? companyId = null)
     {
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, 100);
 
         var query = db.Rfqs.AsQueryable();
+
+        if (companyId.HasValue)
+            query = query.Where(r => r.CompanyId == companyId);
 
         if (!string.IsNullOrWhiteSpace(search))
         {

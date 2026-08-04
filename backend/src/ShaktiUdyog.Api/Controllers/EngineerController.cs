@@ -46,9 +46,9 @@ public class EngineerController(
     [ProducesResponseType<PagedResult<UpdaterRfqListItemDto>>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetRfqs(
         [FromQuery] int page = 1, [FromQuery] int pageSize = 20,
-        [FromQuery] string? search = null, [FromQuery] string? status = null)
+        [FromQuery] string? search = null, [FromQuery] string? status = null, [FromQuery] Guid? companyId = null)
     {
-        return Ok(await updaterService.GetRfqsAsync(page, pageSize, search, status));
+        return Ok(await updaterService.GetRfqsAsync(page, pageSize, search, status, companyId));
     }
 
     // ---- RFQ detail ---------------------------------------------------------

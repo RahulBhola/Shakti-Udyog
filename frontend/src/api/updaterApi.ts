@@ -74,10 +74,11 @@ export const updaterApi = {
 
   // ---- RFQs ---------------------------------------------------------------
 
-  rfqs: (page = 1, pageSize = 20, search?: string, status?: string) => {
+  rfqs: (page = 1, pageSize = 20, search?: string, status?: string, companyId?: string) => {
     const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
     if (search) params.set("search", search);
     if (status) params.set("status", status);
+    if (companyId) params.set("companyId", companyId);
     return apiGet<Paged<UpdaterRfqListItem>>(`${base}/rfqs?${params}`);
   },
   rfq: (id: string) => apiGet<UpdaterRfqDetail>(`${base}/rfqs/${id}`),
@@ -114,10 +115,11 @@ export const updaterApi = {
 
   // ---- Orders -------------------------------------------------------------
 
-  orders: (page = 1, pageSize = 20, search?: string, status?: string) => {
+  orders: (page = 1, pageSize = 20, search?: string, status?: string, companyId?: string) => {
     const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
     if (search) params.set("search", search);
     if (status) params.set("status", status);
+    if (companyId) params.set("companyId", companyId);
     return apiGet<Paged<OrderListItem>>(`${base}/orders?${params}`);
   },
   order: (id: string) => apiGet<OrderDetail>(`${base}/orders/${id}`),

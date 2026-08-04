@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type CSSProperties, type ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { updaterApi, type UpdaterRfqListItem } from "../../../api/updaterApi";
 import type { Paged } from "../../../api/customerApi";
 import { EmptyState, Loading } from "../../../components/ui";
@@ -103,6 +103,8 @@ function ListRfqImage({ rfqId, fileId }: { rfqId: string; fileId: string }) {
 
 export default function UpdaterRfqListPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const companyId = searchParams.get("company") ?? "";
 
   const [data, setData] = useState<Paged<UpdaterRfqListItem> | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -116,10 +118,10 @@ export default function UpdaterRfqListPage() {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
 
   const load = useCallback(() => {
-    updaterApi.rfqs(page, pageSize, search || undefined, statusFilter === "All" ? undefined : statusFilter)
+    updaterApi.rfqs(page, pageSize, search || undefined, statusFilter === "All" ? undefined : statusFilter, companyId || undefined)
       .then(setData)
       .catch((e: Error) => setError(e.message));
-  }, [page, pageSize, search, statusFilter]);
+  }, [page, pageSize, search, statusFilter, companyId]);
   useEffect(load, [load]);
   useEffect(() => { setPage(1); }, [search, statusFilter, pageSize]);
 
@@ -348,6 +350,16 @@ export default function UpdaterRfqListPage() {
           </button>
         )}
       </div>
+
+      {/* Company scope indicator */}
+      {companyId && (
+        <div className="inv-filterbar" style={{ padding: "10px 16px", alignItems: "center", gap: 10 }}>
+          <span className="inv-badge inv-badge--blue">Filtered by company</span>
+          <button className="inv-btn" onClick={() => navigate("/admin/rfqs")}>
+            <X size={14} /> Clear company filter
+          </button>
+        </div>
+      )}
 
       {/* Desktop table */}
       {data && filteredItems.length > 0 && (

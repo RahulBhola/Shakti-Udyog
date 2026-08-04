@@ -97,7 +97,7 @@ public class InvoiceManagementController(
 
     [HttpGet("admin/invoices")]
     [Authorize(Policy = AuthPolicies.AdminOnly)]
-    public async Task<IActionResult> GetAdminInvoices([FromQuery] int page = 1, [FromQuery] int pageSize = 20, [FromQuery] string? status = null, [FromQuery] string? search = null) => Ok(await service.GetInvoicesAsync(page, pageSize, status, search));
+    public async Task<IActionResult> GetAdminInvoices([FromQuery] int page = 1, [FromQuery] int pageSize = 20, [FromQuery] string? status = null, [FromQuery] string? search = null, [FromQuery] Guid? companyId = null) => Ok(await service.GetInvoicesAsync(page, pageSize, status, search, companyId));
 
     [HttpGet("admin/invoices/{id:guid}")]
     [Authorize(Policy = AuthPolicies.AdminOnly)]

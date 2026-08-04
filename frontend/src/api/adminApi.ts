@@ -89,10 +89,11 @@ export const adminApi = {
   companies: () => apiGet<{ id: string; name: string }[]>(`${base}/companies`),
 
   // ---- Invoices -----------------------------------------------------------
-  invoices: (page = 1, pageSize = 20, status?: string, search?: string) => {
+  invoices: (page = 1, pageSize = 20, status?: string, search?: string, companyId?: string) => {
     const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
     if (status && status !== "All") params.set("status", status);
     if (search && search.trim()) params.set("search", search.trim());
+    if (companyId) params.set("companyId", companyId);
     return apiGet<Paged<InvoiceListItem>>(`${base}/invoices?${params}`);
   },
   invoice: (id: string) => apiGet<InvoiceDetail>(`${base}/invoices/${id}`),
