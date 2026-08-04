@@ -556,6 +556,37 @@
   .inv-company__right { border-left: none; padding-left: 0; border-top: 1px solid var(--border-default); padding-top: 16px; }
 }
 
+/* ---- Report cards --------------------------------------------------- */
+.inv-report-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 18px; }
+.inv-report-card {
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 20px; border-radius: 18px; border: 1px solid var(--border-default);
+  background: var(--bg-card); box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+}
+.inv-report-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-3px); border-color: var(--color-primary); }
+.inv-report__head { display: flex; align-items: flex-start; gap: 12px; }
+.inv-report__icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.inv-report__title { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+.inv-report__desc { font-size: 12px; color: var(--text-muted); line-height: 1.5; flex: 1; }
+.inv-report__meta { display: flex; flex-wrap: wrap; gap: 6px; }
+.inv-report__chip { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 999px; background: var(--bg-surface-hover); color: var(--text-secondary); border: none; cursor: pointer; transition: filter 0.15s ease; }
+.inv-report__chip:disabled { opacity: 0.45; cursor: not-allowed; }
+.inv-report__chip:not(:disabled):hover { filter: brightness(1.2); }
+.inv-report__chip--pdf { background: rgba(239, 68, 68, 0.1); color: var(--color-danger); }
+.inv-report__chip--xls { background: rgba(34, 197, 94, 0.1); color: var(--color-success); }
+.inv-report__chip--csv { background: rgba(59, 130, 246, 0.1); color: var(--color-primary); }
+.inv-report__sub { font-size: 11px; color: var(--text-muted); }
+.inv-report__actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; }
+.inv-report__actions .inv-btn { flex: 1 1 90px; justify-content: center; padding: 7px 8px; font-size: 12px; }
+
+/* ---- Quick actions / popular reports -------------------------------- */
+.inv-popular { display: flex; flex-wrap: wrap; gap: 10px; }
+
+@media (max-width: 900px) {
+  .inv-report-grid { grid-template-columns: 1fr; }
+}
+
 /* ---- Settings form -------------------------------------------------- */
 .inv-settings { display: flex; flex-direction: column; gap: 20px; }
 .inv-settings__section {

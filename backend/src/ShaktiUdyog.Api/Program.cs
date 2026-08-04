@@ -166,6 +166,7 @@ builder.Services.AddScoped<ICustomerAddressService, CustomerAddressService>();
 builder.Services.AddScoped<ICustomerDocumentService, CustomerDocumentService>();
 builder.Services.AddScoped<ICustomerSecurityService, CustomerSecurityService>();
 builder.Services.AddScoped<IEngineerService, EngineerService>();
+builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<IQuotationUpdaterService, QuotationUpdaterService>();
 builder.Services.AddScoped<IQuotationAdminService, QuotationAdminService>();
