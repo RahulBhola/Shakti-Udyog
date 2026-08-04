@@ -21,8 +21,8 @@ export function QuotationListPage() {
 
   return (
     <>
-      <h1>Quotations</h1>
-      {error && <EmptyState title="Quotations unavailable" text={error} />}
+      <h1>Quotes</h1>
+      {error && <EmptyState title="Quotes unavailable" text={error} />}
       {!quotations && !error && <Loading label="Loading quotations" />}
       {quotations && quotations.length === 0 && <EmptyState title="No quotations yet" />}
       {quotations && quotations.length > 0 && (
@@ -122,7 +122,7 @@ export function QuotationDetailPage() {
 <body>
   <div class="header">
     <div class="header-left">
-      <h1>Quotation</h1>
+      <h1>Quote</h1>
       <h2>${q.quotationNumber}</h2>
       <div style="margin-top:6px;"><span class="badge">${q.status}</span></div>
     </div>
@@ -185,7 +185,7 @@ async function respond() {
     }
   }
 
-  if (missing) return <EmptyState title="Quotation not found" />;
+  if (missing) return <EmptyState title="Quote not found" />;
   if (!quotation) return <Loading label="Loading quotation" />;
 
   const canRespond = quotation.status === "Issued" || quotation.status === "Viewed";
@@ -228,7 +228,7 @@ async function respond() {
             <span className="flex items-center justify-center w-9 h-9 rounded-[10px] bg-emerald-500/10 text-emerald-500">
               <IndianRupee size={16} />
             </span>
-            <span className="text-[11px] font-medium uppercase tracking-wider text-[var(--text-muted)]">Quotation Value</span>
+            <span className="text-[11px] font-medium uppercase tracking-wider text-[var(--text-muted)]">Quote Value</span>
           </div>
           <span className="text-[22px] font-bold text-[var(--text-primary)] tabular-nums">{formatMoney(quotation.total, quotation.currency)}</span>
         </div>
@@ -267,11 +267,11 @@ async function respond() {
         {/* ══ LEFT COLUMN (70%) ══ */}
         <div className="flex-1 min-w-0 space-y-6 w-full">
 
-          {/* Section 1: Quotation Overview */}
+          {/* Section 1: Quote Overview */}
           <div className="rounded-[16px] border border-[var(--border-default)] bg-[var(--bg-card)] shadow-sm overflow-hidden">
             <div className="px-5 py-4 border-b border-[var(--border-default)] flex items-center gap-2.5 bg-[var(--bg-surface)]/50">
               <FileText size={15} className="text-[var(--color-primary)]" />
-              <h2 className="text-sm font-semibold text-[var(--text-primary)] m-0">Quotation Overview</h2>
+              <h2 className="text-sm font-semibold text-[var(--text-primary)] m-0">Quote Overview</h2>
             </div>
             <div className="p-5">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
@@ -308,12 +308,12 @@ async function respond() {
             </div>
           </div>
 
-          {/* Section 3: Quotation Items */}
+          {/* Section 3: Quote Items */}
           {quotation.items.length > 0 && (
             <div className="rounded-[16px] border border-[var(--border-default)] bg-[var(--bg-card)] shadow-sm overflow-hidden">
               <div className="px-5 py-4 border-b border-[var(--border-default)] flex items-center gap-2.5 bg-[var(--bg-surface)]/50">
                 <Package size={15} className="text-[var(--color-primary)]" />
-                <h2 className="text-sm font-semibold text-[var(--text-primary)] m-0">Quotation Items ({quotation.items.length})</h2>
+                <h2 className="text-sm font-semibold text-[var(--text-primary)] m-0">Quote Items ({quotation.items.length})</h2>
               </div>
               <div className="p-5 space-y-3">
                 {quotation.items.map((i, idx) => (
@@ -423,7 +423,7 @@ async function respond() {
                 <SidebarField label="Issue Date" value={formatDate(quotation.createdAtUtc)} />
                 <SidebarField label="Revision" value={String(quotation.revisionNumber)} />
                 <SidebarField label="Expiry Date" value={formatDate(quotation.validUntilUtc)} />
-                <SidebarField label="Quotation Value" value={formatMoney(quotation.total, quotation.currency)} />
+                <SidebarField label="Quote Value" value={formatMoney(quotation.total, quotation.currency)} />
               </div>
             </div>
           </div>
@@ -449,7 +449,7 @@ async function respond() {
                   <div className="space-y-2.5">
                     <button type="button" onClick={() => setResponding("accept")}
                       className="w-full flex items-center justify-center gap-2 h-11 rounded-[12px] bg-emerald-500 text-white text-[13px] font-semibold hover:bg-emerald-600 transition-all duration-200 shadow-sm hover:shadow-md">
-                      <CheckCircle size={16} /> Accept Quotation
+                      <CheckCircle size={16} /> Accept Quote
                     </button>
                     <button type="button" onClick={() => setResponding("negotiate")}
                       className="w-full flex items-center justify-center gap-2 h-11 rounded-[12px] border border-amber-300 dark:border-amber-500/40 bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 text-[13px] font-semibold hover:bg-amber-100 dark:hover:bg-amber-500/20 transition-all duration-200">
@@ -457,7 +457,7 @@ async function respond() {
                     </button>
                     <button type="button" onClick={() => setResponding("decline")}
                       className="w-full flex items-center justify-center gap-2 h-11 rounded-[12px] border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 text-[13px] font-semibold hover:bg-red-50 dark:hover:bg-red-500/10 transition-all duration-200">
-                      <XCircle size={16} /> Reject Quotation
+                      <XCircle size={16} /> Reject Quote
                     </button>
                   </div>
                 )}
@@ -524,7 +524,7 @@ async function respond() {
               </button>
               <button type="button" onClick={printQuotationDoc}
                 className="w-full flex items-center justify-center gap-2 h-9 rounded-[10px] border border-[var(--border-default)] text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all duration-200">
-                <Printer size={14} /> Print Quotation
+                <Printer size={14} /> Print Quote
               </button>
               <button type="button" onClick={async () => { try { await navigator.share({ title: document.title, url: window.location.href }); } catch { navigator.clipboard?.writeText(window.location.href); } }}
                 className="w-full flex items-center justify-center gap-2 h-9 rounded-[10px] border border-[var(--border-default)] text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all duration-200">

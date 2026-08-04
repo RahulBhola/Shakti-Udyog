@@ -59,7 +59,7 @@ const SECTIONS: SectionDef[] = [
       { key: "commercial.defaultCurrency", label: "Default Currency", type: "text", placeholder: "INR" },
       { key: "commercial.defaultPaymentTerms", label: "Payment Terms", type: "text", placeholder: "30 days net" },
       { key: "commercial.defaultDeliveryTerms", label: "Delivery Terms", type: "text", placeholder: "EXW / CIF / FOB" },
-      { key: "commercial.quotationValidityDays", label: "Quotation Validity (days)", type: "number" },
+      { key: "commercial.quotationValidityDays", label: "Quote Validity (days)", type: "number" },
       { key: "commercial.leadTimeDays", label: "Default Lead Time (days)", type: "number" },
       { key: "commercial.advancePercent", label: "Advance Payment %", type: "number" },
       { key: "commercial.minOrderQty", label: "Minimum Order Qty", type: "number" },
@@ -123,7 +123,7 @@ const SECTIONS: SectionDef[] = [
     icon: Flag,
     fields: [
       { key: "feature.enquiry", label: "Enquiry Module", type: "boolean" },
-      { key: "feature.quotations", label: "Quotations", type: "boolean" },
+      { key: "feature.quotations", label: "Quotes", type: "boolean" },
       { key: "feature.orders", label: "Orders", type: "boolean" },
       { key: "feature.production", label: "Production Board", type: "boolean" },
       { key: "feature.payments", label: "Payments", type: "boolean" },

@@ -93,7 +93,7 @@ export default function QuotationListPage() {
   const hasActiveFilter = search !== "" || statusFilter !== "All" || quickStatus !== "All";
 
   const kpis = [
-    { label: "Total Quotations", value: total, hint: "This Month view", icon: ClipboardList, color: "var(--kpi-blue)", bg: "var(--kpi-blue-bg)", glow: "rgba(59,130,246,0.25)" },
+    { label: "Total Quotes", value: total, hint: "This Month view", icon: ClipboardList, color: "var(--kpi-blue)", bg: "var(--kpi-blue-bg)", glow: "rgba(59,130,246,0.25)" },
     { label: "Accepted", value: accepted, hint: "Accepted & converted", icon: CheckCircle, color: "var(--kpi-green)", bg: "var(--kpi-green-bg)", glow: "rgba(34,197,94,0.22)" },
     { label: "Pending", value: pending, hint: "Draft / issued / negotiating", icon: Clock, color: "var(--kpi-orange)", bg: "var(--kpi-orange-bg)", glow: "rgba(249,115,22,0.22)" },
     { label: "Cancelled", value: cancelled, hint: "Cancelled / declined / expired", icon: XCircle, color: "var(--color-danger)", bg: "rgba(239,68,68,0.10)", glow: "rgba(239,68,68,0.22)" },
@@ -189,7 +189,7 @@ export default function QuotationListPage() {
       {/* Page header (no create action) */}
       <div className="inv-header">
         <div>
-          <h1 className="inv-header__title">Quotations</h1>
+          <h1 className="inv-header__title">Quotes</h1>
           <p className="inv-header__subtitle">Track and manage every customer quotation across the sales cycle.</p>
         </div>
       </div>
@@ -215,7 +215,7 @@ export default function QuotationListPage() {
             <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
             <input
               className="inv-input" style={{ paddingLeft: 32 }} type="search" value={searchInput}
-              placeholder="Quotation no, customer, item..."
+              placeholder="Quote no, customer, item..."
               aria-label="Search quotations"
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") setSearch(searchInput.trim()); }}
@@ -263,7 +263,7 @@ export default function QuotationListPage() {
               </colgroup>
               <thead>
                 <tr>
-                  <th>Quotation No</th>
+                  <th>Quote No</th>
                   <th>Customer</th>
                   <th>Amount</th>
                   <th>Valid Till</th>
@@ -290,7 +290,7 @@ export default function QuotationListPage() {
       </div>
 
       {/* Errors / empty (desktop) */}
-      {error && <EmptyState title="Quotations unavailable" text={error} />}
+      {error && <EmptyState title="Quotes unavailable" text={error} />}
       {!data && !error && <div className="inv-status"><Loading label="Loading quotations" /></div>}
       {data && visible.length === 0 && !error && (
         <div className="inv-status">

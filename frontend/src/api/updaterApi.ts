@@ -89,7 +89,7 @@ export const updaterApi = {
   addEnquiryComment: (id: string, message: string, isCustomerVisible = true) =>
     apiPost<{ id: string }>(`${base}/enquiries/${id}/comments`, { message, isCustomerVisible }),
 
-  // ---- Quotations ---------------------------------------------------------
+  // ---- Quotes ---------------------------------------------------------
 
   quotations: (page = 1, pageSize = 20, search?: string, status?: string) => {
     const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });

@@ -429,7 +429,7 @@ export default function EnquiryNewPage() {
 
           {/* Tips Card */}
           <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] p-5">
-            <h4 className="text-[12px] font-semibold text-[var(--text-primary)] m-0 mb-3">Tips for Better Quotation</h4>
+            <h4 className="text-[12px] font-semibold text-[var(--text-primary)] m-0 mb-3">Tips for Better Quote</h4>
             <ul className="space-y-1.5 m-0 p-0 list-none">
               {["Provide drawing", "Mention material grade", "Mention approximate weight", "Mention delivery expectations", "Mention annual requirement if known"].map((tip) => (
                 <li key={tip} className="flex items-center gap-2 text-[12px] text-[var(--text-secondary)]">

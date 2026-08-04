@@ -186,7 +186,7 @@ export default function QualityPage() {
         <h2 id="q-cta" className="visually-hidden">Request a quote</h2>
         <CtaBand
           heading="Quality requirements for your order?"
-          text="Inspection and documentation scope is agreed as part of the quotation."
+          text="Inspection and documentation scope is agreed as part of the quote."
           buttonLabel="Request a Quote"
           buttonHref="/request-a-quote"
         />

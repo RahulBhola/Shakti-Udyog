@@ -285,7 +285,7 @@ export default function EnquiryDetailPage() {
               <div className="mt-6 pt-4 border-t border-[var(--border-default)]">
                 <Link to={"/customer/quotations/" + quotation.id}
                   className="w-full flex items-center justify-center gap-2 px-4 h-10 rounded-lg bg-[var(--color-primary)] text-white text-sm font-semibold hover:bg-[var(--color-primary-hover)] transition-all no-underline">
-                  <FileText size={14} /> View Quotation
+                  <FileText size={14} /> View Quote
                 </Link>
                 {enquiry.status === "Quoted" && quotation.status === "Issued" && (
                   <p className="text-[11px] text-[var(--text-muted)] mt-2 text-center">

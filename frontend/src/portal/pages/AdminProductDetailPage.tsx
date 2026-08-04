@@ -322,7 +322,7 @@ export default function AdminProductDetailPage() {
           <Section icon={Activity} title="Usage">
             <div className="space-y-3">
               <UsageRow label="Enquiries" count={usage.enquiryCount} />
-              <UsageRow label="Quotations" count={usage.quotationCount} />
+              <UsageRow label="Quotes" count={usage.quotationCount} />
               <UsageRow label="Orders" count={usage.orderCount} />
             </div>
           </Section>

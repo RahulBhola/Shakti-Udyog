@@ -134,7 +134,7 @@ export default function CreateQuotationPage() {
           })));
         }
         setLoading(false);
-      }).catch(() => { setError("Quotation not found."); setLoading(false); });
+      }).catch(() => { setError("Quote not found."); setLoading(false); });
       return;
     }
     if (!enquiryIdParam) { setLoading(false); setError("No Enquiry ID provided."); return; }
@@ -268,7 +268,7 @@ export default function CreateQuotationPage() {
         <div className="w-14 h-14 rounded-2xl bg-red-50 dark:bg-red-500/10 flex items-center justify-center mb-4">
           <AlertCircle size={28} className="text-red-500" />
         </div>
-        <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-1">Cannot Create Quotation</h3>
+        <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-1">Cannot Create Quote</h3>
         <p className="text-[13px] text-[var(--text-muted)] mb-6">{error ?? "Enquiry data could not be loaded."}</p>
         <button type="button" onClick={() => navigate("/admin/enquiries")}
           className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg border border-[var(--border-default)] text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all">
@@ -290,7 +290,7 @@ export default function CreateQuotationPage() {
             <ArrowLeft size={15} />
           </button>
           <div>
-            <h1 className="text-xl font-bold text-[var(--text-primary)]">{editQuotationId ? "Edit Quotation" : "Create Quotation"}</h1>
+            <h1 className="text-xl font-bold text-[var(--text-primary)]">{editQuotationId ? "Edit Quote" : "Create Quote"}</h1>
             <p className="text-[12px] text-[var(--text-muted)]">Based on Enquiry — {enquiry.productType}</p>
           </div>
         </div>
@@ -449,8 +449,8 @@ export default function CreateQuotationPage() {
             </div>
           </Section>
 
-          {/* ── Quotation Items (editable) ───────────────────── */}
-          <Section title="Quotation Items" icon={Package}>
+          {/* ── Quote Items (editable) ───────────────────── */}
+          <Section title="Quote Items" icon={Package}>
             <div className="overflow-x-auto">
               <table className="w-full text-[11px]">
                 <thead>

@@ -42,7 +42,7 @@ export default function DashboardPage() {
             <Link to="/customer/quotations" className="row-link">
               <div className="stat-card">
                 <div className="stat-card__value">{data.activeQuotations}</div>
-                <div className="stat-card__label">Active Quotations</div>
+                <div className="stat-card__label">Active Quotes</div>
               </div>
             </Link>
             <Link to="/customer/orders" className="row-link">

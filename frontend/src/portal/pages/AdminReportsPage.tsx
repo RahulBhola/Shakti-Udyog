@@ -45,7 +45,7 @@ function catStyle(cat: string): { color: string; bg: string } {
 const REPORTS: ReportDef[] = [
   { name: "Customer Report", category: "Customers", description: "Registered customers, contacts, and account status.", formats: ["PDF", "Excel", "CSV"], icon: Users, ...catStyle("Customers"), key: "customer" },
   { name: "Enquiry Report", category: "Sales", description: "All requests for quotation and their statuses.", formats: ["PDF", "Excel", "CSV"], icon: ClipboardList, ...catStyle("Sales"), key: "enquiry" },
-  { name: "Quotation Report", category: "Sales", description: "Quotations issued, accepted, and pending.", formats: ["PDF", "Excel", "CSV"], icon: FileText, ...catStyle("Sales"), key: "quotation" },
+  { name: "Quote Report", category: "Sales", description: "Quotes issued, accepted, and pending.", formats: ["PDF", "Excel", "CSV"], icon: FileText, ...catStyle("Sales"), key: "quotation" },
   { name: "Order Report", category: "Sales", description: "Confirmed orders and delivery milestones.", formats: ["PDF", "Excel", "CSV"], icon: ShoppingCart, ...catStyle("Sales"), key: "order" },
   { name: "Production Report", category: "Production", description: "Production jobs, stages, and output.", formats: ["PDF", "Excel", "CSV"], icon: Factory, ...catStyle("Production"), key: "production" },
   { name: "Manufacturing Report", category: "Production", description: "Manufacturing throughput and capacity.", formats: ["PDF", "Excel", "CSV"], icon: Cog, ...catStyle("Production"), key: "manufacturing" },
@@ -110,7 +110,7 @@ export default function AdminReportsPage() {
 
   const kpis = [
     { label: "Total Enquiries", value: counts?.enquiries ?? 0, display: (counts?.enquiries ?? 0).toLocaleString(), hint: "Requests received", icon: ClipboardList, color: "var(--kpi-blue)", bg: "var(--kpi-blue-bg)", glow: "rgba(59,130,246,0.25)" },
-    { label: "Quotations Generated", value: counts?.quotations ?? 0, display: (counts?.quotations ?? 0).toLocaleString(), hint: "Quotations issued", icon: FileText, color: "var(--kpi-purple)", bg: "var(--kpi-purple-bg)", glow: "rgba(167,139,250,0.22)" },
+    { label: "Quotes Generated", value: counts?.quotations ?? 0, display: (counts?.quotations ?? 0).toLocaleString(), hint: "Quotes issued", icon: FileText, color: "var(--kpi-purple)", bg: "var(--kpi-purple-bg)", glow: "rgba(167,139,250,0.22)" },
     { label: "Orders Confirmed", value: counts?.orders ?? 0, display: (counts?.orders ?? 0).toLocaleString(), hint: "Confirmed orders", icon: ShoppingCart, color: "var(--kpi-orange)", bg: "var(--kpi-orange-bg)", glow: "rgba(249,115,22,0.22)" },
     { label: "Revenue", value: revenue, display: formatMoney(revenue), hint: "Collected + outstanding", icon: BarChart3, color: "var(--kpi-green)", bg: "var(--kpi-green-bg)", glow: "rgba(34,197,94,0.22)" },
     { label: "Invoices Generated", value: counts?.invoices ?? 0, display: (counts?.invoices ?? 0).toLocaleString(), hint: "Invoices created", icon: Receipt, color: "var(--color-danger)", bg: "rgba(239,68,68,0.10)", glow: "rgba(239,68,68,0.22)" },

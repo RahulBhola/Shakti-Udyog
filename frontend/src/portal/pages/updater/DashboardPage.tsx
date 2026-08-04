@@ -17,7 +17,7 @@ export default function UpdaterDashboardPage() {
 
   const stats = [
     { label: "Pending Enquiries", value: data.pendingEnquiries, href: "/admin/enquiries", filter: "Received" },
-    { label: "Pending Quotations", value: data.pendingQuotations, href: "/admin/quotations", filter: "Draft" },
+    { label: "Pending Quotes", value: data.pendingQuotations, href: "/admin/quotations", filter: "Draft" },
     { label: "Orders in Production", value: data.ordersInProduction, href: "/admin/orders", filter: "production" },
     { label: "Awaiting Shipment", value: data.ordersAwaitingShipment, href: "/admin/orders", filter: "ready_to_dispatch" },
   ];

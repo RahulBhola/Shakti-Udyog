@@ -341,13 +341,13 @@ export default function UpdaterEnquiryDetailPage() {
               {enquiry.status === "Approved" && !enquiry.hasDraftQuotation && (
                 <button type="button" onClick={() => window.location.assign(`/admin/quotations/new?enquiryId=${enquiry.id}&companyName=${encodeURIComponent(enquiry.companyName)}`)}
                   className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg bg-emerald-500 text-white text-xs font-semibold hover:bg-emerald-600 transition-all">
-                  <FileEdit size={15} /> Generate Quotation
+                  <FileEdit size={15} /> Generate Quote
                 </button>
               )}
               {enquiry.hasDraftQuotation && (
                 <Link to={`/admin/quotations/${enquiry.draftQuotationId}`}
                   className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg border border-amber-200 bg-amber-50 text-amber-700 text-xs font-semibold hover:bg-amber-100 transition-all no-underline hover:no-underline">
-                  <FileEdit size={15} /> {enquiry.status === "Approved" ? "View Draft" : "View Quotation"}
+                  <FileEdit size={15} /> {enquiry.status === "Approved" ? "View Draft" : "View Quote"}
                 </Link>
               )}
               {!["Draft", "Quoted", "Accepted", "Rejected", "Declined", "Cancelled", "Expired"].includes(enquiry.status) && (
@@ -547,7 +547,7 @@ export default function UpdaterEnquiryDetailPage() {
           {/* Related Records */}
           <Section icon={Activity} title="Related Records" defaultOpen={false}>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <RelatedCard icon={FileEdit} label="Quotation" status={enquiry.status === "Approved" ? "Pending" : "Not Started"} href="/admin/quotations" />
+              <RelatedCard icon={FileEdit} label="Quote" status={enquiry.status === "Approved" ? "Pending" : "Not Started"} href="/admin/quotations" />
               <RelatedCard icon={Factory} label="Pattern / Tooling" status="Not Started" href="/admin/production" />
               <RelatedCard icon={Truck} label="Dispatch" status="Pending" href="/admin/orders" />
               <RelatedCard icon={CreditCard} label="Invoice" status="Pending" href="/admin/invoices" />
@@ -656,12 +656,12 @@ export default function UpdaterEnquiryDetailPage() {
         {enquiry.hasDraftQuotation ? (
           <Link to={`/admin/quotations/${enquiry.draftQuotationId}`}
             className="inline-flex items-center gap-1.5 px-5 h-10 rounded-lg border border-amber-200 bg-amber-50 text-amber-700 text-xs font-semibold hover:bg-amber-100 transition-all no-underline hover:no-underline">
-            <FileEdit size={15} /> {enquiry.status === "Approved" ? "View Draft Quotation" : "View Quotation"}
+            <FileEdit size={15} /> {enquiry.status === "Approved" ? "View Draft Quote" : "View Quote"}
           </Link>
         ) : enquiry.status === "Approved" ? (
           <button type="button" onClick={() => window.location.assign(`/admin/quotations/new?enquiryId=${enquiry.id}&companyName=${encodeURIComponent(enquiry.companyName)}`)}
             className="inline-flex items-center gap-1.5 px-5 h-10 rounded-lg bg-emerald-500 text-white text-xs font-semibold hover:bg-emerald-600 transition-all">
-            <FileEdit size={15} /> Generate Quotation
+            <FileEdit size={15} /> Generate Quote
           </button>
         ) : (
           <span />

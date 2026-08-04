@@ -18,7 +18,7 @@ export default function EmptyState({ onAdd, hasFilters, onClearFilters }: EmptyS
       <p className="text-[13px] text-[var(--text-secondary)] text-center max-w-sm mb-6">
         {hasFilters
           ? "Try adjusting your search or filters to find what you're looking for."
-          : "Products created here can be reused in Enquiries, Quotations, Orders and Manufacturing."}
+          : "Products created here can be reused in Enquiries, Quotes, Orders and Manufacturing."}
       </p>
       {hasFilters && onClearFilters ? (
         <button type="button" onClick={onClearFilters}

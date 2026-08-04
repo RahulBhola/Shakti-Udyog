@@ -1204,7 +1204,7 @@ export default function ProfilePage() {
                 <div style={{ display: "grid", gap: 12 }}>
                   {[
                     { key: "emailNotifications", label: "Email Notifications" },
-                    { key: "quotationUpdates", label: "Quotation Updates" },
+                    { key: "quotationUpdates", label: "Quote Updates" },
                     { key: "invoiceNotifications", label: "Invoice Notifications" },
                     { key: "marketingEmails", label: "Marketing Emails" },
                   ].map(item => (

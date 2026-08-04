@@ -59,13 +59,13 @@ export const advantages = [
   {
     title: "Clear Communication",
     description:
-      "Responsive quotation, order updates, inspection documentation, and dispatch coordination.",
+      "Responsive quote, order updates, inspection documentation, and dispatch coordination.",
   },
 ] as const;
 
 export const processSteps = [
   "Share your drawing, sample, or requirement.",
-  "We review manufacturability and prepare a quotation.",
+  "We review manufacturability and prepare a quote.",
   "Pattern and process planning are finalized after approval.",
   "Castings are produced and inspected as per the agreed specification.",
   "Machining, finishing, packing, and delivery are completed as required.",

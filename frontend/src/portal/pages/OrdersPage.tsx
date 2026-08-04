@@ -282,7 +282,7 @@ export function OrderDetailPage() {
           {order.quotationId && (
             <Link to={`/customer/quotations/${order.quotationId}`}
               className="inline-flex items-center gap-1.5 px-4 h-8 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-secondary)] text-[12px] font-medium hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all">
-              <FileText size={14} /> View Quotation
+              <FileText size={14} /> View Quote
             </Link>
           )}
           <Link to={`/customer/orders/${id}/timeline`}

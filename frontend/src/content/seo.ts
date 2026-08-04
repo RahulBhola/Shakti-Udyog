@@ -45,6 +45,6 @@ export const seoPages = {
   enquiry: {
     title: "Request a Quote | Shakti Udyog",
     description:
-      "Send your casting drawing, material grade, quantity, and delivery requirement for a quotation from Shakti Udyog.",
+      "Send your casting drawing, material grade, quantity, and delivery requirement for a quote from Shakti Udyog.",
   },
 } as const;

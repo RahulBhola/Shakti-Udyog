@@ -52,7 +52,7 @@ export const adminApi = {
   // ---- Enquiries ---------------------------------------------------------------
   enquiry: (id: string) => apiGet<UpdaterEnquiryDetail>(`${base}/enquiries/${id}`),
 
-  // ---- Quotations ---------------------------------------------------------
+  // ---- Quotes ---------------------------------------------------------
   quotations: (page = 1, pageSize = 20, search?: string, status?: string) => {
     const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
     if (search) params.set("search", search); if (status) params.set("status", status);

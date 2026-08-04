@@ -190,7 +190,7 @@ export default function AdminCompaniesPage() {
             <div className="inv-company__stat"><span className="inv-company__stat-value">{c.state ?? "—"}</span><span className="inv-company__stat-label">State</span></div>
             <div className="inv-company__stat"><span className="inv-company__stat-value">—</span><span className="inv-company__stat-label">Orders</span></div>
             <div className="inv-company__stat"><span className="inv-company__stat-value">—</span><span className="inv-company__stat-label">Enquiries</span></div>
-            <div className="inv-company__stat"><span className="inv-company__stat-value">—</span><span className="inv-company__stat-label">Quotations</span></div>
+            <div className="inv-company__stat"><span className="inv-company__stat-value">—</span><span className="inv-company__stat-label">Quotes</span></div>
             <div className="inv-company__stat"><span className="inv-company__stat-value">—</span><span className="inv-company__stat-label">Invoices</span></div>
           </div>
           <div className="inv-company__actions">

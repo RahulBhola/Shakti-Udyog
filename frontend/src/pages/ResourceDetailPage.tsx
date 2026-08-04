@@ -66,7 +66,7 @@ export default function ResourceDetailPage() {
       <Section tint labelledBy="res-cta">
         <h2 id="res-cta" className="visually-hidden">Request a quote</h2>
         <CtaBand
-          heading="Ready to request a quotation?"
+          heading="Ready to request a quote?"
           text="Use our Enquiry form to share your drawing and requirement."
           buttonLabel="Request a Quote"
           buttonHref="/request-a-quote"

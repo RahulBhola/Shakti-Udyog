@@ -38,8 +38,8 @@ function ShieldIcon() {
 
 const features = [
   {
-    title: "Enquiry to Quotation",
-    description: "Create Enquiries and get accurate quotations with ease.",
+    title: "Enquiry to Quote",
+    description: "Create Enquiries and get accurate quotes with ease.",
   },
   {
     title: "Track Every Stage",

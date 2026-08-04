@@ -167,7 +167,7 @@ export default function UpdaterEnquiryListPage() {
     { label: "Total Enquiries", value: totalEnquiries, hint: "All requests", icon: FileText, color: "var(--kpi-blue)", bg: "var(--kpi-blue-bg)", glow: "rgba(59,130,246,0.25)" },
     { label: "Received", value: newCount, hint: "New requests", icon: Clock, color: "var(--kpi-blue)", bg: "var(--kpi-blue-bg)", glow: "rgba(59,130,246,0.22)" },
     { label: "Under Review", value: reviewCount, hint: "In review", icon: AlertCircle, color: "var(--kpi-orange)", bg: "var(--kpi-orange-bg)", glow: "rgba(249,115,22,0.22)" },
-    { label: "Quoted", value: quotedCount, hint: "Quotations sent", icon: FileEdit, color: "var(--kpi-purple)", bg: "var(--kpi-purple-bg)", glow: "rgba(167,139,250,0.22)" },
+    { label: "Quoted", value: quotedCount, hint: "Quotes sent", icon: FileEdit, color: "var(--kpi-purple)", bg: "var(--kpi-purple-bg)", glow: "rgba(167,139,250,0.22)" },
     { label: "Accepted", value: acceptedCount, hint: "Accepted", icon: CheckCircle, color: "var(--kpi-green)", bg: "var(--kpi-green-bg)", glow: "rgba(34,197,94,0.22)" },
     { label: "Rejected", value: rejectedCount, hint: "Rejected", icon: XCircle, color: "var(--color-danger)", bg: "rgba(239,68,68,0.10)", glow: "rgba(239,68,68,0.22)" },
   ];
@@ -286,7 +286,7 @@ export default function UpdaterEnquiryListPage() {
       <div className="inv-header">
         <div>
           <h1 className="inv-header__title">Enquiries</h1>
-          <p className="inv-header__subtitle">Manage customer Requests for Quotation.</p>
+          <p className="inv-header__subtitle">Manage customer Requests for Quote.</p>
         </div>
         <div className="inv-header__actions">
           <button className="inv-btn" onClick={() => { if (data) exportToCsv(data.items); }} title="Export visible Enquiries to Excel">

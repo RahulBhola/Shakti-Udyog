@@ -110,11 +110,11 @@ export default function AdminQuotationDetailPage() {
         <div className="w-14 h-14 rounded-2xl bg-red-50 dark:bg-red-500/10 flex items-center justify-center mb-4">
           <span className="text-red-500 text-2xl">!</span>
         </div>
-        <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-1">Quotation Not Found</h3>
+        <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-1">Quote Not Found</h3>
         <p className="text-[13px] text-[var(--text-muted)] mb-6">The quotation you're looking for doesn't exist or has been removed.</p>
         <button type="button" onClick={() => navigate("/admin/quotations")}
           className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg border border-[var(--border-default)] text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all">
-          <ArrowLeft size={14} /> Back to Quotations
+          <ArrowLeft size={14} /> Back to Quotes
         </button>
       </div>
     );
@@ -398,9 +398,9 @@ export default function AdminQuotationDetailPage() {
                   <CheckCircle size={22} />
                 </span>
                 <div>
-                  <h3 className="text-[16px] font-bold text-[var(--text-primary)] m-0">Approve Quotation</h3>
+                  <h3 className="text-[16px] font-bold text-[var(--text-primary)] m-0">Approve Quote</h3>
                   <p className="text-[12px] text-[var(--text-muted)] m-0 mt-2 leading-relaxed">
-                    After approval, the customer will be able to <strong>Accept</strong> or <strong>Decline</strong> this quotation from their portal. 
+                    After approval, the customer will be able to <strong>Accept</strong> or <strong>Decline</strong> this quote from their portal. 
                     The quotation will be issued to the customer for their review and response.
                   </p>
                   <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-500/10 p-3.5">
@@ -440,14 +440,14 @@ export default function AdminQuotationDetailPage() {
                   <XCircle size={22} />
                 </span>
                 <div>
-                  <h3 className="text-[16px] font-bold text-[var(--text-primary)] m-0">Cancel Quotation</h3>
-                  <p className="text-[12px] text-[var(--text-muted)] m-0 mt-0.5">This will cancel the quotation for the customer.</p>
+                  <h3 className="text-[16px] font-bold text-[var(--text-primary)] m-0">Cancel Quote</h3>
+                  <p className="text-[12px] text-[var(--text-muted)] m-0 mt-0.5">This will cancel the quote for the customer.</p>
                 </div>
               </div>
 
               <div className="mb-4">
                 <label className="text-[12px] font-medium text-[var(--text-primary)] block mb-1.5">Reason for Cancellation</label>
-                <textarea value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} rows={3} placeholder="Explain why this quotation is being cancelled..."
+                <textarea value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} rows={3} placeholder="Explain why this quote is being cancelled..."
                   className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2.5 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-red-500 resize-none" />
               </div>
 
@@ -460,7 +460,7 @@ export default function AdminQuotationDetailPage() {
                 <button type="button" disabled={busy || !cancelReason.trim()} onClick={() => { doAction(() => adminApi.cancelQuotation(id, cancelReason.trim())); setShowCancelModal(false); setCancelReason(""); }}
                   className="px-5 h-9 rounded-xl bg-red-500 text-white text-[12px] font-semibold hover:bg-red-600 disabled:opacity-50 transition-all flex items-center gap-1.5 shadow-sm">
                   {busy ? <Loader2 size={14} className="animate-spin" /> : <XCircle size={14} />}
-                  {busy ? "Cancelling..." : "Cancel Quotation"}
+                  {busy ? "Cancelling..." : "Cancel Quote"}
                 </button>
               </div>
             </div>

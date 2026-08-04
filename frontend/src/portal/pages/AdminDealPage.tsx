@@ -95,7 +95,7 @@ export default function AdminDealPage() {
     updaterApi.order(orderId)
       .then((o) => {
         setOrder(o);
-        // Quotation → Enquiry chain
+        // Quote → Enquiry chain
         if (o.quotationId) {
           return adminApi.quotation(o.quotationId).then((q) => {
             setQuotation(q);
@@ -184,7 +184,7 @@ export default function AdminDealPage() {
               <Badge status={order.statusLabel ?? order.status} />
             </div>
             <p className="text-[12px] text-[var(--text-muted)]">
-              Enquiry → Quotation → Order → Invoice{enquiry?.companyName ? ` · ${enquiry.companyName}` : ""}
+              Enquiry → Quote → Order → Invoice{enquiry?.companyName ? ` · ${enquiry.companyName}` : ""}
             </p>
           </div>
         </div>
@@ -196,7 +196,7 @@ export default function AdminDealPage() {
           {quotation && (
             <Link to={`/admin/quotations/${quotation.id}`}
               className="inline-flex items-center gap-1.5 px-4 h-8 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-secondary)] text-[12px] font-medium hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all no-underline hover:no-underline">
-              <FileText size={13} /> Quotation
+              <FileText size={13} /> Quote
             </Link>
           )}
           {enquiry && (
@@ -208,9 +208,9 @@ export default function AdminDealPage() {
         </div>
       </div>
 
-      {/* ── Pipeline: Enquiry → Quotation → Order → Invoice ────── */}
+      {/* ── Pipeline: Enquiry → Quote → Order → Invoice ────── */}
       <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
-        <span>Enquiry</span><span>→</span><span>Quotation</span><span>→</span><span>Order</span><span>→</span><span>Invoice</span>
+        <span>Enquiry</span><span>→</span><span>Quote</span><span>→</span><span>Order</span><span>→</span><span>Invoice</span>
       </div>
 
       {/* Enquiry */}
@@ -239,12 +239,12 @@ export default function AdminDealPage() {
         )}
       </Section>
 
-      {/* Quotation */}
-      <Section title="Quotation" right={quotation ? <Badge status={quotation.status} /> : undefined}>
+      {/* Quote */}
+      <Section title="Quote" right={quotation ? <Badge status={quotation.status} /> : undefined}>
         {quotation ? (
           <div className="space-y-4">
             <GridFields>
-              <Field label="Quotation no." value={quotation.quotationNumber} />
+              <Field label="Quote no." value={quotation.quotationNumber} />
               <Field label="Revision" value={quotation.revisionNumber} />
               <Field label="Valid until" value={formatDate(quotation.validUntilUtc)} />
               <Field label="Payment terms" value={quotation.paymentTerms} />

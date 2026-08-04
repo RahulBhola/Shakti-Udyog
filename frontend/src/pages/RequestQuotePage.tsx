@@ -53,7 +53,7 @@ export default function RequestQuotePage() {
     if (!get("productType")) nextErrors.productType = "Please select a requirement type.";
     if (!get("quantity")) nextErrors.quantity = "Please enter the required quantity.";
     if (get("requirementDetails").length < 10) nextErrors.requirementDetails = "Please describe the part or application (10+ characters).";
-    if (!data.get("consent")) nextErrors.consent = "Consent is required so we can respond with a quotation.";
+    if (!data.get("consent")) nextErrors.consent = "Consent is required so we can respond with a quote.";
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0 || fileError) return;
 
@@ -98,7 +98,7 @@ export default function RequestQuotePage() {
       <Section labelledBy="enquiry-form-heading">
         <SectionHeading
           id="enquiry-form-heading"
-          eyebrow="Quotation request"
+          eyebrow="Quote request"
           title="Tell Us About Your Requirement"
           lead="Not sure what to include? See our guide: How to Prepare a Casting Enquiry."
         />
@@ -203,7 +203,7 @@ export default function RequestQuotePage() {
             <div className="form__field">
               <label className="form__consent">
                 <input type="checkbox" name="consent" />
-                <span>I agree that Shakti Udyog may use my submitted information to respond to this quotation request. *</span>
+                <span>I agree that Shakti Udyog may use my submitted information to respond to this quote request. *</span>
               </label>
               {errors.consent && <span className="form__error">{errors.consent}</span>}
             </div>
