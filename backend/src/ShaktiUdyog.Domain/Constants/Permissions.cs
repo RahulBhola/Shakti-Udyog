@@ -14,8 +14,8 @@ public static class Permissions
     public const string RolesManage = "roles.manage";
     public const string ContentEdit = "content.edit";
     public const string ContentPublish = "content.publish";
-    public const string RfqReadAssigned = "rfq.read.assigned";
-    public const string RfqUpdateAssigned = "rfq.update.assigned";
+    public const string EnquiryReadAssigned = "enquiry.read.assigned";
+    public const string EnquiryUpdateAssigned = "enquiry.update.assigned";
     public const string QuotationCreate = "quotation.create";
     public const string OrderUpdateAssigned = "order.update.assigned";
     public const string OrderPublishCustomerStatus = "order.publish.customer_status";
@@ -29,8 +29,8 @@ public static class Permissions
         RolesManage,
         ContentEdit,
         ContentPublish,
-        RfqReadAssigned,
-        RfqUpdateAssigned,
+        EnquiryReadAssigned,
+        EnquiryUpdateAssigned,
         QuotationCreate,
         OrderUpdateAssigned,
         OrderPublishCustomerStatus,
@@ -57,8 +57,8 @@ public static class RolePermissions
             [Roles.Engineer] =
             [
                 Permissions.ContentEdit,
-                Permissions.RfqReadAssigned,
-                Permissions.RfqUpdateAssigned,
+                Permissions.EnquiryReadAssigned,
+                Permissions.EnquiryUpdateAssigned,
                 Permissions.QuotationCreate,
                 Permissions.OrderUpdateAssigned,
             ],

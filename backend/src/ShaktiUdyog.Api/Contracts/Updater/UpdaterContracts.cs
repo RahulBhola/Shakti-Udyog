@@ -2,22 +2,22 @@ using ShaktiUdyog.Api.Contracts.Customer;
 
 namespace ShaktiUdyog.Api.Contracts.Updater;
 
-// ---- RFQs -------------------------------------------------------------------
+// ---- Enquirys -------------------------------------------------------------------
 
-public record UpdaterRfqListItemDto(
+public record UpdaterEnquiryListItemDto(
     Guid Id, string ProductType, string? CompanyName, string Quantity,
     string Status, bool IsDraft, Guid? AssignedToUserId, int FileCount,
     DateTimeOffset CreatedAtUtc, string Priority,
     Guid? FirstFileId, string? FirstFileContentType);
 
-public record UpdaterRfqDetailDto(
+public record UpdaterEnquiryDetailDto(
     Guid Id, Guid CompanyId, string FullName, string CompanyName, string Email, string Phone,
     string ProductType, string? MaterialGrade, string Quantity,
     string? DeliveryLocation, string RequirementDetails, string Status, bool IsDraft,
     string? SubmittedByIp, DateTimeOffset CreatedAtUtc,
-    IReadOnlyList<UpdaterRfqFileDto> Files,
-    IReadOnlyList<RfqTimelineEntryDto> StatusHistory,
-    IReadOnlyList<RfqCommentDto> Comments,
+    IReadOnlyList<UpdaterEnquiryFileDto> Files,
+    IReadOnlyList<EnquiryTimelineEntryDto> StatusHistory,
+    IReadOnlyList<EnquiryCommentDto> Comments,
     Guid? AssignedToUserId, string Priority,
     string? PartName, string? PartNumber, string? Industry, string? Application,
     string? MaterialStandard, decimal? ApproxWeight,
@@ -27,10 +27,10 @@ public record UpdaterRfqDetailDto(
     string? AdditionalRequirements, string? Remarks,
     bool HasDraftQuotation, Guid? DraftQuotationId);
 
-public record UpdaterRfqFileDto(
+public record UpdaterEnquiryFileDto(
     Guid Id, string FileName, string ContentType, long SizeBytes,
     string StorageKey, Guid? UploadedByUserId, DateTimeOffset UploadedAtUtc);
 
-public record RfqCommentDto(
+public record EnquiryCommentDto(
     Guid Id, Guid AuthorUserId, string AuthorRole, bool IsCustomerVisible,
     string Message, DateTimeOffset CreatedAtUtc);

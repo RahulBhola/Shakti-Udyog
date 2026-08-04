@@ -108,7 +108,7 @@ public class ProductMasterService(
             .Distinct()
             .CountAsync();
 
-        // Low usage: products referenced in < 2 RFQs, Quotations, or Orders combined
+        // Low usage: products referenced in < 2 Enquirys, Quotations, or Orders combined
         // Simplified: count products with attachment count = 0 as "low usage"
         var lowUsage = await db.ProductMasters.IgnoreQueryFilters()
             .Where(p => !p.IsArchived && p.Attachments.Count == 0)
@@ -119,7 +119,7 @@ public class ProductMasterService(
 
     public async Task<ProductMasterUsageDto> GetUsageAsync(Guid id)
     {
-        // Count how many RFQs reference this product (via ProductType matching ProductName)
+        // Count how many Enquirys reference this product (via ProductType matching ProductName)
         var product = await db.ProductMasters.IgnoreQueryFilters()
             .Where(p => p.Id == id)
             .Select(p => p.ProductName)
@@ -127,14 +127,14 @@ public class ProductMasterService(
 
         if (product is null) return new ProductMasterUsageDto(0, 0, 0);
 
-        var rfqCount = await db.Rfqs.IgnoreQueryFilters()
+        var enquiryCount = await db.Enquiries.IgnoreQueryFilters()
             .CountAsync(r => r.ProductType.Contains(product));
         var quotationCount = await db.Quotations.IgnoreQueryFilters()
-            .CountAsync(q => q.Rfq != null && q.Rfq.ProductType.Contains(product));
+            .CountAsync(q => q.Enquiry != null && q.Enquiry.ProductType.Contains(product));
         var orderCount = await db.Orders.IgnoreQueryFilters()
-            .CountAsync(o => o.Quotation != null && o.Quotation.Rfq != null && o.Quotation.Rfq.ProductType.Contains(product));
+            .CountAsync(o => o.Quotation != null && o.Quotation.Enquiry != null && o.Quotation.Enquiry.ProductType.Contains(product));
 
-        return new ProductMasterUsageDto(rfqCount, quotationCount, orderCount);
+        return new ProductMasterUsageDto(enquiryCount, quotationCount, orderCount);
     }
 
     public async Task<ProductMasterDetailDto> CreateProductAsync(CreateProductMasterRequest request, Guid userId, string? ip)

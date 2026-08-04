@@ -11,7 +11,7 @@ import { UserCheck, ClipboardList, ShoppingCart, Truck, Wallet, Users, Building2
 /* ------------------------------------------------------------------ */
 
 interface AdminDashboard {
-  totalCustomers: number; activeCustomers: number; pendingRfqs: number; approvedRfqs: number;
+  totalCustomers: number; activeCustomers: number; pendingEnquiries: number; approvedEnquiries: number;
   pendingQuotations: number; ordersInProduction: number; ordersDispatched: number; pendingPayments: number;
   totalRevenue: number; outstandingBalance: number;
 }
@@ -19,7 +19,7 @@ interface AdminDashboard {
 interface ChartData {
   ordersByStatus: { name: string; value: number }[];
   invoicesByStatus: { name: string; value: number }[];
-  monthlyRfqs: { year: number; month: number; count: number }[];
+  monthlyEnquiries: { year: number; month: number; count: number }[];
   monthlyRevenue: { year: number; month: number; revenue: number }[];
 }
 
@@ -39,8 +39,8 @@ interface KpiDef {
 const kpiMetrics: KpiDef[] = [
   { key: "totalCustomers", label: "Total Customers", icon: UserCheck, color: "blue", href: "/admin/users", hint: "Total registered accounts" },
   { key: "activeCustomers", label: "Active Customers", icon: UserCheck, color: "green", href: "/admin/users", hint: "Verified & active" },
-  { key: "pendingRfqs", label: "Pending RFQs", icon: ClipboardList, color: "purple", href: "/admin/rfqs", hint: "Awaiting review" },
-  { key: "approvedRfqs", label: "Approved RFQs", icon: ClipboardList, color: "teal", href: "/admin/rfqs", hint: "Approved & ready" },
+  { key: "pendingEnquiries", label: "Pending Enquiries", icon: ClipboardList, color: "purple", href: "/admin/enquiries", hint: "Awaiting review" },
+  { key: "approvedEnquiries", label: "Approved Enquiries", icon: ClipboardList, color: "teal", href: "/admin/enquiries", hint: "Approved & ready" },
   { key: "pendingQuotations", label: "Pending Quotations", icon: ClipboardList, color: "indigo", href: "/admin/quotations", hint: "Awaiting response" },
   { key: "ordersInProduction", label: "Orders in Production", icon: ShoppingCart, color: "orange", href: "/admin/orders", hint: "Currently in the foundry" },
   { key: "ordersDispatched", label: "Orders Dispatched", icon: Truck, color: "pink", href: "/admin/orders", hint: "Shipped to customers" },
@@ -192,7 +192,7 @@ export default function AdminDashboardPage() {
           <InvoicesPieChart data={charts?.invoicesByStatus} />
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
-          <MonthlyBarChart data={charts?.monthlyRfqs} />
+          <MonthlyBarChart data={charts?.monthlyEnquiries} />
           <RevenueLineChart data={charts?.monthlyRevenue} />
         </div>
       </div>

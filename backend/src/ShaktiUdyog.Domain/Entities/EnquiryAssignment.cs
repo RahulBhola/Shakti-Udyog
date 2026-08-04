@@ -1,15 +1,15 @@
 namespace ShaktiUdyog.Domain.Entities;
 
 /// <summary>
-/// Tracks staff (Data Updater) assignment to an RFQ (Milestone 4 RFQ spec).
-/// Only the most recent active assignment per RFQ is used for routing; history
+/// Tracks staff (Data Updater) assignment to an Enquiry (Milestone 4 Enquiry spec).
+/// Only the most recent active assignment per Enquiry is used for routing; history
 /// is preserved for audit.
 /// </summary>
-public class RfqAssignment
+public class EnquiryAssignment
 {
     public Guid Id { get; set; }
-    public Guid RfqId { get; set; }
-    public Rfq Rfq { get; set; } = null!;
+    public Guid EnquiryId { get; set; }
+    public Enquiry Enquiry { get; set; } = null!;
     public Guid AssignedToUserId { get; set; }
     public Guid AssignedByUserId { get; set; }
     /// <summary>True when this is the current active assignment; historical entries are false.</summary>

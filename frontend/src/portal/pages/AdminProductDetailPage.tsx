@@ -202,7 +202,7 @@ export default function AdminProductDetailPage() {
         <InfoCard icon={Calendar} label="Created" value={formatDate(p.createdAtUtc)} color="bg-[var(--kpi-blue)]/10" />
         <InfoCard icon={Clock} label="Updated" value={p.updatedAtUtc ? formatDate(p.updatedAtUtc) : "—"} color="bg-[var(--kpi-teal)]/10" />
         <InfoCard icon={Building2} label="Category" value={p.categoryName ?? "—"} color="bg-[var(--kpi-purple)]/10" />
-        <InfoCard icon={Package} label="Used In" value={`${usage.rfqCount + usage.quotationCount + usage.orderCount} records`} color="bg-[var(--kpi-orange)]/10" />
+        <InfoCard icon={Package} label="Used In" value={`${usage.enquiryCount + usage.quotationCount + usage.orderCount} records`} color="bg-[var(--kpi-orange)]/10" />
       </div>
 
       {/* Two-column layout */}
@@ -321,7 +321,7 @@ export default function AdminProductDetailPage() {
           {/* Usage */}
           <Section icon={Activity} title="Usage">
             <div className="space-y-3">
-              <UsageRow label="RFQs" count={usage.rfqCount} />
+              <UsageRow label="Enquiries" count={usage.enquiryCount} />
               <UsageRow label="Quotations" count={usage.quotationCount} />
               <UsageRow label="Orders" count={usage.orderCount} />
             </div>

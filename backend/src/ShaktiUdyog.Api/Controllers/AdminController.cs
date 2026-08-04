@@ -13,8 +13,8 @@ using ShaktiUdyog.Infrastructure.Data;
 namespace ShaktiUdyog.Api.Controllers;
 
 /// <summary>
-/// Admin portal API for RFQ oversight (Milestone 4 RFQ spec). All endpoints
-/// require the Admin role. Admins can view all RFQs (including deleted),
+/// Admin portal API for Enquiry oversight (Milestone 4 Enquiry spec). All endpoints
+/// require the Admin role. Admins can view all Enquirys (including deleted),
 /// approve/reject, override status, and view full audit history.
 /// </summary>
 [ApiController]
@@ -36,13 +36,13 @@ public class AdminController(IAdminService adminService, AppDbContext db, UserMa
     {
         var totalCustomers = await userManager.Users.CountAsync(u => u.IsActive);
         var activeCustomers = await userManager.Users.CountAsync(u => u.IsActive);
-        var pendingRfqs = await db.Rfqs.CountAsync(r => r.Status == "Received");
-        var approvedRfqs = await db.Rfqs.CountAsync(r => r.Status == "Approved" || r.Status == "Quoted");
+        var pendingEnquiries = await db.Enquiries.CountAsync(r => r.Status == "Received");
+        var approvedEnquiries = await db.Enquiries.CountAsync(r => r.Status == "Approved" || r.Status == "Quoted");
         var pendingQuotations = await db.Quotations.CountAsync(q => q.Status == "Draft" || q.Status == "Pending Approval");
         var ordersInProduction = await db.Orders.CountAsync(o => o.Status == "production" || o.Status == "quality_check");
         var ordersDispatched = await db.Orders.CountAsync(o => o.Status == "dispatched");
         var pendingPayments = await db.Invoices.CountAsync(i => i.Status == "Issued" || i.Status == "Partially Paid" || i.Status == "Overdue");
-        return Ok(new { totalCustomers, activeCustomers, pendingRfqs, approvedRfqs, pendingQuotations, ordersInProduction, ordersDispatched, pendingPayments, totalRevenue = 0m, outstandingBalance = 0m });
+        return Ok(new { totalCustomers, activeCustomers, pendingEnquiries, approvedEnquiries, pendingQuotations, ordersInProduction, ordersDispatched, pendingPayments, totalRevenue = 0m, outstandingBalance = 0m });
     }
 
     // ---- Users ---------------------------------------------------------------
@@ -233,64 +233,64 @@ public class AdminController(IAdminService adminService, AppDbContext db, UserMa
         return Ok(new { items, page, pageSize, totalCount = total });
     }
 
-    // ---- RFQ list -----------------------------------------------------------
+    // ---- Enquiry list -----------------------------------------------------------
 
-    [HttpGet("rfqs")]
-    [ProducesResponseType<PagedResult<UpdaterRfqListItemDto>>(StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetRfqs(
+    [HttpGet("enquiries")]
+    [ProducesResponseType<PagedResult<UpdaterEnquiryListItemDto>>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetEnquiries(
         [FromQuery] int page = 1, [FromQuery] int pageSize = 20,
         [FromQuery] string? search = null, [FromQuery] string? status = null,
         [FromQuery] bool includeDeleted = false)
     {
-        return Ok(await adminService.GetRfqsAsync(page, pageSize, search, status, includeDeleted));
+        return Ok(await adminService.GetEnquiriesAsync(page, pageSize, search, status, includeDeleted));
     }
 
-    // ---- RFQ detail ---------------------------------------------------------
+    // ---- Enquiry detail ---------------------------------------------------------
 
-    [HttpGet("rfqs/{id:guid}")]
-    [ProducesResponseType<UpdaterRfqDetailDto>(StatusCodes.Status200OK)]
+    [HttpGet("enquiries/{id:guid}")]
+    [ProducesResponseType<UpdaterEnquiryDetailDto>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetRfq(Guid id)
+    public async Task<IActionResult> GetEnquiry(Guid id)
     {
-        var rfq = await adminService.GetRfqAsync(id);
-        return rfq is null ? NotFound() : Ok(rfq);
+        var enquiry = await adminService.GetEnquiryAsync(id);
+        return enquiry is null ? NotFound() : Ok(enquiry);
     }
 
     // ---- Approve / Reject ---------------------------------------------------
 
-    [HttpPatch("rfqs/{id:guid}/approve")]
+    [HttpPatch("enquiries/{id:guid}/approve")]
     [ProducesResponseType<MessageResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> ApproveRfq(Guid id)
+    public async Task<IActionResult> ApproveEnquiry(Guid id)
     {
-        var result = await adminService.ApproveRfqAsync(id, UserId, ClientIp);
+        var result = await adminService.ApproveEnquiryAsync(id, UserId, ClientIp);
         return result switch
         {
             null => NotFound(),
-            false => Conflict(new MessageResponse("This RFQ cannot be approved in its current state.")),
-            true => Ok(new MessageResponse("RFQ approved.")),
+            false => Conflict(new MessageResponse("This Enquiry cannot be approved in its current state.")),
+            true => Ok(new MessageResponse("Enquiry approved.")),
         };
     }
 
-    [HttpPatch("rfqs/{id:guid}/reject")]
+    [HttpPatch("enquiries/{id:guid}/reject")]
     [ProducesResponseType<MessageResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> RejectRfq(Guid id, [FromBody] string reason)
+    public async Task<IActionResult> RejectEnquiry(Guid id, [FromBody] string reason)
     {
-        var result = await adminService.RejectRfqAsync(id, reason, UserId, ClientIp);
+        var result = await adminService.RejectEnquiryAsync(id, reason, UserId, ClientIp);
         return result switch
         {
             null => NotFound(),
-            false => Conflict(new MessageResponse("This RFQ cannot be rejected in its current state.")),
-            true => Ok(new MessageResponse("RFQ rejected.")),
+            false => Conflict(new MessageResponse("This Enquiry cannot be rejected in its current state.")),
+            true => Ok(new MessageResponse("Enquiry rejected.")),
         };
     }
 
     // ---- Status override ----------------------------------------------------
 
-    [HttpPatch("rfqs/{id:guid}/override-status")]
+    [HttpPatch("enquiries/{id:guid}/override-status")]
     [ProducesResponseType<MessageResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> OverrideStatus(Guid id, OverrideStatusRequest request)
@@ -305,15 +305,15 @@ public class AdminController(IAdminService adminService, AppDbContext db, UserMa
 
     // ---- History ------------------------------------------------------------
 
-    [HttpGet("rfqs/{id:guid}/history")]
-    [ProducesResponseType<IReadOnlyList<RfqTimelineEntryDto>>(StatusCodes.Status200OK)]
+    [HttpGet("enquiries/{id:guid}/history")]
+    [ProducesResponseType<IReadOnlyList<EnquiryTimelineEntryDto>>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetRfqHistory(Guid id)
+    public async Task<IActionResult> GetEnquiryHistory(Guid id)
     {
-        var rfq = await adminService.GetRfqAsync(id);
-        if (rfq is null) return NotFound();
+        var enquiry = await adminService.GetEnquiryAsync(id);
+        if (enquiry is null) return NotFound();
 
-        var history = await adminService.GetRfqHistoryAsync(id);
+        var history = await adminService.GetEnquiryHistoryAsync(id);
         return Ok(history);
     }
 
@@ -349,7 +349,7 @@ public class AdminController(IAdminService adminService, AppDbContext db, UserMa
         var ordersByStatus = await db.Orders.GroupBy(o => o.Status).Select(g => new { name = g.Key, value = g.Count() }).ToListAsync();
         var invoicesByStatus = await db.Invoices.GroupBy(i => i.Status).Select(g => new { name = g.Key, value = g.Count() }).ToListAsync();
         var now = DateTimeOffset.UtcNow;
-        var monthlyRfqs = await db.Rfqs.Where(r => r.CreatedAtUtc >= now.AddMonths(-12)).GroupBy(r => new { r.CreatedAtUtc.Year, r.CreatedAtUtc.Month }).Select(g => new { year = g.Key.Year, month = g.Key.Month, count = g.Count() }).OrderBy(x => x.year).ThenBy(x => x.month).ToListAsync();
+        var monthlyEnquiries = await db.Enquiries.Where(r => r.CreatedAtUtc >= now.AddMonths(-12)).GroupBy(r => new { r.CreatedAtUtc.Year, r.CreatedAtUtc.Month }).Select(g => new { year = g.Key.Year, month = g.Key.Month, count = g.Count() }).OrderBy(x => x.year).ThenBy(x => x.month).ToListAsync();
 
         // Last 12 calendar months (incl. current), zero-filled so the trend has a continuous line.
         var start = new DateTimeOffset(new DateTime(now.Year, now.Month, 1), now.Offset);
@@ -366,7 +366,7 @@ public class AdminController(IAdminService adminService, AppDbContext db, UserMa
             revenue = revenueByMonth.FirstOrDefault(r => r.Year == m.Year && r.Month == m.Month)?.revenue ?? 0,
         }).ToList();
 
-        return Ok(new { ordersByStatus, invoicesByStatus, monthlyRfqs, monthlyRevenue });
+        return Ok(new { ordersByStatus, invoicesByStatus, monthlyEnquiries, monthlyRevenue });
     }
 }
 

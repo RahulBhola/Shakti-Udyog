@@ -112,7 +112,7 @@ export default function QuotationListPage() {
             {q.quotationNumber}
           </span>
           <span className="inv-sub">
-            Rev.{q.revisionNumber}{q.rfqId ? " · linked to RFQ" : ""}
+            Rev.{q.revisionNumber}{q.enquiryId ? " · linked to Enquiry" : ""}
           </span>
         </td>
         <td>

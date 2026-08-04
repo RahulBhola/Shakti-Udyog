@@ -4,7 +4,7 @@ namespace ShaktiUdyog.Domain.Constants;
 /// Workflow status values. Stored as strings for readability in the database
 /// and reports; values match docs/shakti-udyog-requirements.md exactly.
 /// </summary>
-public static class RfqStatuses
+public static class EnquiryStatuses
 {
     public const string Draft = "Draft";
     public const string Submitted = "Submitted";
@@ -218,7 +218,7 @@ public static class DocumentCategories
 
 public static class NotificationTypes
 {
-    public const string Rfq = "RFQ";
+    public const string Enquiry = "Enquiry";
     public const string Quotation = "Quotation";
     public const string Order = "Order";
     public const string Invoice = "Invoice";

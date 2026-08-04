@@ -38,7 +38,7 @@ public static class RoleMigration
         await db.SaveChangesAsync();
 
         // 2. Update historical audit strings ("DataUpdater" → "Engineer").
-        await db.RfqStatusHistories
+        await db.EnquiryStatusHistories
             .Where(h => h.ChangedByRole == "DataUpdater")
             .ExecuteUpdateAsync(s => s.SetProperty(h => h.ChangedByRole, "Engineer"));
         await db.QuotationStatusHistories

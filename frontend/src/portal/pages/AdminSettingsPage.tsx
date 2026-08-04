@@ -88,7 +88,7 @@ const SECTIONS: SectionDef[] = [
       { key: "notify.supportEmail", label: "Support Email", type: "email" },
       { key: "notify.purchaseEmail", label: "Purchase Email", type: "email" },
       { key: "notify.accountsEmail", label: "Accounts Email", type: "email" },
-      { key: "notify.onNewRfq", label: "Email on New RFQ", type: "boolean" },
+      { key: "notify.onNewEnquiry", label: "Email on New Enquiry", type: "boolean" },
       { key: "notify.onOrderStatus", label: "Email on Order Status Change", type: "boolean" },
       { key: "notify.onInvoice", label: "Email on Invoice Created", type: "boolean" },
       { key: "notify.onPayment", label: "Email on Payment Received", type: "boolean" },
@@ -122,7 +122,7 @@ const SECTIONS: SectionDef[] = [
     id: "features", title: "Feature Flags", description: "Enable or disable platform modules.",
     icon: Flag,
     fields: [
-      { key: "feature.rfq", label: "RFQ Module", type: "boolean" },
+      { key: "feature.enquiry", label: "Enquiry Module", type: "boolean" },
       { key: "feature.quotations", label: "Quotations", type: "boolean" },
       { key: "feature.orders", label: "Orders", type: "boolean" },
       { key: "feature.production", label: "Production Board", type: "boolean" },

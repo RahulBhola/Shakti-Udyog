@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { customerApi, type RfqDetail } from "../../api/customerApi";
-import { rfqProductTypes } from "../../api/publicApi";
+import { customerApi, type EnquiryDetail } from "../../api/customerApi";
+import { enquiryProductTypes } from "../../api/publicApi";
 import { config } from "../../config";
 import { tokenStorage } from "../../auth/tokenStorage";
 import { EmptyState, Loading } from "../../components/ui";
@@ -17,7 +17,7 @@ const additionalOptions = ["Heat Treatment", "Shot Blasting", "Painting", "Machi
 
 /* ── FileCard component ─────────────────────────────────────── */
 
-function FileCard({ fileName, sizeBytes, dragIdx, totalCount, dragFileIndex, onDragStart, onDragOver, onDrop, onDragEnd, onDelete, src, localUrl, isServerFile }: {
+function FileCard({ fileName, sizeBytes, dragIdx, totalCount: _totalCount, dragFileIndex, onDragStart, onDragOver, onDrop, onDragEnd, onDelete, src, localUrl, isServerFile }: {
   fileName: string; sizeBytes: number; dragIdx: number; totalCount: number;
   dragFileIndex: number | null;
   onDragStart: () => void; onDragOver: (e: React.DragEvent) => void; onDrop: (e: React.DragEvent) => void; onDragEnd: () => void;
@@ -84,10 +84,10 @@ function Field({ label, required, hint, children }: { label: string; required?: 
   );
 }
 
-export default function RfqEditPage() {
+export default function EnquiryEditPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
-  const [rfq, setRfq] = useState<RfqDetail | null>(null);
+  const [enquiry, setEnquiry] = useState<EnquiryDetail | null>(null);
   const [missing, setMissing] = useState(false);
   const [status, setStatus] = useState<"idle" | "saving" | "error">("idle");
 
@@ -120,7 +120,7 @@ export default function RfqEditPage() {
   const [fileOrder, setFileOrder] = useState<string[]>([]);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [submitBusy, setSubmitBusy] = useState(false);
-  useEffect(() => { if (rfq) setFileOrder(rfq.files.map((f) => f.id)); }, [rfq]);
+  useEffect(() => { if (enquiry) setFileOrder(enquiry.files.map((f) => f.id)); }, [enquiry]);
 
   function handleFiles(list: FileList | null) {
     setFileError(null);
@@ -140,8 +140,8 @@ export default function RfqEditPage() {
   function handleDrop(e: React.DragEvent) { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); }
 
   useEffect(() => {
-    customerApi.rfq(id).then((data) => {
-      setRfq(data);
+    customerApi.enquiry(id).then((data) => {
+      setEnquiry(data);
       setProductType(data.productType);
       setPartName(data.partName ?? "");
       setPartNumber(data.partNumber ?? "");
@@ -170,7 +170,7 @@ export default function RfqEditPage() {
 
     setStatus("saving");
     try {
-      await customerApi.updateRfq(id, {
+      await customerApi.updateEnquiry(id, {
         productType,
         materialGrade: materialGrade || undefined,
         quantity: quantity || productionQty,
@@ -193,9 +193,9 @@ export default function RfqEditPage() {
         remarks: remarks || undefined,
       });
       for (let i = 0; i < newFiles.length; i++) {
-        await customerApi.uploadRfqFile(id, newFiles[i]).catch(() => {});
+        await customerApi.uploadEnquiryFile(id, newFiles[i]).catch(() => {});
       }
-      navigate(`/customer/rfqs/${id}`);
+      navigate(`/customer/enquiries/${id}`);
     } catch {
       setStatus("error");
     }
@@ -207,14 +207,14 @@ export default function RfqEditPage() {
 
   async function handleSubmitDraft() {
     setSubmitBusy(true);
-    try { await customerApi.submitRfq(id); navigate(`/customer/rfqs/${id}`); }
+    try { await customerApi.submitEnquiry(id); navigate(`/customer/enquiries/${id}`); }
     catch { setSubmitBusy(false); setShowSubmitModal(false); }
   }
 
-  if (missing) return <EmptyState title="RFQ not found" />;
-  if (!rfq) return <Loading label="Loading RFQ" />;
-  if (!rfq.isDraft || rfq.status !== "Draft") {
-    return <EmptyState title="Cannot edit" text="This RFQ has already been submitted and cannot be edited." />;
+  if (missing) return <EmptyState title="Enquiry not found" />;
+  if (!enquiry) return <Loading label="Loading Enquiry" />;
+  if (!enquiry.isDraft || enquiry.status !== "Draft") {
+    return <EmptyState title="Cannot edit" text="This Enquiry has already been submitted and cannot be edited." />;
   }
 
   const busy = status === "saving";
@@ -224,16 +224,16 @@ export default function RfqEditPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <button type="button" onClick={() => navigate(`/customer/rfqs/${id}`)}
+          <button type="button" onClick={() => navigate(`/customer/enquiries/${id}`)}
             className="flex items-center justify-center w-8 h-8 rounded-lg border border-[var(--border-default)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all">
             <ArrowLeft size={15} />
           </button>
           <div>
             <div className="flex items-center gap-2 text-[12px] text-[var(--text-muted)] mb-0.5">
-              <span>Home</span><ChevronRight size={12} /><span>RFQ</span><ChevronRight size={12} />
+              <span>Home</span><ChevronRight size={12} /><span>Enquiry</span><ChevronRight size={12} />
               <span className="text-[var(--text-primary)] font-medium">Edit Draft</span>
             </div>
-            <h1 className="text-xl font-bold text-[var(--text-primary)]">Edit Draft RFQ</h1>
+            <h1 className="text-xl font-bold text-[var(--text-primary)]">Edit Draft Enquiry</h1>
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -263,7 +263,7 @@ export default function RfqEditPage() {
               <select value={productType} onChange={(e) => setProductType(e.target.value)}
                 className="w-full h-10 px-3 rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] text-[13px] text-[var(--text-primary)] outline-none focus:border-[var(--color-primary)]">
                 <option value="">Select requirement type</option>
-                {rfqProductTypes.map((t) => <option key={t} value={t}>{t}</option>)}
+                {enquiryProductTypes.map((t) => <option key={t} value={t}>{t}</option>)}
               </select>
             </Field>
             <Field label="Part Name" required>
@@ -385,7 +385,7 @@ export default function RfqEditPage() {
           {/* Combined file grid (existing + new) */}
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3" onDragOver={(e) => e.preventDefault()}>
             {fileOrder.map((fid, fileIdx) => {
-              const f = rfq.files.find((x) => x.id === fid);
+              const f = enquiry.files.find((x) => x.id === fid);
               if (!f) return null;
               return (
                 <FileCard key={f.id} fileName={f.fileName} sizeBytes={f.sizeBytes}
@@ -397,9 +397,9 @@ export default function RfqEditPage() {
                   onDragEnd={() => { setDragFileIndex(null); dragIdxRef.current = null; }}
                   onDelete={() => {
                     setFileOrder((prev) => prev.filter((x) => x !== f.id));
-                    fetch(`${config.apiBaseUrl}/api/v1/customer/rfqs/${id}/files/${f.id}`, { method: "DELETE", headers: { Authorization: `Bearer ${tokenStorage.getAccessToken()}` }, credentials: "include" }).catch(() => {});
+                    fetch(`${config.apiBaseUrl}/api/v1/customer/enquiries/${id}/files/${f.id}`, { method: "DELETE", headers: { Authorization: `Bearer ${tokenStorage.getAccessToken()}` }, credentials: "include" }).catch(() => {});
                   }}
-                  src={`${config.apiBaseUrl}/api/v1/customer/rfqs/${id}/files/${f.id}`} isServerFile />
+                  src={`${config.apiBaseUrl}/api/v1/customer/enquiries/${id}/files/${f.id}`} isServerFile />
               );
             })}
             {newFiles.map((f, i) => {
@@ -422,9 +422,9 @@ export default function RfqEditPage() {
           </div>
 
           {/* Upload new files */}
-          <div className="mt-4" onDragOver={(e) => { e.preventDefault(); setDragOver(true); }} onDragLeave={() => setDragOver(false)} onDrop={handleDrop}
+          <div onDragOver={(e) => { e.preventDefault(); setDragOver(true); }} onDragLeave={() => setDragOver(false)} onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
-            className={`flex flex-col items-center justify-center py-8 px-6 rounded-xl border-2 border-dashed cursor-pointer transition-all ${
+            className={`mt-4 flex flex-col items-center justify-center py-8 px-6 rounded-xl border-2 border-dashed cursor-pointer transition-all ${
               dragOver ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5" : "border-[var(--border-default)] hover:border-[var(--color-primary)]/50"
             }`}>
             <Upload size={24} className="text-[var(--text-muted)] mb-2" />
@@ -468,14 +468,14 @@ export default function RfqEditPage() {
                   <Send size={22} />
                 </span>
                 <div>
-                  <h3 className="text-[16px] font-bold text-[var(--text-primary)] m-0">Submit Draft RFQ</h3>
+                  <h3 className="text-[16px] font-bold text-[var(--text-primary)] m-0">Submit Draft Enquiry</h3>
                   <p className="text-[12px] text-[var(--text-muted)] m-0 mt-0.5">This action cannot be undone</p>
                 </div>
               </div>
 
               {/* Message */}
               <p className="text-[13px] text-[var(--text-secondary)] leading-relaxed m-0 mb-6">
-                Once submitted, this RFQ will be sent to our engineering team for review and quotation. You will not be able to edit it further.
+                Once submitted, this Enquiry will be sent to our engineering team for review and quotation. You will not be able to edit it further.
               </p>
 
               {/* Divider */}

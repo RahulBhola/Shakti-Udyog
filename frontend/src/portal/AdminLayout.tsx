@@ -16,7 +16,7 @@ const adminSections: NavSection[] = [
   {
     label: "Sales",
     items: [
-      { label: "RFQs", href: "/admin/rfqs" },
+      { label: "Enquiries", href: "/admin/enquiries" },
       { label: "Quotations", href: "/admin/quotations" },
       { label: "Orders", href: "/admin/orders" },
     ],

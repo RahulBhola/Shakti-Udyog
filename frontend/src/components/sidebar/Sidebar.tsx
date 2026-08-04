@@ -41,7 +41,7 @@ export interface NavSection {
 
 const labelIconMap: Record<string, LucideIcon> = {
   Dashboard: Home,
-  RFQs: ClipboardList,
+  Enquiries: ClipboardList,
   Quotations: FileText,
   Orders: ShoppingCart,
   "Manufacturing Board": Factory,

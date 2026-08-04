@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { customerApi, type RfqDetail, type RfqTimelineEntry, type QuotationListItem } from "../../api/customerApi";
+import { customerApi, type EnquiryDetail, type EnquiryTimelineEntry, type QuotationListItem } from "../../api/customerApi";
 import { config } from "../../config";
 import { tokenStorage } from "../../auth/tokenStorage";
 import { Loading } from "../../components/ui";
@@ -12,7 +12,7 @@ import {
 
 /* ── Status timeline steps ──────────────────────────────────── */
 
-const RFQ_STATUSES = [
+const Enquiry_STATUSES = [
   "Draft", "Submitted", "Received", "Under Review",
   "Approved", "Quoted", "Accepted",
 ];
@@ -95,7 +95,7 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-/* ── RFQ Info section (numbered) ─────────────────────────────── */
+/* ── Enquiry Info section (numbered) ─────────────────────────────── */
 
 function InfoSection({ number, title, children }: { number: number; title: string; children: React.ReactNode }) {
   return (
@@ -111,7 +111,7 @@ function InfoSection({ number, title, children }: { number: number; title: strin
   );
 }
 
-/* ── Info field (used inside RFQ Information grids) ──────────── */
+/* ── Info field (used inside Enquiry Information grids) ──────────── */
 
 function InfoField({ label, value }: { label: string; value: string }) {
   return (
@@ -124,37 +124,37 @@ function InfoField({ label, value }: { label: string; value: string }) {
 
 /* ── Auth-fetched image ─────────────────────────────────────── */
 
-function RfqImage({ rfqId, fileId, fileName }: { rfqId: string; fileId: string; fileName: string }) {
+function EnquiryImage({ enquiryId, fileId, fileName }: { enquiryId: string; fileId: string; fileName: string }) {
   const [url, setUrl] = useState<string | null>(null);
   useEffect(() => {
     let cancelled = false;
     const token = tokenStorage.getAccessToken();
-    fetch(`${config.apiBaseUrl}/api/v1/customer/rfqs/${rfqId}/files/${fileId}`, {
+    fetch(`${config.apiBaseUrl}/api/v1/customer/enquiries/${enquiryId}/files/${fileId}`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {}, credentials: "include",
     }).then((r) => { if (!r.ok) throw new Error(); return r.blob(); })
       .then((blob) => { if (!cancelled) setUrl(URL.createObjectURL(blob)); })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [rfqId, fileId]);
+  }, [enquiryId, fileId]);
   if (!url) return <div className="w-full h-full rounded-xl bg-[var(--bg-surface)] animate-pulse" />;
   return <img src={url} alt={fileName} className="w-full h-full object-cover rounded-xl" />;
 }
 
 /* ── Main Page ──────────────────────────────────────────────── */
 
-export default function RfqDetailPage() {
+export default function EnquiryDetailPage() {
   const { id = "" } = useParams();
-  const [rfq, setRfq] = useState<RfqDetail | null>(null);
-  const [timeline, setTimeline] = useState<RfqTimelineEntry[] | null>(null);
+  const [enquiry, setEnquiry] = useState<EnquiryDetail | null>(null);
+  const [timeline, setTimeline] = useState<EnquiryTimelineEntry[] | null>(null);
   const [missing, setMissing] = useState(false);
   const [quotation, setQuotation] = useState<QuotationListItem | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    customerApi.rfq(id).then(setRfq).catch(() => setMissing(true));
-    customerApi.rfqTimeline(id).then(setTimeline).catch(() => {});
+    customerApi.enquiry(id).then(setEnquiry).catch(() => setMissing(true));
+    customerApi.enquiryTimeline(id).then(setTimeline).catch(() => {});
     customerApi.quotations().then((list) => {
-      const found = list.find((q) => q.rfqId === id);
+      const found = list.find((q) => q.enquiryId === id);
       if (found) setQuotation(found);
     }).catch(() => {});
   }, [id]);
@@ -162,10 +162,10 @@ export default function RfqDetailPage() {
   async function submitDraft() {
     setSubmitting(true);
     try {
-      await customerApi.submitRfq(id);
-      const updated = await customerApi.rfq(id);
-      setRfq(updated);
-      setTimeline(await customerApi.rfqTimeline(id));
+      await customerApi.submitEnquiry(id);
+      const updated = await customerApi.enquiry(id);
+      setEnquiry(updated);
+      setTimeline(await customerApi.enquiryTimeline(id));
     } catch {
       alert("Could not submit the draft.");
     } finally {
@@ -177,20 +177,20 @@ export default function RfqDetailPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px]">
         <XCircle size={48} className="text-[var(--text-muted)] mb-4 opacity-40" />
-        <h2 className="text-lg font-semibold text-[var(--text-primary)] m-0">RFQ not found</h2>
-        <p className="text-sm text-[var(--text-secondary)] mt-1 mb-4">This RFQ may have been removed or you may not have access.</p>
-        <Link to="/customer/rfqs" className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg bg-[var(--color-primary)] text-white text-xs font-semibold hover:bg-[var(--color-primary-hover)] transition-all no-underline">Back to RFQs</Link>
+        <h2 className="text-lg font-semibold text-[var(--text-primary)] m-0">Enquiry not found</h2>
+        <p className="text-sm text-[var(--text-secondary)] mt-1 mb-4">This Enquiry may have been removed or you may not have access.</p>
+        <Link to="/customer/enquiries" className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg bg-[var(--color-primary)] text-white text-xs font-semibold hover:bg-[var(--color-primary-hover)] transition-all no-underline">Back to Enquiries</Link>
       </div>
     );
   }
-  if (!rfq) return <div className="py-10"><Loading label="Loading RFQ" /></div>;
+  if (!enquiry) return <div className="py-10"><Loading label="Loading Enquiry" /></div>;
 
-  const isDraft = rfq.isDraft && rfq.status === "Draft";
-  const flowIndex = RFQ_STATUSES.indexOf(rfq.status);
-  const terminal = ["Rejected", "Declined", "Expired", "Cancelled"].includes(rfq.status);
+  const isDraft = enquiry.isDraft && enquiry.status === "Draft";
+  const flowIndex = Enquiry_STATUSES.indexOf(enquiry.status);
+  const terminal = ["Rejected", "Declined", "Expired", "Cancelled"].includes(enquiry.status);
 
   // Additional requirements array
-  const additionalReqs = rfq.additionalRequirements ? rfq.additionalRequirements.split(", ").filter(Boolean) : [];
+  const additionalReqs = enquiry.additionalRequirements ? enquiry.additionalRequirements.split(", ").filter(Boolean) : [];
 
   // Tips
   const tips = [
@@ -207,22 +207,22 @@ export default function RfqDetailPage() {
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-6 border-b border-[var(--border-default)]">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight m-0">
-            RFQ — {rfq.productType}
+            Enquiry — {enquiry.productType}
           </h1>
           <div className="flex items-center gap-2 mt-2">
-            <StatusBadge status={isDraft ? "Draft" : rfq.status} />
+            <StatusBadge status={isDraft ? "Draft" : enquiry.status} />
           </div>
         </div>
         {isDraft && (
           <div className="flex items-center gap-2 shrink-0">
-            <Link to={`/customer/rfqs/${id}/edit`}
+            <Link to={`/customer/enquiries/${id}/edit`}
               className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg border border-[var(--border-default)] text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] transition-all no-underline">
               <FileEdit size={15} /> Save as Draft
             </Link>
             <button type="button" disabled={submitting} onClick={submitDraft}
               className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg bg-[var(--color-primary)] text-white text-xs font-semibold hover:bg-[var(--color-primary-hover)] disabled:opacity-50 transition-all">
               {submitting ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-              Submit RFQ
+              Submit Enquiry
             </button>
           </div>
         )}
@@ -235,14 +235,14 @@ export default function RfqDetailPage() {
         <div className="col-span-12 lg:col-span-3 lg:col-start-1 lg:row-start-1">
           <SectionCard title="Status">
             {terminal ? (
-              <p className="text-sm text-[var(--text-secondary)]">This RFQ has been <strong>{rfq.status.toLowerCase()}</strong>.</p>
+              <p className="text-sm text-[var(--text-secondary)]">This Enquiry has been <strong>{enquiry.status.toLowerCase()}</strong>.</p>
             ) : (
               <div className="space-y-1">
-                {RFQ_STATUSES.map((step, i) => {
+                {Enquiry_STATUSES.map((step, i) => {
                   const Icon = STATUS_ICONS[step] ?? Clock;
                   const isDone = i < flowIndex;
                   const isCurrent = i === flowIndex;
-                  if (["Rejected","Declined","Expired","Cancelled"].includes(step) && step !== rfq.status) return null;
+                  if (["Rejected","Declined","Expired","Cancelled"].includes(step) && step !== enquiry.status) return null;
                   // Approved and Rejected are mutually exclusive — show only the active one
                   return (
                     <div key={step} className={`flex gap-2.5 ${isCurrent ? "" : isDone ? "opacity-70" : "opacity-40"}`}>
@@ -254,7 +254,7 @@ export default function RfqDetailPage() {
                             ? "border-[1.5px] border-[var(--color-primary)]"
                             : "border-[1.5px] border-[var(--border-default)]"
                         }`} />
-                        {i < RFQ_STATUSES.length - 1 && <div className="w-px h-3.5 bg-[var(--border-default)]/60" />}
+                        {i < Enquiry_STATUSES.length - 1 && <div className="w-px h-3.5 bg-[var(--border-default)]/60" />}
                       </div>
                       <div className="flex items-center gap-1.5 min-w-0 py-0.5">
                         <Icon size={11} className={isCurrent ? "text-[var(--color-primary)]" : "text-[var(--text-muted)]"} />
@@ -269,9 +269,9 @@ export default function RfqDetailPage() {
             )}
             {isDraft && (
               <div className="mt-6 flex flex-col gap-3 pt-4 border-t border-[var(--border-default)]">
-                <Link to={`/customer/rfqs/${id}/edit`}
+                <Link to={`/customer/enquiries/${id}/edit`}
                   className="w-full flex items-center justify-center gap-2 px-4 h-10 rounded-lg border border-[var(--border-default)] text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] transition-all no-underline">
-                  <FileEdit size={15} /> Edit RFQ
+                  <FileEdit size={15} /> Edit Enquiry
                 </Link>
                 <button type="button" disabled={submitting} onClick={submitDraft}
                   className="w-full flex items-center justify-center gap-2 px-4 h-10 rounded-lg bg-[var(--color-primary)] text-white text-sm font-semibold hover:bg-[var(--color-primary-hover)] disabled:opacity-50 transition-all">
@@ -281,13 +281,13 @@ export default function RfqDetailPage() {
               </div>
             )}
 
-            {quotation && !isDraft && ["Quoted","Accepted","Declined"].includes(rfq.status) && (
+            {quotation && !isDraft && ["Quoted","Accepted","Declined"].includes(enquiry.status) && (
               <div className="mt-6 pt-4 border-t border-[var(--border-default)]">
                 <Link to={"/customer/quotations/" + quotation.id}
                   className="w-full flex items-center justify-center gap-2 px-4 h-10 rounded-lg bg-[var(--color-primary)] text-white text-sm font-semibold hover:bg-[var(--color-primary-hover)] transition-all no-underline">
                   <FileText size={14} /> View Quotation
                 </Link>
-                {rfq.status === "Quoted" && quotation.status === "Issued" && (
+                {enquiry.status === "Quoted" && quotation.status === "Issued" && (
                   <p className="text-[11px] text-[var(--text-muted)] mt-2 text-center">
                     You can accept or decline this quotation from the quotation page.
                   </p>
@@ -302,17 +302,17 @@ export default function RfqDetailPage() {
           <SectionCard title="Request Details" icon={FileText}>
             <div className="flex flex-col lg:flex-row gap-6 lg:items-start">
               <div className="flex-1 space-y-0">
-                <Field label="Requirement" value={rfq.productType} />
-                <Field label="Material Grade" value={rfq.materialGrade ?? "Not Available"} />
-                <Field label="Quantity" value={rfq.quantity} />
-                <Field label="Delivery Location" value={rfq.deliveryLocation ?? "Not Available"} />
-                <Field label="Submitted Date" value={formatDate(rfq.createdAtUtc)} />
-                <Field label="Draft" value={rfq.isDraft ? "Yes" : "No"} />
+                <Field label="Requirement" value={enquiry.productType} />
+                <Field label="Material Grade" value={enquiry.materialGrade ?? "Not Available"} />
+                <Field label="Quantity" value={enquiry.quantity} />
+                <Field label="Delivery Location" value={enquiry.deliveryLocation ?? "Not Available"} />
+                <Field label="Submitted Date" value={formatDate(enquiry.createdAtUtc)} />
+                <Field label="Draft" value={enquiry.isDraft ? "Yes" : "No"} />
               </div>
               <div className="shrink-0">
                 <div className="w-full sm:w-[250px] aspect-[4/3] rounded-2xl border border-[var(--border-default)] overflow-hidden">
-                  {rfq.files.length > 0 ? (
-                    <RfqImage rfqId={id} fileId={rfq.files[0].id} fileName={rfq.files[0].fileName} />
+                  {enquiry.files.length > 0 ? (
+                    <EnquiryImage enquiryId={id} fileId={enquiry.files[0].id} fileName={enquiry.files[0].fileName} />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-[var(--bg-surface)]">
                       <Package size={52} className="text-[var(--text-muted)] opacity-30" />
@@ -321,10 +321,10 @@ export default function RfqDetailPage() {
                 </div>
               </div>
             </div>
-            {rfq.requirementDetails && (
+            {enquiry.requirementDetails && (
               <div className="mt-6 pt-5 border-t border-[var(--border-default)]">
                 <span className="text-xs font-medium text-[var(--text-muted)] mb-2 block">Details</span>
-                <p className="text-sm text-[var(--text-primary)] leading-relaxed m-0">{rfq.requirementDetails}</p>
+                <p className="text-sm text-[var(--text-primary)] leading-relaxed m-0">{enquiry.requirementDetails}</p>
               </div>
             )}
           </SectionCard>
@@ -333,15 +333,15 @@ export default function RfqDetailPage() {
         {/* ══ RIGHT COLUMN (3) — Summary & Tips ══ */}
         <div className="col-span-12 lg:col-span-3 lg:col-start-10 lg:row-span-2 space-y-6 lg:sticky lg:top-6 lg:self-start">
 
-          {/* Card 1: RFQ Summary */}
-          <SectionCard title="RFQ Summary">
+          {/* Card 1: Enquiry Summary */}
+          <SectionCard title="Enquiry Summary">
             <div className="space-y-0">
-              <SummaryRow label="Requirement" value={rfq.productType} />
-              <SummaryRow label="Material Grade" value={rfq.materialGrade || "—"} />
-              <SummaryRow label="Quantity" value={rfq.productionQuantity || rfq.quantity} />
-              <SummaryRow label="Delivery Location" value={rfq.deliveryLocation || "—"} />
-              <SummaryRow label="Expected Delivery" value={rfq.expectedDeliveryDate ? formatDate(rfq.expectedDeliveryDate) : "—"} />
-              <SummaryRow label="Attachments" value={rfq.files.length > 0 ? `${rfq.files.length} file(s)` : "—"} />
+              <SummaryRow label="Requirement" value={enquiry.productType} />
+              <SummaryRow label="Material Grade" value={enquiry.materialGrade || "—"} />
+              <SummaryRow label="Quantity" value={enquiry.productionQuantity || enquiry.quantity} />
+              <SummaryRow label="Delivery Location" value={enquiry.deliveryLocation || "—"} />
+              <SummaryRow label="Expected Delivery" value={enquiry.expectedDeliveryDate ? formatDate(enquiry.expectedDeliveryDate) : "—"} />
+              <SummaryRow label="Attachments" value={enquiry.files.length > 0 ? `${enquiry.files.length} file(s)` : "—"} />
             </div>
           </SectionCard>
 
@@ -392,19 +392,19 @@ export default function RfqDetailPage() {
           </div>
         </div>
 
-        {/* ══ RFQ INFORMATION — below Status + Request Details ══ */}
+        {/* ══ Enquiry INFORMATION — below Status + Request Details ══ */}
         <div className="col-span-12 lg:col-span-9 lg:col-start-1 lg:row-start-2">
-          <SectionCard title="RFQ Information" icon={Info}>
+          <SectionCard title="Enquiry Information" icon={Info}>
             <div className="space-y-8">
 
               {/* 1. Basic Information */}
               <InfoSection number={1} title="Basic Information">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <InfoField label="Requirement Type" value={rfq.productType} />
-                  <InfoField label="Part Name" value={rfq.partName ?? "Not Available"} />
-                  <InfoField label="Part Number" value={rfq.partNumber ?? "Not Available"} />
-                  <InfoField label="Application" value={rfq.application ?? "Not Available"} />
-                  <InfoField label="Industry" value={rfq.industry ?? "Not Available"} />
+                  <InfoField label="Requirement Type" value={enquiry.productType} />
+                  <InfoField label="Part Name" value={enquiry.partName ?? "Not Available"} />
+                  <InfoField label="Part Number" value={enquiry.partNumber ?? "Not Available"} />
+                  <InfoField label="Application" value={enquiry.application ?? "Not Available"} />
+                  <InfoField label="Industry" value={enquiry.industry ?? "Not Available"} />
                 </div>
               </InfoSection>
               <div className="border-t border-[var(--border-default)]" />
@@ -412,11 +412,11 @@ export default function RfqDetailPage() {
               {/* 2. Material Details */}
               <InfoSection number={2} title="Material Details">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <InfoField label="Material Grade" value={rfq.materialGrade ?? "Not Available"} />
-                  <InfoField label="Standard" value={rfq.materialStandard ?? "Not Available"} />
-                  <InfoField label="Approx Weight" value={rfq.approxWeight != null ? `${rfq.approxWeight} kg` : "Not Available"} />
-                  <InfoField label="Machining Required" value={rfq.machiningRequired ?? "Not Available"} />
-                  <InfoField label="Pattern Availability" value={rfq.patternAvailability ?? "Not Available"} />
+                  <InfoField label="Material Grade" value={enquiry.materialGrade ?? "Not Available"} />
+                  <InfoField label="Standard" value={enquiry.materialStandard ?? "Not Available"} />
+                  <InfoField label="Approx Weight" value={enquiry.approxWeight != null ? `${enquiry.approxWeight} kg` : "Not Available"} />
+                  <InfoField label="Machining Required" value={enquiry.machiningRequired ?? "Not Available"} />
+                  <InfoField label="Pattern Availability" value={enquiry.patternAvailability ?? "Not Available"} />
                 </div>
               </InfoSection>
               <div className="border-t border-[var(--border-default)]" />
@@ -424,9 +424,9 @@ export default function RfqDetailPage() {
               {/* 3. Quantity Details */}
               <InfoSection number={3} title="Quantity Details">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <InfoField label="Prototype Quantity" value={rfq.prototypeQuantity ?? "Not Available"} />
-                  <InfoField label="Production Quantity" value={rfq.productionQuantity ?? rfq.quantity} />
-                  <InfoField label="Annual Requirement" value={rfq.annualRequirement ?? "Not Available"} />
+                  <InfoField label="Prototype Quantity" value={enquiry.prototypeQuantity ?? "Not Available"} />
+                  <InfoField label="Production Quantity" value={enquiry.productionQuantity ?? enquiry.quantity} />
+                  <InfoField label="Annual Requirement" value={enquiry.annualRequirement ?? "Not Available"} />
                 </div>
               </InfoSection>
               <div className="border-t border-[var(--border-default)]" />
@@ -434,9 +434,9 @@ export default function RfqDetailPage() {
               {/* 4. Delivery Details */}
               <InfoSection number={4} title="Delivery Details">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <InfoField label="Delivery Location" value={rfq.deliveryLocation ?? "Not Available"} />
-                  <InfoField label="Expected Delivery Date" value={rfq.expectedDeliveryDate ? formatDate(rfq.expectedDeliveryDate) : "Not Available"} />
-                  <InfoField label="Preferred Delivery Terms" value={rfq.preferredDeliveryTerms ?? "Not Available"} />
+                  <InfoField label="Delivery Location" value={enquiry.deliveryLocation ?? "Not Available"} />
+                  <InfoField label="Expected Delivery Date" value={enquiry.expectedDeliveryDate ? formatDate(enquiry.expectedDeliveryDate) : "Not Available"} />
+                  <InfoField label="Preferred Delivery Terms" value={enquiry.preferredDeliveryTerms ?? "Not Available"} />
                 </div>
               </InfoSection>
               <div className="border-t border-[var(--border-default)]" />
@@ -455,9 +455,9 @@ export default function RfqDetailPage() {
 
               {/* 6. Remarks */}
               <InfoSection number={6} title="Remarks">
-                {rfq.remarks ? (
+                {enquiry.remarks ? (
                   <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] px-4 py-3">
-                    <p className="text-sm text-[var(--text-primary)] leading-relaxed m-0 whitespace-pre-wrap">{rfq.remarks}</p>
+                    <p className="text-sm text-[var(--text-primary)] leading-relaxed m-0 whitespace-pre-wrap">{enquiry.remarks}</p>
                   </div>
                 ) : (
                   <p className="text-sm text-[var(--text-muted)]">No remarks</p>

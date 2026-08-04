@@ -44,7 +44,7 @@ function catStyle(cat: string): { color: string; bg: string } {
 
 const REPORTS: ReportDef[] = [
   { name: "Customer Report", category: "Customers", description: "Registered customers, contacts, and account status.", formats: ["PDF", "Excel", "CSV"], icon: Users, ...catStyle("Customers"), key: "customer" },
-  { name: "RFQ Report", category: "Sales", description: "All requests for quotation and their statuses.", formats: ["PDF", "Excel", "CSV"], icon: ClipboardList, ...catStyle("Sales"), key: "rfq" },
+  { name: "Enquiry Report", category: "Sales", description: "All requests for quotation and their statuses.", formats: ["PDF", "Excel", "CSV"], icon: ClipboardList, ...catStyle("Sales"), key: "enquiry" },
   { name: "Quotation Report", category: "Sales", description: "Quotations issued, accepted, and pending.", formats: ["PDF", "Excel", "CSV"], icon: FileText, ...catStyle("Sales"), key: "quotation" },
   { name: "Order Report", category: "Sales", description: "Confirmed orders and delivery milestones.", formats: ["PDF", "Excel", "CSV"], icon: ShoppingCart, ...catStyle("Sales"), key: "order" },
   { name: "Production Report", category: "Production", description: "Production jobs, stages, and output.", formats: ["PDF", "Excel", "CSV"], icon: Factory, ...catStyle("Production"), key: "production" },
@@ -79,20 +79,20 @@ export default function AdminReportsPage() {
   const [category, setCategory] = useState("All");
   const [dateRange, setDateRange] = useState("Last 7 Days");
   const [finance, setFinance] = useState<Finance | null>(null);
-  const [counts, setCounts] = useState<{ rfqs: number; quotations: number; orders: number; invoices: number } | null>(null);
+  const [counts, setCounts] = useState<{ enquiries: number; quotations: number; orders: number; invoices: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [preview, setPreview] = useState<{ name: string; content: string } | null>(null);
 
   const load = useCallback(() => {
     setLoading(true);
     Promise.all([
-      updaterApi.rfqs(1, 1).then((r) => r.totalCount).catch(() => 0),
+      updaterApi.enquiries(1, 1).then((r) => r.totalCount).catch(() => 0),
       updaterApi.quotations(1, 1).then((r) => r.totalCount).catch(() => 0),
       updaterApi.orders(1, 1).then((r) => r.totalCount).catch(() => 0),
       adminApi.invoices(1, 1).then((r) => r.totalCount).catch(() => 0),
       adminApi.financialDashboard().then(setFinance).catch(() => {}),
-    ]).then(([rfqs, quotations, orders, invoices]) => {
-      setCounts({ rfqs, quotations, orders, invoices });
+    ]).then(([enquiries, quotations, orders, invoices]) => {
+      setCounts({ enquiries, quotations, orders, invoices });
     }).finally(() => setLoading(false));
   }, []);
   useEffect(() => { void load(); }, [load]);
@@ -109,7 +109,7 @@ export default function AdminReportsPage() {
   const revenue = (finance?.collectedAmount ?? 0) + (finance?.outstandingAmount ?? 0);
 
   const kpis = [
-    { label: "Total RFQs", value: counts?.rfqs ?? 0, display: (counts?.rfqs ?? 0).toLocaleString(), hint: "Requests received", icon: ClipboardList, color: "var(--kpi-blue)", bg: "var(--kpi-blue-bg)", glow: "rgba(59,130,246,0.25)" },
+    { label: "Total Enquiries", value: counts?.enquiries ?? 0, display: (counts?.enquiries ?? 0).toLocaleString(), hint: "Requests received", icon: ClipboardList, color: "var(--kpi-blue)", bg: "var(--kpi-blue-bg)", glow: "rgba(59,130,246,0.25)" },
     { label: "Quotations Generated", value: counts?.quotations ?? 0, display: (counts?.quotations ?? 0).toLocaleString(), hint: "Quotations issued", icon: FileText, color: "var(--kpi-purple)", bg: "var(--kpi-purple-bg)", glow: "rgba(167,139,250,0.22)" },
     { label: "Orders Confirmed", value: counts?.orders ?? 0, display: (counts?.orders ?? 0).toLocaleString(), hint: "Confirmed orders", icon: ShoppingCart, color: "var(--kpi-orange)", bg: "var(--kpi-orange-bg)", glow: "rgba(249,115,22,0.22)" },
     { label: "Revenue", value: revenue, display: formatMoney(revenue), hint: "Collected + outstanding", icon: BarChart3, color: "var(--kpi-green)", bg: "var(--kpi-green-bg)", glow: "rgba(34,197,94,0.22)" },

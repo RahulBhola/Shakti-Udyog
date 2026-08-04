@@ -134,7 +134,7 @@ public class ProductionBoardService(AppDbContext db, IAuditWriter audit) : IProd
                 j.Status, j.IsBlocked, j.BlockReason,
                 j.CompanyId, j.Company.Name,
                 j.OrderId, j.Order != null ? j.Order.OrderNumber : null,
-                j.RfqId, j.Rfq != null ? j.Rfq.ProductType : null,
+                j.EnquiryId, j.Enquiry != null ? j.Enquiry.ProductType : null,
                 j.QuotationId, j.Quotation != null ? j.Quotation.QuotationNumber : null,
                 j.CreatedAtUtc, j.UpdatedAtUtc,
                 j.StageHistory.OrderByDescending(h => h.OccurredAtUtc).Select(h =>
@@ -162,7 +162,7 @@ public class ProductionBoardService(AppDbContext db, IAuditWriter audit) : IProd
             CastingName = request.CastingName,
             Quantity = request.Quantity,
             OrderId = request.OrderId,
-            RfqId = request.RfqId,
+            EnquiryId = request.EnquiryId,
             QuotationId = request.QuotationId,
             PartNumber = request.PartNumber,
             DrawingNumber = request.DrawingNumber,
@@ -175,7 +175,7 @@ public class ProductionBoardService(AppDbContext db, IAuditWriter audit) : IProd
             AssignedSupervisor = request.AssignedSupervisor,
             Department = request.Department,
             ProductionBatch = request.ProductionBatch,
-            CurrentStage = ProductionStageNames.NewRfqs,
+            CurrentStage = ProductionStageNames.NewEnquiries,
             Status = ProductionJobStatuses.Active,
         };
 
@@ -187,7 +187,7 @@ public class ProductionBoardService(AppDbContext db, IAuditWriter audit) : IProd
             Id = Guid.NewGuid(),
             JobId = job.Id,
             FromStage = "—",
-            ToStage = ProductionStageNames.NewRfqs,
+            ToStage = ProductionStageNames.NewEnquiries,
             ChangedByUserId = userId.ToString(),
             ChangedByName = null,
             Remarks = request.Notes,
@@ -430,7 +430,7 @@ public class ProductionBoardService(AppDbContext db, IAuditWriter audit) : IProd
 
         var totalActive = activeJobs.Count;
         var jobsInProduction = activeJobs.Count(j =>
-            j.CurrentStage != ProductionStageNames.NewRfqs &&
+            j.CurrentStage != ProductionStageNames.NewEnquiries &&
             j.CurrentStage != ProductionStageNames.Dispatched &&
             j.CurrentStage != ProductionStageNames.ReadyForDispatch);
         var delayedJobs = activeJobs.Count(j =>

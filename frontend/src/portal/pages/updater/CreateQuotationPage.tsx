@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { updaterApi, type UpdaterRfqDetail } from "../../../api/updaterApi";
+import { updaterApi, type UpdaterEnquiryDetail } from "../../../api/updaterApi";
 import { adminApi } from "../../../api/adminApi";
 import {
   ArrowLeft, Building2, Mail, Phone, Package, Calendar, Clock,
@@ -73,11 +73,11 @@ function Field({ label, value, icon: Icon }: { label: string; value: string; ico
 export default function CreateQuotationPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const rfqIdParam = searchParams.get("rfqId") ?? "";
+  const enquiryIdParam = searchParams.get("enquiryId") ?? "";
   const editQuotationId = searchParams.get("editQuotationId") ?? "";
 
   // ── State ─────────────────────────────────────────────────────
-  const [rfq, setRfq] = useState<UpdaterRfqDetail | null>(null);
+  const [enquiry, setEnquiry] = useState<UpdaterEnquiryDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -101,13 +101,13 @@ export default function CreateQuotationPage() {
     { id: "1", description: "", quantity: 0, unit: "pcs", unitPrice: 0, discountPercent: 0, gstPercent: 18, amount: 0 },
   ]);
 
-  // ── Load RFQ (or load existing quotation for editing) ────────
+  // ── Load Enquiry (or load existing quotation for editing) ────────
   useEffect(() => {
     if (editQuotationId) {
       updaterApi.quotation(editQuotationId).then(async (q) => {
-        // Load the originating RFQ for context
-        const rfqData = await updaterApi.rfq(q.rfqId).catch(() => null);
-        setRfq(rfqData);
+        // Load the originating Enquiry for context
+        const enquiryData = await updaterApi.enquiry(q.enquiryId).catch(() => null);
+        setEnquiry(enquiryData);
         // Pre-fill form fields from existing quotation
         setValidUntil(q.validUntilUtc ? q.validUntilUtc.slice(0, 10) : "");
         setPaymentTerms(q.paymentTerms ?? "");
@@ -137,11 +137,11 @@ export default function CreateQuotationPage() {
       }).catch(() => { setError("Quotation not found."); setLoading(false); });
       return;
     }
-    if (!rfqIdParam) { setLoading(false); setError("No RFQ ID provided."); return; }
-    updaterApi.rfq(rfqIdParam)
-      .then((data) => { setRfq(data); setLoading(false); })
-      .catch(() => { setError("RFQ not found or inaccessible."); setLoading(false); });
-  }, [rfqIdParam, editQuotationId]);
+    if (!enquiryIdParam) { setLoading(false); setError("No Enquiry ID provided."); return; }
+    updaterApi.enquiry(enquiryIdParam)
+      .then((data) => { setEnquiry(data); setLoading(false); })
+      .catch(() => { setError("Enquiry not found or inaccessible."); setLoading(false); });
+  }, [enquiryIdParam, editQuotationId]);
 
   // ── Auto-calculate line amounts ───────────────────────────────
   const calculatedItems = useMemo(() =>
@@ -180,25 +180,25 @@ export default function CreateQuotationPage() {
 
   // ── Save ──────────────────────────────────────────────────────
   async function handleSave(submit: boolean) {
-    if (!rfq) return;
+    if (!enquiry) return;
     setSaving(true);
     setSaveMsg(null);
     try {
-      // Resolve companyId if missing (RFQ may not have a linked company)
-      let companyId = rfq.companyId;
+      // Resolve companyId if missing (Enquiry may not have a linked company)
+      let companyId = enquiry.companyId;
       if (!companyId || companyId === "00000000-0000-0000-0000-000000000000") {
         const companies = await adminApi.companies();
-        const match = companies.find((c: any) => c.name === rfq.companyName);
+        const match = companies.find((c: any) => c.name === enquiry.companyName);
         if (match) companyId = match.id;
       }
       if (!companyId || companyId === "00000000-0000-0000-0000-000000000000") {
-        setSaveMsg("Failed: No company linked to this RFQ.");
+        setSaveMsg("Failed: No company linked to this Enquiry.");
         setSaving(false);
         return;
       }
 
       const payload = {
-        rfqId: rfq.id,
+        enquiryId: enquiry.id,
         companyId,
         currency,
         subtotal: totals.subtotal,
@@ -217,7 +217,7 @@ export default function CreateQuotationPage() {
           lineNumber: idx + 1,
           partNumber: `ITEM-${idx + 1}`,
           description: i.description,
-          materialGrade: rfq.materialGrade ?? undefined,
+          materialGrade: enquiry.materialGrade ?? undefined,
           quantity: i.quantity,
           unit: i.unit,
           unitPrice: i.unitPrice,
@@ -228,15 +228,15 @@ export default function CreateQuotationPage() {
       if (editQuotationId) {
         await updaterApi.updateQuotation(editQuotationId, payload);
         if (submit) {
-          // Advance RFQ to Quoted and submit the quotation
-          await updaterApi.updateRfqStatus(rfq?.id ?? "", "Quoted").catch(() => {});
+          // Advance Enquiry to Quoted and submit the quotation
+          await updaterApi.updateEnquiryStatus(enquiry?.id ?? "", "Quoted").catch(() => {});
           await updaterApi.submitQuotation(editQuotationId);
         }
         navigate(`/admin/quotations/${editQuotationId}`);
       } else {
         const { id } = await updaterApi.createQuotation(payload);
         if (submit) {
-          await updaterApi.updateRfqStatus(rfq.id, "Quoted").catch(() => {});
+          await updaterApi.updateEnquiryStatus(enquiry.id, "Quoted").catch(() => {});
           await updaterApi.submitQuotation(id);
         }
         navigate(`/admin/quotations/${id}`);
@@ -255,24 +255,24 @@ export default function CreateQuotationPage() {
       <div className="flex items-center justify-center py-24">
         <div className="flex flex-col items-center gap-3">
           <Loader2 size={28} className="animate-spin text-[var(--color-primary)]" />
-          <span className="text-[13px] text-[var(--text-muted)]">Loading RFQ details...</span>
+          <span className="text-[13px] text-[var(--text-muted)]">Loading Enquiry details...</span>
         </div>
       </div>
     );
   }
 
   // ── Error ─────────────────────────────────────────────────────
-  if (error || !rfq) {
+  if (error || !enquiry) {
     return (
       <div className="flex flex-col items-center justify-center py-24 px-4">
         <div className="w-14 h-14 rounded-2xl bg-red-50 dark:bg-red-500/10 flex items-center justify-center mb-4">
           <AlertCircle size={28} className="text-red-500" />
         </div>
         <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-1">Cannot Create Quotation</h3>
-        <p className="text-[13px] text-[var(--text-muted)] mb-6">{error ?? "RFQ data could not be loaded."}</p>
-        <button type="button" onClick={() => navigate("/admin/rfqs")}
+        <p className="text-[13px] text-[var(--text-muted)] mb-6">{error ?? "Enquiry data could not be loaded."}</p>
+        <button type="button" onClick={() => navigate("/admin/enquiries")}
           className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg border border-[var(--border-default)] text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all">
-          <ArrowLeft size={14} /> Back to RFQs
+          <ArrowLeft size={14} /> Back to Enquiries
         </button>
       </div>
     );
@@ -285,19 +285,19 @@ export default function CreateQuotationPage() {
       {/* ── Header ───────────────────────────────────────────── */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <button type="button" onClick={() => navigate(`/admin/rfqs/${rfq.id}`)}
+          <button type="button" onClick={() => navigate(`/admin/enquiries/${enquiry.id}`)}
             className="flex items-center justify-center w-8 h-8 rounded-lg border border-[var(--border-default)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all">
             <ArrowLeft size={15} />
           </button>
           <div>
             <h1 className="text-xl font-bold text-[var(--text-primary)]">{editQuotationId ? "Edit Quotation" : "Create Quotation"}</h1>
-            <p className="text-[12px] text-[var(--text-muted)]">Based on RFQ — {rfq.productType}</p>
+            <p className="text-[12px] text-[var(--text-muted)]">Based on Enquiry — {enquiry.productType}</p>
           </div>
         </div>
-        {!editQuotationId && rfq.status !== "Approved" && (
+        {!editQuotationId && enquiry.status !== "Approved" && (
           <div className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 text-[12px] font-medium">
             <AlertCircle size={14} />
-            RFQ must be Approved to generate quotation
+            Enquiry must be Approved to generate quotation
           </div>
         )}
       </div>
@@ -318,16 +318,16 @@ export default function CreateQuotationPage() {
         {/* ══ LEFT COLUMN ══ */}
         <div className="flex-1 min-w-0 space-y-5">
 
-          {/* ── RFQ Information (read-only) ──────────────────── */}
-          <Section title="RFQ Information" icon={FileText}>
+          {/* ── Enquiry Information (read-only) ──────────────────── */}
+          <Section title="Enquiry Information" icon={FileText}>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              <Field label="RFQ ID" value={`RFQ-${rfq.id.slice(0, 8).toUpperCase()}`} icon={Hash} />
-              <Field label="Customer" value={rfq.companyName} icon={Building2} />
-              <Field label="Contact Person" value={rfq.fullName} icon={User} />
-              <Field label="Email" value={rfq.email} icon={Mail} />
-              <Field label="Phone" value={rfq.phone || "—"} icon={Phone} />
-              <Field label="RFQ Date" value={formatDate(rfq.createdAtUtc)} icon={Calendar} />
-              <Field label="Status" value={rfq.status} icon={Clock} />
+              <Field label="Enquiry ID" value={`Enquiry-${enquiry.id.slice(0, 8).toUpperCase()}`} icon={Hash} />
+              <Field label="Customer" value={enquiry.companyName} icon={Building2} />
+              <Field label="Contact Person" value={enquiry.fullName} icon={User} />
+              <Field label="Email" value={enquiry.email} icon={Mail} />
+              <Field label="Phone" value={enquiry.phone || "—"} icon={Phone} />
+              <Field label="Enquiry Date" value={formatDate(enquiry.createdAtUtc)} icon={Calendar} />
+              <Field label="Status" value={enquiry.status} icon={Clock} />
             </div>
           </Section>
 
@@ -339,11 +339,11 @@ export default function CreateQuotationPage() {
               <div>
                 <h4 className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2.5">Part Details</h4>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                  <Field label="Product Type" value={rfq.productType} />
-                  <Field label="Part Name" value={rfq.partName ?? "—"} />
-                  <Field label="Part Number" value={rfq.partNumber ?? "—"} />
-                  <Field label="Application" value={rfq.application ?? "—"} />
-                  <Field label="Industry" value={rfq.industry ?? "—"} />
+                  <Field label="Product Type" value={enquiry.productType} />
+                  <Field label="Part Name" value={enquiry.partName ?? "—"} />
+                  <Field label="Part Number" value={enquiry.partNumber ?? "—"} />
+                  <Field label="Application" value={enquiry.application ?? "—"} />
+                  <Field label="Industry" value={enquiry.industry ?? "—"} />
                 </div>
               </div>
               <div className="border-t border-[var(--border-default)]" />
@@ -352,11 +352,11 @@ export default function CreateQuotationPage() {
               <div>
                 <h4 className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2.5">Material Details</h4>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                  <Field label="Material Grade" value={rfq.materialGrade ?? "—"} />
-                  <Field label="Material Standard" value={rfq.materialStandard ?? "—"} />
-                  <Field label="Approx Weight" value={rfq.approxWeight != null ? `${rfq.approxWeight} kg` : "—"} />
-                  <Field label="Machining Required" value={rfq.machiningRequired ?? "—"} />
-                  <Field label="Pattern Availability" value={rfq.patternAvailability ?? "—"} />
+                  <Field label="Material Grade" value={enquiry.materialGrade ?? "—"} />
+                  <Field label="Material Standard" value={enquiry.materialStandard ?? "—"} />
+                  <Field label="Approx Weight" value={enquiry.approxWeight != null ? `${enquiry.approxWeight} kg` : "—"} />
+                  <Field label="Machining Required" value={enquiry.machiningRequired ?? "—"} />
+                  <Field label="Pattern Availability" value={enquiry.patternAvailability ?? "—"} />
                 </div>
               </div>
               <div className="border-t border-[var(--border-default)]" />
@@ -365,10 +365,10 @@ export default function CreateQuotationPage() {
               <div>
                 <h4 className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2.5">Quantity Details</h4>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                  <Field label="Quantity" value={rfq.quantity} />
-                  <Field label="Prototype Quantity" value={rfq.prototypeQuantity ?? "—"} />
-                  <Field label="Production Quantity" value={rfq.productionQuantity ?? rfq.quantity} />
-                  <Field label="Annual Requirement" value={rfq.annualRequirement ?? "—"} />
+                  <Field label="Quantity" value={enquiry.quantity} />
+                  <Field label="Prototype Quantity" value={enquiry.prototypeQuantity ?? "—"} />
+                  <Field label="Production Quantity" value={enquiry.productionQuantity ?? enquiry.quantity} />
+                  <Field label="Annual Requirement" value={enquiry.annualRequirement ?? "—"} />
                 </div>
               </div>
               <div className="border-t border-[var(--border-default)]" />
@@ -377,33 +377,33 @@ export default function CreateQuotationPage() {
               <div>
                 <h4 className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2.5">Delivery Details</h4>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                  <Field label="Delivery Location" value={rfq.deliveryLocation ?? "—"} />
-                  <Field label="Expected Delivery Date" value={rfq.expectedDeliveryDate ? formatDate(rfq.expectedDeliveryDate) : "—"} />
-                  <Field label="Preferred Delivery Terms" value={rfq.preferredDeliveryTerms ?? "—"} />
+                  <Field label="Delivery Location" value={enquiry.deliveryLocation ?? "—"} />
+                  <Field label="Expected Delivery Date" value={enquiry.expectedDeliveryDate ? formatDate(enquiry.expectedDeliveryDate) : "—"} />
+                  <Field label="Preferred Delivery Terms" value={enquiry.preferredDeliveryTerms ?? "—"} />
                 </div>
               </div>
 
               {/* Requirements */}
-              {rfq.requirementDetails && (
+              {enquiry.requirementDetails && (
                 <>
                   <div className="border-t border-[var(--border-default)]" />
                   <div>
                     <h4 className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2.5">Requirements</h4>
                     <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2.5">
-                      <p className="text-[13px] text-[var(--text-primary)] leading-relaxed whitespace-pre-wrap m-0">{rfq.requirementDetails}</p>
+                      <p className="text-[13px] text-[var(--text-primary)] leading-relaxed whitespace-pre-wrap m-0">{enquiry.requirementDetails}</p>
                     </div>
                   </div>
                 </>
               )}
 
               {/* Additional Requirements */}
-              {rfq.additionalRequirements && (
+              {enquiry.additionalRequirements && (
                 <>
                   <div className="border-t border-[var(--border-default)]" />
                   <div>
                     <h4 className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2.5">Additional Requirements</h4>
                     <div className="flex flex-wrap gap-2">
-                      {rfq.additionalRequirements.split(", ").filter(Boolean).map((r: string) => (
+                      {enquiry.additionalRequirements.split(", ").filter(Boolean).map((r: string) => (
                         <span key={r} className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium bg-white dark:bg-[var(--bg-surface)] border border-[var(--border-default)] text-[var(--text-primary)]">
                           <CheckCircle size={11} className="text-emerald-500 shrink-0" />
                           {r}
@@ -415,28 +415,28 @@ export default function CreateQuotationPage() {
               )}
 
               {/* Remarks */}
-              {rfq.remarks && (
+              {enquiry.remarks && (
                 <>
                   <div className="border-t border-[var(--border-default)]" />
                   <div>
                     <h4 className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2.5">Remarks</h4>
                     <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2.5">
-                      <p className="text-[13px] text-[var(--text-primary)] leading-relaxed whitespace-pre-wrap m-0">{rfq.remarks}</p>
+                      <p className="text-[13px] text-[var(--text-primary)] leading-relaxed whitespace-pre-wrap m-0">{enquiry.remarks}</p>
                     </div>
                   </div>
                 </>
               )}
 
               {/* Attachments */}
-              {rfq.files.length > 0 && (
+              {enquiry.files.length > 0 && (
                 <>
                   <div className="border-t border-[var(--border-default)]" />
                   <div>
                     <h4 className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2.5 flex items-center gap-1.5">
-                      <Paperclip size={12} /> Attachments ({rfq.files.length})
+                      <Paperclip size={12} /> Attachments ({enquiry.files.length})
                     </h4>
                     <div className="flex flex-wrap gap-2">
-                      {rfq.files.map((f) => (
+                      {enquiry.files.map((f) => (
                         <span key={f.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[var(--bg-surface-hover)] text-[11px] text-[var(--text-secondary)]">
                           <FileText size={11} />
                           {f.fileName}
@@ -623,12 +623,12 @@ export default function CreateQuotationPage() {
 
             {/* Action buttons */}
             <div className="px-5 pb-5 space-y-2">
-              <button type="button" disabled={saving || !hasItems || (!editQuotationId && rfq.status !== "Approved")} onClick={() => void handleSave(false)}
+              <button type="button" disabled={saving || !hasItems || (!editQuotationId && enquiry.status !== "Approved")} onClick={() => void handleSave(false)}
                 className="w-full flex items-center justify-center gap-1.5 h-10 rounded-xl bg-[var(--color-primary)] text-white text-[12px] font-semibold hover:bg-[var(--color-primary-hover)] disabled:opacity-50 transition-all">
                 {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                 Save Draft
               </button>
-              <button type="button" disabled={saving || !hasItems || (!editQuotationId && rfq.status !== "Approved")} onClick={() => void handleSave(true)}
+              <button type="button" disabled={saving || !hasItems || (!editQuotationId && enquiry.status !== "Approved")} onClick={() => void handleSave(true)}
                 className="w-full flex items-center justify-center gap-1.5 h-10 rounded-xl border border-[var(--border-default)] text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] disabled:opacity-50 transition-all">
                 <Send size={14} /> Submit for Approval
               </button>

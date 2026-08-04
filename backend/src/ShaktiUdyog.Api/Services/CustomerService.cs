@@ -23,14 +23,14 @@ public interface ICustomerService
 {
     Task<DashboardDto> GetDashboardAsync(CustomerContext ctx);
 
-    Task<PagedResult<RfqListItemDto>> GetRfqsAsync(CustomerContext ctx, int page = 1, int pageSize = 20, string? search = null, string? status = null);
-    Task<RfqDetailDto?> GetRfqAsync(CustomerContext ctx, Guid rfqId);
-    Task<Guid> CreateRfqAsync(CustomerContext ctx, CreateRfqRequest request, string? ip);
-    Task<RfqFileDto?> AttachRfqFileAsync(CustomerContext ctx, Guid rfqId, IFormFile file, string? ip);
-    Task<bool?> UpdateDraftRfqAsync(CustomerContext ctx, Guid rfqId, UpdateRfqRequest request, string? ip);
-    Task<bool?> DeleteDraftRfqAsync(CustomerContext ctx, Guid rfqId, string? ip);
-    Task<bool?> SubmitDraftRfqAsync(CustomerContext ctx, Guid rfqId, string? ip);
-    Task<IReadOnlyList<RfqTimelineEntryDto>?> GetRfqTimelineAsync(CustomerContext ctx, Guid rfqId);
+    Task<PagedResult<EnquiryListItemDto>> GetEnquiriesAsync(CustomerContext ctx, int page = 1, int pageSize = 20, string? search = null, string? status = null);
+    Task<EnquiryDetailDto?> GetEnquiryAsync(CustomerContext ctx, Guid enquiryId);
+    Task<Guid> CreateEnquiryAsync(CustomerContext ctx, CreateEnquiryRequest request, string? ip);
+    Task<EnquiryFileDto?> AttachEnquiryFileAsync(CustomerContext ctx, Guid enquiryId, IFormFile file, string? ip);
+    Task<bool?> UpdateDraftEnquiryAsync(CustomerContext ctx, Guid enquiryId, UpdateEnquiryRequest request, string? ip);
+    Task<bool?> DeleteDraftEnquiryAsync(CustomerContext ctx, Guid enquiryId, string? ip);
+    Task<bool?> SubmitDraftEnquiryAsync(CustomerContext ctx, Guid enquiryId, string? ip);
+    Task<IReadOnlyList<EnquiryTimelineEntryDto>?> GetEnquiryTimelineAsync(CustomerContext ctx, Guid enquiryId);
 
     Task<IReadOnlyList<QuotationListItemDto>> GetQuotationsAsync(CustomerContext ctx);
     Task<QuotationDetailDto?> GetQuotationAsync(CustomerContext ctx, Guid quotationId);
@@ -70,9 +70,9 @@ public class CustomerService(
     {
         var companies = ctx.CompanyIds;
 
-        var openRfqs = await db.Rfqs.CountAsync(r =>
+        var openEnquiries = await db.Enquiries.CountAsync(r =>
             r.CompanyId != null && companies.Contains(r.CompanyId.Value)
-            && (r.Status == RfqStatuses.Received || r.Status == RfqStatuses.UnderReview));
+            && (r.Status == EnquiryStatuses.Received || r.Status == EnquiryStatuses.UnderReview));
         var activeQuotes = await db.Quotations.CountAsync(q =>
             companies.Contains(q.CompanyId) && q.Status == QuotationStatuses.Issued);
         var activeOrders = await db.Orders.CountAsync(o =>
@@ -105,18 +105,18 @@ public class CustomerService(
                 m.OccurredAtUtc))
             .ToList();
 
-        return new DashboardDto(openRfqs, activeQuotes, activeOrders, unpaidInvoices, unread, activity, recentDocs);
+        return new DashboardDto(openEnquiries, activeQuotes, activeOrders, unpaidInvoices, unread, activity, recentDocs);
     }
 
-    // ---- RFQs ---------------------------------------------------------------
+    // ---- Enquirys ---------------------------------------------------------------
 
-    public async Task<PagedResult<RfqListItemDto>> GetRfqsAsync(
+    public async Task<PagedResult<EnquiryListItemDto>> GetEnquiriesAsync(
         CustomerContext ctx, int page = 1, int pageSize = 20, string? search = null, string? status = null)
     {
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, 100);
 
-        var query = db.Rfqs.Where(r => r.CompanyId != null && ctx.CompanyIds.Contains(r.CompanyId.Value));
+        var query = db.Enquiries.Where(r => r.CompanyId != null && ctx.CompanyIds.Contains(r.CompanyId.Value));
 
         if (!string.IsNullOrWhiteSpace(search))
         {
@@ -133,21 +133,21 @@ public class CustomerService(
             .OrderByDescending(r => r.CreatedAtUtc)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(r => new RfqListItemDto(
+            .Select(r => new EnquiryListItemDto(
                 r.Id, r.ProductType, r.Quantity, r.Status, r.IsDraft, r.Files.Count, r.CreatedAtUtc,
                 r.PartName, r.PartNumber, r.Industry, r.ProductionQuantity))
             .ToListAsync();
 
-        return new PagedResult<RfqListItemDto>(items, page, pageSize, total);
+        return new PagedResult<EnquiryListItemDto>(items, page, pageSize, total);
     }
 
-    public async Task<RfqDetailDto?> GetRfqAsync(CustomerContext ctx, Guid rfqId) =>
-        await db.Rfqs
-            .Where(r => r.Id == rfqId && r.CompanyId != null && ctx.CompanyIds.Contains(r.CompanyId.Value))
-            .Select(r => new RfqDetailDto(
+    public async Task<EnquiryDetailDto?> GetEnquiryAsync(CustomerContext ctx, Guid enquiryId) =>
+        await db.Enquiries
+            .Where(r => r.Id == enquiryId && r.CompanyId != null && ctx.CompanyIds.Contains(r.CompanyId.Value))
+            .Select(r => new EnquiryDetailDto(
                 r.Id, r.FullName, r.CompanyName, r.ProductType, r.MaterialGrade, r.Quantity,
                 r.DeliveryLocation, r.RequirementDetails, r.Status, r.IsDraft,
-                r.Files.Select(f => new RfqFileDto(f.Id, f.FileName, f.SizeBytes, f.UploadedAtUtc)).ToList(),
+                r.Files.Select(f => new EnquiryFileDto(f.Id, f.FileName, f.SizeBytes, f.UploadedAtUtc)).ToList(),
                 r.CreatedAtUtc,
                 r.PartName, r.PartNumber, r.Industry, r.Application,
                 r.MaterialStandard, r.ApproxWeight, r.MachiningRequired, r.PatternAvailability,
@@ -155,7 +155,7 @@ public class CustomerService(
                 r.ExpectedDeliveryDate, r.PreferredDeliveryTerms, r.AdditionalRequirements, r.Remarks))
             .SingleOrDefaultAsync();
 
-    public async Task<Guid> CreateRfqAsync(CustomerContext ctx, CreateRfqRequest request, string? ip)
+    public async Task<Guid> CreateEnquiryAsync(CustomerContext ctx, CreateEnquiryRequest request, string? ip)
     {
         var user = await userManager.FindByIdAsync(ctx.UserId.ToString())
             ?? throw new InvalidOperationException("Authenticated user not found.");
@@ -163,7 +163,7 @@ public class CustomerService(
         var company = await db.Companies.SingleAsync(c => c.Id == companyId);
 
         var now = DateTimeOffset.UtcNow;
-        var rfq = new Rfq
+        var enquiry = new Enquiry
         {
             Id = Guid.NewGuid(),
             CompanyId = companyId,
@@ -179,7 +179,7 @@ public class CustomerService(
             RequirementDetails = request.RequirementDetails,
             ConsentGiven = true,
             IsDraft = request.SaveAsDraft,
-            Status = request.SaveAsDraft ? RfqStatuses.Draft : RfqStatuses.Submitted,
+            Status = request.SaveAsDraft ? EnquiryStatuses.Draft : EnquiryStatuses.Submitted,
             SubmittedByIp = ip,
             PartName = request.PartName,
             PartNumber = request.PartNumber,
@@ -198,33 +198,33 @@ public class CustomerService(
             Remarks = request.Remarks,
         };
 
-        db.Rfqs.Add(rfq);
+        db.Enquiries.Add(enquiry);
 
         if (!request.SaveAsDraft)
         {
-            db.RfqStatusHistories.Add(new RfqStatusHistory
+            db.EnquiryStatusHistories.Add(new EnquiryStatusHistory
             {
                 Id = Guid.NewGuid(),
-                RfqId = rfq.Id,
+                EnquiryId = enquiry.Id,
                 FromStatus = "New",
-                ToStatus = RfqStatuses.Submitted,
+                ToStatus = EnquiryStatuses.Submitted,
                 ChangedByUserId = ctx.UserId,
                 ChangedByRole = "Customer",
-                Note = "RFQ created and submitted",
+                Note = "Enquiry created and submitted",
                 CreatedAtUtc = now,
             });
         }
 
         await db.SaveChangesAsync();
-        await audit.WriteAsync("customer.rfq.created", ctx.UserId, "Rfq", rfq.Id.ToString(), ip);
-        return rfq.Id;
+        await audit.WriteAsync("customer.enquiry.created", ctx.UserId, "Enquiry", enquiry.Id.ToString(), ip);
+        return enquiry.Id;
     }
 
-    public async Task<RfqFileDto?> AttachRfqFileAsync(CustomerContext ctx, Guid rfqId, IFormFile file, string? ip)
+    public async Task<EnquiryFileDto?> AttachEnquiryFileAsync(CustomerContext ctx, Guid enquiryId, IFormFile file, string? ip)
     {
-        var rfq = await db.Rfqs.SingleOrDefaultAsync(r =>
-            r.Id == rfqId && r.CompanyId != null && ctx.CompanyIds.Contains(r.CompanyId.Value));
-        if (rfq is null)
+        var enquiry = await db.Enquiries.SingleOrDefaultAsync(r =>
+            r.Id == enquiryId && r.CompanyId != null && ctx.CompanyIds.Contains(r.CompanyId.Value));
+        if (enquiry is null)
         {
             return null;
         }
@@ -232,10 +232,10 @@ public class CustomerService(
         await using var stream = file.OpenReadStream();
         var stored = await storage.SaveAsync(stream, file.FileName, file.ContentType);
 
-        var rfqFile = new RfqFile
+        var enquiryFile = new EnquiryFile
         {
             Id = Guid.NewGuid(),
-            RfqId = rfq.Id,
+            EnquiryId = enquiry.Id,
             FileName = Path.GetFileName(file.FileName),
             ContentType = file.ContentType,
             SizeBytes = stored.SizeBytes,
@@ -243,92 +243,92 @@ public class CustomerService(
             UploadedByUserId = ctx.UserId,
         };
 
-        db.RfqFiles.Add(rfqFile);
+        db.EnquiryFiles.Add(enquiryFile);
         await db.SaveChangesAsync();
-        await audit.WriteAsync("customer.rfq.file_uploaded", ctx.UserId, "RfqFile", rfqFile.Id.ToString(), ip);
-        return new RfqFileDto(rfqFile.Id, rfqFile.FileName, rfqFile.SizeBytes, rfqFile.UploadedAtUtc);
+        await audit.WriteAsync("customer.enquiry.file_uploaded", ctx.UserId, "EnquiryFile", enquiryFile.Id.ToString(), ip);
+        return new EnquiryFileDto(enquiryFile.Id, enquiryFile.FileName, enquiryFile.SizeBytes, enquiryFile.UploadedAtUtc);
     }
 
     /// <returns>null = not found; false = not in draft state; true = saved.</returns>
-    public async Task<bool?> UpdateDraftRfqAsync(CustomerContext ctx, Guid rfqId, UpdateRfqRequest request, string? ip)
+    public async Task<bool?> UpdateDraftEnquiryAsync(CustomerContext ctx, Guid enquiryId, UpdateEnquiryRequest request, string? ip)
     {
-        var rfq = await db.Rfqs.SingleOrDefaultAsync(r =>
-            r.Id == rfqId && r.CompanyId != null && ctx.CompanyIds.Contains(r.CompanyId.Value));
-        if (rfq is null) return null;
-        if (!rfq.IsDraft || rfq.Status != RfqStatuses.Draft) return false;
+        var enquiry = await db.Enquiries.SingleOrDefaultAsync(r =>
+            r.Id == enquiryId && r.CompanyId != null && ctx.CompanyIds.Contains(r.CompanyId.Value));
+        if (enquiry is null) return null;
+        if (!enquiry.IsDraft || enquiry.Status != EnquiryStatuses.Draft) return false;
 
-        if (request.ProductType is not null) rfq.ProductType = request.ProductType;
-        if (request.MaterialGrade is not null) rfq.MaterialGrade = request.MaterialGrade;
-        if (request.Quantity is not null) rfq.Quantity = request.Quantity;
-        if (request.DeliveryLocation is not null) rfq.DeliveryLocation = request.DeliveryLocation;
-        if (request.RequirementDetails is not null) rfq.RequirementDetails = request.RequirementDetails;
-        if (request.PartName is not null) rfq.PartName = request.PartName;
-        if (request.PartNumber is not null) rfq.PartNumber = request.PartNumber;
-        if (request.Industry is not null) rfq.Industry = request.Industry;
-        if (request.Application is not null) rfq.Application = request.Application;
-        if (request.MaterialStandard is not null) rfq.MaterialStandard = request.MaterialStandard;
-        if (request.ApproxWeight is not null) rfq.ApproxWeight = request.ApproxWeight;
-        if (request.MachiningRequired is not null) rfq.MachiningRequired = request.MachiningRequired;
-        if (request.PatternAvailability is not null) rfq.PatternAvailability = request.PatternAvailability;
-        if (request.PrototypeQuantity is not null) rfq.PrototypeQuantity = request.PrototypeQuantity;
-        if (request.ProductionQuantity is not null) rfq.ProductionQuantity = request.ProductionQuantity;
-        if (request.AnnualRequirement is not null) rfq.AnnualRequirement = request.AnnualRequirement;
-        if (request.ExpectedDeliveryDate is not null) rfq.ExpectedDeliveryDate = request.ExpectedDeliveryDate;
-        if (request.PreferredDeliveryTerms is not null) rfq.PreferredDeliveryTerms = request.PreferredDeliveryTerms;
-        if (request.AdditionalRequirements is not null) rfq.AdditionalRequirements = request.AdditionalRequirements;
-        if (request.Remarks is not null) rfq.Remarks = request.Remarks;
+        if (request.ProductType is not null) enquiry.ProductType = request.ProductType;
+        if (request.MaterialGrade is not null) enquiry.MaterialGrade = request.MaterialGrade;
+        if (request.Quantity is not null) enquiry.Quantity = request.Quantity;
+        if (request.DeliveryLocation is not null) enquiry.DeliveryLocation = request.DeliveryLocation;
+        if (request.RequirementDetails is not null) enquiry.RequirementDetails = request.RequirementDetails;
+        if (request.PartName is not null) enquiry.PartName = request.PartName;
+        if (request.PartNumber is not null) enquiry.PartNumber = request.PartNumber;
+        if (request.Industry is not null) enquiry.Industry = request.Industry;
+        if (request.Application is not null) enquiry.Application = request.Application;
+        if (request.MaterialStandard is not null) enquiry.MaterialStandard = request.MaterialStandard;
+        if (request.ApproxWeight is not null) enquiry.ApproxWeight = request.ApproxWeight;
+        if (request.MachiningRequired is not null) enquiry.MachiningRequired = request.MachiningRequired;
+        if (request.PatternAvailability is not null) enquiry.PatternAvailability = request.PatternAvailability;
+        if (request.PrototypeQuantity is not null) enquiry.PrototypeQuantity = request.PrototypeQuantity;
+        if (request.ProductionQuantity is not null) enquiry.ProductionQuantity = request.ProductionQuantity;
+        if (request.AnnualRequirement is not null) enquiry.AnnualRequirement = request.AnnualRequirement;
+        if (request.ExpectedDeliveryDate is not null) enquiry.ExpectedDeliveryDate = request.ExpectedDeliveryDate;
+        if (request.PreferredDeliveryTerms is not null) enquiry.PreferredDeliveryTerms = request.PreferredDeliveryTerms;
+        if (request.AdditionalRequirements is not null) enquiry.AdditionalRequirements = request.AdditionalRequirements;
+        if (request.Remarks is not null) enquiry.Remarks = request.Remarks;
 
         await db.SaveChangesAsync();
-        await audit.WriteAsync("customer.rfq.updated", ctx.UserId, "Rfq", rfq.Id.ToString(), ip);
+        await audit.WriteAsync("customer.enquiry.updated", ctx.UserId, "Enquiry", enquiry.Id.ToString(), ip);
         return true;
     }
 
     /// <returns>null = not found; false = not in draft state; true = deleted.</returns>
-    public async Task<bool?> DeleteDraftRfqAsync(CustomerContext ctx, Guid rfqId, string? ip)
+    public async Task<bool?> DeleteDraftEnquiryAsync(CustomerContext ctx, Guid enquiryId, string? ip)
     {
-        var rfq = await db.Rfqs.SingleOrDefaultAsync(r =>
-            r.Id == rfqId && r.CompanyId != null && ctx.CompanyIds.Contains(r.CompanyId.Value));
-        if (rfq is null) return null;
-        if (!rfq.IsDraft || rfq.Status != RfqStatuses.Draft) return false;
+        var enquiry = await db.Enquiries.SingleOrDefaultAsync(r =>
+            r.Id == enquiryId && r.CompanyId != null && ctx.CompanyIds.Contains(r.CompanyId.Value));
+        if (enquiry is null) return null;
+        if (!enquiry.IsDraft || enquiry.Status != EnquiryStatuses.Draft) return false;
 
-        rfq.IsDeleted = true;
-        rfq.DeletedAtUtc = DateTimeOffset.UtcNow;
-        rfq.Status = RfqStatuses.Cancelled;
+        enquiry.IsDeleted = true;
+        enquiry.DeletedAtUtc = DateTimeOffset.UtcNow;
+        enquiry.Status = EnquiryStatuses.Cancelled;
 
-        db.RfqStatusHistories.Add(new RfqStatusHistory
+        db.EnquiryStatusHistories.Add(new EnquiryStatusHistory
         {
             Id = Guid.NewGuid(),
-            RfqId = rfq.Id,
-            FromStatus = RfqStatuses.Draft,
-            ToStatus = RfqStatuses.Cancelled,
+            EnquiryId = enquiry.Id,
+            FromStatus = EnquiryStatuses.Draft,
+            ToStatus = EnquiryStatuses.Cancelled,
             ChangedByUserId = ctx.UserId,
             ChangedByRole = "Customer",
             Note = "Draft cancelled by customer",
         });
 
         await db.SaveChangesAsync();
-        await audit.WriteAsync("customer.rfq.deleted", ctx.UserId, "Rfq", rfq.Id.ToString(), ip);
+        await audit.WriteAsync("customer.enquiry.deleted", ctx.UserId, "Enquiry", enquiry.Id.ToString(), ip);
         return true;
     }
 
     /// <returns>null = not found; false = not a draft; true = submitted.</returns>
-    public async Task<bool?> SubmitDraftRfqAsync(CustomerContext ctx, Guid rfqId, string? ip)
+    public async Task<bool?> SubmitDraftEnquiryAsync(CustomerContext ctx, Guid enquiryId, string? ip)
     {
-        var rfq = await db.Rfqs.SingleOrDefaultAsync(r =>
-            r.Id == rfqId && r.CompanyId != null && ctx.CompanyIds.Contains(r.CompanyId.Value));
-        if (rfq is null) return null;
-        if (!rfq.IsDraft || rfq.Status != RfqStatuses.Draft) return false;
+        var enquiry = await db.Enquiries.SingleOrDefaultAsync(r =>
+            r.Id == enquiryId && r.CompanyId != null && ctx.CompanyIds.Contains(r.CompanyId.Value));
+        if (enquiry is null) return null;
+        if (!enquiry.IsDraft || enquiry.Status != EnquiryStatuses.Draft) return false;
 
         var now = DateTimeOffset.UtcNow;
-        rfq.IsDraft = false;
-        rfq.Status = RfqStatuses.Submitted;
+        enquiry.IsDraft = false;
+        enquiry.Status = EnquiryStatuses.Submitted;
 
-        db.RfqStatusHistories.Add(new RfqStatusHistory
+        db.EnquiryStatusHistories.Add(new EnquiryStatusHistory
         {
             Id = Guid.NewGuid(),
-            RfqId = rfq.Id,
-            FromStatus = RfqStatuses.Draft,
-            ToStatus = RfqStatuses.Submitted,
+            EnquiryId = enquiry.Id,
+            FromStatus = EnquiryStatuses.Draft,
+            ToStatus = EnquiryStatuses.Submitted,
             ChangedByUserId = ctx.UserId,
             ChangedByRole = "Customer",
             Note = "Draft submitted by customer",
@@ -336,21 +336,21 @@ public class CustomerService(
         });
 
         await db.SaveChangesAsync();
-        await audit.WriteAsync("customer.rfq.submitted", ctx.UserId, "Rfq", rfq.Id.ToString(), ip);
+        await audit.WriteAsync("customer.enquiry.submitted", ctx.UserId, "Enquiry", enquiry.Id.ToString(), ip);
         return true;
     }
 
-    /// <returns>null when the RFQ is not found/accessible; timeline entries otherwise.</returns>
-    public async Task<IReadOnlyList<RfqTimelineEntryDto>?> GetRfqTimelineAsync(CustomerContext ctx, Guid rfqId)
+    /// <returns>null when the Enquiry is not found/accessible; timeline entries otherwise.</returns>
+    public async Task<IReadOnlyList<EnquiryTimelineEntryDto>?> GetEnquiryTimelineAsync(CustomerContext ctx, Guid enquiryId)
     {
-        var exists = await db.Rfqs.AnyAsync(r =>
-            r.Id == rfqId && r.CompanyId != null && ctx.CompanyIds.Contains(r.CompanyId.Value));
+        var exists = await db.Enquiries.AnyAsync(r =>
+            r.Id == enquiryId && r.CompanyId != null && ctx.CompanyIds.Contains(r.CompanyId.Value));
         if (!exists) return null;
 
-        var history = await db.RfqStatusHistories
-            .Where(h => h.RfqId == rfqId)
+        var history = await db.EnquiryStatusHistories
+            .Where(h => h.EnquiryId == enquiryId)
             .OrderBy(h => h.CreatedAtUtc)
-            .Select(h => new RfqTimelineEntryDto(
+            .Select(h => new EnquiryTimelineEntryDto(
                 h.FromStatus, h.ToStatus, h.ChangedByRole, h.Note, h.CreatedAtUtc))
             .ToListAsync();
 
@@ -364,9 +364,9 @@ public class CustomerService(
             .Where(q => ctx.CompanyIds.Contains(q.CompanyId) && q.Status != QuotationStatuses.Draft)
             .OrderByDescending(q => q.CreatedAtUtc)
             .Select(q => new QuotationListItemDto(
-                q.Id, q.QuotationNumber, q.RevisionNumber, q.RfqId, q.Rfq.ProductType, q.Total, q.Currency,
+                q.Id, q.QuotationNumber, q.RevisionNumber, q.EnquiryId, q.Enquiry.ProductType, q.Total, q.Currency,
                 q.Status, q.ValidUntilUtc, q.CreatedAtUtc,
-                q.Rfq.CompanyName, q.Items.Count, q.PaymentTerms, q.DeliveryTime))
+                q.Enquiry.CompanyName, q.Items.Count, q.PaymentTerms, q.DeliveryTime))
             .ToListAsync();
 
     public async Task<QuotationDetailDto?> GetQuotationAsync(CustomerContext ctx, Guid quotationId)
@@ -383,7 +383,7 @@ public class CustomerService(
             .FirstOrDefaultAsync();
 
         return new QuotationDetailDto(
-            q.Id, q.QuotationNumber, q.RevisionNumber, q.RfqId, q.Rfq?.ProductType ?? "",
+            q.Id, q.QuotationNumber, q.RevisionNumber, q.EnquiryId, q.Enquiry?.ProductType ?? "",
             q.Subtotal, q.Tax, q.Discount, q.Total, q.Currency,
             q.PaymentTerms, q.DeliveryTerms, q.Freight, q.Packing, q.Remarks,
             q.DeliveryTime, q.Warranty,
@@ -447,12 +447,12 @@ public class CustomerService(
             CreatedAtUtc = DateTimeOffset.UtcNow,
         });
 
-        var rfq = await db.Rfqs.SingleOrDefaultAsync(r => r.Id == quotation.RfqId);
-        if (rfq is not null)
+        var enquiry = await db.Enquiries.SingleOrDefaultAsync(r => r.Id == quotation.EnquiryId);
+        if (enquiry is not null)
         {
-            rfq.Status = request.Response == "accept" ? RfqStatuses.Accepted
-                : request.Response == "negotiate" ? RfqStatuses.UnderReview
-                : RfqStatuses.Declined;
+            enquiry.Status = request.Response == "accept" ? EnquiryStatuses.Accepted
+                : request.Response == "negotiate" ? EnquiryStatuses.UnderReview
+                : EnquiryStatuses.Declined;
         }
 
         await db.SaveChangesAsync();

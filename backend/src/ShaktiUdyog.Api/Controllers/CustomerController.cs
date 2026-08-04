@@ -60,90 +60,90 @@ public class CustomerController(
         return Ok(await customerService.GetDashboardAsync(ctx!));
     }
 
-    // ---- RFQs ---------------------------------------------------------------
+    // ---- Enquirys ---------------------------------------------------------------
 
-    [HttpGet("rfqs")]
-    [ProducesResponseType<IReadOnlyList<RfqListItemDto>>(StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetRfqs()
+    [HttpGet("enquiries")]
+    [ProducesResponseType<IReadOnlyList<EnquiryListItemDto>>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetEnquiries()
     {
         var (ctx, failure) = await RequireContextAsync();
         if (failure is not null) return failure;
-        return Ok(await customerService.GetRfqsAsync(ctx!));
+        return Ok(await customerService.GetEnquiriesAsync(ctx!));
     }
 
-    [HttpGet("rfqs/{id:guid}")]
-    [ProducesResponseType<RfqDetailDto>(StatusCodes.Status200OK)]
+    [HttpGet("enquiries/{id:guid}")]
+    [ProducesResponseType<EnquiryDetailDto>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetRfq(Guid id)
+    public async Task<IActionResult> GetEnquiry(Guid id)
     {
         var (ctx, failure) = await RequireContextAsync();
         if (failure is not null) return failure;
-        var rfq = await customerService.GetRfqAsync(ctx!, id);
-        return rfq is null ? NotFound() : Ok(rfq);
+        var enquiry = await customerService.GetEnquiryAsync(ctx!, id);
+        return enquiry is null ? NotFound() : Ok(enquiry);
     }
 
-    [HttpPost("rfqs")]
+    [HttpPost("enquiries")]
     [EnableRateLimiting("public")]
     [ProducesResponseType(StatusCodes.Status201Created)]
-    public async Task<IActionResult> CreateRfq(CreateRfqRequest request)
+    public async Task<IActionResult> CreateEnquiry(CreateEnquiryRequest request)
     {
         var (ctx, failure) = await RequireContextAsync();
         if (failure is not null) return failure;
 
-        if (!Contracts.Public.RfqRequest.AllowedProductTypes.Contains(request.ProductType))
+        if (!Contracts.Public.EnquiryRequest.AllowedProductTypes.Contains(request.ProductType))
         {
             ModelState.AddModelError(nameof(request.ProductType), "Unknown requirement type.");
             return ValidationProblem(ModelState);
         }
 
-        var id = await customerService.CreateRfqAsync(ctx!, request, ClientIp);
-        return CreatedAtAction(nameof(GetRfq), new { id }, new { id });
+        var id = await customerService.CreateEnquiryAsync(ctx!, request, ClientIp);
+        return CreatedAtAction(nameof(GetEnquiry), new { id }, new { id });
     }
 
-    /// <summary>Update a draft RFQ. Only draft RFQs can be edited.</summary>
-    [HttpPatch("rfqs/{id:guid}")]
-    public async Task<IActionResult> UpdateRfq(Guid id, UpdateRfqRequest request)
+    /// <summary>Update a draft Enquiry. Only draft Enquirys can be edited.</summary>
+    [HttpPatch("enquiries/{id:guid}")]
+    public async Task<IActionResult> UpdateEnquiry(Guid id, UpdateEnquiryRequest request)
     {
         var (ctx, failure) = await RequireContextAsync();
         if (failure is not null) return failure;
-        var result = await customerService.UpdateDraftRfqAsync(ctx!, id, request, ClientIp);
+        var result = await customerService.UpdateDraftEnquiryAsync(ctx!, id, request, ClientIp);
         return result switch
         {
             null => NotFound(),
             false => Conflict(new MessageResponse("Only drafts can be edited.")),
-            true => Ok(new MessageResponse("RFQ updated.")),
+            true => Ok(new MessageResponse("Enquiry updated.")),
         };
     }
 
-    [HttpPost("rfqs/{id:guid}/submit")]
-    public async Task<IActionResult> SubmitRfq(Guid id)
+    [HttpPost("enquiries/{id:guid}/submit")]
+    public async Task<IActionResult> SubmitEnquiry(Guid id)
     {
         var (ctx, failure) = await RequireContextAsync();
         if (failure is not null) return failure;
-        var result = await customerService.SubmitDraftRfqAsync(ctx!, id, ClientIp);
+        var result = await customerService.SubmitDraftEnquiryAsync(ctx!, id, ClientIp);
         return result switch
         {
             null => NotFound(),
             false => Conflict(new MessageResponse("Only drafts can be submitted.")),
-            true => Ok(new MessageResponse("RFQ submitted for review.")),
+            true => Ok(new MessageResponse("Enquiry submitted for review.")),
         };
     }
 
-    /// <summary>Uploads a drawing/specification to the caller's own RFQ (multipart).</summary>
-    [HttpPost("rfqs/{id:guid}/files")]
+    /// <summary>Uploads a drawing/specification to the caller's own Enquiry (multipart).</summary>
+    [HttpPost("enquiries/{id:guid}/files")]
     [EnableRateLimiting("public")]
     [RequestSizeLimit(11 * 1024 * 1024)]
-    [ProducesResponseType<RfqFileDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<EnquiryFileDto>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> UploadRfqFile(Guid id, IFormFile file)
+    public async Task<IActionResult> UploadEnquiryFile(Guid id, IFormFile file)
     {
         var (ctx, failure) = await RequireContextAsync();
         if (failure is not null) return failure;
 
         try
         {
-            var result = await customerService.AttachRfqFileAsync(ctx!, id, file, ClientIp);
+            var result = await customerService.AttachEnquiryFileAsync(ctx!, id, file, ClientIp);
             return result is null ? NotFound() : Ok(result);
         }
         catch (FileValidationException ex)
@@ -152,26 +152,26 @@ public class CustomerController(
         }
     }
 
-    [HttpGet("rfqs/{id:guid}/files/{fileId:guid}")]
-    public async Task<IActionResult> DownloadRfqFile(Guid id, Guid fileId)
+    [HttpGet("enquiries/{id:guid}/files/{fileId:guid}")]
+    public async Task<IActionResult> DownloadEnquiryFile(Guid id, Guid fileId)
     {
         var (ctx, failure) = await RequireContextAsync();
         if (failure is not null) return failure;
-        var f = await db.RfqFiles.Where(x => x.Id == fileId && x.RfqId == id).FirstOrDefaultAsync();
+        var f = await db.EnquiryFiles.Where(x => x.Id == fileId && x.EnquiryId == id).FirstOrDefaultAsync();
         if (f is null) return NotFound();
         var stream = await storage.OpenReadAsync(f.StorageKey);
         if (stream is null) return NotFound();
         return File(stream, f.ContentType, f.FileName);
     }
 
-    [HttpDelete("rfqs/{id:guid}/files/{fileId:guid}")]
-    public async Task<IActionResult> DeleteRfqFile(Guid id, Guid fileId)
+    [HttpDelete("enquiries/{id:guid}/files/{fileId:guid}")]
+    public async Task<IActionResult> DeleteEnquiryFile(Guid id, Guid fileId)
     {
         var (ctx, failure) = await RequireContextAsync();
         if (failure is not null) return failure;
-        var f = await db.RfqFiles.Where(x => x.Id == fileId && x.RfqId == id).FirstOrDefaultAsync();
+        var f = await db.EnquiryFiles.Where(x => x.Id == fileId && x.EnquiryId == id).FirstOrDefaultAsync();
         if (f is null) return NotFound();
-        db.RfqFiles.Remove(f);
+        db.EnquiryFiles.Remove(f);
         await db.SaveChangesAsync();
         return Ok(new MessageResponse("File deleted."));
     }

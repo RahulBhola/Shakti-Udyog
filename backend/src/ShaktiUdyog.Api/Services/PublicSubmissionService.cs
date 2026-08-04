@@ -7,10 +7,10 @@ namespace ShaktiUdyog.Api.Services;
 
 public interface IPublicSubmissionService
 {
-    /// <summary>Persists an enquiry; returns null Id for honeypot hits (fake success).</summary>
-    Task<SubmissionAccepted> SubmitEnquiryAsync(EnquiryRequest request, string? ipAddress);
+    /// <summary>Persists a contact request; returns null Id for honeypot hits (fake success).</summary>
+    Task<SubmissionAccepted> SubmitContactRequestAsync(ContactRequestDto request, string? ipAddress);
 
-    Task<SubmissionAccepted> SubmitRfqAsync(RfqRequest request, string? ipAddress);
+    Task<SubmissionAccepted> SubmitEnquiryAsync(EnquiryRequest request, string? ipAddress);
 }
 
 /// <summary>
@@ -23,10 +23,39 @@ public class PublicSubmissionService(
     IAuditWriter audit,
     ILogger<PublicSubmissionService> logger) : IPublicSubmissionService
 {
+    private const string ContactRequestAccepted =
+        "Thank you. Your contact request has been received. Our team will contact you shortly.";
     private const string EnquiryAccepted =
-        "Thank you. Your enquiry has been received. Our team will contact you shortly.";
-    private const string RfqAccepted =
         "Your quotation request has been submitted. We will review the details and contact you.";
+
+    public async Task<SubmissionAccepted> SubmitContactRequestAsync(ContactRequestDto request, string? ipAddress)
+    {
+        if (!string.IsNullOrEmpty(request.Website))
+        {
+            logger.LogInformation("Contact request honeypot triggered; submission discarded.");
+            return new SubmissionAccepted(null, ContactRequestAccepted);
+        }
+
+        var contactRequest = new ContactRequest
+        {
+            Id = Guid.NewGuid(),
+            FullName = request.FullName.Trim(),
+            CompanyName = request.CompanyName.Trim(),
+            Email = request.Email.Trim(),
+            Phone = request.Phone.Trim(),
+            City = request.City?.Trim(),
+            Message = request.Message.Trim(),
+            ConsentGiven = request.ConsentGiven,
+            SubmittedByIp = ipAddress,
+        };
+
+        db.ContactRequests.Add(contactRequest);
+        await db.SaveChangesAsync();
+        await audit.WriteAsync("public.contact_request.received", null, "ContactRequest", contactRequest.Id.ToString(), ipAddress);
+        logger.LogInformation("ContactRequest {ContactRequestId} received from company {Company}.", contactRequest.Id, contactRequest.CompanyName);
+
+        return new SubmissionAccepted(contactRequest.Id, ContactRequestAccepted);
+    }
 
     public async Task<SubmissionAccepted> SubmitEnquiryAsync(EnquiryRequest request, string? ipAddress)
     {
@@ -43,8 +72,11 @@ public class PublicSubmissionService(
             CompanyName = request.CompanyName.Trim(),
             Email = request.Email.Trim(),
             Phone = request.Phone.Trim(),
-            City = request.City?.Trim(),
-            Message = request.Message.Trim(),
+            ProductType = request.ProductType,
+            MaterialGrade = request.MaterialGrade?.Trim(),
+            Quantity = request.Quantity.Trim(),
+            DeliveryLocation = request.DeliveryLocation?.Trim(),
+            RequirementDetails = request.RequirementDetails.Trim(),
             ConsentGiven = request.ConsentGiven,
             SubmittedByIp = ipAddress,
         };
@@ -55,37 +87,5 @@ public class PublicSubmissionService(
         logger.LogInformation("Enquiry {EnquiryId} received from company {Company}.", enquiry.Id, enquiry.CompanyName);
 
         return new SubmissionAccepted(enquiry.Id, EnquiryAccepted);
-    }
-
-    public async Task<SubmissionAccepted> SubmitRfqAsync(RfqRequest request, string? ipAddress)
-    {
-        if (!string.IsNullOrEmpty(request.Website))
-        {
-            logger.LogInformation("RFQ honeypot triggered; submission discarded.");
-            return new SubmissionAccepted(null, RfqAccepted);
-        }
-
-        var rfq = new Rfq
-        {
-            Id = Guid.NewGuid(),
-            FullName = request.FullName.Trim(),
-            CompanyName = request.CompanyName.Trim(),
-            Email = request.Email.Trim(),
-            Phone = request.Phone.Trim(),
-            ProductType = request.ProductType,
-            MaterialGrade = request.MaterialGrade?.Trim(),
-            Quantity = request.Quantity.Trim(),
-            DeliveryLocation = request.DeliveryLocation?.Trim(),
-            RequirementDetails = request.RequirementDetails.Trim(),
-            ConsentGiven = request.ConsentGiven,
-            SubmittedByIp = ipAddress,
-        };
-
-        db.Rfqs.Add(rfq);
-        await db.SaveChangesAsync();
-        await audit.WriteAsync("public.rfq.received", null, "Rfq", rfq.Id.ToString(), ipAddress);
-        logger.LogInformation("RFQ {RfqId} received from company {Company}.", rfq.Id, rfq.CompanyName);
-
-        return new SubmissionAccepted(rfq.Id, RfqAccepted);
     }
 }

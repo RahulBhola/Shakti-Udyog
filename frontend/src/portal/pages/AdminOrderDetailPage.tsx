@@ -668,9 +668,9 @@ export default function AdminOrderDetailPage() {
                 className="w-full text-left px-3 py-2 rounded-lg text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-colors">
                 Production Board →
               </button>
-              <button type="button" onClick={() => navigate("/admin/rfqs")}
+              <button type="button" onClick={() => navigate("/admin/enquiries")}
                 className="w-full text-left px-3 py-2 rounded-lg text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-colors">
-                View RFQs →
+                View Enquiries →
               </button>
             </div>
           </Section>

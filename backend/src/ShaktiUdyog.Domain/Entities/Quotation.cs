@@ -3,7 +3,7 @@ using ShaktiUdyog.Domain.Constants;
 namespace ShaktiUdyog.Domain.Entities;
 
 /// <summary>
-/// Quotation issued against an RFQ (requirements §14/§20, Milestone 5 spec).
+/// Quotation issued against an Enquiry (requirements §14/§20, Milestone 5 spec).
 /// Extended with line items, commercial terms, approval tracking, and
 /// revision history. Amount and terms are set only by internal staff;
 /// customers may only accept/decline with a comment.
@@ -13,8 +13,8 @@ public class Quotation
     public Guid Id { get; set; }
     public required string QuotationNumber { get; set; }
     public int RevisionNumber { get; set; } = 1;
-    public Guid RfqId { get; set; }
-    public Rfq Rfq { get; set; } = null!;
+    public Guid EnquiryId { get; set; }
+    public Enquiry Enquiry { get; set; } = null!;
     public Guid CompanyId { get; set; }
     public Company Company { get; set; } = null!;
     public decimal Subtotal { get; set; }

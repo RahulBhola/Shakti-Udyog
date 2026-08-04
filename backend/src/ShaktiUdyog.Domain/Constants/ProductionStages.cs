@@ -2,11 +2,11 @@ namespace ShaktiUdyog.Domain.Constants;
 
 /// <summary>
 /// The 25 workflow stages for manufacturing production jobs in an iron casting ERP.
-/// Ordered from RFQ intake through dispatch.
+/// Ordered from Enquiry intake through dispatch.
 /// </summary>
 public static class ProductionStageNames
 {
-    public const string NewRfqs = "New RFQs";
+    public const string NewEnquiries = "New Enquirys";
     public const string EngineeringReview = "Engineering Review";
     public const string QuotationSent = "Quotation Sent";
     public const string CustomerApproval = "Customer Approval";
@@ -35,7 +35,7 @@ public static class ProductionStageNames
     /// <summary>Ordered list of all stages for workflow progression.</summary>
     public static readonly IReadOnlyList<string> Workflow =
     [
-        NewRfqs, EngineeringReview, QuotationSent, CustomerApproval,
+        NewEnquiries, EngineeringReview, QuotationSent, CustomerApproval,
         OrderConfirmed, PatternDesign, PatternMaking, MaterialPlanning,
         RawMaterialReady, CoreMaking, Moulding, FurnaceCharging, Melting,
         Pouring, Cooling, Shakeout, Fettling, ShotBlasting, Machining,
@@ -51,7 +51,7 @@ public static class ProductionStageNames
     /// <summary>Stage colors for the Kanban board column headers.</summary>
     public static readonly IReadOnlyDictionary<string, string> Colors = new Dictionary<string, string>
     {
-        [NewRfqs] = "#6366f1",
+        [NewEnquiries] = "#6366f1",
         [EngineeringReview] = "#8b5cf6",
         [QuotationSent] = "#a78bfa",
         [CustomerApproval] = "#c4b5fd",
@@ -81,7 +81,7 @@ public static class ProductionStageNames
     /// <summary>Stage descriptions for tooltip text.</summary>
     public static readonly IReadOnlyDictionary<string, string> Descriptions = new Dictionary<string, string>
     {
-        [NewRfqs] = "Incoming RFQs awaiting initial review",
+        [NewEnquiries] = "Incoming Enquirys awaiting initial review",
         [EngineeringReview] = "Technical feasibility and design review",
         [QuotationSent] = "Quotation sent to customer",
         [CustomerApproval] = "Awaiting customer approval of quotation",

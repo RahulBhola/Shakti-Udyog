@@ -80,8 +80,8 @@ public class PublicContentService : IPublicContentService
     private static readonly IReadOnlyList<ResourceDto> Resources =
     [
         new(
-            "how-to-prepare-a-casting-rfq",
-            "How to Prepare a Casting RFQ",
+            "how-to-prepare-a-casting-enquiry",
+            "How to Prepare a Casting Enquiry",
             "A checklist of information that helps us quote accurately and faster.",
             [
                 "To provide an accurate quotation, please share:",

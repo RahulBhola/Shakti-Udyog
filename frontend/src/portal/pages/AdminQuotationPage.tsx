@@ -377,9 +377,9 @@ export default function AdminQuotationDetailPage() {
           {/* Quick Links */}
           <Section title="Quick Links">
             <div className="space-y-2">
-              <button type="button" onClick={() => navigate(`/admin/rfqs/${q.rfqId}`)}
+              <button type="button" onClick={() => navigate(`/admin/enquiries/${q.enquiryId}`)}
                 className="w-full text-left px-3 py-2 rounded-lg text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-colors">
-                View Originating RFQ →
+                View Originating Enquiry →
               </button>
             </div>
           </Section>

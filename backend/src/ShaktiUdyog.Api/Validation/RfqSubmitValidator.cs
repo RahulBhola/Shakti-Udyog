@@ -2,12 +2,12 @@ using FluentValidation;
 
 namespace ShaktiUdyog.Api.Validation;
 
-public class RfqSubmitValidator : AbstractValidator<RfqSubmitRequest>
+public class EnquirySubmitValidator : AbstractValidator<EnquirySubmitRequest>
 {
-    public RfqSubmitValidator()
+    public EnquirySubmitValidator()
     {
         RuleFor(x => x.RequirementDetails).NotEmpty().MinimumLength(10).MaximumLength(8000);
     }
 }
 
-public record RfqSubmitRequest(string RequirementDetails, string? DeliveryLocation);
+public record EnquirySubmitRequest(string RequirementDetails, string? DeliveryLocation);

@@ -89,7 +89,7 @@ public record ProductMasterStatsDto(
 // ── Usage (related records) ───────────────────────────────────────────
 
 public record ProductMasterUsageDto(
-    int RfqCount,
+    int EnquiryCount,
     int QuotationCount,
     int OrderCount);
 

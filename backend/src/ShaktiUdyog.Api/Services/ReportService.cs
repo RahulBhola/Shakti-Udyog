@@ -54,7 +54,7 @@ public class ReportService(AppDbContext db) : IReportService
         "outstanding" => await OutstandingReportAsync(),
         "customer" => await CustomerReportAsync(),
         "company" => await CustomerReportAsync(),
-        "rfq" => await RfqReportAsync(),
+        "enquiry" => await EnquiryReportAsync(),
         "quotation" => await QuotationReportAsync(),
         "order" => await OrderReportAsync(),
         "product" => await ProductReportAsync(),
@@ -111,17 +111,17 @@ public class ReportService(AppDbContext db) : IReportService
         return new ReportData("Customer Report", ["Company", "GST", "City", "State", "Industry", "Email", "Phone", "Status", "Active", "Registered"], rows);
     }
 
-    // ---- RFQ -----------------------------------------------------------------
+    // ---- Enquiry -----------------------------------------------------------------
 
-    private async Task<ReportData> RfqReportAsync()
+    private async Task<ReportData> EnquiryReportAsync()
     {
-        var rows = await db.Rfqs
+        var rows = await db.Enquiries
             .OrderByDescending(r => r.CreatedAtUtc)
             .Select(r => new[] {
                 r.CompanyName, r.FullName, r.Email, r.Phone, r.ProductType,
                 r.MaterialGrade ?? "", r.Quantity, r.Status, r.CreatedAtUtc.ToString("yyyy-MM-dd"),
             }).ToListAsync();
-        return new ReportData("RFQ Report", ["Company", "Contact", "Email", "Phone", "Product", "Grade", "Quantity", "Status", "Date"], rows);
+        return new ReportData("Enquiry Report", ["Company", "Contact", "Email", "Phone", "Product", "Grade", "Quantity", "Status", "Date"], rows);
     }
 
     // ---- Quotation -----------------------------------------------------------
@@ -131,7 +131,7 @@ public class ReportService(AppDbContext db) : IReportService
         var rows = await db.Quotations
             .OrderByDescending(q => q.CreatedAtUtc)
             .Select(q => new[] {
-                q.QuotationNumber, q.Company != null ? q.Company.Name : "", q.Rfq.ProductType,
+                q.QuotationNumber, q.Company != null ? q.Company.Name : "", q.Enquiry.ProductType,
                 q.Total.ToString("0.00"), q.Currency, q.Status,
                 q.ValidUntilUtc != null ? q.ValidUntilUtc.Value.ToString("yyyy-MM-dd") : "",
                 q.CreatedAtUtc.ToString("yyyy-MM-dd"),
@@ -232,13 +232,13 @@ public class ReportService(AppDbContext db) : IReportService
 
     private async Task<ReportData> SalesPerformanceReportAsync()
     {
-        var rfqs = await db.Rfqs.CountAsync();
+        var enquiries = await db.Enquiries.CountAsync();
         var quotations = await db.Quotations.CountAsync();
         var orders = await db.Orders.CountAsync();
         var invoices = await db.Invoices.CountAsync();
         var revenue = await db.Invoices.SumAsync(i => (decimal?)i.Total) ?? 0;
         return new ReportData("Sales Performance Report", ["Metric", "Value"], new[] {
-            new[] { "Total RFQs", rfqs.ToString() },
+            new[] { "Total Enquirys", enquiries.ToString() },
             new[] { "Quotations", quotations.ToString() },
             new[] { "Orders", orders.ToString() },
             new[] { "Invoices", invoices.ToString() },
@@ -272,13 +272,13 @@ public class ReportService(AppDbContext db) : IReportService
     {
         var now = DateTimeOffset.UtcNow;
         var start = new DateTimeOffset(now.Year, now.Month, 1, 0, 0, 0, now.Offset);
-        var rfqs = await db.Rfqs.CountAsync(r => r.CreatedAtUtc >= start);
+        var enquiries = await db.Enquiries.CountAsync(r => r.CreatedAtUtc >= start);
         var quotations = await db.Quotations.CountAsync(q => q.CreatedAtUtc >= start);
         var orders = await db.Orders.CountAsync(o => o.PlacedAtUtc >= start);
         var invoices = await db.Invoices.CountAsync(i => i.IssueDateUtc >= start);
         var revenue = await db.Invoices.Where(i => i.IssueDateUtc >= start).SumAsync(i => (decimal?)i.Total) ?? 0;
         return new ReportData("Monthly Business Summary", ["Metric", "Value"], new[] {
-            new[] { "RFQs (this month)", rfqs.ToString() },
+            new[] { "Enquirys (this month)", enquiries.ToString() },
             new[] { "Quotations (this month)", quotations.ToString() },
             new[] { "Orders (this month)", orders.ToString() },
             new[] { "Invoices (this month)", invoices.ToString() },

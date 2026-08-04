@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
-import { rfqProductTypes, submitRfq } from "../api/publicApi";
+import { enquiryProductTypes, submitEnquiry } from "../api/publicApi";
 import { Seo } from "../components/Seo";
 import { Breadcrumb, Section, SectionHeading } from "../components/ui";
 import { seoPages } from "../content/seo";
@@ -59,7 +59,7 @@ export default function RequestQuotePage() {
 
     setStatus({ kind: "submitting" });
     try {
-      const result = await submitRfq({
+      const result = await submitEnquiry({
         fullName: get("fullName"),
         companyName: get("companyName"),
         email: get("email"),
@@ -82,7 +82,7 @@ export default function RequestQuotePage() {
 
   return (
     <>
-      <Seo title={seoPages.rfq.title} description={seoPages.rfq.description} path="/request-a-quote" />
+      <Seo title={seoPages.enquiry.title} description={seoPages.enquiry.description} path="/request-a-quote" />
       <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Request a Quote", href: "/request-a-quote" }]} />
 
       <section className="hero hero--page">
@@ -95,12 +95,12 @@ export default function RequestQuotePage() {
         </div>
       </section>
 
-      <Section labelledBy="rfq-form-heading">
+      <Section labelledBy="enquiry-form-heading">
         <SectionHeading
-          id="rfq-form-heading"
+          id="enquiry-form-heading"
           eyebrow="Quotation request"
           title="Tell Us About Your Requirement"
-          lead="Not sure what to include? See our guide: How to Prepare a Casting RFQ."
+          lead="Not sure what to include? See our guide: How to Prepare a Casting Enquiry."
         />
 
         {status.kind === "ok" ? (
@@ -109,7 +109,7 @@ export default function RequestQuotePage() {
             {status.reference && <p>Reference: {status.reference}</p>}
             <p>
               <Link to="/">Return to home</Link> ·{" "}
-              <Link to="/resources/how-to-prepare-a-casting-rfq">RFQ preparation guide</Link>
+              <Link to="/resources/how-to-prepare-a-casting-rfq">Enquiry preparation guide</Link>
             </p>
           </div>
         ) : (
@@ -138,7 +138,7 @@ export default function RequestQuotePage() {
               <label htmlFor="r-productType">Requirement *</label>
               <select id="r-productType" name="productType" required aria-invalid={!!errors.productType} defaultValue="">
                 <option value="" disabled>Select requirement type</option>
-                {rfqProductTypes.map((type) => (
+                {enquiryProductTypes.map((type) => (
                   <option key={type} value={type}>{type}</option>
                 ))}
               </select>

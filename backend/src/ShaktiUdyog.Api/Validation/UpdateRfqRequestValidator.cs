@@ -3,12 +3,12 @@ using ShaktiUdyog.Api.Contracts.Customer;
 
 namespace ShaktiUdyog.Api.Validation;
 
-public class UpdateRfqRequestValidator : AbstractValidator<UpdateRfqRequest>
+public class UpdateEnquiryRequestValidator : AbstractValidator<UpdateEnquiryRequest>
 {
-    public UpdateRfqRequestValidator()
+    public UpdateEnquiryRequestValidator()
     {
         RuleFor(x => x.ProductType)
-            .Must(v => string.IsNullOrEmpty(v) || Contracts.Public.RfqRequest.AllowedProductTypes.Contains(v))
+            .Must(v => string.IsNullOrEmpty(v) || Contracts.Public.EnquiryRequest.AllowedProductTypes.Contains(v))
             .WithMessage("Unknown requirement type.");
         RuleFor(x => x.Quantity).MaximumLength(100);
         RuleFor(x => x.RequirementDetails).MinimumLength(10).MaximumLength(8000);

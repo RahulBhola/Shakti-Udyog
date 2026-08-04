@@ -29,7 +29,7 @@ interface UserInfo {
   role: string;
 }
 
-const MODULES = ["RFQ", "Quotation", "Orders", "Production", "Invoice", "Payment", "Products", "Companies", "Users", "Settings"];
+const MODULES = ["Enquiry", "Quotation", "Orders", "Production", "Invoice", "Payment", "Products", "Companies", "Users", "Settings"];
 const ACTION_TYPES = ["Created", "Updated", "Approved", "Rejected", "Generated", "Deleted", "Moved", "Received"];
 const PAGE_SIZES = [10, 20, 50];
 
@@ -40,7 +40,7 @@ const isExcluded = (a: string): boolean =>
   || a.startsWith("login") || a.startsWith("password") || a.startsWith("role.") || a.startsWith("permission");
 
 const MODULE_MAP: Record<string, string> = {
-  rfq: "RFQ", quotation: "Quotation", order: "Orders", invoice: "Invoice", payment: "Payment",
+  enquiry: "Enquiry", quotation: "Quotation", order: "Orders", invoice: "Invoice", payment: "Payment",
   product: "Products", company: "Companies", user: "Users", setting: "Settings", category: "Products", production: "Production",
 };
 
@@ -66,7 +66,7 @@ function actionLabel(item: AuditItem): { label: string; tone: string } {
 
 function moduleTone(module: string): string {
   switch (module) {
-    case "RFQ": case "Companies": return "blue";
+    case "Enquiry": case "Companies": return "blue";
     case "Quotation": case "Products": return "purple";
     case "Orders": case "Production": return "orange";
     case "Invoice": return "red";

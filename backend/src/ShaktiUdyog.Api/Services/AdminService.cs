@@ -10,12 +10,12 @@ namespace ShaktiUdyog.Api.Services;
 
 public interface IAdminService
 {
-    Task<PagedResult<UpdaterRfqListItemDto>> GetRfqsAsync(int page = 1, int pageSize = 20, string? search = null, string? status = null, bool includeDeleted = false);
-    Task<UpdaterRfqDetailDto?> GetRfqAsync(Guid rfqId);
-    Task<bool?> ApproveRfqAsync(Guid rfqId, Guid userId, string? ip);
-    Task<bool?> RejectRfqAsync(Guid rfqId, string reason, Guid userId, string? ip);
-    Task<bool?> OverrideStatusAsync(Guid rfqId, string newStatus, string? note, Guid userId, string? ip);
-    Task<IReadOnlyList<RfqTimelineEntryDto>> GetRfqHistoryAsync(Guid rfqId);
+    Task<PagedResult<UpdaterEnquiryListItemDto>> GetEnquiriesAsync(int page = 1, int pageSize = 20, string? search = null, string? status = null, bool includeDeleted = false);
+    Task<UpdaterEnquiryDetailDto?> GetEnquiryAsync(Guid enquiryId);
+    Task<bool?> ApproveEnquiryAsync(Guid enquiryId, Guid userId, string? ip);
+    Task<bool?> RejectEnquiryAsync(Guid enquiryId, string reason, Guid userId, string? ip);
+    Task<bool?> OverrideStatusAsync(Guid enquiryId, string newStatus, string? note, Guid userId, string? ip);
+    Task<IReadOnlyList<EnquiryTimelineEntryDto>> GetEnquiryHistoryAsync(Guid enquiryId);
     Task<OrderDetailDto?> CreateOrderFromQuotationAsync(Guid quotationId, Guid userId, string? ip);
     Task<bool?> VerifyAdvancePaymentAsync(Guid orderId, Guid userId, string? ip);
     Task<bool?> UpdateOrderStageAsync(Guid orderId, string newStage, string? note, Guid userId, string? ip);
@@ -26,17 +26,17 @@ public class AdminService(
     IAuditWriter audit) : IAdminService
 {
     /// <summary>
-    /// Lists RFQs, optionally including soft-deleted records for administrative review.
+    /// Lists Enquirys, optionally including soft-deleted records for administrative review.
     /// </summary>
-    public async Task<PagedResult<UpdaterRfqListItemDto>> GetRfqsAsync(
+    public async Task<PagedResult<UpdaterEnquiryListItemDto>> GetEnquiriesAsync(
         int page = 1, int pageSize = 20, string? search = null, string? status = null, bool includeDeleted = false)
     {
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, 100);
 
         var query = includeDeleted
-            ? db.Rfqs.IgnoreQueryFilters().AsQueryable()
-            : db.Rfqs.AsQueryable();
+            ? db.Enquiries.IgnoreQueryFilters().AsQueryable()
+            : db.Enquiries.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(search))
         {
@@ -56,7 +56,7 @@ public class AdminService(
             .OrderByDescending(r => r.CreatedAtUtc)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(r => new UpdaterRfqListItemDto(
+            .Select(r => new UpdaterEnquiryListItemDto(
                 r.Id, r.ProductType, r.CompanyName, r.Quantity,
                 r.Status, r.IsDraft,
                 r.Assignments.Where(a => a.IsActive).Select(a => (Guid?)a.AssignedToUserId).FirstOrDefault(),
@@ -65,114 +65,114 @@ public class AdminService(
                 r.Files.OrderBy(f => f.UploadedAtUtc).Select(f => f.ContentType).FirstOrDefault()))
             .ToListAsync();
 
-        return new PagedResult<UpdaterRfqListItemDto>(items, page, pageSize, total);
+        return new PagedResult<UpdaterEnquiryListItemDto>(items, page, pageSize, total);
     }
 
-    public async Task<UpdaterRfqDetailDto?> GetRfqAsync(Guid rfqId)
+    public async Task<UpdaterEnquiryDetailDto?> GetEnquiryAsync(Guid enquiryId)
     {
-        var rfq = await db.Rfqs
+        var enquiry = await db.Enquiries
             .IgnoreQueryFilters()
             .Include(r => r.Files)
             .Include(r => r.StatusHistory.OrderBy(h => h.CreatedAtUtc))
             .Include(r => r.Comments.OrderBy(c => c.CreatedAtUtc))
             .Include(r => r.Assignments.Where(a => a.IsActive))
-            .SingleOrDefaultAsync(r => r.Id == rfqId);
+            .SingleOrDefaultAsync(r => r.Id == enquiryId);
 
-        if (rfq is null) return null;
+        if (enquiry is null) return null;
 
         var draftQuotationId = await db.Quotations
-            .Where(q => q.RfqId == rfq.Id)
+            .Where(q => q.EnquiryId == enquiry.Id)
             .OrderByDescending(q => q.CreatedAtUtc)
             .Select(q => (Guid?)q.Id)
             .FirstOrDefaultAsync();
 
-        return new UpdaterRfqDetailDto(
-            rfq.Id, rfq.CompanyId ?? Guid.Empty, rfq.FullName, rfq.CompanyName, rfq.Email, rfq.Phone,
-            rfq.ProductType, rfq.MaterialGrade, rfq.Quantity,
-            rfq.DeliveryLocation, rfq.RequirementDetails, rfq.Status, rfq.IsDraft,
-            rfq.SubmittedByIp, rfq.CreatedAtUtc,
-            rfq.Files.Select(f => new UpdaterRfqFileDto(
+        return new UpdaterEnquiryDetailDto(
+            enquiry.Id, enquiry.CompanyId ?? Guid.Empty, enquiry.FullName, enquiry.CompanyName, enquiry.Email, enquiry.Phone,
+            enquiry.ProductType, enquiry.MaterialGrade, enquiry.Quantity,
+            enquiry.DeliveryLocation, enquiry.RequirementDetails, enquiry.Status, enquiry.IsDraft,
+            enquiry.SubmittedByIp, enquiry.CreatedAtUtc,
+            enquiry.Files.Select(f => new UpdaterEnquiryFileDto(
                 f.Id, f.FileName, f.ContentType, f.SizeBytes,
                 f.StorageKey, f.UploadedByUserId, f.UploadedAtUtc)).ToList(),
-            rfq.StatusHistory.Select(h => new RfqTimelineEntryDto(
+            enquiry.StatusHistory.Select(h => new EnquiryTimelineEntryDto(
                 h.FromStatus, h.ToStatus, h.ChangedByRole, h.Note, h.CreatedAtUtc)).ToList(),
-            rfq.Comments.Select(c => new RfqCommentDto(
+            enquiry.Comments.Select(c => new EnquiryCommentDto(
                 c.Id, c.AuthorUserId, c.AuthorRole, c.IsCustomerVisible, c.Message, c.CreatedAtUtc)).ToList(),
-            rfq.Assignments.FirstOrDefault()?.AssignedToUserId, rfq.Priority,
-            rfq.PartName, rfq.PartNumber, rfq.Industry, rfq.Application,
-            rfq.MaterialStandard, rfq.ApproxWeight,
-            rfq.MachiningRequired, rfq.PatternAvailability,
-            rfq.PrototypeQuantity, rfq.ProductionQuantity, rfq.AnnualRequirement,
-            rfq.ExpectedDeliveryDate, rfq.PreferredDeliveryTerms,
-            rfq.AdditionalRequirements, rfq.Remarks,
+            enquiry.Assignments.FirstOrDefault()?.AssignedToUserId, enquiry.Priority,
+            enquiry.PartName, enquiry.PartNumber, enquiry.Industry, enquiry.Application,
+            enquiry.MaterialStandard, enquiry.ApproxWeight,
+            enquiry.MachiningRequired, enquiry.PatternAvailability,
+            enquiry.PrototypeQuantity, enquiry.ProductionQuantity, enquiry.AnnualRequirement,
+            enquiry.ExpectedDeliveryDate, enquiry.PreferredDeliveryTerms,
+            enquiry.AdditionalRequirements, enquiry.Remarks,
             draftQuotationId != null, draftQuotationId);
     }
 
-    /// <summary>Approves an RFQ (Received → Approved).</summary>
-    public async Task<bool?> ApproveRfqAsync(Guid rfqId, Guid userId, string? ip)
+    /// <summary>Approves an Enquiry (Received → Approved).</summary>
+    public async Task<bool?> ApproveEnquiryAsync(Guid enquiryId, Guid userId, string? ip)
     {
-        var rfq = await db.Rfqs.SingleOrDefaultAsync(r => r.Id == rfqId);
-        if (rfq is null) return null;
+        var enquiry = await db.Enquiries.SingleOrDefaultAsync(r => r.Id == enquiryId);
+        if (enquiry is null) return null;
 
-        if (!RfqStatuses.IsValidTransition(rfq.Status, RfqStatuses.Approved))
+        if (!EnquiryStatuses.IsValidTransition(enquiry.Status, EnquiryStatuses.Approved))
             return false;
 
         var now = DateTimeOffset.UtcNow;
-        var from = rfq.Status;
-        rfq.Status = RfqStatuses.Approved;
+        var from = enquiry.Status;
+        enquiry.Status = EnquiryStatuses.Approved;
 
-        db.RfqStatusHistories.Add(new RfqStatusHistory
+        db.EnquiryStatusHistories.Add(new EnquiryStatusHistory
         {
-            Id = Guid.NewGuid(), RfqId = rfq.Id,
-            FromStatus = from, ToStatus = RfqStatuses.Approved,
+            Id = Guid.NewGuid(), EnquiryId = enquiry.Id,
+            FromStatus = from, ToStatus = EnquiryStatuses.Approved,
             ChangedByUserId = userId, ChangedByRole = "Admin",
             Note = "Approved by administrator", CreatedAtUtc = now,
         });
 
         await db.SaveChangesAsync();
-        await audit.WriteAsync("admin.rfq.approved", userId, "Rfq", rfq.Id.ToString(), ip);
+        await audit.WriteAsync("admin.enquiry.approved", userId, "Enquiry", enquiry.Id.ToString(), ip);
         return true;
     }
 
-    /// <summary>Rejects an RFQ with a reason.</summary>
-    public async Task<bool?> RejectRfqAsync(Guid rfqId, string reason, Guid userId, string? ip)
+    /// <summary>Rejects an Enquiry with a reason.</summary>
+    public async Task<bool?> RejectEnquiryAsync(Guid enquiryId, string reason, Guid userId, string? ip)
     {
-        var rfq = await db.Rfqs.SingleOrDefaultAsync(r => r.Id == rfqId);
-        if (rfq is null) return null;
+        var enquiry = await db.Enquiries.SingleOrDefaultAsync(r => r.Id == enquiryId);
+        if (enquiry is null) return null;
 
-        if (!RfqStatuses.IsValidTransition(rfq.Status, RfqStatuses.Rejected))
+        if (!EnquiryStatuses.IsValidTransition(enquiry.Status, EnquiryStatuses.Rejected))
             return false;
 
         var now = DateTimeOffset.UtcNow;
-        var from = rfq.Status;
-        rfq.Status = RfqStatuses.Rejected;
+        var from = enquiry.Status;
+        enquiry.Status = EnquiryStatuses.Rejected;
 
-        db.RfqStatusHistories.Add(new RfqStatusHistory
+        db.EnquiryStatusHistories.Add(new EnquiryStatusHistory
         {
-            Id = Guid.NewGuid(), RfqId = rfq.Id,
-            FromStatus = from, ToStatus = RfqStatuses.Rejected,
+            Id = Guid.NewGuid(), EnquiryId = enquiry.Id,
+            FromStatus = from, ToStatus = EnquiryStatuses.Rejected,
             ChangedByUserId = userId, ChangedByRole = "Admin",
             Note = reason, CreatedAtUtc = now,
         });
 
         await db.SaveChangesAsync();
-        await audit.WriteAsync("admin.rfq.rejected", userId, "Rfq", rfq.Id.ToString(), ip);
+        await audit.WriteAsync("admin.enquiry.rejected", userId, "Enquiry", enquiry.Id.ToString(), ip);
         return true;
     }
 
     /// <summary>Skips transition validation for emergency corrections.</summary>
-    public async Task<bool?> OverrideStatusAsync(Guid rfqId, string newStatus, string? note, Guid userId, string? ip)
+    public async Task<bool?> OverrideStatusAsync(Guid enquiryId, string newStatus, string? note, Guid userId, string? ip)
     {
-        var rfq = await db.Rfqs.IgnoreQueryFilters().SingleOrDefaultAsync(r => r.Id == rfqId);
-        if (rfq is null) return null;
+        var enquiry = await db.Enquiries.IgnoreQueryFilters().SingleOrDefaultAsync(r => r.Id == enquiryId);
+        if (enquiry is null) return null;
 
         var now = DateTimeOffset.UtcNow;
-        var from = rfq.Status;
-        rfq.Status = newStatus;
+        var from = enquiry.Status;
+        enquiry.Status = newStatus;
 
-        db.RfqStatusHistories.Add(new RfqStatusHistory
+        db.EnquiryStatusHistories.Add(new EnquiryStatusHistory
         {
-            Id = Guid.NewGuid(), RfqId = rfq.Id,
+            Id = Guid.NewGuid(), EnquiryId = enquiry.Id,
             FromStatus = from, ToStatus = newStatus,
             ChangedByUserId = userId, ChangedByRole = "Admin",
             Note = note ?? $"Status override: {from} → {newStatus}",
@@ -180,18 +180,18 @@ public class AdminService(
         });
 
         await db.SaveChangesAsync();
-        await audit.WriteAsync("admin.rfq.status_overridden", userId, "Rfq", rfq.Id.ToString(), ip);
+        await audit.WriteAsync("admin.enquiry.status_overridden", userId, "Enquiry", enquiry.Id.ToString(), ip);
         return true;
     }
 
     /// <summary>Full status history including soft-deleted records.</summary>
-    public async Task<IReadOnlyList<RfqTimelineEntryDto>> GetRfqHistoryAsync(Guid rfqId)
+    public async Task<IReadOnlyList<EnquiryTimelineEntryDto>> GetEnquiryHistoryAsync(Guid enquiryId)
     {
-        return await db.RfqStatusHistories
+        return await db.EnquiryStatusHistories
             .IgnoreQueryFilters()
-            .Where(h => h.RfqId == rfqId)
+            .Where(h => h.EnquiryId == enquiryId)
             .OrderBy(h => h.CreatedAtUtc)
-            .Select(h => new RfqTimelineEntryDto(
+            .Select(h => new EnquiryTimelineEntryDto(
                 h.FromStatus, h.ToStatus, h.ChangedByRole, h.Note, h.CreatedAtUtc))
             .ToListAsync();
     }
@@ -207,8 +207,8 @@ public class AdminService(
         if (quotation is null) return null;
 
         var advanceAmount = quotation.Total * 30m / 100m;
-        var rfqShortId = quotation.RfqId.ToString("N")[..8].ToUpperInvariant();
-        var number = $"ORD-{DateTimeOffset.UtcNow:yyyyMMdd}-{rfqShortId}";
+        var enquiryShortId = quotation.EnquiryId.ToString("N")[..8].ToUpperInvariant();
+        var number = $"ORD-{DateTimeOffset.UtcNow:yyyyMMdd}-{enquiryShortId}";
 
         var order = new Order
         {

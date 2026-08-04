@@ -1,18 +1,18 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { customerApi, type Paged, type RfqListItem } from "../../api/customerApi";
+import { customerApi, type Paged, type EnquiryListItem } from "../../api/customerApi";
 import { EmptyState, Loading } from "../../components/ui";
 import { StatusBadge, formatDate } from "../shared";
 
-export default function RfqListPage() {
-  const [data, setData] = useState<Paged<RfqListItem> | null>(null);
+export default function EnquiryListPage() {
+  const [data, setData] = useState<Paged<EnquiryListItem> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
 
   const load = useCallback(() => {
-    customerApi.rfqs(page, 20, search || undefined, statusFilter || undefined)
+    customerApi.enquiries(page, 20, search || undefined, statusFilter || undefined)
       .then(setData)
       .catch((e: Error) => setError(e.message));
   }, [page, search, statusFilter]);
@@ -22,9 +22,9 @@ export default function RfqListPage() {
   const totalPages = data ? Math.max(1, Math.ceil(data.totalCount / data.pageSize)) : 1;
 
   async function cancelDraft(id: string) {
-    if (!confirm("Cancel this draft RFQ?")) return;
+    if (!confirm("Cancel this draft Enquiry?")) return;
     try {
-      await customerApi.deleteRfq(id);
+      await customerApi.deleteEnquiry(id);
       load();
     } catch {
       alert("Could not cancel the draft.");
@@ -34,14 +34,14 @@ export default function RfqListPage() {
   return (
     <>
       <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: "1rem" }}>
-        <h1>My RFQs</h1>
-        <Link className="btn btn--primary" to="/customer/rfqs/new">New RFQ</Link>
+        <h1>My Enquiries</h1>
+        <Link className="btn btn--primary" to="/customer/enquiries/new">New Enquiry</Link>
       </div>
 
       {/* Search & filter */}
       <div className="form" style={{ maxWidth: "none", flexDirection: "row", gap: "var(--sp-3)" }}>
         <input
-          placeholder="Search RFQs..."
+          placeholder="Search Enquiries..."
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(1); }}
           style={{ flex: 1, padding: "0.6rem", border: "1px solid var(--c-line)", borderRadius: "var(--radius)", background: "rgba(15,21,36,0.55)", color: "var(--c-ink)", font: "inherit" }}
@@ -66,16 +66,16 @@ export default function RfqListPage() {
         </select>
       </div>
 
-      {error && <EmptyState title="RFQs unavailable" text={error} />}
-      {!data && !error && <Loading label="Loading RFQs" />}
+      {error && <EmptyState title="Enquiries unavailable" text={error} />}
+      {!data && !error && <Loading label="Loading Enquiries" />}
       {data && data.items.length === 0 && (
-        <EmptyState title="No RFQs yet" text="Submit your first quotation request to get started." />
+        <EmptyState title="No Enquiries yet" text="Submit your first quotation request to get started." />
       )}
       {data && data.items.length > 0 && (
         <div className="list-rows">
           {data.items.map((r) => (
             <div key={r.id} className="list-row">
-              <Link to={`/customer/rfqs/${r.id}`} className="row-link" style={{ flex: 1 }}>
+              <Link to={`/customer/enquiries/${r.id}`} className="row-link" style={{ flex: 1 }}>
                 <div className="list-row__main">
                   <div className="list-row__title">{r.productType} — {r.quantity}</div>
                   <div className="list-row__meta">
@@ -88,7 +88,7 @@ export default function RfqListPage() {
               <div className="quick-actions" style={{ flexShrink: 0 }}>
                 {r.isDraft && r.status === "Draft" && (
                   <>
-                    <Link className="btn btn--ghost" style={{ color: "var(--c-ink)", padding: "0.3rem 0.7rem", fontSize: "var(--fs-xs)" }} to={`/customer/rfqs/${r.id}/edit`}>
+                    <Link className="btn btn--ghost" style={{ color: "var(--c-ink)", padding: "0.3rem 0.7rem", fontSize: "var(--fs-xs)" }} to={`/customer/enquiries/${r.id}/edit`}>
                       Edit
                     </Link>
                     <button className="btn btn--ghost" style={{ color: "var(--c-error)", padding: "0.3rem 0.7rem", fontSize: "var(--fs-xs)" }} type="button" onClick={() => void cancelDraft(r.id)}>

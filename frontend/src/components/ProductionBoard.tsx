@@ -718,7 +718,7 @@ interface JobDetailFull {
   assignedEngineer: string | null; assignedSupervisor: string | null;
   department: string | null; status: string; isBlocked: boolean; blockReason: string | null;
   companyId: string; companyName: string; orderId: string | null; orderNumber: string | null;
-  rfqId: string | null; rfqProductType: string | null;
+  enquiryId: string | null; enquiryProductType: string | null;
   quotationId: string | null; quotationNumber: string | null;
   createdAtUtc: string; updatedAtUtc: string | null;
   stageHistory: Array<{ id: string; fromStage: string; toStage: string; changedByName: string | null; remarks: string | null; occurredAtUtc: string; }>;
@@ -803,7 +803,7 @@ function OverviewTab({ detail }: { detail: JobDetailFull }) {
         <h4>Business Links</h4>
         <div className="prod-detail__field"><span>Customer:</span><strong>{detail.companyName}</strong></div>
         {detail.orderNumber && <div className="prod-detail__field"><span>Order:</span><strong>{detail.orderNumber}</strong></div>}
-        {detail.rfqProductType && <div className="prod-detail__field"><span>RFQ:</span><strong>{detail.rfqProductType}</strong></div>}
+        {detail.enquiryProductType && <div className="prod-detail__field"><span>Enquiry:</span><strong>{detail.enquiryProductType}</strong></div>}
       </div>
       <div className="prod-detail__field-group">
         <h4>Dates</h4>

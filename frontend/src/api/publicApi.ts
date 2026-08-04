@@ -27,7 +27,7 @@ export const getResource = (slug: string) => apiGet<Resource>(`/api/v1/public/re
 
 /* ---- Submissions ------------------------------------------------------------ */
 
-export interface EnquiryPayload {
+export interface ContactRequestPayload {
   fullName: string;
   companyName: string;
   email: string;
@@ -39,7 +39,7 @@ export interface EnquiryPayload {
   website?: string;
 }
 
-export interface RfqPayload {
+export interface EnquiryPayload {
   fullName: string;
   companyName: string;
   email: string;
@@ -58,13 +58,13 @@ export interface SubmissionAccepted {
   message: string;
 }
 
+export const submitContactRequest = (payload: ContactRequestPayload) =>
+  apiPost<SubmissionAccepted>("/api/v1/public/contact-requests", payload);
+
 export const submitEnquiry = (payload: EnquiryPayload) =>
   apiPost<SubmissionAccepted>("/api/v1/public/enquiries", payload);
 
-export const submitRfq = (payload: RfqPayload) =>
-  apiPost<SubmissionAccepted>("/api/v1/public/rfqs", payload);
-
-export const rfqProductTypes = [
+export const enquiryProductTypes = [
   "Grey Iron Casting",
   "Ductile Iron Casting",
   "Machined Casting",

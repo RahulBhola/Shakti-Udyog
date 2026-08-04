@@ -29,9 +29,9 @@
 
 **Shakti Udyog** is a full-stack web platform for an iron casting manufacturing business. It includes:
 
-- **Public Website** — Marketing site with product catalogue, capabilities, quality info, RFQ/contact forms
-- **Customer Portal** — Logged-in customer dashboard for RFQs, quotations, orders, invoices, payments, documents
-- **Data Updater Portal** — Internal staff portal for managing RFQs, quotations, orders, content
+- **Public Website** — Marketing site with product catalogue, capabilities, quality info, Enquiry/contact forms
+- **Customer Portal** — Logged-in customer dashboard for Enquiries, quotations, orders, invoices, payments, documents
+- **Data Updater Portal** — Internal staff portal for managing Enquiries, quotations, orders, content
 - **Admin Portal** — Full administration: users, roles, content, orders, production, audit logs, reports
 
 **Company:** Shakti Udyog (est. 1965), Ludhiana, Punjab, India  
@@ -42,8 +42,8 @@
 
 1. Project setup, database, migrations, configuration, Swagger ✅
 2. Authentication, password reset, roles, authorization policies ✅
-3. Public website and RFQ flow ✅
-4. Customer portal: RFQs, quotations, orders, tracking, documents, invoices, payments ✅
+3. Public website and Enquiry flow ✅
+4. Customer portal: Enquiries, quotations, orders, tracking, documents, invoices, payments ✅
 5. Data Updater and Admin portals ✅
 6. Jira integration, reports, and refinements 🔲
 
@@ -229,7 +229,7 @@ A single fetch wrapper (`client.ts`) handles:
 [Authorize(Policy = "CustomerOnly")]
 
 // Dynamic permission policies
-[Authorize(Policy = "permission:rfq.read.assigned")]
+[Authorize(Policy = "permission:enquiry.read.assigned")]
 ```
 
 - `PermissionPolicyProvider` — resolves `permission:<name>` policies dynamically
@@ -257,8 +257,8 @@ A single fetch wrapper (`client.ts`) handles:
 | Role | Description |
 |------|-------------|
 | `Admin` | Full system access, user management, approvals, audit logs |
-| `Engineer` | Content and operations staff — manages RFQs, orders, products, production jobs |
-| `Customer` | Portal users — own company's RFQs, orders, invoices, documents |
+| `Engineer` | Content and operations staff — manages Enquiries, orders, products, production jobs |
+| `Customer` | Portal users — own company's Enquiries, orders, invoices, documents |
 
 ### Permissions (Fine-Grained)
 
@@ -268,8 +268,8 @@ A single fetch wrapper (`client.ts`) handles:
 | `roles.manage` | ✅ | ❌ | ❌ |
 | `content.edit` | ✅ | ✅ | ❌ |
 | `content.publish` | ✅ | ❌ | ❌ |
-| `rfq.read.assigned` | ✅ | ✅ | ❌ |
-| `rfq.update.assigned` | ✅ | ✅ | ❌ |
+| `enquiry.read.assigned` | ✅ | ✅ | ❌ |
+| `enquiry.update.assigned` | ✅ | ✅ | ❌ |
 | `quotation.create` | ✅ | ✅ | ❌ |
 | `order.update.assigned` | ✅ | ✅ | ❌ |
 | `order.publish.customer_status` | ✅ | ❌ | ❌ |
@@ -303,7 +303,7 @@ A single fetch wrapper (`client.ts`) handles:
 | `/resources` | ResourcesPage | API → resources |
 | `/resources/:slug` | ResourceDetailPage | API → resource |
 | `/contact` | ContactPage | Contact form (submits enquiry) |
-| `/request-a-quote` | RequestQuotePage | RFQ form (with file upload) |
+| `/request-a-quote` | RequestQuotePage | Enquiry form (with file upload) |
 | `/privacy-policy` | LegalPage (slug="privacy-policy") | Static |
 | `/terms-of-use` | LegalPage (slug="terms-of-use") | Static |
 | `/cookie-policy` | LegalPage (slug="cookie-policy") | Static |
@@ -325,11 +325,11 @@ Requires `Customer` role.
 
 | Route | Page | Key Features |
 |-------|------|-------------|
-| `/customer/dashboard` | DashboardPage | Open RFQs, active quotations, orders, recent docs, notifications |
-| `/customer/rfqs` | RfqListPage | Paginated list with search/filter |
-| `/customer/rfqs/new` | RfqNewPage | Multi-field RFQ form with file upload |
-| `/customer/rfqs/:id` | RfqDetailPage | RFQ details with timeline, comments, file download |
-| `/customer/rfqs/:id/edit` | RfqEditPage | Edit draft RFQ |
+| `/customer/dashboard` | DashboardPage | Open Enquiries, active quotations, orders, recent docs, notifications |
+| `/customer/enquirys` | EnquiryListPage | Paginated list with search/filter |
+| `/customer/enquirys/new` | EnquiryNewPage | Multi-field Enquiry form with file upload |
+| `/customer/enquirys/:id` | EnquiryDetailPage | Enquiry details with timeline, comments, file download |
+| `/customer/enquirys/:id/edit` | EnquiryEditPage | Edit draft Enquiry |
 | `/customer/quotations` | QuotationListPage | List with status badges |
 | `/customer/quotations/:id` | QuotationDetailPage | Line items, commercial terms, accept/decline |
 | `/customer/orders` | OrderListPage | List with status tracking |
@@ -352,8 +352,8 @@ Requires `Admin` or `Engineer` role.
 | Route | Page | Role Access |
 |-------|------|-------------|
 | `/admin/dashboard` | AdminDashboardPage | Admin + Updater |
-| `/admin/rfqs` | UpdaterRfqListPage | Admin + Updater |
-| `/admin/rfqs/:id` | UpdaterRfqDetailPage | Admin + Updater |
+| `/admin/enquirys` | UpdaterEnquiryListPage | Admin + Updater |
+| `/admin/enquirys/:id` | UpdaterEnquiryDetailPage | Admin + Updater |
 | `/admin/quotations` | UpdaterQuotationListPage | Admin + Updater |
 | `/admin/quotations/new` | CreateQuotationPage | Admin + Updater |
 | `/admin/quotations/:id` | AdminQuotationDetailPage | Admin + Updater |
@@ -383,7 +383,7 @@ All endpoints are under `/api/v1/`. Authentication: JWT Bearer.
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | POST | `/api/v1/public/enquiries` | Submit contact enquiry (honeypot spam protection) |
-| POST | `/api/v1/public/rfqs` | Submit public RFQ (with optional file upload) |
+| POST | `/api/v1/public/enquirys` | Submit public Enquiry (with optional file upload) |
 | GET | `/api/v1/public/products` | List published products |
 | GET | `/api/v1/public/products/{slug}` | Get product by slug |
 | GET | `/api/v1/public/resources` | List published resources |
@@ -408,14 +408,14 @@ All endpoints are under `/api/v1/`. Authentication: JWT Bearer.
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/api/v1/customer/dashboard` | Dashboard summary |
-| GET | `/api/v1/customer/rfqs` | List RFQs (paginated, filterable) |
-| POST | `/api/v1/customer/rfqs` | Create RFQ |
-| GET | `/api/v1/customer/rfqs/{id}` | Get RFQ detail |
-| PATCH | `/api/v1/customer/rfqs/{id}` | Update draft RFQ |
-| DELETE | `/api/v1/customer/rfqs/{id}` | Soft-delete RFQ |
-| POST | `/api/v1/customer/rfqs/{id}/submit` | Submit draft RFQ |
-| GET | `/api/v1/customer/rfqs/{id}/timeline` | Get RFQ status history |
-| POST | `/api/v1/customer/rfqs/{id}/files` | Upload RFQ file |
+| GET | `/api/v1/customer/enquirys` | List Enquiries (paginated, filterable) |
+| POST | `/api/v1/customer/enquirys` | Create Enquiry |
+| GET | `/api/v1/customer/enquirys/{id}` | Get Enquiry detail |
+| PATCH | `/api/v1/customer/enquirys/{id}` | Update draft Enquiry |
+| DELETE | `/api/v1/customer/enquirys/{id}` | Soft-delete Enquiry |
+| POST | `/api/v1/customer/enquirys/{id}/submit` | Submit draft Enquiry |
+| GET | `/api/v1/customer/enquirys/{id}/timeline` | Get Enquiry status history |
+| POST | `/api/v1/customer/enquirys/{id}/files` | Upload Enquiry file |
 | GET | `/api/v1/customer/quotations` | List quotations |
 | GET | `/api/v1/customer/quotations/{id}` | Get quotation detail |
 | GET | `/api/v1/customer/quotations/{id}/timeline` | Get quotation timeline |
@@ -442,11 +442,11 @@ All endpoints are under `/api/v1/`. Authentication: JWT Bearer.
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/api/v1/updater/dashboard` | Updater dashboard summary |
-| GET | `/api/v1/updater/rfqs` | List all RFQs (paginated) |
-| GET | `/api/v1/updater/rfqs/{id}` | Get RFQ detail with internal data |
-| PATCH | `/api/v1/updater/rfqs/{id}/status` | Update RFQ status |
-| PATCH | `/api/v1/updater/rfqs/{id}/assign` | Assign RFQ to user |
-| POST | `/api/v1/updater/rfqs/{id}/comments` | Add RFQ comment |
+| GET | `/api/v1/updater/enquirys` | List all Enquiries (paginated) |
+| GET | `/api/v1/updater/enquirys/{id}` | Get Enquiry detail with internal data |
+| PATCH | `/api/v1/updater/enquirys/{id}/status` | Update Enquiry status |
+| PATCH | `/api/v1/updater/enquirys/{id}/assign` | Assign Enquiry to user |
+| POST | `/api/v1/updater/enquirys/{id}/comments` | Add Enquiry comment |
 | GET | `/api/v1/updater/quotations` | List all quotations |
 | GET | `/api/v1/updater/quotations/{id}` | Get quotation detail |
 | POST | `/api/v1/updater/quotations` | Create quotation |
@@ -559,16 +559,16 @@ The database has **60+ entity tables** under SQL Server. Key entity groups:
 | `UserCompany` | UserCompanies | UserId, CompanyId (unique constraint) |
 | `Company` | Companies | Name, Address, GstNumber, DeliveryAddresses |
 
-### RFQ → Quotation → Order Pipeline
+### Enquiry → Quotation → Order Pipeline
 
 | Entity | Table | Key Fields |
 |--------|-------|------------|
-| `Rfq` | Rfqs | FullName, CompanyName, Email, Phone, ProductType, Quantity, Status, Priority, IsDraft, IsDeleted, RowVersion |
-| `RfqItem` | RfqItems | PartNumber, Description, MaterialGrade, Quantity |
-| `RfqFile` | RfqFiles | FileName, ContentType, StorageKey, RfqId |
-| `RfqStatusHistory` | RfqStatusHistory | FromStatus, ToStatus, ChangedByRole, Note |
-| `RfqComment` | RfqComments | AuthorRole, Message, IsCustomerVisible |
-| `RfqAssignment` | RfqAssignments | RfqId, AssignedToUserId, IsActive |
+| `Enquiry` | Enquiries | FullName, CompanyName, Email, Phone, ProductType, Quantity, Status, Priority, IsDraft, IsDeleted, RowVersion |
+| `EnquiryItem` | EnquiryItems | PartNumber, Description, MaterialGrade, Quantity |
+| `EnquiryFile` | EnquiryFiles | FileName, ContentType, StorageKey, EnquiryId |
+| `EnquiryStatusHistory` | EnquiryStatusHistory | FromStatus, ToStatus, ChangedByRole, Note |
+| `EnquiryComment` | EnquiryComments | AuthorRole, Message, IsCustomerVisible |
+| `EnquiryAssignment` | EnquiryAssignments | EnquiryId, AssignedToUserId, IsActive |
 | `Quotation` | Quotations | QuotationNumber, Subtotal, Tax, Total, Status, ValidUntilUtc, DeliveryTime, Warranty, RowVersion |
 | `QuotationItem` | QuotationItems | PartNumber, Description, MaterialGrade, UnitPrice, LineTotal |
 | `QuotationRevision` | QuotationRevisions | ChangeNotes, PreviousTotal, NewTotal |
@@ -641,12 +641,12 @@ The database has **60+ entity tables** under SQL Server. Key entity groups:
 
 ```
 Company ──< UserCompany >── ApplicationUser
-Company ──< Rfq ──< Quotation ──< Order ──< Shipment
-Rfq ──< RfqItem
-Rfq ──< RfqFile
-Rfq ──< RfqStatusHistory
-Rfq ──< RfqComment
-Rfq ──< RfqAssignment
+Company ──< Enquiry ──< Quotation ──< Order ──< Shipment
+Enquiry ──< EnquiryItem
+Enquiry ──< EnquiryFile
+Enquiry ──< EnquiryStatusHistory
+Enquiry ──< EnquiryComment
+Enquiry ──< EnquiryAssignment
 Quotation ──< QuotationItem
 Quotation ──< QuotationRevision
 Quotation ──< QuotationStatusHistory
@@ -665,7 +665,7 @@ All sensitive changes → `AuditLog` (immutable — cannot be modified or delete
 
 ## 10. Workflows & Statuses
 
-### RFQ Status Lifecycle
+### Enquiry Status Lifecycle
 
 ```
 Draft → Submitted → Received → Under Review → Approved → Quoted → Accepted
@@ -710,10 +710,10 @@ Internal codes: `pending_advance`, `awaiting_approval`, `advance_paid`, `confirm
 
 `Inspection Report`, `Invoice`, `Packing List`, `Certificate`, `Delivery Challan`, `Drawing`
 
-### RFQ-to-Order Full Workflow
+### Enquiry-to-Order Full Workflow
 
 ```
-Customer submits RFQ
+Customer submits Enquiry
   → Data Updater validates details
   → Admin/authorized sales approver reviews
   → Quotation issued to customer
@@ -747,7 +747,7 @@ A 25-stage drag-and-drop Kanban board for manufacturing workflow management, ins
 ### Production Stages (ordered)
 
 ```
-1.  New RFQs             9.  Raw Material Ready    17. Fettling
+1.  New Enquiries             9.  Raw Material Ready    17. Fettling
 2.  Engineering Review   10. Core Making           18. Shot Blasting
 3.  Quotation Sent       11. Moulding             19. Machining
 4.  Customer Approval    12. Furnace Charging      20. Heat Treatment
@@ -849,7 +849,7 @@ Supported via `[data-theme="light"]` overrides with white backgrounds, darker te
 | Policy | Limit | Scope |
 |--------|-------|-------|
 | `auth` | 10 req/min | Per IP on login endpoints |
-| `public` | 20 req/min (configurable) | Per IP on RFQ/enquiry endpoints |
+| `public` | 20 req/min (configurable) | Per IP on Enquiry/enquiry endpoints |
 
 ### File Security
 
@@ -996,9 +996,9 @@ Public forms use a honeypot field (`website`) — hidden from humans, visible to
 |---|---------------|---------|
 | 1 | `InitialCreate` | Base schema |
 | 2 | `AddAuthTables` | Identity, refresh tokens, password reset |
-| 3 | `AddPublicSubmissions` | Enquiries, RFQs |
+| 3 | `AddPublicSubmissions` | Enquiries, Enquiries |
 | 4 | `AddCustomerPortal` | Companies, UserCompanies, Products |
-| 5 | `AddRfqModule` | RfqItems, RfqFiles, RfqStatusHistory, RfqComments, RfqAssignments |
+| 5 | `AddEnquiryModule` | EnquiryItems, EnquiryFiles, EnquiryStatusHistory, EnquiryComments, EnquiryAssignments |
 | 6 | `AddQuotationModule` | Quotations, QuotationItems, Revisions, StatusHistory, Comments, Attachments, Approvals |
 | 7 | `AddOrderModule` | Orders, OrderItems, OrderMilestones, Shipments |
 | 8 | `FixQuotationIsDeleted` | Add soft-delete to quotations |
@@ -1015,7 +1015,7 @@ Public forms use a honeypot field (`website`) — hidden from humans, visible to
 | 19 | `AddProductionKanban` | Production jobs, stages, quality, comments, timeline |
 | 20 | `AddUserBoardPreferences` | User board view preferences |
 | 21 | `AddCommentAuthorAndEditTracking` | Comment authorship + edit tracking |
-| 22 | `AddRfqPriority` | Priority field on RFQ |
+| 22 | `AddEnquiryPriority` | Priority field on Enquiry |
 | 23 | `AddProductMaster` | Product master data + attachments |
 | 24 | `AddOrderPaymentFields` | Order advance payment fields + milestone DTOs |
 

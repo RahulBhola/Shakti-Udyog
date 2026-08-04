@@ -316,9 +316,9 @@ Never display ISO or other certification logos without valid authorization.
 
 ```yaml
 resources:
-  - title: "How to Prepare a Casting RFQ"
+  - title: "How to Prepare a Casting Enquiry"
     summary: "A checklist of information that helps us quote accurately and faster."
-    slug: how-to-prepare-a-casting-rfq
+    slug: how-to-prepare-a-casting-enquiry
   - title: "Grey Iron vs. Ductile Iron"
     summary: "A practical comparison of properties, applications, and selection considerations."
     slug: grey-iron-vs-ductile-iron
@@ -327,7 +327,7 @@ resources:
     slug: casting-drawing-checklist
 ```
 
-### RFQ Checklist (Download / Web Page)
+### Enquiry Checklist (Download / Web Page)
 
 To provide an accurate quotation, please share:
 
@@ -375,7 +375,7 @@ contact_form:
 ```
 
 ```yaml
-rfq_form:
+enquiry_form:
   fields:
     - name: full_name
       label: Full Name
@@ -427,7 +427,7 @@ functional_requirements:
     - Responsive, mobile-first layout
     - Clear call, WhatsApp, email, and quote-request actions
     - Product and capability pages editable through your chosen content workflow
-    - Enquiry and RFQ forms with server-side validation
+    - Enquiry and Enquiry forms with server-side validation
     - Secure file uploads with type, size, virus, and access controls
     - Automated acknowledgement email to the customer
     - Internal notification email to the sales team
@@ -474,7 +474,7 @@ file_storage:
   options: "Private cloud object storage or secured server storage; never expose files through a public folder."
 project_management:
   tool: Atlassian Jira Software
-  purpose: "Internal assignment, progress tracking, approvals, bottleneck visibility, and operational reporting for RFQs, orders, content, and technical work."
+  purpose: "Internal assignment, progress tracking, approvals, bottleneck visibility, and operational reporting for Enquiries, orders, content, and technical work."
   integration: "Integrate with the ASP.NET Core API using a dedicated Jira service account and secure webhooks."
 authentication:
   approach: "ASP.NET Core Identity or an equivalent secure identity service with JWT access tokens and refresh tokens."
@@ -486,7 +486,7 @@ authentication:
 applications:
   public_website:
     audience: Visitors and prospective buyers
-    features: [Product catalogue, capabilities, quality information, RFQ form, contact form, resource pages]
+    features: [Product catalogue, capabilities, quality information, Enquiry form, contact form, resource pages]
   customer_portal:
     audience: Approved customer users
     features: [Dashboard, quotation history, order status, documents, drawing uploads, profile management, support enquiries]
@@ -505,7 +505,7 @@ applications:
 | Capability | Visitor | Customer | Data Updater | Admin |
 | --- | :---: | :---: | :---: | :---: |
 | View public site and catalogue | Yes | Yes | Yes | Yes |
-| Submit an RFQ | Yes | Yes | Yes (on behalf of customer) | Yes |
+| Submit an Enquiry | Yes | Yes | Yes (on behalf of customer) | Yes |
 | View own quotes and orders | No | Yes | Optional | Yes |
 | Upload / download own approved documents | No | Yes | Optional | Yes |
 | View own invoices and payment status | No | Yes | Optional | Yes |
@@ -526,10 +526,10 @@ applications:
 ```yaml
 customer_features:
   dashboard:
-    - Open RFQs, active quotations, active orders, and recent documents
+    - Open Enquiries, active quotations, active orders, and recent documents
     - Notification centre for status changes and messages
   quotation_management:
-    - Submit a new RFQ with drawings and specifications
+    - Submit a new Enquiry with drawings and specifications
     - View quotation status: received, under review, quoted, accepted, declined, expired
     - Download approved quotation documents
     - Accept or decline a quotation with a recorded comment
@@ -543,7 +543,7 @@ customer_features:
     - See only customer-approved status labels and comments; internal production notes are never visible
   documents:
     - Securely download own invoices, delivery documents, inspection reports, and approved certificates
-    - Upload revised drawings or clarification documents to an RFQ
+    - Upload revised drawings or clarification documents to an Enquiry
   account:
     - Maintain company contact details and approved delivery addresses
     - Manage personal password and multi-factor authentication settings
@@ -557,8 +557,8 @@ data_updater_features:
     - Create and edit product pages, casting grades, industries, FAQs, resources, and image gallery entries
     - Save drafts and submit content for administrator approval before publication
   sales_operations:
-    - Register enquiries and RFQs received through other channels
-    - Update RFQ and quotation stages
+    - Register enquiries and Enquiries received through other channels
+    - Update Enquiry and quotation stages
     - Attach quotations and approved customer documents
   order_operations:
     - Maintain approved order milestones, expected dispatch dates, quantity progress, transporter, tracking reference, and delivery confirmation
@@ -585,7 +585,7 @@ admin_features:
     - View audit trail for logins, file access, data changes, approvals, and status updates
     - Review failed uploads, failed notification deliveries, and suspicious activity
   reporting:
-    - RFQ conversion, order pipeline, product interest, turnaround time, and user activity reports
+    - Enquiry conversion, order pipeline, product interest, turnaround time, and user activity reports
 ```
 
 ## 14. Core Data Model
@@ -610,10 +610,10 @@ core_entities:
     purpose: "Product image metadata, alt text, sort order, and approval status."
   enquiries:
     purpose: "General contact enquiries and their follow-up status."
-  rfqs:
+  enquirys:
     purpose: "Customer quotation requests, material, quantity, delivery location, requirement details, and workflow status."
-  rfq_files:
-    purpose: "Protected drawing and specification file metadata for each RFQ."
+  enquiry_files:
+    purpose: "Protected drawing and specification file metadata for each Enquiry."
   quotations:
     purpose: "Quoted amount, validity, payment and delivery terms, approval state, and customer response."
   orders:
@@ -629,7 +629,7 @@ core_entities:
   payments:
     purpose: "Payment reference, gateway/provider reference, method, amount, date, verification status, receipt, and linked invoice(s)."
   jira_links:
-    purpose: "Stores the Jira project key, issue key, issue URL, sync status, and link to the internal RFQ, quotation, order, content item, or support case."
+    purpose: "Stores the Jira project key, issue key, issue URL, sync status, and link to the internal Enquiry, quotation, order, content item, or support case."
   documents:
     purpose: "Inspection reports, invoices, certificates, delivery documents, and visibility scope."
   notifications:
@@ -642,8 +642,8 @@ core_entities:
 
 ```text
 Company → Customer Users
-Customer User / Company → RFQs → Quotations → Orders → Order Milestones
-RFQs / Quotations / Orders → Protected Documents
+Customer User / Company → Enquiries → Quotations → Orders → Order Milestones
+Enquiries / Quotations / Orders → Protected Documents
 Users → Roles → Permissions
 All sensitive changes → Audit Logs
 ```
@@ -664,7 +664,7 @@ All sensitive changes → Audit Logs
 ```yaml
 public_api:
   - "POST /api/v1/public/enquiries"
-  - "POST /api/v1/public/rfqs"
+  - "POST /api/v1/public/enquirys"
   - "GET /api/v1/public/products"
   - "GET /api/v1/public/products/{slug}"
 auth_api:
@@ -674,8 +674,8 @@ auth_api:
   - "POST /api/v1/auth/reset-password"
 customer_api:
   - "GET /api/v1/customer/dashboard"
-  - "GET /api/v1/customer/rfqs"
-  - "POST /api/v1/customer/rfqs"
+  - "GET /api/v1/customer/enquirys"
+  - "POST /api/v1/customer/enquirys"
   - "GET /api/v1/customer/quotations"
   - "POST /api/v1/customer/quotations/{id}/response"
   - "GET /api/v1/customer/orders"
@@ -691,7 +691,7 @@ customer_api:
 updater_api:
   - "POST /api/v1/updater/products"
   - "PATCH /api/v1/updater/products/{id}"
-  - "PATCH /api/v1/updater/rfqs/{id}/status"
+  - "PATCH /api/v1/updater/enquirys/{id}/status"
   - "PATCH /api/v1/updater/orders/{id}/milestones"
   - "PATCH /api/v1/updater/orders/{id}/fulfilment"
   - "POST /api/v1/updater/orders/{id}/shipments"
@@ -732,7 +732,7 @@ security_requirements:
     - Hash passwords using the framework's current secure password hasher.
     - Use short-lived access tokens, secure refresh-token rotation, and server-side revocation.
     - Require multi-factor authentication for administrators; offer it to all staff and customers.
-    - Rate-limit login, password reset, RFQ, and upload endpoints.
+    - Rate-limit login, password reset, Enquiry, and upload endpoints.
   files:
     - Check file extension, MIME type, actual file signature, size, and malware status.
     - Store files outside the public web root with encrypted private storage.
@@ -749,10 +749,10 @@ security_requirements:
 
 ## 17. Workflow Definitions
 
-### RFQ-to-Order Workflow
+### Enquiry-to-Order Workflow
 
 ```text
-Customer submits RFQ
+Customer submits Enquiry
   → Data Updater validates details
   → Admin / authorized sales approver reviews
   → Quotation issued to customer
@@ -848,7 +848,7 @@ order_update_rules:
 ```yaml
 authentication_requirements:
   registration:
-    - "Public visitors may submit RFQs without an account."
+    - "Public visitors may submit Enquiries without an account."
     - "Customer portal accounts are created by invitation or administrator approval; self-registration must not grant company access automatically."
   login:
     - "Use email or approved username plus password."
@@ -872,8 +872,8 @@ authorization_requirements:
     - roles.manage
     - content.edit
     - content.publish
-    - rfq.read.assigned
-    - rfq.update.assigned
+    - enquiry.read.assigned
+    - enquiry.update.assigned
     - quotation.create
     - order.update.assigned
     - order.publish.customer_status
@@ -956,7 +956,7 @@ payment_api:
 
 ### Why Jira Helps
 
-Jira gives Shakti Udyog a single internal view of who owns each RFQ, quotation, order task, technical review, quality check, and content update. It is particularly useful when several people are involved and management needs to identify waiting items or delivery risks early.
+Jira gives Shakti Udyog a single internal view of who owns each Enquiry, quotation, order task, technical review, quality check, and content update. It is particularly useful when several people are involved and management needs to identify waiting items or delivery risks early.
 
 Jira should be an **internal work-management system**, not the source of truth for customer account data, quotations, orders, or controlled documents. SQL Server and the customer portal remain the official business system; Jira receives only the work references and information required to complete assigned tasks.
 
@@ -970,7 +970,7 @@ jira_project:
   visibility: Internal staff only
   issue_types:
     - Epic: "One accepted customer order or significant internal initiative"
-    - Story: "One RFQ assessment, quotation workflow, customer request, or content initiative"
+    - Story: "One Enquiry assessment, quotation workflow, customer request, or content initiative"
     - Task: "Assigned operational, engineering, production, quality, dispatch, or content activity"
     - Bug: "Website, portal, API, or data defect"
   workflow_columns:
@@ -990,7 +990,7 @@ jira_project:
 ```yaml
 jira_custom_fields:
   - Customer Company
-  - Internal RFQ ID
+  - Internal Enquiry ID
   - Internal Quotation ID
   - Internal Order ID
   - Casting Type / Material Grade
@@ -1007,9 +1007,9 @@ jira_custom_fields:
 
 ```yaml
 jira_automations:
-  - trigger: "New website RFQ passes validation"
-    action: "Create a Jira Story in To Do, assign the sales/technical-review queue, and link it to the internal RFQ record."
-  - trigger: "RFQ requires technical clarification"
+  - trigger: "New website Enquiry passes validation"
+    action: "Create a Jira Story in To Do, assign the sales/technical-review queue, and link it to the internal Enquiry record."
+  - trigger: "Enquiry requires technical clarification"
     action: "Move the linked issue to Waiting for Customer and notify the responsible customer-portal user."
   - trigger: "Quotation approved internally"
     action: "Move the issue to Waiting for Approval or create a quotation-review sub-task, based on the approval policy."
@@ -1028,7 +1028,7 @@ jira_automations:
 ```yaml
 jira_integration_rules:
   source_of_truth:
-    - "SQL Server is authoritative for users, customers, RFQs, quotations, orders, documents, permissions, and customer-visible milestones."
+    - "SQL Server is authoritative for users, customers, Enquiries, quotations, orders, documents, permissions, and customer-visible milestones."
     - "Jira is authoritative only for internal work assignment and task workflow."
   synchronization:
     - "Use the ASP.NET Core backend as the sole connector between the portal/database and Jira."
@@ -1048,7 +1048,7 @@ jira_integration_rules:
 
 ```yaml
 jira_api:
-  - "POST /api/v1/admin/jira/sync/rfqs/{id}"
+  - "POST /api/v1/admin/jira/sync/enquirys/{id}"
   - "POST /api/v1/admin/jira/sync/orders/{id}"
   - "GET /api/v1/admin/jira/issues/{issueKey}"
   - "POST /api/v1/integrations/jira/webhook"
@@ -1059,8 +1059,8 @@ jira_api:
 
 ```yaml
 jira_rollout:
-  phase_1: "Create the board, workflows, issue types, and manual links to RFQ/order records."
-  phase_2: "Add one-way automation from the portal to Jira for new RFQs and confirmed orders."
+  phase_1: "Create the board, workflows, issue types, and manual links to Enquiry/order records."
+  phase_2: "Add one-way automation from the portal to Jira for new Enquiries and confirmed orders."
   phase_3: "Add validated webhook updates, dashboards, escalation rules, and reporting."
 ```
 

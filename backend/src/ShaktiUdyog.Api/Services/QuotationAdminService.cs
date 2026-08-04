@@ -31,12 +31,12 @@ public class QuotationAdminService(
         if (!string.IsNullOrWhiteSpace(search))
         {
             var term = search.Trim();
-            query = query.Where(q => q.QuotationNumber.Contains(term) || q.Rfq.ProductType.Contains(term));
+            query = query.Where(q => q.QuotationNumber.Contains(term) || q.Enquiry.ProductType.Contains(term));
         }
         if (!string.IsNullOrWhiteSpace(status)) query = query.Where(q => q.Status == status);
         var total = await query.CountAsync();
         var items = await query.OrderByDescending(q => q.CreatedAtUtc).Skip((page - 1) * pageSize).Take(pageSize)
-            .Select(q => new QuotationListItemDto(q.Id, q.QuotationNumber, q.RevisionNumber, q.RfqId, q.Rfq.ProductType, q.Total, q.Currency, q.Status, q.ValidUntilUtc, q.CreatedAtUtc, q.Rfq.CompanyName, q.Items.Count, q.PaymentTerms, q.DeliveryTime))
+            .Select(q => new QuotationListItemDto(q.Id, q.QuotationNumber, q.RevisionNumber, q.EnquiryId, q.Enquiry.ProductType, q.Total, q.Currency, q.Status, q.ValidUntilUtc, q.CreatedAtUtc, q.Enquiry.CompanyName, q.Items.Count, q.PaymentTerms, q.DeliveryTime))
             .ToListAsync();
         return new PagedResult<QuotationListItemDto>(items, page, pageSize, total);
     }
@@ -51,7 +51,7 @@ public class QuotationAdminService(
             .Select(o => new { o.Id, o.OrderNumber })
             .FirstOrDefaultAsync();
 
-        return new QuotationDetailDto(q.Id, q.QuotationNumber, q.RevisionNumber, q.RfqId, q.Rfq?.ProductType ?? "",
+        return new QuotationDetailDto(q.Id, q.QuotationNumber, q.RevisionNumber, q.EnquiryId, q.Enquiry?.ProductType ?? "",
             q.Subtotal, q.Tax, q.Discount, q.Total, q.Currency, q.PaymentTerms, q.DeliveryTerms, q.Freight, q.Packing, q.Remarks,
             q.DeliveryTime, q.Warranty,
             q.Status, q.CustomerResponseComment, q.CustomerRespondedAtUtc, q.ValidUntilUtc, q.DocumentId, q.CreatedAtUtc,

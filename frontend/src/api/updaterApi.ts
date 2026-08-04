@@ -3,7 +3,7 @@ import type { QuotationListItem, QuotationDetail, OrderListItem, OrderDetail, Pa
 
 /* ---- Updater-specific types ---------------------------------------------- */
 
-export interface UpdaterRfqListItem {
+export interface UpdaterEnquiryListItem {
   id: string;
   productType: string;
   companyName: string | null;
@@ -18,7 +18,7 @@ export interface UpdaterRfqListItem {
   firstFileContentType: string | null;
 }
 
-export interface UpdaterRfqDetail {
+export interface UpdaterEnquiryDetail {
   id: string;
   companyId: string;
   fullName: string;
@@ -59,7 +59,7 @@ export interface UpdaterRfqDetail {
 }
 
 export interface UpdaterDashboard {
-  pendingRfqs: number;
+  pendingEnquiries: number;
   pendingQuotations: number;
   ordersInProduction: number;
   ordersAwaitingShipment: number;
@@ -72,22 +72,22 @@ export const updaterApi = {
 
   dashboard: () => apiGet<UpdaterDashboard>(`${base}/dashboard`),
 
-  // ---- RFQs ---------------------------------------------------------------
+  // ---- Enquiries ---------------------------------------------------------------
 
-  rfqs: (page = 1, pageSize = 20, search?: string, status?: string, companyId?: string) => {
+  enquiries: (page = 1, pageSize = 20, search?: string, status?: string, companyId?: string) => {
     const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
     if (search) params.set("search", search);
     if (status) params.set("status", status);
     if (companyId) params.set("companyId", companyId);
-    return apiGet<Paged<UpdaterRfqListItem>>(`${base}/rfqs?${params}`);
+    return apiGet<Paged<UpdaterEnquiryListItem>>(`${base}/enquiries?${params}`);
   },
-  rfq: (id: string) => apiGet<UpdaterRfqDetail>(`${base}/rfqs/${id}`),
-  updateRfqStatus: (id: string, newStatus: string, note?: string) =>
-    apiPatch<{ message: string }>(`${base}/rfqs/${id}/status`, { newStatus, note }),
-  assignRfq: (id: string, assignedToUserId: string) =>
-    apiPatch<{ message: string }>(`${base}/rfqs/${id}/assign`, { assignedToUserId }),
-  addRfqComment: (id: string, message: string, isCustomerVisible = true) =>
-    apiPost<{ id: string }>(`${base}/rfqs/${id}/comments`, { message, isCustomerVisible }),
+  enquiry: (id: string) => apiGet<UpdaterEnquiryDetail>(`${base}/enquiries/${id}`),
+  updateEnquiryStatus: (id: string, newStatus: string, note?: string) =>
+    apiPatch<{ message: string }>(`${base}/enquiries/${id}/status`, { newStatus, note }),
+  assignEnquiry: (id: string, assignedToUserId: string) =>
+    apiPatch<{ message: string }>(`${base}/enquiries/${id}/assign`, { assignedToUserId }),
+  addEnquiryComment: (id: string, message: string, isCustomerVisible = true) =>
+    apiPost<{ id: string }>(`${base}/enquiries/${id}/comments`, { message, isCustomerVisible }),
 
   // ---- Quotations ---------------------------------------------------------
 

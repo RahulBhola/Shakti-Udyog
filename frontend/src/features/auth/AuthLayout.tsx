@@ -38,8 +38,8 @@ function ShieldIcon() {
 
 const features = [
   {
-    title: "RFQ to Quotation",
-    description: "Create RFQs and get accurate quotations with ease.",
+    title: "Enquiry to Quotation",
+    description: "Create Enquiries and get accurate quotations with ease.",
   },
   {
     title: "Track Every Stage",
@@ -74,7 +74,7 @@ export function AuthLayout({ children, signUpActive }: AuthLayoutProps) {
             <span className="auth-hero-highlight">Casting Excellence.</span>
           </h1>
           <p className="auth-hero-desc">
-            Streamline RFQs, quotations, orders and production with a complete end-to-end casting management system.
+            Streamline Enquiries, quotations, orders and production with a complete end-to-end casting management system.
           </p>
 
           {/* Features */}

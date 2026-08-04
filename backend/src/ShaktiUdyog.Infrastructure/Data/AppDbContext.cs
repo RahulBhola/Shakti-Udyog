@@ -6,7 +6,7 @@ namespace ShaktiUdyog.Infrastructure.Data;
 
 /// <summary>
 /// Primary application DbContext. Identity tables plus the audit log for now;
-/// business entities (companies, RFQs, quotations, orders, ...) arrive in
+/// business entities (companies, Enquirys, quotations, orders, ...) arrive in
 /// later milestones as separate migrations.
 /// </summary>
 public class AppDbContext(DbContextOptions<AppDbContext> options)
@@ -16,10 +16,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
     public DbSet<UserCompany> UserCompanies => Set<UserCompany>();
+    public DbSet<ContactRequest> ContactRequests => Set<ContactRequest>();
     public DbSet<Enquiry> Enquiries => Set<Enquiry>();
-    public DbSet<Rfq> Rfqs => Set<Rfq>();
     public DbSet<Company> Companies => Set<Company>();
-    public DbSet<RfqFile> RfqFiles => Set<RfqFile>();
+    public DbSet<EnquiryFile> EnquiryFiles => Set<EnquiryFile>();
     public DbSet<Quotation> Quotations => Set<Quotation>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
@@ -30,10 +30,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<Document> Documents => Set<Document>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<SupportRequest> SupportRequests => Set<SupportRequest>();
-    public DbSet<RfqStatusHistory> RfqStatusHistories => Set<RfqStatusHistory>();
-    public DbSet<RfqComment> RfqComments => Set<RfqComment>();
-    public DbSet<RfqItem> RfqItems => Set<RfqItem>();
-    public DbSet<RfqAssignment> RfqAssignments => Set<RfqAssignment>();
+    public DbSet<EnquiryStatusHistory> EnquiryStatusHistories => Set<EnquiryStatusHistory>();
+    public DbSet<EnquiryComment> EnquiryComments => Set<EnquiryComment>();
+    public DbSet<EnquiryItem> EnquiryItems => Set<EnquiryItem>();
+    public DbSet<EnquiryAssignment> EnquiryAssignments => Set<EnquiryAssignment>();
     public DbSet<QuotationItem> QuotationItems => Set<QuotationItem>();
     public DbSet<QuotationRevision> QuotationRevisions => Set<QuotationRevision>();
     public DbSet<QuotationComment> QuotationComments => Set<QuotationComment>();
@@ -205,16 +205,16 @@ public DbSet<KanbanTask> KanbanTasks => Set<KanbanTask>();
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        builder.Entity<RfqFile>(entity =>
+        builder.Entity<EnquiryFile>(entity =>
         {
-            entity.ToTable("RfqFiles");
+            entity.ToTable("EnquiryFiles");
             entity.Property(f => f.FileName).HasMaxLength(255).IsRequired();
             entity.Property(f => f.ContentType).HasMaxLength(127).IsRequired();
             entity.Property(f => f.StorageKey).HasMaxLength(200).IsRequired();
             entity.HasIndex(f => f.StorageKey).IsUnique();
-            entity.HasOne(f => f.Rfq).WithMany(r => r.Files)
-                .HasForeignKey(f => f.RfqId).OnDelete(DeleteBehavior.Cascade);
-            entity.HasQueryFilter(f => !f.Rfq.IsDeleted);
+            entity.HasOne(f => f.Enquiry).WithMany(r => r.Files)
+                .HasForeignKey(f => f.EnquiryId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasQueryFilter(f => !f.Enquiry.IsDeleted);
         });
 
         builder.Entity<Quotation>(entity =>
@@ -239,8 +239,8 @@ public DbSet<KanbanTask> KanbanTasks => Set<KanbanTask>();
             entity.Property(q => q.RowVersion).IsRowVersion();
             entity.HasQueryFilter(q => !q.IsDeleted);
             entity.HasIndex(q => q.CompanyId);
-            entity.HasOne(q => q.Rfq).WithMany()
-                .HasForeignKey(q => q.RfqId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(q => q.Enquiry).WithMany()
+                .HasForeignKey(q => q.EnquiryId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(q => q.Company).WithMany()
                 .HasForeignKey(q => q.CompanyId).OnDelete(DeleteBehavior.Restrict);
         });
@@ -703,53 +703,53 @@ public DbSet<KanbanTask> KanbanTasks => Set<KanbanTask>();
                 .HasForeignKey(s => s.OrderId).OnDelete(DeleteBehavior.SetNull);
         });
 
-        builder.Entity<RfqStatusHistory>(entity =>
+        builder.Entity<EnquiryStatusHistory>(entity =>
         {
-            entity.ToTable("RfqStatusHistory");
+            entity.ToTable("EnquiryStatusHistory");
             entity.Property(h => h.FromStatus).HasMaxLength(30).IsRequired();
             entity.Property(h => h.ToStatus).HasMaxLength(30).IsRequired();
             entity.Property(h => h.ChangedByRole).HasMaxLength(30);
             entity.Property(h => h.Note).HasMaxLength(2000);
-            entity.HasIndex(h => new { h.RfqId, h.CreatedAtUtc });
-            entity.HasOne(h => h.Rfq).WithMany(r => r.StatusHistory)
-                .HasForeignKey(h => h.RfqId).OnDelete(DeleteBehavior.Cascade);
-            entity.HasQueryFilter(h => !h.Rfq.IsDeleted);
+            entity.HasIndex(h => new { h.EnquiryId, h.CreatedAtUtc });
+            entity.HasOne(h => h.Enquiry).WithMany(r => r.StatusHistory)
+                .HasForeignKey(h => h.EnquiryId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasQueryFilter(h => !h.Enquiry.IsDeleted);
         });
 
-        builder.Entity<RfqComment>(entity =>
+        builder.Entity<EnquiryComment>(entity =>
         {
-            entity.ToTable("RfqComments");
+            entity.ToTable("EnquiryComments");
             entity.Property(c => c.AuthorRole).HasMaxLength(30);
             entity.Property(c => c.Message).HasMaxLength(4000).IsRequired();
-            entity.HasIndex(c => new { c.RfqId, c.CreatedAtUtc });
-            entity.HasOne(c => c.Rfq).WithMany(r => r.Comments)
-                .HasForeignKey(c => c.RfqId).OnDelete(DeleteBehavior.Cascade);
-            entity.HasQueryFilter(c => !c.Rfq.IsDeleted);
+            entity.HasIndex(c => new { c.EnquiryId, c.CreatedAtUtc });
+            entity.HasOne(c => c.Enquiry).WithMany(r => r.Comments)
+                .HasForeignKey(c => c.EnquiryId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasQueryFilter(c => !c.Enquiry.IsDeleted);
         });
 
-        builder.Entity<RfqAssignment>(entity =>
+        builder.Entity<EnquiryAssignment>(entity =>
         {
-            entity.ToTable("RfqAssignments");
-            entity.HasIndex(a => new { a.RfqId, a.IsActive });
-            entity.HasOne(a => a.Rfq).WithMany(r => r.Assignments)
-                .HasForeignKey(a => a.RfqId).OnDelete(DeleteBehavior.Cascade);
-            entity.HasQueryFilter(a => !a.Rfq.IsDeleted);
+            entity.ToTable("EnquiryAssignments");
+            entity.HasIndex(a => new { a.EnquiryId, a.IsActive });
+            entity.HasOne(a => a.Enquiry).WithMany(r => r.Assignments)
+                .HasForeignKey(a => a.EnquiryId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasQueryFilter(a => !a.Enquiry.IsDeleted);
         });
 
-        builder.Entity<RfqItem>(entity =>
+        builder.Entity<EnquiryItem>(entity =>
         {
-            entity.ToTable("RfqItems");
+            entity.ToTable("EnquiryItems");
             entity.Property(i => i.PartNumber).HasMaxLength(100).IsRequired();
             entity.Property(i => i.Description).HasMaxLength(500).IsRequired();
             entity.Property(i => i.MaterialGrade).HasMaxLength(100);
             entity.Property(i => i.Unit).HasMaxLength(20);
             entity.Property(i => i.DrawingRevision).HasMaxLength(50);
-            entity.HasOne(i => i.Rfq).WithMany(r => r.Items)
-                .HasForeignKey(i => i.RfqId).OnDelete(DeleteBehavior.Cascade);
-            entity.HasQueryFilter(i => !i.Rfq.IsDeleted);
+            entity.HasOne(i => i.Enquiry).WithMany(r => r.Items)
+                .HasForeignKey(i => i.EnquiryId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasQueryFilter(i => !i.Enquiry.IsDeleted);
         });
 
-        builder.Entity<Rfq>(entity =>
+        builder.Entity<Enquiry>(entity =>
         {
             entity.HasOne(r => r.Company).WithMany()
                 .HasForeignKey(r => r.CompanyId).OnDelete(DeleteBehavior.SetNull);
@@ -763,9 +763,9 @@ public DbSet<KanbanTask> KanbanTasks => Set<KanbanTask>();
                 .HasForeignKey(uc => uc.CompanyId).OnDelete(DeleteBehavior.Cascade);
         });
 
-        builder.Entity<Enquiry>(entity =>
+        builder.Entity<ContactRequest>(entity =>
         {
-            entity.ToTable("Enquiries");
+            entity.ToTable("ContactRequests");
             entity.Property(e => e.FullName).HasMaxLength(150).IsRequired();
             entity.Property(e => e.CompanyName).HasMaxLength(200).IsRequired();
             entity.Property(e => e.Email).HasMaxLength(254).IsRequired();
@@ -777,9 +777,9 @@ public DbSet<KanbanTask> KanbanTasks => Set<KanbanTask>();
             entity.HasIndex(e => e.CreatedAtUtc);
         });
 
-        builder.Entity<Rfq>(entity =>
+        builder.Entity<Enquiry>(entity =>
         {
-            entity.ToTable("Rfqs");
+            entity.ToTable("Enquiries");
             entity.Property(r => r.FullName).HasMaxLength(150).IsRequired();
             entity.Property(r => r.CompanyName).HasMaxLength(200).IsRequired();
             entity.Property(r => r.Email).HasMaxLength(254).IsRequired();
@@ -866,8 +866,8 @@ public DbSet<KanbanTask> KanbanTasks => Set<KanbanTask>();
                 .HasForeignKey(j => j.CompanyId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(j => j.Order).WithMany()
                 .HasForeignKey(j => j.OrderId).OnDelete(DeleteBehavior.SetNull);
-            entity.HasOne(j => j.Rfq).WithMany()
-                .HasForeignKey(j => j.RfqId).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(j => j.Enquiry).WithMany()
+                .HasForeignKey(j => j.EnquiryId).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(j => j.Quotation).WithMany()
                 .HasForeignKey(j => j.QuotationId).OnDelete(DeleteBehavior.SetNull);
         });

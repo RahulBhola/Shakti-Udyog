@@ -2,7 +2,7 @@ namespace ShaktiUdyog.Domain.Entities;
 
 /// <summary>
 /// Central production job card linking manufacturing work to the sales pipeline.
-/// Tracks a casting from RFQ through dispatch across 25 workflow stages.
+/// Tracks a casting from Enquiry through dispatch across 25 workflow stages.
 /// </summary>
 public class ProductionJob
 {
@@ -12,8 +12,8 @@ public class ProductionJob
     // Links to business entities
     public Guid? OrderId { get; set; }
     public Order? Order { get; set; }
-    public Guid? RfqId { get; set; }
-    public Rfq? Rfq { get; set; }
+    public Guid? EnquiryId { get; set; }
+    public Enquiry? Enquiry { get; set; }
     public Guid? QuotationId { get; set; }
     public Quotation? Quotation { get; set; }
     public Guid CompanyId { get; set; }
@@ -29,7 +29,7 @@ public class ProductionJob
     public int Quantity { get; set; }
 
     // Production tracking
-    public string CurrentStage { get; set; } = "New RFQs";
+    public string CurrentStage { get; set; } = "New Enquirys";
     public string Priority { get; set; } = "Medium";
     public string? ProductionBatch { get; set; }
     public int ProgressPercent { get; set; }

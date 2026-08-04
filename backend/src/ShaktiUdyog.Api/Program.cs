@@ -133,7 +133,7 @@ builder.Services.AddRateLimiter(options =>
                 QueueLimit = 0,
             }));
 
-    // Public enquiry/RFQ submissions (requirements §16: rate-limit RFQ endpoints).
+    // Public enquiry/Enquiry submissions (requirements §16: rate-limit Enquiry endpoints).
     // Limit is configurable (RateLimits:PublicPerMinute) so tests can raise it.
     var publicLimit = builder.Configuration.GetValue("RateLimits:PublicPerMinute", 20);
     options.AddPolicy("public", httpContext =>

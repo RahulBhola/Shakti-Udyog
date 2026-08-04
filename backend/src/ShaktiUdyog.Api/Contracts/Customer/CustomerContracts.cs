@@ -5,7 +5,7 @@ namespace ShaktiUdyog.Api.Contracts.Customer;
 // ---- Dashboard --------------------------------------------------------------
 
 public record DashboardDto(
-    int OpenRfqs,
+    int OpenEnquiries,
     int ActiveQuotations,
     int ActiveOrders,
     int UnpaidInvoices,
@@ -15,18 +15,18 @@ public record DashboardDto(
 
 public record ActivityItemDto(string Type, string Title, string? LinkPath, DateTimeOffset OccurredAtUtc);
 
-// ---- RFQs -------------------------------------------------------------------
+// ---- Enquirys -------------------------------------------------------------------
 
-public record RfqListItemDto(
+public record EnquiryListItemDto(
     Guid Id, string ProductType, string Quantity, string Status, bool IsDraft,
     int FileCount, DateTimeOffset CreatedAtUtc,
     string? PartName, string? PartNumber, string? Industry, string? ProductionQuantity);
 
-public record RfqDetailDto(
+public record EnquiryDetailDto(
     Guid Id, string FullName, string CompanyName, string ProductType,
     string? MaterialGrade, string Quantity, string? DeliveryLocation,
     string RequirementDetails, string Status, bool IsDraft,
-    IReadOnlyList<RfqFileDto> Files, DateTimeOffset CreatedAtUtc,
+    IReadOnlyList<EnquiryFileDto> Files, DateTimeOffset CreatedAtUtc,
     string? PartName, string? PartNumber, string? Industry, string? Application,
     string? MaterialStandard, decimal? ApproxWeight,
     string? MachiningRequired, string? PatternAvailability,
@@ -34,9 +34,9 @@ public record RfqDetailDto(
     DateTimeOffset? ExpectedDeliveryDate, string? PreferredDeliveryTerms,
     string? AdditionalRequirements, string? Remarks);
 
-public record RfqFileDto(Guid Id, string FileName, long SizeBytes, DateTimeOffset UploadedAtUtc);
+public record EnquiryFileDto(Guid Id, string FileName, long SizeBytes, DateTimeOffset UploadedAtUtc);
 
-public record CreateRfqRequest(
+public record CreateEnquiryRequest(
     [Required, StringLength(100)] string ProductType,
     [StringLength(200)] string? MaterialGrade,
     [Required, StringLength(100)] string Quantity,
@@ -60,12 +60,12 @@ public record CreateRfqRequest(
     [StringLength(2000)] string? AdditionalRequirements = null,
     [StringLength(4000)] string? Remarks = null);
 
-public record RfqTimelineEntryDto(
+public record EnquiryTimelineEntryDto(
     string FromStatus, string ToStatus, string ChangedByRole,
     string? Note, DateTimeOffset OccurredAtUtc);
 
-/// <summary>DTO for updating a draft RFQ. All fields are optional — only supplied fields are changed.</summary>
-public record UpdateRfqRequest(
+/// <summary>DTO for updating a draft Enquiry. All fields are optional — only supplied fields are changed.</summary>
+public record UpdateEnquiryRequest(
     string? ProductType, string? MaterialGrade, string? Quantity,
     string? DeliveryLocation, string? RequirementDetails,
     string? PartName = null, string? PartNumber = null,
@@ -80,13 +80,13 @@ public record UpdateRfqRequest(
 // ---- Quotations -------------------------------------------------------------
 
 public record QuotationListItemDto(
-    Guid Id, string QuotationNumber, int RevisionNumber, Guid RfqId, string ProductType,
+    Guid Id, string QuotationNumber, int RevisionNumber, Guid EnquiryId, string ProductType,
     decimal Total, string Currency, string Status,
     DateTimeOffset? ValidUntilUtc, DateTimeOffset CreatedAtUtc,
     string? CompanyName, int ItemCount, string? PaymentTerms, string? DeliveryTime);
 
 public record QuotationDetailDto(
-    Guid Id, string QuotationNumber, int RevisionNumber, Guid RfqId, string ProductType,
+    Guid Id, string QuotationNumber, int RevisionNumber, Guid EnquiryId, string ProductType,
     decimal Subtotal, decimal Tax, decimal Discount, decimal Total,
     string Currency, string? PaymentTerms, string? DeliveryTerms,
     string? Freight, string? Packing, string? Remarks,

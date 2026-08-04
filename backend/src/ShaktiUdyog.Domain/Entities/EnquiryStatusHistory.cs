@@ -1,15 +1,15 @@
 namespace ShaktiUdyog.Domain.Entities;
 
 /// <summary>
-/// Immutable record of every RFQ status transition (requirements §14,
-/// Milestone 4 RFQ spec). Created alongside every status change for full
+/// Immutable record of every Enquiry status transition (requirements §14,
+/// Milestone 4 Enquiry spec). Created alongside every status change for full
 /// audit trail.
 /// </summary>
-public class RfqStatusHistory
+public class EnquiryStatusHistory
 {
     public Guid Id { get; set; }
-    public Guid RfqId { get; set; }
-    public Rfq Rfq { get; set; } = null!;
+    public Guid EnquiryId { get; set; }
+    public Enquiry Enquiry { get; set; } = null!;
     public required string FromStatus { get; set; }
     public required string ToStatus { get; set; }
     public Guid? ChangedByUserId { get; set; }

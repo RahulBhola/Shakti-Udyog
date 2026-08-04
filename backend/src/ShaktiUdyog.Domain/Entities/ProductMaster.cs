@@ -1,6 +1,6 @@
 namespace ShaktiUdyog.Domain.Entities;
 
-/// <summary>ERP Product Master — the authoritative source for products used across RFQs, Quotations, Orders, Manufacturing, Inventory, and Invoices.</summary>
+/// <summary>ERP Product Master — the authoritative source for products used across Enquirys, Quotations, Orders, Manufacturing, Inventory, and Invoices.</summary>
 public class ProductMaster
 {
     public Guid Id { get; set; }

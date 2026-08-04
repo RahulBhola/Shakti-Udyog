@@ -1,7 +1,7 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { customerApi } from "../../api/customerApi";
-import { rfqProductTypes } from "../../api/publicApi";
+import { enquiryProductTypes } from "../../api/publicApi";
 import { Upload, FileText, X, ChevronRight, Loader2, AlertCircle, GripVertical } from "lucide-react";
 
 /* ── Constants ──────────────────────────────────────────────── */
@@ -48,7 +48,7 @@ function Field({ label, required, error, hint, children }: { label: string; requ
 
 /* ── Main Page ──────────────────────────────────────────────── */
 
-export default function RfqNewPage() {
+export default function EnquiryNewPage() {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -119,7 +119,7 @@ export default function RfqNewPage() {
 
     setStatus("submitting");
     try {
-      const { id } = await customerApi.createRfq({
+      const { id } = await customerApi.createEnquiry({
         productType,
         materialGrade: materialGrade || undefined,
         quantity: productionQty,
@@ -147,11 +147,11 @@ export default function RfqNewPage() {
         setStatus("uploading");
         for (let i = 0; i < files.length; i++) {
           setUploadProgress(`Uploading ${i + 1} of ${files.length}: ${files[i].name}`);
-          await customerApi.uploadRfqFile(id, files[i]);
+          await customerApi.uploadEnquiryFile(id, files[i]);
         }
       }
 
-      navigate(`/customer/rfqs/${id}`);
+      navigate(`/customer/enquiries/${id}`);
     } catch {
       setStatus("error");
     }
@@ -169,11 +169,11 @@ export default function RfqNewPage() {
           <div className="flex items-center gap-2 text-[12px] text-[var(--text-muted)] mb-1">
             <span>Home</span>
             <ChevronRight size={12} />
-            <span>RFQ</span>
+            <span>Enquiry</span>
             <ChevronRight size={12} />
-            <span className="text-[var(--text-primary)] font-medium">New RFQ</span>
+            <span className="text-[var(--text-primary)] font-medium">New Enquiry</span>
           </div>
-          <h1 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight">New RFQ</h1>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight">New Enquiry</h1>
           <p className="text-[13px] text-[var(--text-muted)] mt-0.5">
             Provide details about your requirement. Our engineering team will review it and prepare the quotation.
           </p>
@@ -186,7 +186,7 @@ export default function RfqNewPage() {
           <button type="button" disabled={busy} onClick={() => void submit(false)}
             className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg bg-[var(--color-primary)] text-white text-[12px] font-semibold hover:bg-[var(--color-primary-hover)] transition-all disabled:opacity-50">
             {busy ? <Loader2 size={14} className="animate-spin" /> : null}
-            Submit RFQ
+            Submit Enquiry
           </button>
         </div>
       </div>
@@ -195,7 +195,7 @@ export default function RfqNewPage() {
       {status === "error" && (
         <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400 text-[13px] font-medium">
           <AlertCircle size={14} />
-          Could not submit the RFQ. Please try again.
+          Could not submit the Enquiry. Please try again.
         </div>
       )}
       {uploadProgress && (
@@ -218,7 +218,7 @@ export default function RfqNewPage() {
                 <select value={productType} onChange={(e) => setProductType(e.target.value)}
                   className="w-full h-10 px-3 rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] text-[13px] text-[var(--text-primary)] outline-none focus:border-[var(--color-primary)]">
                   <option value="">Select requirement type</option>
-                  {rfqProductTypes.map((t) => <option key={t} value={t}>{t}</option>)}
+                  {enquiryProductTypes.map((t) => <option key={t} value={t}>{t}</option>)}
                 </select>
               </Field>
               <Field label="Part Name" required error={errors.partName}>
@@ -404,10 +404,10 @@ export default function RfqNewPage() {
         {/* ══ RIGHT COLUMN — Sticky Summary ══ */}
         <div className="w-full lg:w-[300px] xl:w-[340px] shrink-0 lg:sticky lg:top-6 lg:self-start space-y-4">
 
-          {/* RFQ Summary */}
+          {/* Enquiry Summary */}
           <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] overflow-hidden">
             <div className="px-5 py-3.5 border-b border-[var(--border-default)]">
-              <h3 className="text-[13px] font-semibold text-[var(--text-primary)] m-0">RFQ Summary</h3>
+              <h3 className="text-[13px] font-semibold text-[var(--text-primary)] m-0">Enquiry Summary</h3>
             </div>
             <div className="p-5 space-y-2.5 text-[13px]">
               <div className="flex justify-between"><span className="text-[var(--text-muted)]">Requirement Type</span><span className="font-medium text-[var(--text-primary)] text-right">{productType || "—"}</span></div>

@@ -20,7 +20,7 @@ public interface IQuotationUpdaterService
 }
 
 public record CreateQuotationRequest(
-    Guid RfqId, Guid CompanyId, string Currency,
+    Guid EnquiryId, Guid CompanyId, string Currency,
     decimal Subtotal, decimal Tax, decimal Discount, decimal Total,
     DateTimeOffset? ValidUntilUtc, string? PaymentTerms, string? DeliveryTerms,
     string? Freight, string? Packing, string? Remarks,
@@ -63,7 +63,7 @@ public class QuotationUpdaterService(
         if (!string.IsNullOrWhiteSpace(search))
         {
             var term = search.Trim();
-            query = query.Where(q => q.QuotationNumber.Contains(term) || q.Rfq.ProductType.Contains(term));
+            query = query.Where(q => q.QuotationNumber.Contains(term) || q.Enquiry.ProductType.Contains(term));
         }
         if (!string.IsNullOrWhiteSpace(status))
             query = query.Where(q => q.Status == status);
@@ -73,9 +73,9 @@ public class QuotationUpdaterService(
             .OrderByDescending(q => q.CreatedAtUtc)
             .Skip((page - 1) * pageSize).Take(pageSize)
             .Select(q => new QuotationListItemDto(
-                q.Id, q.QuotationNumber, q.RevisionNumber, q.RfqId, q.Rfq.ProductType,
+                q.Id, q.QuotationNumber, q.RevisionNumber, q.EnquiryId, q.Enquiry.ProductType,
                 q.Total, q.Currency, q.Status, q.ValidUntilUtc, q.CreatedAtUtc,
-                q.Rfq.CompanyName, q.Items.Count, q.PaymentTerms, q.DeliveryTime))
+                q.Enquiry.CompanyName, q.Items.Count, q.PaymentTerms, q.DeliveryTime))
             .ToListAsync();
         return new PagedResult<QuotationListItemDto>(items, page, pageSize, total);
     }
@@ -89,16 +89,16 @@ public class QuotationUpdaterService(
 
     public async Task<Guid> CreateQuotationAsync(CreateQuotationRequest request, Guid userId, string? ip)
     {
-        var rfq = await db.Rfqs.SingleOrDefaultAsync(r => r.Id == request.RfqId && r.Status == RfqStatuses.Approved)
-            ?? throw new InvalidOperationException("RFQ not found or not approved.");
-        var rfqShortId = rfq.Id.ToString("N")[..8].ToUpperInvariant();
-        var number = $"QT-{DateTimeOffset.UtcNow:yyyyMMdd}-{rfqShortId}";
+        var enquiry = await db.Enquiries.SingleOrDefaultAsync(r => r.Id == request.EnquiryId && r.Status == EnquiryStatuses.Approved)
+            ?? throw new InvalidOperationException("Enquiry not found or not approved.");
+        var enquiryShortId = enquiry.Id.ToString("N")[..8].ToUpperInvariant();
+        var number = $"QT-{DateTimeOffset.UtcNow:yyyyMMdd}-{enquiryShortId}";
 
         var quotation = new Quotation
         {
             Id = Guid.NewGuid(),
             QuotationNumber = number,
-            RfqId = request.RfqId,
+            EnquiryId = request.EnquiryId,
             CompanyId = request.CompanyId,
             Subtotal = request.Subtotal,
             Tax = request.Tax,
@@ -261,7 +261,7 @@ public class QuotationUpdaterService(
             .FirstOrDefaultAsync();
 
         return new QuotationDetailDto(
-            q.Id, q.QuotationNumber, q.RevisionNumber, q.RfqId, q.Rfq?.ProductType ?? "",
+            q.Id, q.QuotationNumber, q.RevisionNumber, q.EnquiryId, q.Enquiry?.ProductType ?? "",
             q.Subtotal, q.Tax, q.Discount, q.Total,
             q.Currency, q.PaymentTerms, q.DeliveryTerms, q.Freight, q.Packing, q.Remarks,
             q.DeliveryTime, q.Warranty,

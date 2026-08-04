@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ProductionBoard } from "../../components/ProductionBoard";
 import { ProductionDashboard } from "../../components/ProductionDashboard";
 import { KanbanSquare, BarChart3 } from "lucide-react";
-import "../erpListView.css";
+import "./erpListView.css";
 
 type ViewMode = "board" | "dashboard";
 

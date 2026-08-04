@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ShaktiUdyog.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using ShaktiUdyog.Infrastructure.Data;
 namespace ShaktiUdyog.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260804070928_AddContactRequest")]
+    partial class AddContactRequest
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -931,341 +934,6 @@ namespace ShaktiUdyog.Infrastructure.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("DocumentVersions", (string)null);
-                });
-
-            modelBuilder.Entity("ShaktiUdyog.Domain.Entities.Enquiry", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("AdditionalRequirements")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("AnnualRequirement")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Application")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal?>("ApproxWeight")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<Guid?>("CompanyId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("CompanyName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<bool>("ConsentGiven")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTimeOffset>("CreatedAtUtc")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<DateTimeOffset?>("DeletedAtUtc")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("DeliveryLocation")
-                        .HasMaxLength(300)
-                        .HasColumnType("nvarchar(300)");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(254)
-                        .HasColumnType("nvarchar(254)");
-
-                    b.Property<DateTimeOffset?>("ExpectedDeliveryDate")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("FullName")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
-
-                    b.Property<string>("Industry")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsDraft")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("MachiningRequired")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("MaterialGrade")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("MaterialStandard")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PartName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PartNumber")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PatternAvailability")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Phone")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
-
-                    b.Property<string>("PreferredDeliveryTerms")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Priority")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ProductType")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("ProductionQuantity")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PrototypeQuantity")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Quantity")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("Remarks")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("RequirementDetails")
-                        .IsRequired()
-                        .HasMaxLength(8000)
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("rowversion");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("SubmittedByIp")
-                        .HasMaxLength(64)
-                        .HasColumnType("nvarchar(64)");
-
-                    b.Property<Guid?>("SubmittedByUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CompanyId");
-
-                    b.HasIndex("CreatedAtUtc");
-
-                    b.ToTable("Enquiries", (string)null);
-                });
-
-            modelBuilder.Entity("ShaktiUdyog.Domain.Entities.EnquiryAssignment", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTimeOffset>("AssignedAtUtc")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<Guid>("AssignedByUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("AssignedToUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("EnquiryId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTimeOffset?>("UnassignedAtUtc")
-                        .HasColumnType("datetimeoffset");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("EnquiryId", "IsActive");
-
-                    b.ToTable("EnquiryAssignments", (string)null);
-                });
-
-            modelBuilder.Entity("ShaktiUdyog.Domain.Entities.EnquiryComment", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("AuthorRole")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
-
-                    b.Property<Guid>("AuthorUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTimeOffset>("CreatedAtUtc")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<Guid>("EnquiryId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<bool>("IsCustomerVisible")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Message")
-                        .IsRequired()
-                        .HasMaxLength(4000)
-                        .HasColumnType("nvarchar(4000)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("EnquiryId", "CreatedAtUtc");
-
-                    b.ToTable("EnquiryComments", (string)null);
-                });
-
-            modelBuilder.Entity("ShaktiUdyog.Domain.Entities.EnquiryFile", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("ContentType")
-                        .IsRequired()
-                        .HasMaxLength(127)
-                        .HasColumnType("nvarchar(127)");
-
-                    b.Property<Guid>("EnquiryId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("FileName")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<long>("SizeBytes")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("StorageKey")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<DateTimeOffset>("UploadedAtUtc")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<Guid?>("UploadedByUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("EnquiryId");
-
-                    b.HasIndex("StorageKey")
-                        .IsUnique();
-
-                    b.ToTable("EnquiryFiles", (string)null);
-                });
-
-            modelBuilder.Entity("ShaktiUdyog.Domain.Entities.EnquiryItem", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<string>("DrawingRevision")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<Guid>("EnquiryId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("MaterialGrade")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("PartNumber")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Unit")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("EnquiryId");
-
-                    b.ToTable("EnquiryItems", (string)null);
-                });
-
-            modelBuilder.Entity("ShaktiUdyog.Domain.Entities.EnquiryStatusHistory", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("ChangedByRole")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
-
-                    b.Property<Guid?>("ChangedByUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTimeOffset>("CreatedAtUtc")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<Guid>("EnquiryId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("FromStatus")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
-
-                    b.Property<string>("Note")
-                        .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)");
-
-                    b.Property<string>("ToStatus")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("EnquiryId", "CreatedAtUtc");
-
-                    b.ToTable("EnquiryStatusHistory", (string)null);
                 });
 
             modelBuilder.Entity("ShaktiUdyog.Domain.Entities.Faq", b =>
@@ -2518,9 +2186,6 @@ namespace ShaktiUdyog.Infrastructure.Data.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<Guid?>("EnquiryId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<DateTimeOffset?>("EstimatedCompletionUtc")
                         .HasColumnType("datetimeoffset");
 
@@ -2568,6 +2233,9 @@ namespace ShaktiUdyog.Infrastructure.Data.Migrations
                     b.Property<Guid?>("QuotationId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("RfqId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
                         .IsRequired()
@@ -2591,8 +2259,6 @@ namespace ShaktiUdyog.Infrastructure.Data.Migrations
 
                     b.HasIndex("CurrentStage");
 
-                    b.HasIndex("EnquiryId");
-
                     b.HasIndex("JobNumber")
                         .IsUnique();
 
@@ -2601,6 +2267,8 @@ namespace ShaktiUdyog.Infrastructure.Data.Migrations
                     b.HasIndex("Priority");
 
                     b.HasIndex("QuotationId");
+
+                    b.HasIndex("RfqId");
 
                     b.HasIndex("Status");
 
@@ -2855,9 +2523,6 @@ namespace ShaktiUdyog.Infrastructure.Data.Migrations
                     b.Property<Guid?>("DocumentId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("EnquiryId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<string>("Freight")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
@@ -2890,6 +2555,9 @@ namespace ShaktiUdyog.Infrastructure.Data.Migrations
 
                     b.Property<int>("RevisionNumber")
                         .HasColumnType("int");
+
+                    b.Property<Guid>("RfqId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
@@ -2925,10 +2593,10 @@ namespace ShaktiUdyog.Infrastructure.Data.Migrations
 
                     b.HasIndex("CompanyId");
 
-                    b.HasIndex("EnquiryId");
-
                     b.HasIndex("QuotationNumber")
                         .IsUnique();
+
+                    b.HasIndex("RfqId");
 
                     b.ToTable("Quotations", (string)null);
                 });
@@ -3277,6 +2945,341 @@ namespace ShaktiUdyog.Infrastructure.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("Resources", (string)null);
+                });
+
+            modelBuilder.Entity("ShaktiUdyog.Domain.Entities.Rfq", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AdditionalRequirements")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AnnualRequirement")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Application")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal?>("ApproxWeight")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<Guid?>("CompanyId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CompanyName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<bool>("ConsentGiven")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("DeletedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("DeliveryLocation")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(254)
+                        .HasColumnType("nvarchar(254)");
+
+                    b.Property<DateTimeOffset?>("ExpectedDeliveryDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("Industry")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDraft")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MachiningRequired")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("MaterialGrade")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("MaterialStandard")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PartName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PartNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PatternAvailability")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("PreferredDeliveryTerms")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Priority")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ProductType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("ProductionQuantity")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PrototypeQuantity")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Quantity")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Remarks")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RequirementDetails")
+                        .IsRequired()
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("SubmittedByIp")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<Guid?>("SubmittedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompanyId");
+
+                    b.HasIndex("CreatedAtUtc");
+
+                    b.ToTable("Rfqs", (string)null);
+                });
+
+            modelBuilder.Entity("ShaktiUdyog.Domain.Entities.RfqAssignment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("AssignedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid>("AssignedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AssignedToUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("RfqId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("UnassignedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RfqId", "IsActive");
+
+                    b.ToTable("RfqAssignments", (string)null);
+                });
+
+            modelBuilder.Entity("ShaktiUdyog.Domain.Entities.RfqComment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AuthorRole")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<Guid>("AuthorUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<bool>("IsCustomerVisible")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<Guid>("RfqId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RfqId", "CreatedAtUtc");
+
+                    b.ToTable("RfqComments", (string)null);
+                });
+
+            modelBuilder.Entity("ShaktiUdyog.Domain.Entities.RfqFile", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(127)
+                        .HasColumnType("nvarchar(127)");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<Guid>("RfqId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<long>("SizeBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("StorageKey")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTimeOffset>("UploadedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("UploadedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RfqId");
+
+                    b.HasIndex("StorageKey")
+                        .IsUnique();
+
+                    b.ToTable("RfqFiles", (string)null);
+                });
+
+            modelBuilder.Entity("ShaktiUdyog.Domain.Entities.RfqItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("DrawingRevision")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("MaterialGrade")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("PartNumber")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("RfqId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Unit")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RfqId");
+
+                    b.ToTable("RfqItems", (string)null);
+                });
+
+            modelBuilder.Entity("ShaktiUdyog.Domain.Entities.RfqStatusHistory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ChangedByRole")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<Guid?>("ChangedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("FromStatus")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<Guid>("RfqId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ToStatus")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RfqId", "CreatedAtUtc");
+
+                    b.ToTable("RfqStatusHistory", (string)null);
                 });
 
             modelBuilder.Entity("ShaktiUdyog.Domain.Entities.Shipment", b =>
@@ -3670,71 +3673,6 @@ namespace ShaktiUdyog.Infrastructure.Data.Migrations
                     b.Navigation("Document");
                 });
 
-            modelBuilder.Entity("ShaktiUdyog.Domain.Entities.Enquiry", b =>
-                {
-                    b.HasOne("ShaktiUdyog.Domain.Entities.Company", "Company")
-                        .WithMany()
-                        .HasForeignKey("CompanyId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("Company");
-                });
-
-            modelBuilder.Entity("ShaktiUdyog.Domain.Entities.EnquiryAssignment", b =>
-                {
-                    b.HasOne("ShaktiUdyog.Domain.Entities.Enquiry", "Enquiry")
-                        .WithMany("Assignments")
-                        .HasForeignKey("EnquiryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Enquiry");
-                });
-
-            modelBuilder.Entity("ShaktiUdyog.Domain.Entities.EnquiryComment", b =>
-                {
-                    b.HasOne("ShaktiUdyog.Domain.Entities.Enquiry", "Enquiry")
-                        .WithMany("Comments")
-                        .HasForeignKey("EnquiryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Enquiry");
-                });
-
-            modelBuilder.Entity("ShaktiUdyog.Domain.Entities.EnquiryFile", b =>
-                {
-                    b.HasOne("ShaktiUdyog.Domain.Entities.Enquiry", "Enquiry")
-                        .WithMany("Files")
-                        .HasForeignKey("EnquiryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Enquiry");
-                });
-
-            modelBuilder.Entity("ShaktiUdyog.Domain.Entities.EnquiryItem", b =>
-                {
-                    b.HasOne("ShaktiUdyog.Domain.Entities.Enquiry", "Enquiry")
-                        .WithMany("Items")
-                        .HasForeignKey("EnquiryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Enquiry");
-                });
-
-            modelBuilder.Entity("ShaktiUdyog.Domain.Entities.EnquiryStatusHistory", b =>
-                {
-                    b.HasOne("ShaktiUdyog.Domain.Entities.Enquiry", "Enquiry")
-                        .WithMany("StatusHistory")
-                        .HasForeignKey("EnquiryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Enquiry");
-                });
-
             modelBuilder.Entity("ShaktiUdyog.Domain.Entities.Invoice", b =>
                 {
                     b.HasOne("ShaktiUdyog.Domain.Entities.Company", "Company")
@@ -3963,11 +3901,6 @@ namespace ShaktiUdyog.Infrastructure.Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("ShaktiUdyog.Domain.Entities.Enquiry", "Enquiry")
-                        .WithMany()
-                        .HasForeignKey("EnquiryId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.HasOne("ShaktiUdyog.Domain.Entities.Order", "Order")
                         .WithMany()
                         .HasForeignKey("OrderId")
@@ -3978,13 +3911,18 @@ namespace ShaktiUdyog.Infrastructure.Data.Migrations
                         .HasForeignKey("QuotationId")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.Navigation("Company");
+                    b.HasOne("ShaktiUdyog.Domain.Entities.Rfq", "Rfq")
+                        .WithMany()
+                        .HasForeignKey("RfqId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
-                    b.Navigation("Enquiry");
+                    b.Navigation("Company");
 
                     b.Navigation("Order");
 
                     b.Navigation("Quotation");
+
+                    b.Navigation("Rfq");
                 });
 
             modelBuilder.Entity("ShaktiUdyog.Domain.Entities.ProductionQuality", b =>
@@ -4028,15 +3966,15 @@ namespace ShaktiUdyog.Infrastructure.Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("ShaktiUdyog.Domain.Entities.Enquiry", "Enquiry")
+                    b.HasOne("ShaktiUdyog.Domain.Entities.Rfq", "Rfq")
                         .WithMany()
-                        .HasForeignKey("EnquiryId")
+                        .HasForeignKey("RfqId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Company");
 
-                    b.Navigation("Enquiry");
+                    b.Navigation("Rfq");
                 });
 
             modelBuilder.Entity("ShaktiUdyog.Domain.Entities.QuotationApproval", b =>
@@ -4114,6 +4052,71 @@ namespace ShaktiUdyog.Infrastructure.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("ShaktiUdyog.Domain.Entities.Rfq", b =>
+                {
+                    b.HasOne("ShaktiUdyog.Domain.Entities.Company", "Company")
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Company");
+                });
+
+            modelBuilder.Entity("ShaktiUdyog.Domain.Entities.RfqAssignment", b =>
+                {
+                    b.HasOne("ShaktiUdyog.Domain.Entities.Rfq", "Rfq")
+                        .WithMany("Assignments")
+                        .HasForeignKey("RfqId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Rfq");
+                });
+
+            modelBuilder.Entity("ShaktiUdyog.Domain.Entities.RfqComment", b =>
+                {
+                    b.HasOne("ShaktiUdyog.Domain.Entities.Rfq", "Rfq")
+                        .WithMany("Comments")
+                        .HasForeignKey("RfqId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Rfq");
+                });
+
+            modelBuilder.Entity("ShaktiUdyog.Domain.Entities.RfqFile", b =>
+                {
+                    b.HasOne("ShaktiUdyog.Domain.Entities.Rfq", "Rfq")
+                        .WithMany("Files")
+                        .HasForeignKey("RfqId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Rfq");
+                });
+
+            modelBuilder.Entity("ShaktiUdyog.Domain.Entities.RfqItem", b =>
+                {
+                    b.HasOne("ShaktiUdyog.Domain.Entities.Rfq", "Rfq")
+                        .WithMany("Items")
+                        .HasForeignKey("RfqId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Rfq");
+                });
+
+            modelBuilder.Entity("ShaktiUdyog.Domain.Entities.RfqStatusHistory", b =>
+                {
+                    b.HasOne("ShaktiUdyog.Domain.Entities.Rfq", "Rfq")
+                        .WithMany("StatusHistory")
+                        .HasForeignKey("RfqId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Rfq");
                 });
 
             modelBuilder.Entity("ShaktiUdyog.Domain.Entities.Shipment", b =>
@@ -4210,19 +4213,6 @@ namespace ShaktiUdyog.Infrastructure.Data.Migrations
                     b.Navigation("Children");
                 });
 
-            modelBuilder.Entity("ShaktiUdyog.Domain.Entities.Enquiry", b =>
-                {
-                    b.Navigation("Assignments");
-
-                    b.Navigation("Comments");
-
-                    b.Navigation("Files");
-
-                    b.Navigation("Items");
-
-                    b.Navigation("StatusHistory");
-                });
-
             modelBuilder.Entity("ShaktiUdyog.Domain.Entities.Invoice", b =>
                 {
                     b.Navigation("Attachments");
@@ -4273,6 +4263,19 @@ namespace ShaktiUdyog.Infrastructure.Data.Migrations
                     b.Navigation("Items");
 
                     b.Navigation("Revisions");
+
+                    b.Navigation("StatusHistory");
+                });
+
+            modelBuilder.Entity("ShaktiUdyog.Domain.Entities.Rfq", b =>
+                {
+                    b.Navigation("Assignments");
+
+                    b.Navigation("Comments");
+
+                    b.Navigation("Files");
+
+                    b.Navigation("Items");
 
                     b.Navigation("StatusHistory");
                 });

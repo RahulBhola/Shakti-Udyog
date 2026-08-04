@@ -12,14 +12,14 @@ namespace ShaktiUdyog.Api.Services;
 public interface IEngineerService
 {
     Task<UpdaterDashboardDto> GetDashboardAsync();
-    Task<PagedResult<UpdaterRfqListItemDto>> GetRfqsAsync(int page = 1, int pageSize = 20, string? search = null, string? status = null, Guid? companyId = null);
-    Task<UpdaterRfqDetailDto?> GetRfqAsync(Guid rfqId);
-    Task<bool?> UpdateRfqStatusAsync(Guid rfqId, RfqStatusChangeRequest request, Guid userId, string? ip);
-    Task<RfqCommentDto?> AddRfqCommentAsync(Guid rfqId, RfqCommentRequest request, Guid userId, string role, string? ip);
-    Task<bool?> AssignRfqAsync(Guid rfqId, RfqAssignmentRequest request, Guid userId, string? ip);
+    Task<PagedResult<UpdaterEnquiryListItemDto>> GetEnquiriesAsync(int page = 1, int pageSize = 20, string? search = null, string? status = null, Guid? companyId = null);
+    Task<UpdaterEnquiryDetailDto?> GetEnquiryAsync(Guid enquiryId);
+    Task<bool?> UpdateEnquiryStatusAsync(Guid enquiryId, EnquiryStatusChangeRequest request, Guid userId, string? ip);
+    Task<EnquiryCommentDto?> AddEnquiryCommentAsync(Guid enquiryId, EnquiryCommentRequest request, Guid userId, string role, string? ip);
+    Task<bool?> AssignEnquiryAsync(Guid enquiryId, EnquiryAssignmentRequest request, Guid userId, string? ip);
 }
 
-public record UpdaterDashboardDto(int PendingRfqs, int PendingQuotations, int OrdersInProduction, int OrdersAwaitingShipment);
+public record UpdaterDashboardDto(int PendingEnquiries, int PendingQuotations, int OrdersInProduction, int OrdersAwaitingShipment);
 
 public class EngineerService(
     AppDbContext db,
@@ -29,22 +29,22 @@ public class EngineerService(
 
     public async Task<UpdaterDashboardDto> GetDashboardAsync()
     {
-        var pendingRfqs = await db.Rfqs.CountAsync(r => r.Status == "Received");
+        var pendingEnquiries = await db.Enquiries.CountAsync(r => r.Status == "Received");
         var pendingQuotations = await db.Quotations.CountAsync(q => q.Status == "Draft" || q.Status == "Pending Approval");
         var ordersInProduction = await db.Orders.CountAsync(o => o.Status == "production" || o.Status == "quality_check");
         var ordersAwaitingShipment = await db.Orders.CountAsync(o => o.Status == "packed" || o.Status == "ready_to_dispatch");
-        return new UpdaterDashboardDto(pendingRfqs, pendingQuotations, ordersInProduction, ordersAwaitingShipment);
+        return new UpdaterDashboardDto(pendingEnquiries, pendingQuotations, ordersInProduction, ordersAwaitingShipment);
     }
 
-    // ---- RFQ list -----------------------------------------------------------
+    // ---- Enquiry list -----------------------------------------------------------
 
-    public async Task<PagedResult<UpdaterRfqListItemDto>> GetRfqsAsync(
+    public async Task<PagedResult<UpdaterEnquiryListItemDto>> GetEnquiriesAsync(
         int page = 1, int pageSize = 20, string? search = null, string? status = null, Guid? companyId = null)
     {
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, 100);
 
-        var query = db.Rfqs.AsQueryable();
+        var query = db.Enquiries.AsQueryable();
 
         if (companyId.HasValue)
             query = query.Where(r => r.CompanyId == companyId);
@@ -68,7 +68,7 @@ public class EngineerService(
             .OrderByDescending(r => r.CreatedAtUtc)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(r => new UpdaterRfqListItemDto(
+            .Select(r => new UpdaterEnquiryListItemDto(
                 r.Id, r.ProductType, r.CompanyName, r.Quantity,
                 r.Status, r.IsDraft,
                 r.Assignments.Where(a => a.IsActive).Select(a => (Guid?)a.AssignedToUserId).FirstOrDefault(),
@@ -77,74 +77,74 @@ public class EngineerService(
                 r.Files.OrderBy(f => f.UploadedAtUtc).Select(f => f.ContentType).FirstOrDefault()))
             .ToListAsync();
 
-        return new PagedResult<UpdaterRfqListItemDto>(items, page, pageSize, total);
+        return new PagedResult<UpdaterEnquiryListItemDto>(items, page, pageSize, total);
     }
 
-    // ---- RFQ detail ---------------------------------------------------------
+    // ---- Enquiry detail ---------------------------------------------------------
 
-    public async Task<UpdaterRfqDetailDto?> GetRfqAsync(Guid rfqId)
+    public async Task<UpdaterEnquiryDetailDto?> GetEnquiryAsync(Guid enquiryId)
     {
-        var rfq = await db.Rfqs
+        var enquiry = await db.Enquiries
             .Include(r => r.Files)
             .Include(r => r.StatusHistory.OrderBy(h => h.CreatedAtUtc))
             .Include(r => r.Comments.OrderBy(c => c.CreatedAtUtc))
             .Include(r => r.Assignments.Where(a => a.IsActive))
-            .SingleOrDefaultAsync(r => r.Id == rfqId);
+            .SingleOrDefaultAsync(r => r.Id == enquiryId);
 
-        if (rfq is null) return null;
+        if (enquiry is null) return null;
 
         var draftQuotationId = await db.Quotations
-            .Where(q => q.RfqId == rfq.Id)
+            .Where(q => q.EnquiryId == enquiry.Id)
             .OrderByDescending(q => q.CreatedAtUtc)
             .Select(q => (Guid?)q.Id)
             .FirstOrDefaultAsync();
 
-        return new UpdaterRfqDetailDto(
-            rfq.Id, rfq.CompanyId ?? Guid.Empty, rfq.FullName, rfq.CompanyName, rfq.Email, rfq.Phone,
-            rfq.ProductType, rfq.MaterialGrade, rfq.Quantity,
-            rfq.DeliveryLocation, rfq.RequirementDetails, rfq.Status, rfq.IsDraft,
-            rfq.SubmittedByIp, rfq.CreatedAtUtc,
-            rfq.Files.Select(f => new UpdaterRfqFileDto(
+        return new UpdaterEnquiryDetailDto(
+            enquiry.Id, enquiry.CompanyId ?? Guid.Empty, enquiry.FullName, enquiry.CompanyName, enquiry.Email, enquiry.Phone,
+            enquiry.ProductType, enquiry.MaterialGrade, enquiry.Quantity,
+            enquiry.DeliveryLocation, enquiry.RequirementDetails, enquiry.Status, enquiry.IsDraft,
+            enquiry.SubmittedByIp, enquiry.CreatedAtUtc,
+            enquiry.Files.Select(f => new UpdaterEnquiryFileDto(
                 f.Id, f.FileName, f.ContentType, f.SizeBytes,
                 f.StorageKey, f.UploadedByUserId, f.UploadedAtUtc)).ToList(),
-            rfq.StatusHistory.Select(h => new RfqTimelineEntryDto(
+            enquiry.StatusHistory.Select(h => new EnquiryTimelineEntryDto(
                 h.FromStatus, h.ToStatus, h.ChangedByRole, h.Note, h.CreatedAtUtc)).ToList(),
-            rfq.Comments.Select(c => new RfqCommentDto(
+            enquiry.Comments.Select(c => new EnquiryCommentDto(
                 c.Id, c.AuthorUserId, c.AuthorRole, c.IsCustomerVisible, c.Message, c.CreatedAtUtc)).ToList(),
-            rfq.Assignments.FirstOrDefault()?.AssignedToUserId, rfq.Priority,
-            rfq.PartName, rfq.PartNumber, rfq.Industry, rfq.Application,
-            rfq.MaterialStandard, rfq.ApproxWeight,
-            rfq.MachiningRequired, rfq.PatternAvailability,
-            rfq.PrototypeQuantity, rfq.ProductionQuantity, rfq.AnnualRequirement,
-            rfq.ExpectedDeliveryDate, rfq.PreferredDeliveryTerms,
-            rfq.AdditionalRequirements, rfq.Remarks,
+            enquiry.Assignments.FirstOrDefault()?.AssignedToUserId, enquiry.Priority,
+            enquiry.PartName, enquiry.PartNumber, enquiry.Industry, enquiry.Application,
+            enquiry.MaterialStandard, enquiry.ApproxWeight,
+            enquiry.MachiningRequired, enquiry.PatternAvailability,
+            enquiry.PrototypeQuantity, enquiry.ProductionQuantity, enquiry.AnnualRequirement,
+            enquiry.ExpectedDeliveryDate, enquiry.PreferredDeliveryTerms,
+            enquiry.AdditionalRequirements, enquiry.Remarks,
             draftQuotationId != null, draftQuotationId);
     }
 
     // ---- Status update ------------------------------------------------------
 
-    public async Task<bool?> UpdateRfqStatusAsync(Guid rfqId, RfqStatusChangeRequest request, Guid userId, string? ip)
+    public async Task<bool?> UpdateEnquiryStatusAsync(Guid enquiryId, EnquiryStatusChangeRequest request, Guid userId, string? ip)
     {
-        var rfq = await db.Rfqs.SingleOrDefaultAsync(r => r.Id == rfqId);
-        if (rfq is null) return null;
+        var enquiry = await db.Enquiries.SingleOrDefaultAsync(r => r.Id == enquiryId);
+        if (enquiry is null) return null;
 
-        if (!RfqStatuses.IsValidTransition(rfq.Status, request.NewStatus))
+        if (!EnquiryStatuses.IsValidTransition(enquiry.Status, request.NewStatus))
         {
             return false;
         }
 
         var now = DateTimeOffset.UtcNow;
-        var from = rfq.Status;
-        rfq.Status = request.NewStatus;
-        if (rfq.IsDraft && request.NewStatus != RfqStatuses.Draft)
+        var from = enquiry.Status;
+        enquiry.Status = request.NewStatus;
+        if (enquiry.IsDraft && request.NewStatus != EnquiryStatuses.Draft)
         {
-            rfq.IsDraft = false;
+            enquiry.IsDraft = false;
         }
 
-        db.RfqStatusHistories.Add(new RfqStatusHistory
+        db.EnquiryStatusHistories.Add(new EnquiryStatusHistory
         {
             Id = Guid.NewGuid(),
-            RfqId = rfq.Id,
+            EnquiryId = enquiry.Id,
             FromStatus = from,
             ToStatus = request.NewStatus,
             ChangedByUserId = userId,
@@ -154,46 +154,46 @@ public class EngineerService(
         });
 
         await db.SaveChangesAsync();
-        await audit.WriteAsync("updater.rfq.status_changed", userId, "Rfq", rfq.Id.ToString(), ip);
+        await audit.WriteAsync("updater.enquiry.status_changed", userId, "Enquiry", enquiry.Id.ToString(), ip);
         return true;
     }
 
     // ---- Comments -----------------------------------------------------------
 
-    public async Task<RfqCommentDto?> AddRfqCommentAsync(Guid rfqId, RfqCommentRequest request, Guid userId, string role, string? ip)
+    public async Task<EnquiryCommentDto?> AddEnquiryCommentAsync(Guid enquiryId, EnquiryCommentRequest request, Guid userId, string role, string? ip)
     {
-        var rfq = await db.Rfqs.AnyAsync(r => r.Id == rfqId);
-        if (!rfq) return null;
+        var enquiry = await db.Enquiries.AnyAsync(r => r.Id == enquiryId);
+        if (!enquiry) return null;
 
-        var comment = new RfqComment
+        var comment = new EnquiryComment
         {
             Id = Guid.NewGuid(),
-            RfqId = rfqId,
+            EnquiryId = enquiryId,
             AuthorUserId = userId,
             AuthorRole = role,
             IsCustomerVisible = request.IsCustomerVisible,
             Message = request.Message.Trim(),
         };
 
-        db.RfqComments.Add(comment);
+        db.EnquiryComments.Add(comment);
         await db.SaveChangesAsync();
-        await audit.WriteAsync("updater.rfq.comment_added", userId, "RfqComment", comment.Id.ToString(), ip);
+        await audit.WriteAsync("updater.enquiry.comment_added", userId, "EnquiryComment", comment.Id.ToString(), ip);
 
-        return new RfqCommentDto(
+        return new EnquiryCommentDto(
             comment.Id, comment.AuthorUserId, comment.AuthorRole,
             comment.IsCustomerVisible, comment.Message, comment.CreatedAtUtc);
     }
 
     // ---- Assignment ---------------------------------------------------------
 
-    public async Task<bool?> AssignRfqAsync(Guid rfqId, RfqAssignmentRequest request, Guid userId, string? ip)
+    public async Task<bool?> AssignEnquiryAsync(Guid enquiryId, EnquiryAssignmentRequest request, Guid userId, string? ip)
     {
-        var rfq = await db.Rfqs.AnyAsync(r => r.Id == rfqId);
-        if (!rfq) return null;
+        var enquiry = await db.Enquiries.AnyAsync(r => r.Id == enquiryId);
+        if (!enquiry) return null;
 
         // Deactivate previous assignments
-        var active = await db.RfqAssignments
-            .Where(a => a.RfqId == rfqId && a.IsActive)
+        var active = await db.EnquiryAssignments
+            .Where(a => a.EnquiryId == enquiryId && a.IsActive)
             .ToListAsync();
         foreach (var a in active)
         {
@@ -201,16 +201,16 @@ public class EngineerService(
             a.UnassignedAtUtc = DateTimeOffset.UtcNow;
         }
 
-        db.RfqAssignments.Add(new RfqAssignment
+        db.EnquiryAssignments.Add(new EnquiryAssignment
         {
             Id = Guid.NewGuid(),
-            RfqId = rfqId,
+            EnquiryId = enquiryId,
             AssignedToUserId = request.AssignedToUserId,
             AssignedByUserId = userId,
         });
 
         await db.SaveChangesAsync();
-        await audit.WriteAsync("updater.rfq.assigned", userId, "Rfq", rfqId.ToString(), ip);
+        await audit.WriteAsync("updater.enquiry.assigned", userId, "Enquiry", enquiryId.ToString(), ip);
         return true;
     }
 }

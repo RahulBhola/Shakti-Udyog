@@ -13,8 +13,8 @@ export interface AdminProduct {
 export interface AdminCategory { id: string; name: string; slug: string | null; description: string | null; parentId: string | null; displayOrder: number; isVisible: boolean; }
 export interface AdminIndustry { id: string; name: string; description: string | null; exampleComponents: string | null; isActive: boolean; displayOrder: number; }
 
-/** Admin RFQ detail (mirrors UpdaterRfqDetailDto). */
-export interface UpdaterRfqDetail {
+/** Admin Enquiry detail (mirrors UpdaterEnquiryDetailDto). */
+export interface UpdaterEnquiryDetail {
   id: string;
   companyId: string;
   fullName: string;
@@ -49,8 +49,8 @@ export interface UpdaterRfqDetail {
 }
 
 export const adminApi = {
-  // ---- RFQs ---------------------------------------------------------------
-  rfq: (id: string) => apiGet<UpdaterRfqDetail>(`${base}/rfqs/${id}`),
+  // ---- Enquiries ---------------------------------------------------------------
+  enquiry: (id: string) => apiGet<UpdaterEnquiryDetail>(`${base}/enquiries/${id}`),
 
   // ---- Quotations ---------------------------------------------------------
   quotations: (page = 1, pageSize = 20, search?: string, status?: string) => {
@@ -322,7 +322,7 @@ export interface ProductMasterStats {
 }
 
 export interface ProductMasterUsage {
-  rfqCount: number;
+  enquiryCount: number;
   quotationCount: number;
   orderCount: number;
 }

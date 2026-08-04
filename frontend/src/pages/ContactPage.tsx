@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { submitEnquiry } from "../api/publicApi";
+import { submitContactRequest } from "../api/publicApi";
 import { Seo, localBusinessJsonLd } from "../components/Seo";
 import { Breadcrumb, ContactCard, ImagePlaceholder, Section, SectionHeading } from "../components/ui";
 import { company } from "../content/company";
@@ -29,7 +29,7 @@ export default function ContactPage() {
 
     setStatus({ kind: "submitting" });
     try {
-      const result = await submitEnquiry({
+      const result = await submitContactRequest({
         fullName: get("fullName"),
         companyName: get("companyName"),
         email: get("email"),

@@ -33,10 +33,10 @@ export default function DashboardPage() {
       ) : (
         <>
           <div className="stat-cards">
-            <Link to="/customer/rfqs" className="row-link">
+            <Link to="/customer/enquiries" className="row-link">
               <div className="stat-card">
-                <div className="stat-card__value">{data.openRfqs}</div>
-                <div className="stat-card__label">Open RFQs</div>
+                <div className="stat-card__value">{data.openEnquiries}</div>
+                <div className="stat-card__label">Open Enquiries</div>
               </div>
             </Link>
             <Link to="/customer/quotations" className="row-link">
@@ -61,7 +61,7 @@ export default function DashboardPage() {
 
           <Panel title="Quick actions">
             <div className="quick-actions">
-              <Link className="btn btn--primary" to="/customer/rfqs/new">Submit a new RFQ</Link>
+              <Link className="btn btn--primary" to="/customer/enquiries/new">Submit a new Enquiry</Link>
               <Link className="btn btn--ghost" style={{ color: "var(--c-ink)" }} to="/customer/documents">Browse documents</Link>
               <Link className="btn btn--ghost" style={{ color: "var(--c-ink)" }} to="/customer/support">Raise a support request</Link>
               <Link className="btn btn--ghost" style={{ color: "var(--c-ink)" }} to="/customer/payments">Payment history</Link>

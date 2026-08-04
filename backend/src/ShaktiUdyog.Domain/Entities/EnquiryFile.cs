@@ -1,15 +1,15 @@
 namespace ShaktiUdyog.Domain.Entities;
 
 /// <summary>
-/// Metadata for a drawing/specification file attached to an RFQ. The binary
+/// Metadata for a drawing/specification file attached to an Enquiry. The binary
 /// lives in protected storage referenced by an opaque StorageKey — file
 /// system paths are never stored here nor exposed to clients.
 /// </summary>
-public class RfqFile
+public class EnquiryFile
 {
     public Guid Id { get; set; }
-    public Guid RfqId { get; set; }
-    public Rfq Rfq { get; set; } = null!;
+    public Guid EnquiryId { get; set; }
+    public Enquiry Enquiry { get; set; } = null!;
     public required string FileName { get; set; }
     public required string ContentType { get; set; }
     public long SizeBytes { get; set; }

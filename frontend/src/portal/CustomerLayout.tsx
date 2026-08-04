@@ -14,7 +14,7 @@ const customerSections: NavSection[] = [
   {
     label: "Sales",
     items: [
-      { label: "RFQs", href: "/customer/rfqs" },
+      { label: "Enquiries", href: "/customer/enquiries" },
       { label: "Quotations", href: "/customer/quotations" },
       { label: "Orders", href: "/customer/orders" },
     ],

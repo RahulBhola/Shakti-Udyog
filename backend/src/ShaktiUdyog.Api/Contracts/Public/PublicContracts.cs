@@ -23,10 +23,10 @@ public record ResourceDto(
 // ---- Submissions (write) ----------------------------------------------------
 
 /// <summary>
-/// Contact enquiry (requirements §10 contact_form). "Website" is a honeypot:
+/// Contact request (requirements §10 contact_form). "Website" is a honeypot:
 /// humans never see it; bots that fill it get a fake success and no record.
 /// </summary>
-public record EnquiryRequest(
+public record ContactRequestDto(
     [Required, StringLength(150, MinimumLength = 2)] string FullName,
     [Required, StringLength(200, MinimumLength = 2)] string CompanyName,
     [Required, EmailAddress, StringLength(254)] string Email,
@@ -36,8 +36,8 @@ public record EnquiryRequest(
     [Required] bool ConsentGiven,
     string? Website);
 
-/// <summary>RFQ submission (requirements §10 rfq_form). Same honeypot rule.</summary>
-public record RfqRequest(
+/// <summary>Enquiry submission (requirements §10 enquiry_form). Same honeypot rule.</summary>
+public record EnquiryRequest(
     [Required, StringLength(150, MinimumLength = 2)] string FullName,
     [Required, StringLength(200, MinimumLength = 2)] string CompanyName,
     [Required, EmailAddress, StringLength(254)] string Email,

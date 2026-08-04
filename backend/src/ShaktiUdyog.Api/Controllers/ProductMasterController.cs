@@ -40,7 +40,7 @@ public class ProductMasterController(IProductMasterService service, AppDbContext
         return result is null ? NotFound() : Ok(result);
     }
 
-    /// <summary>Get product usage counts (RFQs, Quotations, Orders).</summary>
+    /// <summary>Get product usage counts (Enquirys, Quotations, Orders).</summary>
     [HttpGet("{id:guid}/usage")]
     public async Task<IActionResult> GetUsage(Guid id)
     {

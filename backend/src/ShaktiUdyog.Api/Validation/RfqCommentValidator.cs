@@ -2,16 +2,16 @@ using FluentValidation;
 
 namespace ShaktiUdyog.Api.Validation;
 
-public class RfqCommentValidator : AbstractValidator<RfqCommentRequest>
+public class EnquiryCommentValidator : AbstractValidator<EnquiryCommentRequest>
 {
-    public RfqCommentValidator()
+    public EnquiryCommentValidator()
     {
         RuleFor(x => x.Message).NotEmpty().MinimumLength(2).MaximumLength(4000);
     }
 }
 
-public record RfqCommentRequest(
+public record EnquiryCommentRequest(
     string Message,
     bool IsCustomerVisible = true);
 
-public record RfqAssignmentRequest(Guid AssignedToUserId);
+public record EnquiryAssignmentRequest(Guid AssignedToUserId);

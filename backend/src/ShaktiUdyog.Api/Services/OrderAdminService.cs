@@ -31,7 +31,7 @@ public class OrderAdminService(AppDbContext db, IAuditWriter audit) : IOrderAdmi
             query = query.Where(o => o.Status == status);
         var total = await query.CountAsync();
         var items = await query.OrderByDescending(o => o.PlacedAtUtc).Skip((page - 1) * pageSize).Take(pageSize)
-            .Select(o => new OrderListItemDto(o.Id, o.OrderNumber, o.Status, o.Status, o.PlacedAtUtc, o.PromisedDispatchDateUtc, o.Items.Sum(i => i.QuantityOrdered), o.LastUpdatedAtUtc, o.Company!.Name, o.Quotation!.Rfq!.ProductType))
+            .Select(o => new OrderListItemDto(o.Id, o.OrderNumber, o.Status, o.Status, o.PlacedAtUtc, o.PromisedDispatchDateUtc, o.Items.Sum(i => i.QuantityOrdered), o.LastUpdatedAtUtc, o.Company!.Name, o.Quotation!.Enquiry!.ProductType))
             .ToListAsync();
         return new PagedResult<OrderListItemDto>(items, page, pageSize, total);
     }

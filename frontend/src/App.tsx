@@ -34,10 +34,10 @@ const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 
 // Customer portal chunks
 const DashboardPage = lazy(() => import("./portal/pages/DashboardPage"));
-const RfqListPage = lazy(() => import("./portal/pages/RfqListPage"));
-const RfqNewPage = lazy(() => import("./portal/pages/RfqNewPage"));
-const RfqDetailPage = lazy(() => import("./portal/pages/RfqDetailPage"));
-const RfqEditPage = lazy(() => import("./portal/pages/RfqEditPage"));
+const EnquiryListPage = lazy(() => import("./portal/pages/EnquiryListPage"));
+const EnquiryNewPage = lazy(() => import("./portal/pages/EnquiryNewPage"));
+const EnquiryDetailPage = lazy(() => import("./portal/pages/EnquiryDetailPage"));
+const EnquiryEditPage = lazy(() => import("./portal/pages/EnquiryEditPage"));
 const QuotationListPage = lazy(() =>
   import("./portal/pages/QuotationsPage").then((m) => ({ default: m.QuotationListPage })));
 const QuotationDetailPage = lazy(() =>
@@ -76,8 +76,8 @@ const AdminDealPage = lazy(() => import("./portal/pages/AdminDealPage"));
 const AdminProductPage = lazy(() => import("./portal/pages/AdminProductPage"));
 const AdminProductDetailPage = lazy(() => import("./portal/pages/AdminProductDetailPage"));
 const AdminCategoryPage = lazy(() => import("./portal/pages/AdminCategoryPage"));
-const UpdaterRfqListPage = lazy(() => import("./portal/pages/updater/RfqListPage"));
-const UpdaterRfqDetailPage = lazy(() => import("./portal/pages/updater/RfqDetailPage"));
+const UpdaterEnquiryListPage = lazy(() => import("./portal/pages/updater/EnquiryListPage"));
+const UpdaterEnquiryDetailPage = lazy(() => import("./portal/pages/updater/EnquiryDetailPage"));
 const UpdaterQuotationListPage = lazy(() => import("./portal/pages/updater/QuotationListPage"));
 const UpdaterOrderListPage = lazy(() => import("./portal/pages/updater/OrderListPage"));
 
@@ -126,10 +126,10 @@ function App() {
             >
               <Route index element={<Navigate to="/customer/dashboard" replace />} />
               <Route path="dashboard" element={<DashboardPage />} />
-              <Route path="rfqs" element={<RfqListPage />} />
-              <Route path="rfqs/new" element={<RfqNewPage />} />
-              <Route path="rfqs/:id" element={<RfqDetailPage />} />
-              <Route path="rfqs/:id/edit" element={<RfqEditPage />} />
+              <Route path="enquiries" element={<EnquiryListPage />} />
+              <Route path="enquiries/new" element={<EnquiryNewPage />} />
+              <Route path="enquiries/:id" element={<EnquiryDetailPage />} />
+              <Route path="enquiries/:id/edit" element={<EnquiryEditPage />} />
               <Route path="quotations" element={<QuotationListPage />} />
               <Route path="quotations/:id" element={<QuotationDetailPage />} />
               <Route path="orders" element={<OrderListPage />} />
@@ -160,8 +160,8 @@ function App() {
               <Route index element={<Navigate to="/admin/dashboard" replace />} />
               <Route path="dashboard" element={<AdminDashboardPage />} />
               {/* Sales */}
-              <Route path="rfqs" element={<UpdaterRfqListPage />} />
-              <Route path="rfqs/:id" element={<UpdaterRfqDetailPage />} />
+              <Route path="enquiries" element={<UpdaterEnquiryListPage />} />
+              <Route path="enquiries/:id" element={<UpdaterEnquiryDetailPage />} />
               <Route path="quotations" element={<UpdaterQuotationListPage />} />
               <Route path="quotations/new" element={<CreateQuotationPage />} />
               <Route path="quotations/:id" element={<AdminQuotationDetailPage />} />

@@ -533,10 +533,10 @@ async function respond() {
             </div>
           </div>
 
-          {/* Originating RFQ */}
-          <Link to={`/customer/rfqs/${quotation.rfqId}`}
+          {/* Originating Enquiry */}
+          <Link to={`/customer/enquiries/${quotation.enquiryId}`}
             className="flex items-center justify-center gap-2 h-11 rounded-[16px] border border-dashed border-[var(--border-default)] text-[13px] font-medium text-[var(--color-primary)] hover:bg-[var(--bg-surface-hover)] hover:border-[var(--color-primary)]/30 transition-all no-underline hover:no-underline">
-            <FileText size={15} /> View Originating RFQ
+            <FileText size={15} /> View Originating Enquiry
           </Link>
 
           {/* Generated Order */}

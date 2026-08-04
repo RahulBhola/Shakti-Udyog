@@ -5,7 +5,7 @@ import { adminApi } from "../../api/adminApi";
 import { updaterApi } from "../../api/updaterApi";
 import { apiDownload } from "../../api/client";
 import type { OrderDetail, QuotationDetail, InvoiceDetail } from "../../api/customerApi";
-import type { UpdaterRfqDetail } from "../../api/adminApi";
+import type { UpdaterEnquiryDetail } from "../../api/adminApi";
 import { formatDate, formatMoney } from "../shared";
 
 /* ── Minimal badge ─────────────────────────────────────────────── */
@@ -78,7 +78,7 @@ export default function AdminDealPage() {
 
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [quotation, setQuotation] = useState<QuotationDetail | null>(null);
-  const [rfq, setRfq] = useState<UpdaterRfqDetail | null>(null);
+  const [enquiry, setEnquiry] = useState<UpdaterEnquiryDetail | null>(null);
   const [invoices, setInvoices] = useState<OrderInvoiceSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -91,16 +91,16 @@ export default function AdminDealPage() {
     if (!orderId) return;
     setLoading(true);
     setError(null);
-    setOrder(null); setQuotation(null); setRfq(null); setInvoices([]);
+    setOrder(null); setQuotation(null); setEnquiry(null); setInvoices([]);
     updaterApi.order(orderId)
       .then((o) => {
         setOrder(o);
-        // Quotation → RFQ chain
+        // Quotation → Enquiry chain
         if (o.quotationId) {
           return adminApi.quotation(o.quotationId).then((q) => {
             setQuotation(q);
-            if (q.rfqId) {
-              adminApi.rfq(q.rfqId).then(setRfq).catch(() => {});
+            if (q.enquiryId) {
+              adminApi.enquiry(q.enquiryId).then(setEnquiry).catch(() => {});
             }
           });
         }
@@ -184,7 +184,7 @@ export default function AdminDealPage() {
               <Badge status={order.statusLabel ?? order.status} />
             </div>
             <p className="text-[12px] text-[var(--text-muted)]">
-              RFQ → Quotation → Order → Invoice{rfq?.companyName ? ` · ${rfq.companyName}` : ""}
+              Enquiry → Quotation → Order → Invoice{enquiry?.companyName ? ` · ${enquiry.companyName}` : ""}
             </p>
           </div>
         </div>
@@ -199,43 +199,43 @@ export default function AdminDealPage() {
               <FileText size={13} /> Quotation
             </Link>
           )}
-          {rfq && (
-            <Link to={`/admin/rfqs/${rfq.id}`}
+          {enquiry && (
+            <Link to={`/admin/enquiries/${enquiry.id}`}
               className="inline-flex items-center gap-1.5 px-4 h-8 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-secondary)] text-[12px] font-medium hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all no-underline hover:no-underline">
-              <FileText size={13} /> RFQ
+              <FileText size={13} /> Enquiry
             </Link>
           )}
         </div>
       </div>
 
-      {/* ── Pipeline: RFQ → Quotation → Order → Invoice ────── */}
+      {/* ── Pipeline: Enquiry → Quotation → Order → Invoice ────── */}
       <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
-        <span>RFQ</span><span>→</span><span>Quotation</span><span>→</span><span>Order</span><span>→</span><span>Invoice</span>
+        <span>Enquiry</span><span>→</span><span>Quotation</span><span>→</span><span>Order</span><span>→</span><span>Invoice</span>
       </div>
 
-      {/* RFQ */}
-      <Section title="RFQ" right={rfq ? <Badge status={rfq.status} /> : undefined}>
-        {rfq ? (
+      {/* Enquiry */}
+      <Section title="Enquiry" right={enquiry ? <Badge status={enquiry.status} /> : undefined}>
+        {enquiry ? (
           <div className="space-y-4">
             <GridFields>
-              <Field label="Company" value={rfq.companyName} />
-              <Field label="Contact" value={rfq.fullName} />
-              <Field label="Product type" value={rfq.productType} />
-              <Field label="Part no." value={rfq.partNumber} />
-              <Field label="Part name" value={rfq.partName} />
-              <Field label="Material grade" value={rfq.materialGrade} />
-              <Field label="Quantity" value={rfq.quantity} />
-              <Field label="Delivery location" value={rfq.deliveryLocation} />
-              <Field label="Submitted" value={formatDate(rfq.createdAtUtc)} />
-              <Field label="Files" value={rfq.files.length > 0 ? `${rfq.files.length} attachment(s)` : "None"} />
+              <Field label="Company" value={enquiry.companyName} />
+              <Field label="Contact" value={enquiry.fullName} />
+              <Field label="Product type" value={enquiry.productType} />
+              <Field label="Part no." value={enquiry.partNumber} />
+              <Field label="Part name" value={enquiry.partName} />
+              <Field label="Material grade" value={enquiry.materialGrade} />
+              <Field label="Quantity" value={enquiry.quantity} />
+              <Field label="Delivery location" value={enquiry.deliveryLocation} />
+              <Field label="Submitted" value={formatDate(enquiry.createdAtUtc)} />
+              <Field label="Files" value={enquiry.files.length > 0 ? `${enquiry.files.length} attachment(s)` : "None"} />
             </GridFields>
             <div>
               <span className="text-[11px] font-medium text-[var(--text-muted)] uppercase tracking-wider block">Requirement details</span>
-              <p className="text-[13px] text-[var(--text-secondary)] mt-1 whitespace-pre-wrap">{rfq.requirementDetails || "—"}</p>
+              <p className="text-[13px] text-[var(--text-secondary)] mt-1 whitespace-pre-wrap">{enquiry.requirementDetails || "—"}</p>
             </div>
           </div>
         ) : (
-          <p className="text-[13px] text-[var(--text-muted)] text-center py-4">No RFQ linked to this transaction.</p>
+          <p className="text-[13px] text-[var(--text-muted)] text-center py-4">No Enquiry linked to this transaction.</p>
         )}
       </Section>
 

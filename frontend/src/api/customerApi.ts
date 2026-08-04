@@ -3,7 +3,7 @@ import { apiGet, apiPost, apiPatch, apiDelete, apiUpload } from "./client";
 /* ---- Types mirroring backend Contracts/Customer ---------------------------- */
 
 export interface Dashboard {
-  openRfqs: number;
+  openEnquiries: number;
   activeQuotations: number;
   activeOrders: number;
   unpaidInvoices: number;
@@ -12,7 +12,7 @@ export interface Dashboard {
   recentDocuments: DocumentItem[];
 }
 
-export interface RfqListItem {
+export interface EnquiryListItem {
   id: string;
   productType: string;
   quantity: string;
@@ -22,7 +22,7 @@ export interface RfqListItem {
   createdAtUtc: string;
 }
 
-export interface RfqDetail extends RfqListItem {
+export interface EnquiryDetail extends EnquiryListItem {
   fullName: string;
   companyName: string;
   materialGrade: string | null;
@@ -50,7 +50,7 @@ export interface QuotationListItem {
   id: string;
   quotationNumber: string;
   revisionNumber: number;
-  rfqId: string;
+  enquiryId: string;
   productType: string;
   total: number;
   currency: string;
@@ -233,7 +233,7 @@ export interface DocumentItem {
   createdAtUtc: string;
 }
 
-export interface RfqTimelineEntry {
+export interface EnquiryTimelineEntry {
   fromStatus: string;
   toStatus: string;
   changedByRole: string;
@@ -458,29 +458,44 @@ const base = "/api/v1/customer";
 export const customerApi = {
   dashboard: () => apiGet<Dashboard>(`${base}/dashboard`),
 
-  rfqs: (page = 1, pageSize = 20, search?: string, status?: string) => {
+  enquiries: (page = 1, pageSize = 20, search?: string, status?: string) => {
     const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
     if (search) params.set("search", search);
     if (status) params.set("status", status);
-    return apiGet<Paged<RfqListItem>>(`${base}/rfqs?${params}`);
+    return apiGet<Paged<EnquiryListItem>>(`${base}/enquiries?${params}`);
   },
-  rfq: (id: string) => apiGet<RfqDetail>(`${base}/rfqs/${id}`),
-  createRfq: (payload: {
+  enquiry: (id: string) => apiGet<EnquiryDetail>(`${base}/enquiries/${id}`),
+  createEnquiry: (payload: {
     productType: string;
     materialGrade?: string;
     quantity: string;
     deliveryLocation?: string;
     requirementDetails: string;
     saveAsDraft: boolean;
-  }) => apiPost<{ id: string }>(`${base}/rfqs`, payload),
-  updateRfq: (id: string, payload: Record<string, unknown>) => apiPatch<{ message: string }>(`${base}/rfqs/${id}`, payload),
-  deleteRfq: (id: string) => apiDelete<{ message: string }>(`${base}/rfqs/${id}`),
-  submitRfq: (id: string) => apiPost<{ message: string }>(`${base}/rfqs/${id}/submit`),
-  rfqTimeline: (id: string) => apiGet<RfqTimelineEntry[]>(`${base}/rfqs/${id}/timeline`),
-  uploadRfqFile: (rfqId: string, file: File) => {
+    partName?: string;
+    partNumber?: string;
+    industry?: string;
+    application?: string;
+    materialStandard?: string;
+    approxWeight?: number;
+    machiningRequired?: string;
+    patternAvailability?: string;
+    prototypeQuantity?: string;
+    productionQuantity?: string;
+    annualRequirement?: string;
+    expectedDeliveryDate?: string;
+    preferredDeliveryTerms?: string;
+    additionalRequirements?: string;
+    remarks?: string;
+  }) => apiPost<{ id: string }>(`${base}/enquiries`, payload),
+  updateEnquiry: (id: string, payload: Record<string, unknown>) => apiPatch<{ message: string }>(`${base}/enquiries/${id}`, payload),
+  deleteEnquiry: (id: string) => apiDelete<{ message: string }>(`${base}/enquiries/${id}`),
+  submitEnquiry: (id: string) => apiPost<{ message: string }>(`${base}/enquiries/${id}/submit`),
+  enquiryTimeline: (id: string) => apiGet<EnquiryTimelineEntry[]>(`${base}/enquiries/${id}/timeline`),
+  uploadEnquiryFile: (enquiryId: string, file: File) => {
     const form = new FormData();
     form.append("file", file);
-    return apiUpload<{ id: string; fileName: string }>(`${base}/rfqs/${rfqId}/files`, form);
+    return apiUpload<{ id: string; fileName: string }>(`${base}/enquiries/${enquiryId}/files`, form);
   },
 
   quotations: () => apiGet<QuotationListItem[]>(`${base}/quotations`),

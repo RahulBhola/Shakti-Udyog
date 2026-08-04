@@ -8,7 +8,7 @@ namespace ShaktiUdyog.Infrastructure.Data;
 
 /// <summary>
 /// DEVELOPMENT ONLY: seeds a clearly-labelled demo customer company, customer
-/// user, and sample portal records (RFQ → quotation → order → invoice →
+/// user, and sample portal records (Enquiry → quotation → order → invoice →
 /// documents → notifications) so every customer-portal screen is explorable
 /// before the staff portals exist. All values are fictitious demo data.
 /// Idempotent: skipped when the demo company already exists. Requires
@@ -85,8 +85,8 @@ public static class DevPortalSeeder
 
         var now = DateTimeOffset.UtcNow;
 
-        // RFQ (quoted) → quotation (issued)
-        var rfq = new Rfq
+        // Enquiry (quoted) → quotation (issued)
+        var enquiry = new Enquiry
         {
             Id = Guid.NewGuid(),
             CompanyId = company.Id,
@@ -101,16 +101,16 @@ public static class DevPortalSeeder
             DeliveryLocation = "Ludhiana",
             RequirementDetails = "[Demo] Pump housing casting per drawing PH-102 rev B.",
             ConsentGiven = true,
-            Status = RfqStatuses.Quoted,
+            Status = EnquiryStatuses.Quoted,
             CreatedAtUtc = now.AddDays(-20),
         };
-        db.Rfqs.Add(rfq);
+        db.Enquiries.Add(enquiry);
 
         var quotation = new Quotation
         {
             Id = Guid.NewGuid(),
             QuotationNumber = "QT-DEMO-0001",
-            RfqId = rfq.Id,
+            EnquiryId = enquiry.Id,
             CompanyId = company.Id,
             Subtotal = 485000m,
             Total = 485000m,
@@ -122,8 +122,8 @@ public static class DevPortalSeeder
         };
         db.Quotations.Add(quotation);
 
-        // A second RFQ still under review
-        db.Rfqs.Add(new Rfq
+        // A second Enquiry still under review
+        db.Enquiries.Add(new Enquiry
         {
             Id = Guid.NewGuid(),
             CompanyId = company.Id,
@@ -136,7 +136,7 @@ public static class DevPortalSeeder
             Quantity = "250 pcs",
             RequirementDetails = "[Demo] Machine base casting, sample drawing to follow.",
             ConsentGiven = true,
-            Status = RfqStatuses.UnderReview,
+            Status = EnquiryStatuses.UnderReview,
             CreatedAtUtc = now.AddDays(-4),
         });
 
@@ -420,7 +420,7 @@ public static class DevPortalSeeder
     /// <summary>
     /// Idempotent: links the demo order (SO-DEMO-0001) to its quotation
     /// (QT-DEMO-0001) when the link is missing, so the admin "Deal" page can
-    /// render the full RFQ → Quotation → Order chain for demo data. Runs on
+    /// render the full Enquiry → Quotation → Order chain for demo data. Runs on
     /// every Development startup, even when the demo company is already seeded.
     /// </summary>
     private static async Task EnsureDemoOrderQuotationLinkAsync(AppDbContext db, ILogger logger)

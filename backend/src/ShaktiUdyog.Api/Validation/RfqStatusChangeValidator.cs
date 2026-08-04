@@ -2,13 +2,13 @@ using FluentValidation;
 
 namespace ShaktiUdyog.Api.Validation;
 
-public class RfqStatusChangeValidator : AbstractValidator<RfqStatusChangeRequest>
+public class EnquiryStatusChangeValidator : AbstractValidator<EnquiryStatusChangeRequest>
 {
     private static readonly string[] ValidStatuses =
         ["Received", "Under Review", "Waiting for Customer", "Approved", "Rejected",
          "Quoted", "Accepted", "Declined", "Expired", "Cancelled"];
 
-    public RfqStatusChangeValidator()
+    public EnquiryStatusChangeValidator()
     {
         RuleFor(x => x.NewStatus)
             .NotEmpty()
@@ -18,4 +18,4 @@ public class RfqStatusChangeValidator : AbstractValidator<RfqStatusChangeRequest
     }
 }
 
-public record RfqStatusChangeRequest(string NewStatus, string? Note);
+public record EnquiryStatusChangeRequest(string NewStatus, string? Note);

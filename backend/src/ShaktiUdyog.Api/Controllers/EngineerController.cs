@@ -13,9 +13,9 @@ using ShaktiUdyog.Infrastructure.Storage;
 namespace ShaktiUdyog.Api.Controllers;
 
 /// <summary>
-/// Engineer portal API for RFQ management (Milestone 4 RFQ spec). All
+/// Engineer portal API for Enquiry management (Milestone 4 Enquiry spec). All
 /// endpoints require the Engineer role (or Admin). Access is not scoped
-/// to a specific company — staff see all RFQs.
+/// to a specific company — staff see all Enquirys.
 /// </summary>
 [ApiController]
 [Route("api/v1/updater")]
@@ -40,37 +40,37 @@ public class EngineerController(
     [HttpGet("dashboard")]
     public async Task<IActionResult> GetDashboard() => Ok(await updaterService.GetDashboardAsync());
 
-    // ---- RFQ list -----------------------------------------------------------
+    // ---- Enquiry list -----------------------------------------------------------
 
-    [HttpGet("rfqs")]
-    [ProducesResponseType<PagedResult<UpdaterRfqListItemDto>>(StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetRfqs(
+    [HttpGet("enquiries")]
+    [ProducesResponseType<PagedResult<UpdaterEnquiryListItemDto>>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetEnquiries(
         [FromQuery] int page = 1, [FromQuery] int pageSize = 20,
         [FromQuery] string? search = null, [FromQuery] string? status = null, [FromQuery] Guid? companyId = null)
     {
-        return Ok(await updaterService.GetRfqsAsync(page, pageSize, search, status, companyId));
+        return Ok(await updaterService.GetEnquiriesAsync(page, pageSize, search, status, companyId));
     }
 
-    // ---- RFQ detail ---------------------------------------------------------
+    // ---- Enquiry detail ---------------------------------------------------------
 
-    [HttpGet("rfqs/{id:guid}")]
-    [ProducesResponseType<UpdaterRfqDetailDto>(StatusCodes.Status200OK)]
+    [HttpGet("enquiries/{id:guid}")]
+    [ProducesResponseType<UpdaterEnquiryDetailDto>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetRfq(Guid id)
+    public async Task<IActionResult> GetEnquiry(Guid id)
     {
-        var rfq = await updaterService.GetRfqAsync(id);
-        return rfq is null ? NotFound() : Ok(rfq);
+        var enquiry = await updaterService.GetEnquiryAsync(id);
+        return enquiry is null ? NotFound() : Ok(enquiry);
     }
 
     // ---- Status change ------------------------------------------------------
 
-    [HttpPatch("rfqs/{id:guid}/status")]
+    [HttpPatch("enquiries/{id:guid}/status")]
     [ProducesResponseType<MessageResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> UpdateRfqStatus(Guid id, RfqStatusChangeRequest request)
+    public async Task<IActionResult> UpdateEnquiryStatus(Guid id, EnquiryStatusChangeRequest request)
     {
-        var result = await updaterService.UpdateRfqStatusAsync(id, request, UserId, ClientIp);
+        var result = await updaterService.UpdateEnquiryStatusAsync(id, request, UserId, ClientIp);
         return result switch
         {
             null => NotFound(),
@@ -81,38 +81,38 @@ public class EngineerController(
 
     // ---- Comments -----------------------------------------------------------
 
-    [HttpPost("rfqs/{id:guid}/comments")]
-    [ProducesResponseType<RfqCommentDto>(StatusCodes.Status201Created)]
+    [HttpPost("enquiries/{id:guid}/comments")]
+    [ProducesResponseType<EnquiryCommentDto>(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> AddComment(Guid id, RfqCommentRequest request)
+    public async Task<IActionResult> AddComment(Guid id, EnquiryCommentRequest request)
     {
-        var comment = await updaterService.AddRfqCommentAsync(id, request, UserId, UserRole, ClientIp);
+        var comment = await updaterService.AddEnquiryCommentAsync(id, request, UserId, UserRole, ClientIp);
         return comment is null ? NotFound() : StatusCode(StatusCodes.Status201Created, comment);
     }
 
     // ---- Assignment ---------------------------------------------------------
 
-    [HttpPatch("rfqs/{id:guid}/assign")]
+    [HttpPatch("enquiries/{id:guid}/assign")]
     [ProducesResponseType<MessageResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> AssignRfq(Guid id, RfqAssignmentRequest request)
+    public async Task<IActionResult> AssignEnquiry(Guid id, EnquiryAssignmentRequest request)
     {
-        var result = await updaterService.AssignRfqAsync(id, request, UserId, ClientIp);
+        var result = await updaterService.AssignEnquiryAsync(id, request, UserId, ClientIp);
         return result switch
         {
             null => NotFound(),
-            true => Ok(new MessageResponse("RFQ assigned.")),
+            true => Ok(new MessageResponse("Enquiry assigned.")),
             _ => BadRequest(new MessageResponse("Assignment failed.")),
         };
     }
 
     // ---- File download ----------------------------------------------------
 
-    [HttpGet("rfqs/{id:guid}/files/{fileId:guid}/download")]
-    public async Task<IActionResult> DownloadRfqFile(Guid id, Guid fileId)
+    [HttpGet("enquiries/{id:guid}/files/{fileId:guid}/download")]
+    public async Task<IActionResult> DownloadEnquiryFile(Guid id, Guid fileId)
     {
-        var file = await db.RfqFiles
-            .Where(f => f.Id == fileId && f.RfqId == id)
+        var file = await db.EnquiryFiles
+            .Where(f => f.Id == fileId && f.EnquiryId == id)
             .FirstOrDefaultAsync();
 
         if (file is null) return NotFound();

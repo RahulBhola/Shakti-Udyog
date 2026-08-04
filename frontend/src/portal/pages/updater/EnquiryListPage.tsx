@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { updaterApi, type UpdaterRfqListItem } from "../../../api/updaterApi";
+import { updaterApi, type UpdaterEnquiryListItem } from "../../../api/updaterApi";
 import type { Paged } from "../../../api/customerApi";
 import { EmptyState, Loading } from "../../../components/ui";
 import { tokenStorage } from "../../../auth/tokenStorage";
@@ -19,8 +19,8 @@ const PAGE_SIZES = [10, 20, 50];
 
 /* ---- helpers ------------------------------------------------------- */
 
-function rfqNo(id: string): string {
-  return `RFQ-${id.slice(0, 8).toUpperCase()}`;
+function enquiryNo(id: string): string {
+  return `Enquiry-${id.slice(0, 8).toUpperCase()}`;
 }
 
 function statusTone(status: string): string {
@@ -47,7 +47,7 @@ function priorityTone(priority: string): string {
   }
 }
 
-function RfqBadge({ status }: { status: string }) {
+function EnquiryBadge({ status }: { status: string }) {
   return <span className={`inv-badge inv-badge--${statusTone(status)}`}>{status}</span>;
 }
 
@@ -56,10 +56,10 @@ function PriorityBadge({ priority }: { priority: string }) {
 }
 
 /*  CSV export                                                        */
-function exportToCsv(items: UpdaterRfqListItem[]) {
-  const headers = ["RFQ No.", "Customer", "Product", "Quantity", "Status", "Date", "Files", "Assigned"];
+function exportToCsv(items: UpdaterEnquiryListItem[]) {
+  const headers = ["Enquiry No.", "Customer", "Product", "Quantity", "Status", "Date", "Files", "Assigned"];
   const rows = items.map((r) => [
-    rfqNo(r.id),
+    enquiryNo(r.id),
     r.companyName ?? "Unknown",
     r.productType,
     r.quantity,
@@ -74,7 +74,7 @@ function exportToCsv(items: UpdaterRfqListItem[]) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `rfqs-export-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.download = `enquiries-export-${new Date().toISOString().slice(0, 10)}.csv`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -82,31 +82,31 @@ function exportToCsv(items: UpdaterRfqListItem[]) {
 }
 
 /*  Thumbnail image (auth-fetched)                                    */
-function ListRfqImage({ rfqId, fileId }: { rfqId: string; fileId: string }) {
+function ListEnquiryImage({ enquiryId, fileId }: { enquiryId: string; fileId: string }) {
   const [url, setUrl] = useState<string | null>(null);
   useEffect(() => {
     let cancelled = false;
     let objectUrl: string | null = null;
     const token = tokenStorage.getAccessToken();
-    fetch(`${config.apiBaseUrl}/api/v1/updater/rfqs/${rfqId}/files/${fileId}/download`, {
+    fetch(`${config.apiBaseUrl}/api/v1/updater/enquiries/${enquiryId}/files/${fileId}/download`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {}, credentials: "include",
     }).then((r) => { if (!r.ok) throw new Error(); return r.blob(); })
       .then((blob) => { if (!cancelled) { objectUrl = URL.createObjectURL(blob); setUrl(objectUrl); } })
       .catch(() => {});
     return () => { cancelled = true; if (objectUrl) URL.revokeObjectURL(objectUrl); };
-  }, [rfqId, fileId]);
+  }, [enquiryId, fileId]);
   if (!url) return <span className="inv-avatar" style={{ background: "var(--bg-surface-hover)" }} />;
   return <img src={url} alt="" className="inv-avatar" style={{ objectFit: "cover" }} />;
 }
 
 /* ---- main page ----------------------------------------------------- */
 
-export default function UpdaterRfqListPage() {
+export default function UpdaterEnquiryListPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const companyId = searchParams.get("company") ?? "";
 
-  const [data, setData] = useState<Paged<UpdaterRfqListItem> | null>(null);
+  const [data, setData] = useState<Paged<UpdaterEnquiryListItem> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -118,7 +118,7 @@ export default function UpdaterRfqListPage() {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
 
   const load = useCallback(() => {
-    updaterApi.rfqs(page, pageSize, search || undefined, statusFilter === "All" ? undefined : statusFilter, companyId || undefined)
+    updaterApi.enquiries(page, pageSize, search || undefined, statusFilter === "All" ? undefined : statusFilter, companyId || undefined)
       .then(setData)
       .catch((e: Error) => setError(e.message));
   }, [page, pageSize, search, statusFilter, companyId]);
@@ -138,9 +138,9 @@ export default function UpdaterRfqListPage() {
   // Priority is a client-side refinement on the current page (no backend param)
   const filteredItems = data?.items.filter((r) => priorityFilter === "All" || r.priority === priorityFilter) ?? [];
 
-  // RFQ-specific summary from the current page (preserving existing behaviour)
+  // Enquiry-specific summary from the current page (preserving existing behaviour)
   const allStatuses = data?.items.map((r) => r.status) ?? [];
-  const totalRfqs = data?.totalCount ?? 0;
+  const totalEnquiries = data?.totalCount ?? 0;
   const newCount = allStatuses.filter((s) => s === "Received").length;
   const reviewCount = allStatuses.filter((s) => s === "Under Review").length;
   const quotedCount = allStatuses.filter((s) => s === "Quoted").length;
@@ -164,7 +164,7 @@ export default function UpdaterRfqListPage() {
   const hasFilters = !!search || statusFilter !== "All" || priorityFilter !== "All";
 
   const kpis = [
-    { label: "Total RFQs", value: totalRfqs, hint: "All requests", icon: FileText, color: "var(--kpi-blue)", bg: "var(--kpi-blue-bg)", glow: "rgba(59,130,246,0.25)" },
+    { label: "Total Enquiries", value: totalEnquiries, hint: "All requests", icon: FileText, color: "var(--kpi-blue)", bg: "var(--kpi-blue-bg)", glow: "rgba(59,130,246,0.25)" },
     { label: "Received", value: newCount, hint: "New requests", icon: Clock, color: "var(--kpi-blue)", bg: "var(--kpi-blue-bg)", glow: "rgba(59,130,246,0.22)" },
     { label: "Under Review", value: reviewCount, hint: "In review", icon: AlertCircle, color: "var(--kpi-orange)", bg: "var(--kpi-orange-bg)", glow: "rgba(249,115,22,0.22)" },
     { label: "Quoted", value: quotedCount, hint: "Quotations sent", icon: FileEdit, color: "var(--kpi-purple)", bg: "var(--kpi-purple-bg)", glow: "rgba(167,139,250,0.22)" },
@@ -172,11 +172,11 @@ export default function UpdaterRfqListPage() {
     { label: "Rejected", value: rejectedCount, hint: "Rejected", icon: XCircle, color: "var(--color-danger)", bg: "rgba(239,68,68,0.10)", glow: "rgba(239,68,68,0.22)" },
   ];
 
-  const openRfq = (r: UpdaterRfqListItem) => navigate(`/admin/rfqs/${r.id}`);
+  const openEnquiry = (r: UpdaterEnquiryListItem) => navigate(`/admin/enquiries/${r.id}`);
 
-  const renderThumb = (r: UpdaterRfqListItem) => {
+  const renderThumb = (r: UpdaterEnquiryListItem) => {
     if (r.firstFileId && r.firstFileContentType?.startsWith("image/")) {
-      return <ListRfqImage rfqId={r.id} fileId={r.firstFileId} />;
+      return <ListEnquiryImage enquiryId={r.id} fileId={r.firstFileId} />;
     }
     if (r.fileCount > 0) {
       return <span className="inv-avatar" style={{ background: "var(--bg-surface-hover)" }}><FileText size={16} /></span>;
@@ -184,18 +184,18 @@ export default function UpdaterRfqListPage() {
     return <span className="inv-avatar" style={{ background: "var(--bg-surface)" }} />;
   };
 
-  const renderRow = (r: UpdaterRfqListItem) => {
+  const renderRow = (r: UpdaterEnquiryListItem) => {
     return (
-      <tr key={r.id} onClick={() => openRfq(r)}>
+      <tr key={r.id} onClick={() => openEnquiry(r)}>
         <td onClick={(e) => e.stopPropagation()}>
-          <input type="checkbox" className="inv-check" checked={selectedIds.has(r.id)} onChange={() => toggleSelect(r.id)} aria-label="Select RFQ" />
+          <input type="checkbox" className="inv-check" checked={selectedIds.has(r.id)} onChange={() => toggleSelect(r.id)} aria-label="Select Enquiry" />
         </td>
         <td>{renderThumb(r)}</td>
         <td>
           <span className="inv-link" role="link" tabIndex={0}
             onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); openRfq(r); } }}>
-            {rfqNo(r.id)}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); openEnquiry(r); } }}>
+            {enquiryNo(r.id)}
           </span>
           <div className="inv-sub">{formatDate(r.createdAtUtc)}</div>
         </td>
@@ -219,10 +219,10 @@ export default function UpdaterRfqListPage() {
           )}
         </td>
         <td><PriorityBadge priority={r.priority} /></td>
-        <td><RfqBadge status={r.status} /></td>
+        <td><EnquiryBadge status={r.status} /></td>
         <td>
           <div className="inv-actions" onClick={(e) => e.stopPropagation()}>
-            <button className="inv-icon-btn" title="View" aria-label="View" onClick={() => openRfq(r)}>
+            <button className="inv-icon-btn" title="View" aria-label="View" onClick={() => openEnquiry(r)}>
               <Eye size={16} />
             </button>
             <div className="inv-menu-wrap" onMouseDown={(e) => e.stopPropagation()}>
@@ -233,7 +233,7 @@ export default function UpdaterRfqListPage() {
               </button>
               {openMenu === r.id && (
                 <div className="inv-menu">
-                  <button className="inv-menu__item" onClick={() => { setOpenMenu(null); openRfq(r); }}>
+                  <button className="inv-menu__item" onClick={() => { setOpenMenu(null); openEnquiry(r); }}>
                     <Eye size={15} /> View Details
                   </button>
                 </div>
@@ -245,18 +245,18 @@ export default function UpdaterRfqListPage() {
     );
   };
 
-  const renderCard = (r: UpdaterRfqListItem) => {
+  const renderCard = (r: UpdaterEnquiryListItem) => {
     return (
-      <div key={r.id} className="inv-card" onClick={() => openRfq(r)}>
+      <div key={r.id} className="inv-card" onClick={() => openEnquiry(r)}>
         <div className="inv-card__top">
           <div className="inv-card__customer">
             <span className="inv-avatar">{initials(r.companyName)}</span>
             <div>
               <div className="inv-customer__name">{r.companyName ?? "Unknown"}</div>
-              <div className="inv-sub inv-link">{rfqNo(r.id)}</div>
+              <div className="inv-sub inv-link">{enquiryNo(r.id)}</div>
             </div>
           </div>
-          <RfqBadge status={r.status} />
+          <EnquiryBadge status={r.status} />
         </div>
         <div className="inv-card__body">
           <div className="inv-card__cell">
@@ -285,11 +285,11 @@ export default function UpdaterRfqListPage() {
       {/* Header */}
       <div className="inv-header">
         <div>
-          <h1 className="inv-header__title">RFQs</h1>
+          <h1 className="inv-header__title">Enquiries</h1>
           <p className="inv-header__subtitle">Manage customer Requests for Quotation.</p>
         </div>
         <div className="inv-header__actions">
-          <button className="inv-btn" onClick={() => { if (data) exportToCsv(data.items); }} title="Export visible RFQs to Excel">
+          <button className="inv-btn" onClick={() => { if (data) exportToCsv(data.items); }} title="Export visible Enquiries to Excel">
             <Download size={16} /> Export Excel
           </button>
         </div>
@@ -316,8 +316,8 @@ export default function UpdaterRfqListPage() {
             <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
             <input
               className="inv-input" style={{ paddingLeft: 32 }} type="search" value={searchInput}
-              placeholder="Search RFQs..."
-              aria-label="Search RFQs"
+              placeholder="Search Enquiries..."
+              aria-label="Search Enquiries"
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") setSearch(searchInput.trim()); }}
             />
@@ -341,7 +341,7 @@ export default function UpdaterRfqListPage() {
         <button className="inv-btn inv-btn--icon" title="Refresh" aria-label="Refresh" onClick={load}>
           <RefreshCw size={16} />
         </button>
-        <button className="inv-btn" onClick={() => { if (data) exportToCsv(data.items); }} title="Export visible RFQs to Excel">
+        <button className="inv-btn" onClick={() => { if (data) exportToCsv(data.items); }} title="Export visible Enquiries to Excel">
           <Download size={14} /> Export
         </button>
         {hasFilters && (
@@ -355,7 +355,7 @@ export default function UpdaterRfqListPage() {
       {companyId && (
         <div className="inv-filterbar" style={{ padding: "10px 16px", alignItems: "center", gap: 10 }}>
           <span className="inv-badge inv-badge--blue">Filtered by company</span>
-          <button className="inv-btn" onClick={() => navigate("/admin/rfqs")}>
+          <button className="inv-btn" onClick={() => navigate("/admin/enquiries")}>
             <X size={14} /> Clear company filter
           </button>
         </div>
@@ -383,7 +383,7 @@ export default function UpdaterRfqListPage() {
                     <input type="checkbox" className="inv-check" checked={allSelected} onChange={toggleSelectAll} aria-label="Select all" />
                   </th>
                   <th style={{ width: 52 }}>Image</th>
-                  <th>RFQ No.</th>
+                  <th>Enquiry No.</th>
                   <th>Customer</th>
                   <th>Qty</th>
                   <th>Assigned</th>
@@ -402,18 +402,18 @@ export default function UpdaterRfqListPage() {
 
       {/* Mobile cards */}
       <div className="inv-mobile">
-        {!data && !error && <Loading label="Loading RFQs" />}
-        {data && filteredItems.length === 0 && !error && <div className="inv-status">No RFQs found.</div>}
+        {!data && !error && <Loading label="Loading Enquiries" />}
+        {data && filteredItems.length === 0 && !error && <div className="inv-status">No Enquiries found.</div>}
         {filteredItems.map((r) => renderCard(r))}
       </div>
 
       {/* Errors / loading / empty (desktop) */}
-      {error && <EmptyState title="RFQs unavailable" text={error} />}
-      {!data && !error && <div className="inv-status"><Loading label="Loading RFQs" /></div>}
+      {error && <EmptyState title="Enquiries unavailable" text={error} />}
+      {!data && !error && <div className="inv-status"><Loading label="Loading Enquiries" /></div>}
       {data && filteredItems.length === 0 && !error && (
         <div className="inv-status">
           <Package size={40} style={{ opacity: 0.4, marginBottom: 12 }} />
-          <div>{hasFilters ? "No RFQs match the current filters." : "No RFQs found."}</div>
+          <div>{hasFilters ? "No Enquiries match the current filters." : "No Enquiries found."}</div>
         </div>
       )}
 
@@ -422,7 +422,7 @@ export default function UpdaterRfqListPage() {
         <span className="inv-pagination__info">
           {selectedIds.size > 0
             ? `${selectedIds.size} selected`
-            : data ? `Showing ${data.items.length} of ${data.totalCount} RFQs` : ""}
+            : data ? `Showing ${data.items.length} of ${data.totalCount} Enquiries` : ""}
         </span>
 
         <div className="inv-field" style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>

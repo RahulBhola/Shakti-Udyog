@@ -1,7 +1,7 @@
 import { Package, CheckCircle, FileEdit, FolderTree, AlertTriangle } from "lucide-react";
 
 /* ------------------------------------------------------------------ */
-/*  Stat card (reused from RfqListPage pattern)                        */
+/*  Stat card (reused from EnquiryListPage pattern)                        */
 /* ------------------------------------------------------------------ */
 
 function StatCard({ icon: Icon, label, value, color }: { icon: any; label: string; value: number; color: string }) {

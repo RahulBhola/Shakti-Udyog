@@ -42,6 +42,21 @@ public class PublicController(
         return resource is null ? NotFound() : Ok(resource);
     }
 
+    [HttpPost("contact-requests")]
+    [EnableRateLimiting("public")]
+    [ProducesResponseType<SubmissionAccepted>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> SubmitContactRequest(ContactRequestDto request)
+    {
+        if (!request.ConsentGiven)
+        {
+            ModelState.AddModelError(nameof(request.ConsentGiven), "Consent is required to process the contact request.");
+            return ValidationProblem(ModelState);
+        }
+
+        return Ok(await submissions.SubmitContactRequestAsync(request, ClientIp));
+    }
+
     [HttpPost("enquiries")]
     [EnableRateLimiting("public")]
     [ProducesResponseType<SubmissionAccepted>(StatusCodes.Status200OK)]
@@ -50,32 +65,17 @@ public class PublicController(
     {
         if (!request.ConsentGiven)
         {
-            ModelState.AddModelError(nameof(request.ConsentGiven), "Consent is required to process the enquiry.");
-            return ValidationProblem(ModelState);
-        }
-
-        return Ok(await submissions.SubmitEnquiryAsync(request, ClientIp));
-    }
-
-    [HttpPost("rfqs")]
-    [EnableRateLimiting("public")]
-    [ProducesResponseType<SubmissionAccepted>(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> SubmitRfq(RfqRequest request)
-    {
-        if (!request.ConsentGiven)
-        {
             ModelState.AddModelError(nameof(request.ConsentGiven), "Consent is required to process the quotation request.");
             return ValidationProblem(ModelState);
         }
 
-        if (!RfqRequest.AllowedProductTypes.Contains(request.ProductType))
+        if (!EnquiryRequest.AllowedProductTypes.Contains(request.ProductType))
         {
             ModelState.AddModelError(nameof(request.ProductType), "Unknown requirement type.");
             return ValidationProblem(ModelState);
         }
 
-        return Ok(await submissions.SubmitRfqAsync(request, ClientIp));
+        return Ok(await submissions.SubmitEnquiryAsync(request, ClientIp));
     }
 
     private string? ClientIp => HttpContext.Connection.RemoteIpAddress?.ToString();

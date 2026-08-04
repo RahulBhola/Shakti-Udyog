@@ -188,13 +188,13 @@ export function InvoicesPieChart({ data }: { data?: { name: string; value: numbe
 }
 
 /* ------------------------------------------------------------------ */
-/*  RFQ Bar Chart                                                      */
+/*  Enquiry Bar Chart                                                      */
 /* ------------------------------------------------------------------ */
 
 export function MonthlyBarChart({ data }: { data?: { year: number; month: number; count: number }[] }) {
   if (!data || data.length === 0) {
     return (
-      <ChartCard title="RFQs per Month" subtitle="Last 12 months">
+      <ChartCard title="Enquiries per Month" subtitle="Last 12 months">
         <div className="flex items-center justify-center h-[140px] text-sm text-[var(--text-secondary)]">No data available</div>
       </ChartCard>
     );
@@ -204,7 +204,7 @@ export function MonthlyBarChart({ data }: { data?: { year: number; month: number
   const maxCount = Math.max(...chartData.map(d => d.count), 1);
 
   return (
-    <ChartCard title="RFQs per Month" subtitle="Last 12 months">
+    <ChartCard title="Enquiries per Month" subtitle="Last 12 months">
       <ResponsiveContainer width="100%" height={140}>
         <BarChart data={chartData} margin={{ top: 4, right: 4, left: -12, bottom: 0 }}>
           <defs>

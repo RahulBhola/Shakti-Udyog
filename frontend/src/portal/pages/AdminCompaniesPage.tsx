@@ -189,7 +189,7 @@ export default function AdminCompaniesPage() {
             <div className="inv-company__stat"><span className="inv-company__stat-value">{c.city ?? "—"}</span><span className="inv-company__stat-label">City</span></div>
             <div className="inv-company__stat"><span className="inv-company__stat-value">{c.state ?? "—"}</span><span className="inv-company__stat-label">State</span></div>
             <div className="inv-company__stat"><span className="inv-company__stat-value">—</span><span className="inv-company__stat-label">Orders</span></div>
-            <div className="inv-company__stat"><span className="inv-company__stat-value">—</span><span className="inv-company__stat-label">RFQs</span></div>
+            <div className="inv-company__stat"><span className="inv-company__stat-value">—</span><span className="inv-company__stat-label">Enquiries</span></div>
             <div className="inv-company__stat"><span className="inv-company__stat-value">—</span><span className="inv-company__stat-label">Quotations</span></div>
             <div className="inv-company__stat"><span className="inv-company__stat-value">—</span><span className="inv-company__stat-label">Invoices</span></div>
           </div>
@@ -198,7 +198,7 @@ export default function AdminCompaniesPage() {
               <Eye size={13} /> View Company
             </button>
             <button className="inv-company__btn" onClick={() => navigate(`/admin/orders?company=${c.id}`)}><Folder size={13} /> Orders</button>
-            <button className="inv-company__btn" onClick={() => navigate(`/admin/rfqs?company=${c.id}`)}><FileText size={13} /> RFQs</button>
+            <button className="inv-company__btn" onClick={() => navigate(`/admin/enquiries?company=${c.id}`)}><FileText size={13} /> Enquiries</button>
             <button className="inv-company__btn" onClick={() => navigate(`/admin/invoices?company=${c.id}`)}><Receipt size={13} /> Invoices</button>
           </div>
         </div>

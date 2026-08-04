@@ -35,14 +35,14 @@ export const seoPages = {
   resources: {
     title: "Casting Resources & Guides | Shakti Udyog",
     description:
-      "Practical guides on preparing casting RFQs, choosing between grey and ductile iron, and casting drawing checklists.",
+      "Practical guides on preparing casting Enquiries, choosing between grey and ductile iron, and casting drawing checklists.",
   },
   contact: {
     title: "Contact Shakti Udyog | Request an Iron Casting Quote",
     description:
       "Contact Shakti Udyog for grey iron, ductile iron, and custom casting enquiries. Send your drawing for a quote.",
   },
-  rfq: {
+  enquiry: {
     title: "Request a Quote | Shakti Udyog",
     description:
       "Send your casting drawing, material grade, quantity, and delivery requirement for a quotation from Shakti Udyog.",

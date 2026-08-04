@@ -16,7 +16,7 @@ export default function UpdaterDashboardPage() {
   if (!data) return <Loading label="Loading dashboard" />;
 
   const stats = [
-    { label: "Pending RFQs", value: data.pendingRfqs, href: "/admin/rfqs", filter: "Received" },
+    { label: "Pending Enquiries", value: data.pendingEnquiries, href: "/admin/enquiries", filter: "Received" },
     { label: "Pending Quotations", value: data.pendingQuotations, href: "/admin/quotations", filter: "Draft" },
     { label: "Orders in Production", value: data.ordersInProduction, href: "/admin/orders", filter: "production" },
     { label: "Awaiting Shipment", value: data.ordersAwaitingShipment, href: "/admin/orders", filter: "ready_to_dispatch" },
@@ -37,7 +37,7 @@ export default function UpdaterDashboardPage() {
       </div>
       <Panel title="Quick actions">
         <div className="quick-actions">
-          <Link className="btn btn--primary" to="/admin/rfqs">Review RFQs</Link>
+          <Link className="btn btn--primary" to="/admin/enquiries">Review Enquiries</Link>
           <Link className="btn btn--ghost" style={{ color: "var(--c-ink)" }} to="/admin/quotations">Manage quotations</Link>
           <Link className="btn btn--ghost" style={{ color: "var(--c-ink)" }} to="/admin/orders">Manage orders</Link>
         </div>
