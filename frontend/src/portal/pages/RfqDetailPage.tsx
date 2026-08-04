@@ -217,7 +217,7 @@ export default function RfqDetailPage() {
           <div className="flex items-center gap-2 shrink-0">
             <Link to={`/customer/rfqs/${id}/edit`}
               className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg border border-[var(--border-default)] text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] transition-all no-underline">
-              <FileEdit size={14} /> Save as Draft
+              <FileEdit size={15} /> Save as Draft
             </Link>
             <button type="button" disabled={submitting} onClick={submitDraft}
               className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg bg-[var(--color-primary)] text-white text-xs font-semibold hover:bg-[var(--color-primary-hover)] disabled:opacity-50 transition-all">
@@ -271,7 +271,7 @@ export default function RfqDetailPage() {
               <div className="mt-6 flex flex-col gap-3 pt-4 border-t border-[var(--border-default)]">
                 <Link to={`/customer/rfqs/${id}/edit`}
                   className="w-full flex items-center justify-center gap-2 px-4 h-10 rounded-lg border border-[var(--border-default)] text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] transition-all no-underline">
-                  <FileEdit size={14} /> Edit RFQ
+                  <FileEdit size={15} /> Edit RFQ
                 </Link>
                 <button type="button" disabled={submitting} onClick={submitDraft}
                   className="w-full flex items-center justify-center gap-2 px-4 h-10 rounded-lg bg-[var(--color-primary)] text-white text-sm font-semibold hover:bg-[var(--color-primary-hover)] disabled:opacity-50 transition-all">

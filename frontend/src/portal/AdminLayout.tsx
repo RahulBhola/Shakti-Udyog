@@ -37,7 +37,7 @@ const adminSections: NavSection[] = [
       { label: "Products", href: "/admin/products" },
       { label: "Categories", href: "/admin/categories" },
       { label: "Settings", href: "/admin/settings" },
-      { label: "Audit Logs", href: "/admin/audit-logs" },
+      { label: "Activity Log", href: "/admin/audit-logs" },
     ],
   },
   {

@@ -3,6 +3,7 @@ using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -203,6 +204,25 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Honor X-Forwarded-For / X-Forwarded-Proto so real client IPs are captured
+// behind a reverse proxy. Only proxies explicitly listed in configuration are
+// trusted, which prevents clients from spoofing their IP via the header.
+var forwardedOptions = new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
+    ForwardLimit = 2,
+};
+foreach (var ip in builder.Configuration.GetSection("ForwardedHeaders:KnownProxies").Get<string[]?>() ?? [])
+{
+    if (System.Net.IPAddress.TryParse(ip, out var parsed)) forwardedOptions.KnownProxies.Add(parsed);
+}
+foreach (var network in builder.Configuration.GetSection("ForwardedHeaders:KnownNetworks").Get<string[]?>() ?? [])
+{
+    var net = ParseIpNetwork(network);
+    if (net is not null) forwardedOptions.KnownNetworks.Add(net);
+}
+app.UseForwardedHeaders(forwardedOptions);
+
 app.UseExceptionHandler();
 
 if (app.Environment.IsDevelopment())
@@ -267,6 +287,17 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Run();
+
+// Parses a "ip/cidr" (or bare IP) string into the forwarded-headers IPNetwork type.
+static Microsoft.AspNetCore.HttpOverrides.IPNetwork? ParseIpNetwork(string value)
+{
+    var parts = value.Split('/');
+    if (!System.Net.IPAddress.TryParse(parts[0], out var ip)) return null;
+    var prefix = parts.Length > 1 && int.TryParse(parts[1], out var p)
+        ? p
+        : ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork ? 32 : 128;
+    return new Microsoft.AspNetCore.HttpOverrides.IPNetwork(ip, prefix);
+}
 
 // Exposed for WebApplicationFactory-based integration tests.
 public partial class Program;

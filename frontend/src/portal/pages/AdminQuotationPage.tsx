@@ -147,7 +147,7 @@ export default function AdminQuotationDetailPage() {
             <>
               <button type="button" onClick={() => navigate(`/admin/quotations/new?editQuotationId=${id}`)}
                 className="inline-flex items-center gap-1.5 px-4 h-8 rounded-lg border border-[var(--border-default)] text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all">
-                <FileEdit size={13} /> Edit
+                <FileEdit size={15} /> Edit
               </button>
               <button type="button" disabled={busy} onClick={() => void doAction(() => updaterApi.submitQuotation(id))}
                 className="inline-flex items-center gap-1.5 px-4 h-8 rounded-lg bg-[var(--color-primary)] text-white text-[12px] font-semibold hover:bg-[var(--color-primary-hover)] disabled:opacity-50 transition-all">
@@ -158,7 +158,7 @@ export default function AdminQuotationDetailPage() {
           {q.status === "Negotiating" && (
             <button type="button" onClick={() => navigate(`/admin/quotations/new?editQuotationId=${id}`)}
               className="inline-flex items-center gap-1.5 px-4 h-8 rounded-lg bg-amber-500 text-white text-[12px] font-semibold hover:bg-amber-600 transition-all">
-              <FileEdit size={13} /> Revise & Re-issue
+              <FileEdit size={15} /> Revise & Re-issue
             </button>
           )}
           {q.status === "Pending Approval" && (

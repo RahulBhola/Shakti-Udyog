@@ -180,7 +180,7 @@ export default function AdminProductDetailPage() {
           <div className="flex items-center gap-2">
             <button type="button" onClick={() => setDrawerOpen(true)}
               className="inline-flex items-center gap-1.5 px-3.5 h-8 rounded-lg bg-[var(--color-primary)] text-white text-[12px] font-semibold hover:bg-[var(--color-primary-hover)] transition-all">
-              <Edit3 size={13} />
+              <Edit3 size={15} />
               Edit
             </button>
             <button type="button" onClick={() => adminApi.productMaster.duplicate(p.id).then(() => navigate(0))}

@@ -341,13 +341,13 @@ export default function UpdaterRfqDetailPage() {
               {rfq.status === "Approved" && !rfq.hasDraftQuotation && (
                 <button type="button" onClick={() => window.location.assign(`/admin/quotations/new?rfqId=${rfq.id}&companyName=${encodeURIComponent(rfq.companyName)}`)}
                   className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg bg-emerald-500 text-white text-xs font-semibold hover:bg-emerald-600 transition-all">
-                  <FileEdit size={14} /> Generate Quotation
+                  <FileEdit size={15} /> Generate Quotation
                 </button>
               )}
               {rfq.hasDraftQuotation && (
                 <Link to={`/admin/quotations/${rfq.draftQuotationId}`}
                   className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg border border-amber-200 bg-amber-50 text-amber-700 text-xs font-semibold hover:bg-amber-100 transition-all no-underline hover:no-underline">
-                  <FileEdit size={14} /> {rfq.status === "Approved" ? "View Draft" : "View Quotation"}
+                  <FileEdit size={15} /> {rfq.status === "Approved" ? "View Draft" : "View Quotation"}
                 </Link>
               )}
               {!["Draft", "Quoted", "Accepted", "Rejected", "Declined", "Cancelled", "Expired"].includes(rfq.status) && (
@@ -656,12 +656,12 @@ export default function UpdaterRfqDetailPage() {
         {rfq.hasDraftQuotation ? (
           <Link to={`/admin/quotations/${rfq.draftQuotationId}`}
             className="inline-flex items-center gap-1.5 px-5 h-10 rounded-lg border border-amber-200 bg-amber-50 text-amber-700 text-xs font-semibold hover:bg-amber-100 transition-all no-underline hover:no-underline">
-            <FileEdit size={14} /> {rfq.status === "Approved" ? "View Draft Quotation" : "View Quotation"}
+            <FileEdit size={15} /> {rfq.status === "Approved" ? "View Draft Quotation" : "View Quotation"}
           </Link>
         ) : rfq.status === "Approved" ? (
           <button type="button" onClick={() => window.location.assign(`/admin/quotations/new?rfqId=${rfq.id}&companyName=${encodeURIComponent(rfq.companyName)}`)}
             className="inline-flex items-center gap-1.5 px-5 h-10 rounded-lg bg-emerald-500 text-white text-xs font-semibold hover:bg-emerald-600 transition-all">
-            <FileEdit size={14} /> Generate Quotation
+            <FileEdit size={15} /> Generate Quotation
           </button>
         ) : (
           <span />
