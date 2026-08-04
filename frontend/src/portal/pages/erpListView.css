@@ -506,6 +506,17 @@
 .inv-modal__row-value { font-size: 13px; color: var(--text-secondary); word-break: break-word; }
 .inv-modal__foot { padding: 14px 20px; border-top: 1px solid var(--border-default); display: flex; justify-content: flex-end; gap: 10px; }
 
+/* ---- Chart cards (dashboards) ---------------------------------------- */
+.inv-chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 18px; }
+.inv-chart-card {
+  border-radius: 16px; border: 1px solid var(--border-default);
+  background: var(--bg-card); box-shadow: var(--shadow-sm);
+  padding: 20px;
+}
+.inv-chart-card__title { font-size: 14px; font-weight: 700; color: var(--text-primary); margin: 0 0 4px; }
+.inv-chart-card__sub { font-size: 12px; color: var(--text-muted); margin: 0 0 16px; }
+.inv-chart-card .recharts-text { fill: var(--text-muted); }
+
 /* ---- Company cards -------------------------------------------------- */
 .inv-company-grid { display: flex; flex-direction: column; gap: 16px; }
 .inv-company-card {
