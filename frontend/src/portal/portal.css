@@ -138,6 +138,13 @@
 .portal__topbar .nav-spacer { flex: 1; }
 .portal__user { font-size: 14px; color: var(--text-secondary); }
 
+/* Compact topbar on small screens so it never overflows */
+@media (max-width: 48rem) {
+  .portal__topbar { padding: 0 12px; height: 60px; gap: 10px; }
+  .portal__topbar .portal__title { font-size: 15px; }
+  .portal__topbar a[href="/"] { white-space: nowrap; }
+}
+
 .portal__content {
   padding: 24px;
   display: grid;

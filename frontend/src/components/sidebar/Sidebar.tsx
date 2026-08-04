@@ -1,6 +1,5 @@
 import { useState } from "react";
 import {
-  ChevronDown,
   PanelLeftClose,
   PanelLeft,
   Home,
@@ -95,9 +94,10 @@ export function Sidebar({ sections, onLogout }: SidebarProps) {
         "sticky top-0 h-screen z-40 shrink-0",
         "bg-[var(--bg-sidebar)]",
         "border-r border-[var(--border-default)]",
-        "flex flex-col",
+        // Show the sidebar only on desktop (>= 1024px); below that the mobile-nav takes over.
+        "hidden lg:flex flex-col",
         "transition-all duration-250 ease-[cubic-bezier(0.22,0.61,0.36,1)]",
-        collapsed ? "w-[72px]" : "w-[280px]",
+        collapsed ? "lg:w-[72px]" : "lg:w-[280px]",
       )}
       aria-label="Sidebar navigation"
     >

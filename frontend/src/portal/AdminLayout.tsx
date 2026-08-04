@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
-import { Bell, User, Settings, Palette, LogOut, ExternalLink, Sun, Moon } from "lucide-react";
+import { Bell, User, Settings, LogOut, ExternalLink, Sun, Moon } from "lucide-react";
 import { useAuth } from "../auth/AuthContext";
 import { useTheme } from "../auth/ThemeContext";
 import { Sidebar } from "../components/sidebar/Sidebar";
