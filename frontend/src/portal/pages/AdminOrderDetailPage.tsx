@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, Package, Calendar, MapPin, FileText, Truck, CheckCircle2, Clock, Loader2, MessageSquare, Download, Upload, Plus, ChevronDown, ChevronUp, X, UserCog, UserPlus } from "lucide-react";
+import { ArrowLeft, Package, Calendar, MapPin, FileText, Truck, CheckCircle2, Clock, Loader2, MessageSquare, Download, Upload, Plus, ChevronDown, ChevronUp, X, UserCog, UserPlus, Pencil, Trash2 } from "lucide-react";
 import { engineerApi } from "../../api/engineerApi";
 import { adminApi } from "../../api/adminApi";
 import { apiDownload } from "../../api/client";
 import { useAuth } from "../../auth/AuthContext";
 import { Roles } from "../../auth/roles";
-import type { OrderDetail, InvoiceDetail } from "../../api/customerApi";
+import type { OrderDetail, InvoiceDetail, Shipment } from "../../api/customerApi";
 import { ConfirmActionModal } from "./orders/ConfirmModal";
 
 /* ── Status badge ──────────────────────────────────────────────── */
@@ -166,6 +166,8 @@ export default function AdminOrderDetailPage() {
     dispatchDate: "",
     eta: "",
   });
+  const [editingShipment, setEditingShipment] = useState<Shipment | null>(null);
+  const [deletingShipment, setDeletingShipment] = useState<Shipment | null>(null);
 
   async function handlePostOrderComment() {
     if (!newOrderComment.trim() || postingComment) return;
@@ -291,29 +293,67 @@ export default function AdminOrderDetailPage() {
     } finally { setAssignBusy(false); }
   }
 
-  async function handleCreateShipment() {
+  function openAddShipment() {
+    setEditingShipment(null);
+    setShipmentMsg(null);
+    setShipmentForm({ transporter: "", vehicleNumber: "", phoneNumber: "", dispatchDate: "", eta: "" });
+    setShowShipmentModal(true);
+  }
+
+  function openEditShipment(s: Shipment) {
+    setEditingShipment(s);
+    setShipmentMsg(null);
+    setShipmentForm({
+      transporter: s.transporter ?? "",
+      vehicleNumber: s.vehicleNumber ?? "",
+      phoneNumber: s.phoneNumber ?? "",
+      dispatchDate: s.dispatchDateUtc ? s.dispatchDateUtc.slice(0, 10) : "",
+      eta: s.estimatedArrivalUtc ? s.estimatedArrivalUtc.slice(0, 10) : "",
+    });
+    setShowShipmentModal(true);
+  }
+
+  async function handleSaveShipment() {
     if (!shipmentForm.transporter.trim() && !shipmentForm.vehicleNumber.trim() && !shipmentForm.phoneNumber.trim()) {
       setShipmentMsg("Enter at least a transporter, a vehicle number, or a phone number.");
       return;
     }
+    const transporter = shipmentForm.transporter.trim() || undefined;
+    const vehicleNumber = shipmentForm.vehicleNumber.trim() || undefined;
+    const phoneNumber = shipmentForm.phoneNumber.trim() || undefined;
+    const dispatchDateUtc = shipmentForm.dispatchDate ? new Date(shipmentForm.dispatchDate).toISOString() : undefined;
+    const estimatedArrivalUtc = shipmentForm.eta ? new Date(shipmentForm.eta).toISOString() : undefined;
     setShipmentBusy(true);
     setShipmentMsg(null);
     try {
-      await engineerApi.createShipment(
-        id,
-        shipmentForm.transporter.trim() || undefined,
-        shipmentForm.vehicleNumber.trim() || undefined,
-        shipmentForm.phoneNumber.trim() || undefined,
-        shipmentForm.dispatchDate ? new Date(shipmentForm.dispatchDate).toISOString() : undefined,
-        shipmentForm.eta ? new Date(shipmentForm.eta).toISOString() : undefined,
-      );
+      if (editingShipment) {
+        await engineerApi.updateShipment(id, editingShipment.id, transporter, vehicleNumber, phoneNumber, dispatchDateUtc, estimatedArrivalUtc);
+        setActionMsg("Shipment updated.");
+      } else {
+        await engineerApi.createShipment(id, transporter, vehicleNumber, phoneNumber, dispatchDateUtc, estimatedArrivalUtc);
+        setActionMsg("Shipment created.");
+      }
       setShowShipmentModal(false);
+      setEditingShipment(null);
       setShipmentForm({ transporter: "", vehicleNumber: "", phoneNumber: "", dispatchDate: "", eta: "" });
       const o = await engineerApi.order(id);
       setOrder(o);
-      setActionMsg("Shipment created.");
     } catch {
-      setShipmentMsg("Could not create shipment.");
+      setShipmentMsg(editingShipment ? "Could not update shipment." : "Could not create shipment.");
+    } finally { setShipmentBusy(false); }
+  }
+
+  async function handleDeleteShipment() {
+    if (!deletingShipment) return;
+    setShipmentBusy(true);
+    try {
+      await engineerApi.deleteShipment(id, deletingShipment.id);
+      setDeletingShipment(null);
+      setActionMsg("Shipment deleted.");
+      const o = await engineerApi.order(id);
+      setOrder(o);
+    } catch {
+      setActionMsg("Could not delete shipment.");
     } finally { setShipmentBusy(false); }
   }
 
@@ -512,12 +552,22 @@ export default function AdminOrderDetailPage() {
                       <Field label="Dispatch Date" value={formatDate(s.dispatchDateUtc)} icon={Calendar} />
                       <Field label="ETA" value={formatDate(s.estimatedArrivalUtc)} icon={Clock} />
                       <Field label="Delivered" value={formatDate(s.deliveredAtUtc)} icon={CheckCircle2} />
-                      <Field label="POD" value={s.hasProofOfDelivery ? "Available" : "Not available"} />
+                      <Field label="Proof of Delivery" value={s.hasProofOfDelivery ? "Available" : "Not available"} />
+                    </div>
+                    <div className="mt-3 pt-3 border-t border-[var(--border-default)] flex items-center gap-2">
+                      <button type="button" onClick={() => openEditShipment(s)}
+                        className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--color-primary)] hover:border-[var(--color-primary)]/30 transition-all">
+                        <Pencil size={13} /> Edit
+                      </button>
+                      <button type="button" onClick={() => setDeletingShipment(s)}
+                        className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg border border-red-500/20 bg-red-500/5 text-red-500 text-[12px] font-medium hover:bg-red-500/10 transition-all">
+                        <Trash2 size={13} /> Delete
+                      </button>
                     </div>
                   </div>
                 ))}
               </div>
-              <button type="button" onClick={() => setShowShipmentModal(true)}
+              <button type="button" onClick={openAddShipment}
                 className="mt-4 w-full flex items-center justify-center gap-1.5 px-4 h-9 rounded-lg border border-dashed border-[var(--border-default)] text-[12px] font-medium text-[var(--text-muted)] hover:text-[var(--color-primary)] hover:border-[var(--color-primary)]/30 transition-all">
                 <Truck size={14} /> Add Shipment
               </button>
@@ -528,7 +578,7 @@ export default function AdminOrderDetailPage() {
           {order.shipments.length === 0 && (
             <Section title="Shipments">
               <p className="text-[13px] text-[var(--text-muted)] text-center py-2">No shipments recorded yet.</p>
-              <button type="button" onClick={() => setShowShipmentModal(true)}
+              <button type="button" onClick={openAddShipment}
                 className="w-full flex items-center justify-center gap-1.5 px-4 h-9 rounded-lg border border-dashed border-[var(--border-default)] text-[12px] font-medium text-[var(--text-muted)] hover:text-[var(--color-primary)] hover:border-[var(--color-primary)]/30 transition-all">
                 <Truck size={14} /> Add Shipment
               </button>
@@ -1028,7 +1078,7 @@ export default function AdminOrderDetailPage() {
       {/* ── Shipment Creation Modal ──────────────────────── */}
       {showShipmentModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-md" onClick={() => { setShowShipmentModal(false); setShipmentMsg(null); }} />
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-md" onClick={() => { setShowShipmentModal(false); setEditingShipment(null); setShipmentMsg(null); }} />
           <div className="relative w-full max-w-md mx-4 rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             <div className="h-1.5 bg-gradient-to-r from-teal-500 to-teal-400" />
             <div className="p-6">
@@ -1037,12 +1087,12 @@ export default function AdminOrderDetailPage() {
                   <Truck size={22} />
                 </span>
                 <div>
-                  <h3 className="text-[16px] font-bold text-[var(--text-primary)] m-0">Add Shipment</h3>
+                  <h3 className="text-[16px] font-bold text-[var(--text-primary)] m-0">{editingShipment ? "Edit Shipment" : "Add Shipment"}</h3>
                   <p className="text-[12px] text-[var(--text-muted)] m-0 mt-1 leading-relaxed">
-                    Record the dispatch details for this order.
+                    {editingShipment ? "Update the dispatch details for this order." : "Record the dispatch details for this order."}
                   </p>
                 </div>
-                <button type="button" onClick={() => setShowShipmentModal(false)} className="ml-auto bg-[var(--bg-surface)] rounded-lg p-1.5 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors shrink-0">
+                <button type="button" onClick={() => { setShowShipmentModal(false); setEditingShipment(null); }} className="ml-auto bg-[var(--bg-surface)] rounded-lg p-1.5 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors shrink-0">
                   <X size={16} />
                 </button>
               </div>
@@ -1095,10 +1145,44 @@ export default function AdminOrderDetailPage() {
                   className="px-4 h-9 rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all disabled:opacity-50">
                   Cancel
                 </button>
-                <button type="button" disabled={shipmentBusy} onClick={handleCreateShipment}
+                <button type="button" disabled={shipmentBusy} onClick={handleSaveShipment}
                   className="px-5 h-9 rounded-xl bg-teal-500 text-white text-[12px] font-semibold hover:bg-teal-600 disabled:opacity-50 transition-all flex items-center gap-1.5 shadow-sm">
                   {shipmentBusy ? <Loader2 size={14} className="animate-spin" /> : <Truck size={14} />}
-                  {shipmentBusy ? "Adding..." : "Add Shipment"}
+                  {shipmentBusy ? "Saving..." : editingShipment ? "Update Shipment" : "Add Shipment"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Delete Shipment Confirmation Modal ─────────────── */}
+      {deletingShipment && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-md" onClick={() => setDeletingShipment(null)} />
+          <div className="relative w-full max-w-sm mx-4 rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="h-1.5 bg-gradient-to-r from-red-500 to-red-400" />
+            <div className="p-6">
+              <div className="flex items-start gap-4 mb-4">
+                <span className="flex items-center justify-center w-11 h-11 rounded-2xl bg-red-50 dark:bg-red-500/10 text-red-500 shrink-0 mt-1">
+                  <Trash2 size={20} />
+                </span>
+                <div>
+                  <h3 className="text-[16px] font-bold text-[var(--text-primary)] m-0">Delete Shipment?</h3>
+                  <p className="text-[12px] text-[var(--text-muted)] m-0 mt-1 leading-relaxed">
+                    This will permanently remove the {deletingShipment.transporter ? `"${deletingShipment.transporter}" ` : ""}dispatch record. This action cannot be undone.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center justify-end gap-2.5">
+                <button type="button" disabled={shipmentBusy} onClick={() => setDeletingShipment(null)}
+                  className="px-4 h-9 rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all disabled:opacity-50">
+                  Cancel
+                </button>
+                <button type="button" disabled={shipmentBusy} onClick={handleDeleteShipment}
+                  className="px-5 h-9 rounded-xl bg-red-500 text-white text-[12px] font-semibold hover:bg-red-600 disabled:opacity-50 transition-all flex items-center gap-1.5 shadow-sm">
+                  {shipmentBusy ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                  {shipmentBusy ? "Deleting..." : "Delete Shipment"}
                 </button>
               </div>
             </div>

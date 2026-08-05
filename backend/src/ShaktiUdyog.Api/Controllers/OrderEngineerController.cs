@@ -60,6 +60,28 @@ public class OrderEngineerController(IOrderEngineerService service) : Controller
         catch (OrderAccessException ex) { return Forbid(ex); }
     }
 
+    [HttpPatch("orders/{id:guid}/shipments/{shipmentId:guid}")]
+    public async Task<IActionResult> UpdateShipment(Guid id, Guid shipmentId, CreateShipmentRequest request)
+    {
+        try
+        {
+            var result = await service.UpdateShipmentAsync(id, shipmentId, request, UserId, IsAdmin, ClientIp);
+            return result switch { null => NotFound(), _ => Ok(new MessageResponse("Shipment updated.")) };
+        }
+        catch (OrderAccessException ex) { return Forbid(ex); }
+    }
+
+    [HttpDelete("orders/{id:guid}/shipments/{shipmentId:guid}")]
+    public async Task<IActionResult> DeleteShipment(Guid id, Guid shipmentId)
+    {
+        try
+        {
+            var result = await service.DeleteShipmentAsync(id, shipmentId, UserId, IsAdmin, ClientIp);
+            return result switch { null => NotFound(), _ => Ok(new MessageResponse("Shipment deleted.")) };
+        }
+        catch (OrderAccessException ex) { return Forbid(ex); }
+    }
+
     [HttpPost("orders/{id:guid}/documents")]
     public async Task<IActionResult> UploadDocument(Guid id, IFormFile file, [FromForm] string category)
     {

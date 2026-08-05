@@ -21,6 +21,8 @@ public interface IOrderEngineerService
     Task<OrderDetailDto?> GetOrderAsync(Guid id, Guid callerUserId, bool callerIsAdmin);
     Task<bool?> UpdateMilestoneAsync(Guid id, MilestoneRequest request, Guid userId, bool callerIsAdmin, string? ip);
     Task<bool?> CreateShipmentAsync(Guid id, CreateShipmentRequest request, Guid userId, bool callerIsAdmin, string? ip);
+    Task<bool?> UpdateShipmentAsync(Guid orderId, Guid shipmentId, CreateShipmentRequest request, Guid userId, bool callerIsAdmin, string? ip);
+    Task<bool?> DeleteShipmentAsync(Guid orderId, Guid shipmentId, Guid userId, bool callerIsAdmin, string? ip);
     Task UploadDocumentAsync(Guid id, IFormFile file, string category, Guid userId, bool callerIsAdmin, string? ip);
     Task<bool?> AddCommentAsync(Guid id, OrderCommentRequest request, Guid userId, string role, bool callerIsAdmin, string? ip);
     Task<IReadOnlyList<OrderCommentResponseDto>> GetCommentsAsync(Guid id);
@@ -133,6 +135,40 @@ public class OrderEngineerService(
         db.Shipments.Add(new Shipment { Id = Guid.NewGuid(), OrderId = id, Transporter = request.Transporter, VehicleNumber = request.VehicleNumber, PhoneNumber = request.PhoneNumber, DispatchDateUtc = request.DispatchDateUtc, EstimatedArrivalUtc = request.EstimatedArrivalUtc });
         await db.SaveChangesAsync();
         await audit.WriteAsync("engineer.order.shipment_created", userId, "Shipment", id.ToString(), ip);
+        return true;
+    }
+
+    public async Task<bool?> UpdateShipmentAsync(Guid orderId, Guid shipmentId, CreateShipmentRequest request, Guid userId, bool callerIsAdmin, string? ip)
+    {
+        var o = await db.Orders.SingleOrDefaultAsync(x => x.Id == orderId);
+        if (o is null) return null;
+        if (!CanManage(o, userId, callerIsAdmin)) throw new OrderAccessException();
+
+        var shipment = await db.Shipments.SingleOrDefaultAsync(s => s.Id == shipmentId && s.OrderId == orderId);
+        if (shipment is null) return null;
+
+        shipment.Transporter = request.Transporter;
+        shipment.VehicleNumber = request.VehicleNumber;
+        shipment.PhoneNumber = request.PhoneNumber;
+        shipment.DispatchDateUtc = request.DispatchDateUtc;
+        shipment.EstimatedArrivalUtc = request.EstimatedArrivalUtc;
+        await db.SaveChangesAsync();
+        await audit.WriteAsync("engineer.order.shipment_updated", userId, "Shipment", shipmentId.ToString(), ip);
+        return true;
+    }
+
+    public async Task<bool?> DeleteShipmentAsync(Guid orderId, Guid shipmentId, Guid userId, bool callerIsAdmin, string? ip)
+    {
+        var o = await db.Orders.SingleOrDefaultAsync(x => x.Id == orderId);
+        if (o is null) return null;
+        if (!CanManage(o, userId, callerIsAdmin)) throw new OrderAccessException();
+
+        var shipment = await db.Shipments.SingleOrDefaultAsync(s => s.Id == shipmentId && s.OrderId == orderId);
+        if (shipment is null) return null;
+
+        db.Shipments.Remove(shipment);
+        await db.SaveChangesAsync();
+        await audit.WriteAsync("engineer.order.shipment_deleted", userId, "Shipment", shipmentId.ToString(), ip);
         return true;
     }
 

@@ -454,10 +454,12 @@ All endpoints are under `/api/v1/`. Authentication: JWT Bearer.
 | POST | `/api/v1/engineer/quotations/{id}/submit` | Submit for approval |
 | POST | `/api/v1/engineer/quotations/{id}/attachments` | Upload attachment |
 | POST | `/api/v1/engineer/quotations/{id}/comments` | Add comment |
-| GET | `/api/v1/engineer/orders` | List all orders |
+| GET | `/api/v1/engineer/orders` | List orders (engineers see only those assigned to them; supports `assigned=true/false` filter) |
 | GET | `/api/v1/engineer/orders/{id}` | Get order detail |
-| PATCH | `/api/v1/engineer/orders/{id}/milestones` | Update order milestone |
+| PATCH | `/api/v1/engineer/orders/{id}/milestones` | Update order milestone (assigned engineer or admin) |
 | POST | `/api/v1/engineer/orders/{id}/shipment` | Create shipment record |
+| PATCH | `/api/v1/engineer/orders/{id}/shipments/{shipmentId}` | Update shipment record (transporter / vehicle # / phone / dates) |
+| DELETE | `/api/v1/engineer/orders/{id}/shipments/{shipmentId}` | Delete shipment record |
 | POST | `/api/v1/engineer/orders/{id}/documents` | Upload order document |
 
 ### Admin Endpoints (Requires Admin role)
@@ -480,6 +482,7 @@ All endpoints are under `/api/v1/`. Authentication: JWT Bearer.
 | PATCH | `/api/v1/admin/orders/{id}/approve-update` | Approve order update |
 | PATCH | `/api/v1/admin/orders/{id}/override-status` | Override order status |
 | PATCH | `/api/v1/admin/orders/{id}/cancel` | Cancel order |
+| PATCH | `/api/v1/admin/orders/{orderId}/assign` | Assign / reassign / unassign an order to an engineer (audit-logged) |
 | GET | `/api/v1/admin/orders/{id}/history` | Get order status history |
 | GET | `/api/v1/admin/users` | List users |
 | GET | `/api/v1/admin/companies` | List companies |
@@ -576,12 +579,13 @@ The database has **60+ entity tables** under SQL Server. Key entity groups:
 | `QuotationComment` | QuotationComments | AuthorRole, Message |
 | `QuotationAttachment` | QuotationAttachments | FileName, StorageKey |
 | `QuotationApproval` | QuotationApprovals | Action, Comment |
-| `Order` | Orders | OrderNumber, Status, PurchaseOrderReference, AdvancePercent, AdvanceAmount, AdvancePaid, AdvancePaymentRef, QuotationTotal, PaymentTerms, RowVersion |
+| `Order` | Orders | OrderNumber, Status, PurchaseOrderReference, AdvancePercent, AdvanceAmount, AdvancePaid, AdvancePaymentRef, QuotationTotal, PaymentTerms, AssignedToUserId, RowVersion |
 | `OrderItem` | OrderItems | PartNumber, Description, MaterialGrade, Unit, QuantityOrdered, QuantityProduced, QuantityDispatched, UnitRate |
+| `OrderAssignment` | OrderAssignments | OrderId, AssignedToUserId, AssignedByUserId, IsActive, AssignedAtUtc, UnassignedAtUtc |
 | `OrderMilestone` | OrderMilestones | StatusCode, CustomerMessage, InternalNote, IsCustomerVisible |
 | `OrderStatusHistory` | OrderStatusHistory | FromStatus, ToStatus |
 | `OrderComment` | OrderComments | AuthorRole, Message |
-| `Shipment` | Shipments | Transporter, TrackingNumber |
+| `Shipment` | Shipments | Transporter, TrackingNumber, VehicleNumber, PhoneNumber, DispatchDateUtc, EstimatedArrivalUtc, DeliveredAtUtc, ProofOfDeliveryDocumentId |
 | `ShipmentTrackingEvent` | ShipmentTrackingEvents | Location, Description |
 
 ### Finance
@@ -1018,6 +1022,8 @@ Public forms use a honeypot field (`website`) — hidden from humans, visible to
 | 22 | `AddEnquiryPriority` | Priority field on Enquiry |
 | 23 | `AddProductMaster` | Product master data + attachments |
 | 24 | `AddOrderPaymentFields` | Order advance payment fields + milestone DTOs |
+| 25 | `AddOrderAssignment` | Order.AssignedToUserId + OrderAssignments (engineer assignment) |
+| 26 | `AddShipmentVehicleAndPhone` | Shipment VehicleNumber + PhoneNumber |
 
 ---
 
