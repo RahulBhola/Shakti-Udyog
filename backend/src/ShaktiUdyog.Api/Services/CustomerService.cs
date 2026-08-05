@@ -478,7 +478,7 @@ public class CustomerService(
         return orders.Select(o => new OrderListItemDto(
             o.Id, o.OrderNumber, o.Status,
             OrderStatuses.Labels.TryGetValue(o.Status, out var l) ? l.Label : o.Status,
-            o.PlacedAtUtc, o.PromisedDispatchDateUtc, o.TotalQuantity, o.LastUpdatedAtUtc, null, null)).ToList();
+            o.PlacedAtUtc, o.PromisedDispatchDateUtc, o.TotalQuantity, o.LastUpdatedAtUtc, null, null, null, null)).ToList();
     }
 
     public async Task<OrderDetailDto?> GetOrderAsync(CustomerContext ctx, Guid orderId)
@@ -524,7 +524,8 @@ public class CustomerService(
             order.AdvancePaymentRef, order.AdvanceVerifiedAtUtc,
             order.QuotationTotal, order.PaymentTerms, order.QuotationId,
             order.Milestones.Select(m => new OrderMilestoneDto(
-                m.Id, m.StatusCode, m.CustomerMessage, m.OccurredAtUtc)).ToList());
+                m.Id, m.StatusCode, m.CustomerMessage, m.OccurredAtUtc)).ToList(),
+            null, null);
     }
 
     public async Task<IReadOnlyList<TimelineEntryDto>?> GetOrderTimelineAsync(CustomerContext ctx, Guid orderId)

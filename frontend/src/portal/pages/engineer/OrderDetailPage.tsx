@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { updaterApi } from "../../../api/updaterApi";
+import { engineerApi } from "../../../api/engineerApi";
 import type { OrderDetail } from "../../../api/customerApi";
 import { EmptyState, Loading } from "../../../components/ui";
 import { Panel, StatusBadge, formatDate } from "../../shared";
 
-export default function UpdaterOrderDetailPage() {
+export default function EngineerOrderDetailPage() {
   const { id = "" } = useParams();
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [missing, setMissing] = useState(false);
@@ -13,15 +13,15 @@ export default function UpdaterOrderDetailPage() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    updaterApi.order(id).then(setOrder).catch(() => setMissing(true));
+    engineerApi.order(id).then(setOrder).catch(() => setMissing(true));
   }, [id]);
 
   async function updateMilestone(statusCode: string) {
     setBusy(true); setMsg(null);
     try {
-      const r = await updaterApi.updateMilestone(id, statusCode);
+      const r = await engineerApi.updateMilestone(id, statusCode);
       setMsg(r.message);
-      setOrder(await updaterApi.order(id));
+      setOrder(await engineerApi.order(id));
     } catch { setMsg("Update failed."); }
     finally { setBusy(false); }
   }

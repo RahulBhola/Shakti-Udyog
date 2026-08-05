@@ -170,13 +170,13 @@ public class PermissionConstantTests
     }
 
     [Fact]
-    public void DataUpdater_defaults_exclude_finance_and_admin_permissions()
+    public void Engineer_defaults_exclude_finance_and_admin_permissions()
     {
-        var updater = RolePermissions.Defaults[Roles.DataUpdater];
-        Assert.DoesNotContain(Permissions.UsersManage, updater);
-        Assert.DoesNotContain(Permissions.RolesManage, updater);
-        Assert.DoesNotContain(Permissions.InvoiceManage, updater);
-        Assert.DoesNotContain(Permissions.PaymentVerify, updater);
-        Assert.DoesNotContain(Permissions.ContentPublish, updater);
+        var engineer = RolePermissions.Defaults[Roles.Engineer];
+        Assert.DoesNotContain(Permissions.UsersManage, engineer);
+        Assert.DoesNotContain(Permissions.RolesManage, engineer);
+        Assert.DoesNotContain(Permissions.InvoiceManage, engineer);
+        Assert.DoesNotContain(Permissions.PaymentVerify, engineer);
+        Assert.DoesNotContain(Permissions.ContentPublish, engineer);
     }
 }

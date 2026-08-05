@@ -2,10 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ArrowLeft, FileText, Package, ChevronDown, ChevronUp, Download, Receipt, Loader2 } from "lucide-react";
 import { adminApi } from "../../api/adminApi";
-import { updaterApi } from "../../api/updaterApi";
+import { engineerApi } from "../../api/engineerApi";
 import { apiDownload } from "../../api/client";
 import type { OrderDetail, QuotationDetail, InvoiceDetail } from "../../api/customerApi";
-import type { UpdaterEnquiryDetail } from "../../api/adminApi";
+import type { EngineerEnquiryDetail } from "../../api/adminApi";
 import { formatDate, formatMoney } from "../shared";
 
 /* ── Minimal badge ─────────────────────────────────────────────── */
@@ -78,7 +78,7 @@ export default function AdminDealPage() {
 
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [quotation, setQuotation] = useState<QuotationDetail | null>(null);
-  const [enquiry, setEnquiry] = useState<UpdaterEnquiryDetail | null>(null);
+  const [enquiry, setEnquiry] = useState<EngineerEnquiryDetail | null>(null);
   const [invoices, setInvoices] = useState<OrderInvoiceSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -92,7 +92,7 @@ export default function AdminDealPage() {
     setLoading(true);
     setError(null);
     setOrder(null); setQuotation(null); setEnquiry(null); setInvoices([]);
-    updaterApi.order(orderId)
+    engineerApi.order(orderId)
       .then((o) => {
         setOrder(o);
         // Quote → Enquiry chain

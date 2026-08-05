@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using ShaktiUdyog.Api.Contracts.Customer;
-using ShaktiUdyog.Api.Contracts.Updater;
+using ShaktiUdyog.Api.Contracts.Engineer;
 using ShaktiUdyog.Domain.Constants;
 using ShaktiUdyog.Domain.Entities;
 using ShaktiUdyog.Infrastructure.Auditing;
@@ -10,8 +10,8 @@ namespace ShaktiUdyog.Api.Services;
 
 public interface IAdminService
 {
-    Task<PagedResult<UpdaterEnquiryListItemDto>> GetEnquiriesAsync(int page = 1, int pageSize = 20, string? search = null, string? status = null, bool includeDeleted = false);
-    Task<UpdaterEnquiryDetailDto?> GetEnquiryAsync(Guid enquiryId);
+    Task<PagedResult<EngineerEnquiryListItemDto>> GetEnquiriesAsync(int page = 1, int pageSize = 20, string? search = null, string? status = null, bool includeDeleted = false);
+    Task<EngineerEnquiryDetailDto?> GetEnquiryAsync(Guid enquiryId);
     Task<bool?> ApproveEnquiryAsync(Guid enquiryId, Guid userId, string? ip);
     Task<bool?> RejectEnquiryAsync(Guid enquiryId, string reason, Guid userId, string? ip);
     Task<bool?> OverrideStatusAsync(Guid enquiryId, string newStatus, string? note, Guid userId, string? ip);
@@ -19,6 +19,7 @@ public interface IAdminService
     Task<OrderDetailDto?> CreateOrderFromQuotationAsync(Guid quotationId, Guid userId, string? ip);
     Task<bool?> VerifyAdvancePaymentAsync(Guid orderId, Guid userId, string? ip);
     Task<bool?> UpdateOrderStageAsync(Guid orderId, string newStage, string? note, Guid userId, string? ip);
+    Task<bool?> AssignOrderAsync(Guid orderId, Guid? assignedToUserId, Guid userId, string? ip);
 }
 
 public class AdminService(
@@ -28,7 +29,7 @@ public class AdminService(
     /// <summary>
     /// Lists Enquirys, optionally including soft-deleted records for administrative review.
     /// </summary>
-    public async Task<PagedResult<UpdaterEnquiryListItemDto>> GetEnquiriesAsync(
+    public async Task<PagedResult<EngineerEnquiryListItemDto>> GetEnquiriesAsync(
         int page = 1, int pageSize = 20, string? search = null, string? status = null, bool includeDeleted = false)
     {
         page = Math.Max(1, page);
@@ -56,7 +57,7 @@ public class AdminService(
             .OrderByDescending(r => r.CreatedAtUtc)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(r => new UpdaterEnquiryListItemDto(
+            .Select(r => new EngineerEnquiryListItemDto(
                 r.Id, r.ProductType, r.CompanyName, r.Quantity,
                 r.Status, r.IsDraft,
                 r.Assignments.Where(a => a.IsActive).Select(a => (Guid?)a.AssignedToUserId).FirstOrDefault(),
@@ -65,10 +66,10 @@ public class AdminService(
                 r.Files.OrderBy(f => f.UploadedAtUtc).Select(f => f.ContentType).FirstOrDefault()))
             .ToListAsync();
 
-        return new PagedResult<UpdaterEnquiryListItemDto>(items, page, pageSize, total);
+        return new PagedResult<EngineerEnquiryListItemDto>(items, page, pageSize, total);
     }
 
-    public async Task<UpdaterEnquiryDetailDto?> GetEnquiryAsync(Guid enquiryId)
+    public async Task<EngineerEnquiryDetailDto?> GetEnquiryAsync(Guid enquiryId)
     {
         var enquiry = await db.Enquiries
             .IgnoreQueryFilters()
@@ -86,12 +87,12 @@ public class AdminService(
             .Select(q => (Guid?)q.Id)
             .FirstOrDefaultAsync();
 
-        return new UpdaterEnquiryDetailDto(
+        return new EngineerEnquiryDetailDto(
             enquiry.Id, enquiry.CompanyId ?? Guid.Empty, enquiry.FullName, enquiry.CompanyName, enquiry.Email, enquiry.Phone,
             enquiry.ProductType, enquiry.MaterialGrade, enquiry.Quantity,
             enquiry.DeliveryLocation, enquiry.RequirementDetails, enquiry.Status, enquiry.IsDraft,
             enquiry.SubmittedByIp, enquiry.CreatedAtUtc,
-            enquiry.Files.Select(f => new UpdaterEnquiryFileDto(
+            enquiry.Files.Select(f => new EngineerEnquiryFileDto(
                 f.Id, f.FileName, f.ContentType, f.SizeBytes,
                 f.StorageKey, f.UploadedByUserId, f.UploadedAtUtc)).ToList(),
             enquiry.StatusHistory.Select(h => new EnquiryTimelineEntryDto(
@@ -294,6 +295,58 @@ public class AdminService(
         return true;
     }
 
+    /// <summary>
+    /// Assigns (or unassigns when <paramref name="assignedToUserId"/> is null) an order
+    /// to a staff member (Engineer/Admin). Deactivates the previous active assignment so
+    /// reassignment history is preserved; the Order.AssignedToUserId denormalizes the
+    /// current assignee. Cannot be assigned to a Customer.
+    /// </summary>
+    public async Task<bool?> AssignOrderAsync(Guid orderId, Guid? assignedToUserId, Guid userId, string? ip)
+    {
+        var order = await db.Orders.Include(o => o.Assignments).SingleOrDefaultAsync(o => o.Id == orderId);
+        if (order is null) return null;
+
+        // Unassign
+        if (!assignedToUserId.HasValue)
+        {
+            var active = order.Assignments.Where(a => a.IsActive).ToList();
+            foreach (var a in active) { a.IsActive = false; a.UnassignedAtUtc = DateTimeOffset.UtcNow; }
+            order.AssignedToUserId = null;
+            order.LastUpdatedAtUtc = DateTimeOffset.UtcNow;
+            await db.SaveChangesAsync();
+            await audit.WriteAsync("admin.order.unassigned", userId, "Order", order.Id.ToString(), ip);
+            return true;
+        }
+
+        // Validate the target user exists and is not a Customer (least-privilege default).
+        var targetExists = await db.Users.AnyAsync(u => u.Id == assignedToUserId.Value);
+        if (!targetExists) return false;
+        var customerRoleId = await db.Roles.Where(r => r.Name == Roles.Customer).Select(r => r.Id).FirstOrDefaultAsync();
+        var targetIsCustomer = await db.UserRoles.AnyAsync(ur => ur.UserId == assignedToUserId.Value && ur.RoleId == customerRoleId);
+        if (targetIsCustomer) return false;
+
+        // Deactivate previous active assignments, preserving history.
+        foreach (var a in order.Assignments.Where(a => a.IsActive))
+        {
+            a.IsActive = false;
+            a.UnassignedAtUtc = DateTimeOffset.UtcNow;
+        }
+
+        order.AssignedToUserId = assignedToUserId.Value;
+        order.LastUpdatedAtUtc = DateTimeOffset.UtcNow;
+        order.Assignments.Add(new OrderAssignment
+        {
+            Id = Guid.NewGuid(),
+            OrderId = order.Id,
+            AssignedToUserId = assignedToUserId.Value,
+            AssignedByUserId = userId,
+        });
+
+        await db.SaveChangesAsync();
+        await audit.WriteAsync("admin.order.assigned", userId, "Order", order.Id.ToString(), ip);
+        return true;
+    }
+
     private static OrderDetailDto MapOrderDetail(Order o) => new(
         o.Id, o.OrderNumber, null, o.Status, o.Status, "",
         o.PlacedAtUtc, o.PromisedDispatchDateUtc, o.DeliveryAddress, o.LastUpdatedAtUtc,
@@ -305,5 +358,6 @@ public class AdminService(
         o.AdvancePaymentRef, o.AdvanceVerifiedAtUtc,
         o.QuotationTotal, o.PaymentTerms, o.QuotationId,
         o.Milestones.Select(m => new OrderMilestoneDto(
-            m.Id, m.StatusCode, m.CustomerMessage, m.OccurredAtUtc)).ToList());
+            m.Id, m.StatusCode, m.CustomerMessage, m.OccurredAtUtc)).ToList(),
+        null, null);
 }

@@ -35,9 +35,15 @@ public class Order
     public decimal? QuotationTotal { get; set; }
     public string? PaymentTerms { get; set; }
 
+    // Engineer assignment
+    /// <summary>Current assigned engineer (denormalized from the active OrderAssignment for fast listing).</summary>
+    public Guid? AssignedToUserId { get; set; }
+    public ApplicationUser? AssignedToUser { get; set; }
+
     public List<OrderItem> Items { get; set; } = [];
     public List<OrderMilestone> Milestones { get; set; } = [];
     public List<Shipment> Shipments { get; set; } = [];
+    public List<OrderAssignment> Assignments { get; set; } = [];
 }
 
 public class OrderItem

@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ShaktiUdyog.Api.Contracts.Auth;
 using ShaktiUdyog.Api.Contracts.Customer;
-using ShaktiUdyog.Api.Contracts.Updater;
+using ShaktiUdyog.Api.Contracts.Engineer;
 using ShaktiUdyog.Api.Services;
 using ShaktiUdyog.Domain.Constants;
 using ShaktiUdyog.Domain.Entities;
@@ -236,7 +236,7 @@ public class AdminController(IAdminService adminService, AppDbContext db, UserMa
     // ---- Enquiry list -----------------------------------------------------------
 
     [HttpGet("enquiries")]
-    [ProducesResponseType<PagedResult<UpdaterEnquiryListItemDto>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<PagedResult<EngineerEnquiryListItemDto>>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetEnquiries(
         [FromQuery] int page = 1, [FromQuery] int pageSize = 20,
         [FromQuery] string? search = null, [FromQuery] string? status = null,
@@ -248,7 +248,7 @@ public class AdminController(IAdminService adminService, AppDbContext db, UserMa
     // ---- Enquiry detail ---------------------------------------------------------
 
     [HttpGet("enquiries/{id:guid}")]
-    [ProducesResponseType<UpdaterEnquiryDetailDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<EngineerEnquiryDetailDto>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetEnquiry(Guid id)
     {
@@ -341,6 +341,21 @@ public class AdminController(IAdminService adminService, AppDbContext db, UserMa
         return result switch { null => NotFound(), false => BadRequest(new { message = "Invalid stage transition." }), _ => Ok(new { message = "Stage updated." }) };
     }
 
+    [HttpPatch("orders/{orderId:guid}/assign")]
+    [ProducesResponseType<MessageResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> AssignOrder(Guid orderId, [FromBody] AssignOrderRequest request)
+    {
+        var result = await adminService.AssignOrderAsync(orderId, request.AssignedToUserId, UserId, ClientIp);
+        return result switch
+        {
+            null => NotFound(),
+            false => BadRequest(new MessageResponse("Assignment failed. Ensure the user exists and is not a Customer.")),
+            _ => Ok(new MessageResponse(request.AssignedToUserId.HasValue ? "Order assigned." : "Order unassigned.")),
+        };
+    }
+
 // ---- Charts ---------------------------------------------------------------
 
     [HttpGet("charts")]
@@ -375,3 +390,5 @@ public record UpdateStageRequest(string StatusCode, string? Note);
 public record OverrideStatusRequest(string NewStatus, string? Note);
 
 public record ApproveUserRequest(string CompanyName, string? City = null, string? State = null, string? GstNumber = null);
+
+public record AssignOrderRequest(Guid? AssignedToUserId);

@@ -57,6 +57,7 @@ public DbSet<KanbanTask> KanbanTasks => Set<KanbanTask>();
     public DbSet<DebitNote> DebitNotes => Set<DebitNote>();
     public DbSet<ShipmentTrackingEvent> ShipmentTrackingEvents => Set<ShipmentTrackingEvent>();
     public DbSet<OrderComment> OrderComments => Set<OrderComment>();
+    public DbSet<OrderAssignment> OrderAssignments => Set<OrderAssignment>();
     public DbSet<OrderStatusHistory> OrderStatusHistories => Set<OrderStatusHistory>();
     public DbSet<ProductionJob> ProductionJobs => Set<ProductionJob>();
     public DbSet<ProductionStage> ProductionStages => Set<ProductionStage>();
@@ -461,10 +462,22 @@ public DbSet<KanbanTask> KanbanTasks => Set<KanbanTask>();
             entity.Property(o => o.Status).HasMaxLength(30);
             entity.Property(o => o.DeliveryAddress).HasMaxLength(500);
             entity.HasIndex(o => o.CompanyId);
+            entity.HasIndex(o => o.AssignedToUserId);
             entity.HasOne(o => o.Company).WithMany()
                 .HasForeignKey(o => o.CompanyId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(o => o.Quotation).WithMany()
                 .HasForeignKey(o => o.QuotationId).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(o => o.AssignedToUser).WithMany()
+                .HasForeignKey(o => o.AssignedToUserId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        builder.Entity<OrderAssignment>(entity =>
+        {
+            entity.ToTable("OrderAssignments");
+            entity.HasIndex(a => new { a.OrderId, a.IsActive });
+            entity.HasIndex(a => a.AssignedToUserId);
+            entity.HasOne(a => a.Order).WithMany(o => o.Assignments)
+                .HasForeignKey(a => a.OrderId).OnDelete(DeleteBehavior.Cascade);
         });
 
         builder.Entity<OrderItem>(entity =>

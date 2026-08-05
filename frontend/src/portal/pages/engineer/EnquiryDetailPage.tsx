@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { updaterApi, type UpdaterEnquiryDetail } from "../../../api/updaterApi";
+import { engineerApi, type EngineerEnquiryDetail } from "../../../api/engineerApi";
 import { tokenStorage } from "../../../auth/tokenStorage";
 import { config } from "../../../config";
 import { Loading } from "../../../components/ui";
@@ -195,7 +195,7 @@ function EnquiryImage({ enquiryId, fileId, fileName }: { enquiryId: string; file
   useEffect(() => {
     let cancelled = false;
     const token = tokenStorage.getAccessToken();
-    fetch(`${config.apiBaseUrl}/api/v1/updater/enquiries/${enquiryId}/files/${fileId}/download`, {
+    fetch(`${config.apiBaseUrl}/api/v1/engineer/enquiries/${enquiryId}/files/${fileId}/download`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {}, credentials: "include",
     }).then((r) => { if (!r.ok) throw new Error(); return r.blob(); })
       .then((blob) => { if (!cancelled) setUrl(URL.createObjectURL(blob)); })
@@ -232,9 +232,9 @@ function RelatedCard({ icon: Icon, label, status, href }: { icon: any; label: st
 /*  Main Page                                                          */
 /* ------------------------------------------------------------------ */
 
-export default function UpdaterEnquiryDetailPage() {
+export default function EngineerEnquiryDetailPage() {
   const { id = "" } = useParams();
-  const [enquiry, setEnquiry] = useState<UpdaterEnquiryDetail | null>(null);
+  const [enquiry, setEnquiry] = useState<EngineerEnquiryDetail | null>(null);
   const [missing, setMissing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -242,19 +242,19 @@ export default function UpdaterEnquiryDetailPage() {
   const [rejectReason, setRejectReason] = useState("");
 
   useEffect(() => {
-    updaterApi.enquiry(id).then(setEnquiry).catch(() => setMissing(true));
+    engineerApi.enquiry(id).then(setEnquiry).catch(() => setMissing(true));
   }, [id]);
 
   async function updateStatus(newStatus: string, note?: string) {
     setBusy(true); setMsg(null);
-    try { const r = await updaterApi.updateEnquiryStatus(id, newStatus, note); setMsg(r.message); setEnquiry(await updaterApi.enquiry(id)); }
+    try { const r = await engineerApi.updateEnquiryStatus(id, newStatus, note); setMsg(r.message); setEnquiry(await engineerApi.enquiry(id)); }
     catch { setMsg("Status update failed."); }
     finally { setBusy(false); }
   }
 
   function downloadFile(fileId: string, fileName: string) {
     const token = tokenStorage.getAccessToken();
-    const url = `${config.apiBaseUrl}/api/v1/updater/enquiries/${id}/files/${fileId}/download`;
+    const url = `${config.apiBaseUrl}/api/v1/engineer/enquiries/${id}/files/${fileId}/download`;
     fetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {}, credentials: "include" })
       .then((r) => { if (!r.ok) throw new Error(); return r.blob(); })
       .then((blob) => { const u = URL.createObjectURL(blob); const d = document.createElement("a"); d.href = u; d.download = fileName; d.click(); URL.revokeObjectURL(u); })

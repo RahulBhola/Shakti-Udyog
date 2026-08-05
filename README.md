@@ -62,7 +62,7 @@ cd backend
 dotnet ef database update --project src/ShaktiUdyog.Infrastructure --startup-project src/ShaktiUdyog.Api
 ```
 
-Migrations applied: `InitialCreate` (Identity tables + immutable `AuditLogs`) and `AddAuthTables` (`RefreshTokens`, `PasswordResetTokens`, `UserCompanies`). The three application roles (`Admin`, `DataUpdater`, `Customer`) are seeded automatically at API startup (idempotent). No user accounts are seeded outside Development — accounts are created through admin-approval flows.
+Migrations applied: `InitialCreate` (Identity tables + immutable `AuditLogs`) and `AddAuthTables` (`RefreshTokens`, `PasswordResetTokens`, `UserCompanies`). The three application roles (`Admin`, `Engineer`, `Customer`) are seeded automatically at API startup (idempotent). No user accounts are seeded outside Development — accounts are created through admin-approval flows.
 
 To add a new migration after changing entities:
 
@@ -121,7 +121,7 @@ npm run build
 
 ## Security notes
 
-- Authorization is always enforced in the backend: role policies (`AdminOnly`, `DataUpdaterOnly`, `CustomerOnly`) plus dynamic permission policies (`permission:<name>`, e.g. `permission:invoice.manage`). Frontend route guards are UX only.
+- Authorization is always enforced in the backend: role policies (`AdminOnly`, `EngineerOnly`, `CustomerOnly`) plus dynamic permission policies (`permission:<name>`, e.g. `permission:invoice.manage`). Frontend route guards are UX only.
 - Access tokens are 15-minute JWTs (HS256, zero clock skew); refresh tokens are 64-byte random values stored **hashed** (SHA-256) with rotation and reuse-detection chain revocation.
 - Password reset tokens are hashed at rest, single-use, 20-minute expiry; the forgot-password endpoint never discloses whether an email exists.
 - Passwords are hashed by ASP.NET Core Identity's current hasher; policy: 12+ chars, upper/lower/digit/symbol; lockout after 5 failed attempts (15 minutes).

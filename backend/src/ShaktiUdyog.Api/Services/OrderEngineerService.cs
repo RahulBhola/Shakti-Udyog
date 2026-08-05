@@ -9,14 +9,20 @@ using ShaktiUdyog.Infrastructure.Storage;
 
 namespace ShaktiUdyog.Api.Services;
 
-public interface IOrderUpdaterService
+/// <summary>
+/// Thrown when an Engineer attempts to manage an order that is not assigned to
+/// them. The controller converts this into a 403 Forbidden response.
+/// </summary>
+public class OrderAccessException : Exception;
+
+public interface IOrderEngineerService
 {
-    Task<PagedResult<OrderListItemDto>> GetOrdersAsync(int page, int pageSize, string? search, string? status, Guid? companyId = null);
-    Task<OrderDetailDto?> GetOrderAsync(Guid id);
-    Task<bool?> UpdateMilestoneAsync(Guid id, MilestoneRequest request, Guid userId, string? ip);
-    Task<bool?> CreateShipmentAsync(Guid id, CreateShipmentRequest request, Guid userId, string? ip);
-    Task UploadDocumentAsync(Guid id, IFormFile file, string category, Guid userId, string? ip);
-    Task<bool?> AddCommentAsync(Guid id, OrderCommentRequest request, Guid userId, string role, string? ip);
+    Task<PagedResult<OrderListItemDto>> GetOrdersAsync(int page, int pageSize, string? search, string? status, Guid? companyId, bool? assigned, Guid callerUserId, bool callerIsAdmin);
+    Task<OrderDetailDto?> GetOrderAsync(Guid id, Guid callerUserId, bool callerIsAdmin);
+    Task<bool?> UpdateMilestoneAsync(Guid id, MilestoneRequest request, Guid userId, bool callerIsAdmin, string? ip);
+    Task<bool?> CreateShipmentAsync(Guid id, CreateShipmentRequest request, Guid userId, bool callerIsAdmin, string? ip);
+    Task UploadDocumentAsync(Guid id, IFormFile file, string category, Guid userId, bool callerIsAdmin, string? ip);
+    Task<bool?> AddCommentAsync(Guid id, OrderCommentRequest request, Guid userId, string role, bool callerIsAdmin, string? ip);
     Task<IReadOnlyList<OrderCommentResponseDto>> GetCommentsAsync(Guid id);
 }
 
@@ -25,37 +31,50 @@ public record CreateShipmentRequest(string? Transporter, string? TrackingNumber,
 public record OrderCommentRequest(string Message, bool IsCustomerVisible = true);
 public record OrderCommentResponseDto(string AuthorRole, string? AuthorName, string Message, DateTimeOffset CreatedAtUtc);
 
-public class OrderUpdaterService(
+public class OrderEngineerService(
     AppDbContext db,
     IFileStorageService storage,
     INotificationService notifications,
-    IAuditWriter audit) : IOrderUpdaterService
+    IAuditWriter audit) : IOrderEngineerService
 {
-    public async Task<PagedResult<OrderListItemDto>> GetOrdersAsync(int page, int pageSize, string? search, string? status, Guid? companyId = null)
+    /// <summary>Admins manage any order; engineers only the orders assigned to them.</summary>
+    private static bool CanManage(Order o, Guid callerUserId, bool callerIsAdmin)
+        => callerIsAdmin || o.AssignedToUserId == callerUserId;
+
+    public async Task<PagedResult<OrderListItemDto>> GetOrdersAsync(int page, int pageSize, string? search, string? status, Guid? companyId, bool? assigned, Guid callerUserId, bool callerIsAdmin)
     {
         page = Math.Max(1, page); pageSize = Math.Clamp(pageSize, 1, 100);
         var query = db.Orders.AsQueryable();
+        if (!callerIsAdmin)
+            query = query.Where(o => o.AssignedToUserId == callerUserId);
         if (companyId.HasValue)
             query = query.Where(o => o.CompanyId == companyId.Value);
+        if (assigned.HasValue)
+            query = assigned.Value
+                ? query.Where(o => o.AssignedToUserId != null)
+                : query.Where(o => o.AssignedToUserId == null);
         if (!string.IsNullOrWhiteSpace(search))
             query = query.Where(o => o.OrderNumber.Contains(search.Trim()));
         if (!string.IsNullOrWhiteSpace(status))
             query = query.Where(o => o.Status == status);
         var total = await query.CountAsync();
         var items = await query.OrderByDescending(o => o.PlacedAtUtc).Skip((page - 1) * pageSize).Take(pageSize)
-            .Select(o => new OrderListItemDto(o.Id, o.OrderNumber, o.Status, o.Status, o.PlacedAtUtc, o.PromisedDispatchDateUtc, o.Items.Sum(i => i.QuantityOrdered), o.LastUpdatedAtUtc, o.Company.Name, o.Quotation!.Enquiry!.ProductType))
+            .Select(o => new OrderListItemDto(o.Id, o.OrderNumber, o.Status, o.Status, o.PlacedAtUtc, o.PromisedDispatchDateUtc, o.Items.Sum(i => i.QuantityOrdered), o.LastUpdatedAtUtc, o.Company.Name, o.Quotation!.Enquiry!.ProductType,
+                o.AssignedToUserId, o.AssignedToUser != null ? o.AssignedToUser.FullName : null))
             .ToListAsync();
         return new PagedResult<OrderListItemDto>(items, page, pageSize, total);
     }
 
-    public async Task<OrderDetailDto?> GetOrderAsync(Guid id)
+    public async Task<OrderDetailDto?> GetOrderAsync(Guid id, Guid callerUserId, bool callerIsAdmin)
     {
         var o = await db.Orders
             .Include(x => x.Items)
             .Include(x => x.Shipments)
             .Include(x => x.Milestones)
+            .Include(x => x.AssignedToUser)
             .SingleOrDefaultAsync(x => x.Id == id);
         if (o is null) return null;
+        if (!CanManage(o, callerUserId, callerIsAdmin)) throw new OrderAccessException();
 
         var (label, desc) = OrderStatuses.Labels.TryGetValue(o.Status, out var l) ? l : (o.Status, "");
 
@@ -83,13 +102,15 @@ public class OrderUpdaterService(
             o.AdvancePercent, o.AdvanceAmount, o.AdvancePaid, o.AdvancePaidAtUtc,
             o.AdvancePaymentRef, o.AdvanceVerifiedAtUtc,
             o.QuotationTotal, o.PaymentTerms, o.QuotationId,
-            o.Milestones.Select(m => new OrderMilestoneDto(m.Id, m.StatusCode, m.CustomerMessage, m.OccurredAtUtc)).ToList());
+            o.Milestones.Select(m => new OrderMilestoneDto(m.Id, m.StatusCode, m.CustomerMessage, m.OccurredAtUtc)).ToList(),
+            o.AssignedToUserId, o.AssignedToUser != null ? o.AssignedToUser.FullName : null);
     }
 
-    public async Task<bool?> UpdateMilestoneAsync(Guid id, MilestoneRequest request, Guid userId, string? ip)
+    public async Task<bool?> UpdateMilestoneAsync(Guid id, MilestoneRequest request, Guid userId, bool callerIsAdmin, string? ip)
     {
         var o = await db.Orders.Include(x => x.Milestones).SingleOrDefaultAsync(x => x.Id == id);
         if (o is null) return null;
+        if (!CanManage(o, userId, callerIsAdmin)) throw new OrderAccessException();
         if (!OrderStatuses.IsValidTransition(o.Status, request.StatusCode)) return false;
         var from = o.Status;
         o.Status = request.StatusCode;
@@ -99,26 +120,31 @@ public class OrderUpdaterService(
         db.OrderStatusHistories.Add(new OrderStatusHistory { Id = Guid.NewGuid(), OrderId = o.Id, FromStatus = from, ToStatus = request.StatusCode, ChangedByUserId = userId, ChangedByRole = "Engineer", Note = request.CustomerMessage });
         await db.SaveChangesAsync();
         await notifications.NotifyOrderStatusChangedAsync(o, from, request.StatusCode);
-        await audit.WriteAsync("updater.order.milestone_updated", userId, "Order", o.Id.ToString(), ip);
+        await audit.WriteAsync("engineer.order.milestone_updated", userId, "Order", o.Id.ToString(), ip);
         return true;
     }
 
-    public async Task<bool?> CreateShipmentAsync(Guid id, CreateShipmentRequest request, Guid userId, string? ip)
+    public async Task<bool?> CreateShipmentAsync(Guid id, CreateShipmentRequest request, Guid userId, bool callerIsAdmin, string? ip)
     {
-        if (!await db.Orders.AnyAsync(x => x.Id == id)) return null;
+        var o = await db.Orders.SingleOrDefaultAsync(x => x.Id == id);
+        if (o is null) return null;
+        if (!CanManage(o, userId, callerIsAdmin)) throw new OrderAccessException();
         db.Shipments.Add(new Shipment { Id = Guid.NewGuid(), OrderId = id, Transporter = request.Transporter, TrackingNumber = request.TrackingNumber, DispatchDateUtc = request.DispatchDateUtc, EstimatedArrivalUtc = request.EstimatedArrivalUtc });
         await db.SaveChangesAsync();
-        await audit.WriteAsync("updater.order.shipment_created", userId, "Shipment", id.ToString(), ip);
+        await audit.WriteAsync("engineer.order.shipment_created", userId, "Shipment", id.ToString(), ip);
         return true;
     }
 
-    public async Task UploadDocumentAsync(Guid id, IFormFile file, string category, Guid userId, string? ip)
+    public async Task UploadDocumentAsync(Guid id, IFormFile file, string category, Guid userId, bool callerIsAdmin, string? ip)
     {
+        var o = await db.Orders.SingleOrDefaultAsync(x => x.Id == id);
+        if (o is null) return;
+        if (!CanManage(o, userId, callerIsAdmin)) throw new OrderAccessException();
         await using var stream = file.OpenReadStream();
         var stored = await storage.SaveAsync(stream, file.FileName, file.ContentType);
         db.Documents.Add(new Document { Id = Guid.NewGuid(), CompanyId = Guid.Empty, OrderId = id, Title = file.FileName, Category = category, FileName = file.FileName, ContentType = file.ContentType, SizeBytes = stored.SizeBytes, StorageKey = stored.StorageKey, IsCustomerVisible = true });
         await db.SaveChangesAsync();
-        await audit.WriteAsync("updater.order.document_uploaded", userId, "Document", id.ToString(), ip);
+        await audit.WriteAsync("engineer.order.document_uploaded", userId, "Document", id.ToString(), ip);
     }
 
     public async Task<IReadOnlyList<OrderCommentResponseDto>> GetCommentsAsync(Guid id)
@@ -135,12 +161,14 @@ public class OrderUpdaterService(
                           c.CreatedAtUtc)).ToListAsync();
     }
 
-    public async Task<bool?> AddCommentAsync(Guid id, OrderCommentRequest request, Guid userId, string role, string? ip)
+    public async Task<bool?> AddCommentAsync(Guid id, OrderCommentRequest request, Guid userId, string role, bool callerIsAdmin, string? ip)
     {
-        if (!await db.Orders.AnyAsync(x => x.Id == id)) return null;
+        var o = await db.Orders.SingleOrDefaultAsync(x => x.Id == id);
+        if (o is null) return null;
+        if (!CanManage(o, userId, callerIsAdmin)) throw new OrderAccessException();
         db.OrderComments.Add(new OrderComment { Id = Guid.NewGuid(), OrderId = id, AuthorUserId = userId, AuthorRole = role, IsCustomerVisible = request.IsCustomerVisible, Message = request.Message.Trim() });
         await db.SaveChangesAsync();
-        await audit.WriteAsync("updater.order.comment_added", userId, "OrderComment", id.ToString(), ip);
+        await audit.WriteAsync("engineer.order.comment_added", userId, "OrderComment", id.ToString(), ip);
         return true;
     }
 }

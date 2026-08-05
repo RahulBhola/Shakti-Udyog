@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ShaktiUdyog.Api.Contracts.Auth;
 using ShaktiUdyog.Api.Contracts.Customer;
-using ShaktiUdyog.Api.Contracts.Updater;
+using ShaktiUdyog.Api.Contracts.Engineer;
 using ShaktiUdyog.Api.Services;
 using ShaktiUdyog.Api.Validation;
 using ShaktiUdyog.Domain.Constants;
@@ -18,7 +18,7 @@ namespace ShaktiUdyog.Api.Controllers;
 /// to a specific company — staff see all Enquirys.
 /// </summary>
 [ApiController]
-[Route("api/v1/updater")]
+[Route("api/v1/engineer")]
 [Authorize(Policy = AuthPolicies.EngineerOnly)]
 public class EngineerController(
     IEngineerService updaterService,
@@ -43,7 +43,7 @@ public class EngineerController(
     // ---- Enquiry list -----------------------------------------------------------
 
     [HttpGet("enquiries")]
-    [ProducesResponseType<PagedResult<UpdaterEnquiryListItemDto>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<PagedResult<EngineerEnquiryListItemDto>>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetEnquiries(
         [FromQuery] int page = 1, [FromQuery] int pageSize = 20,
         [FromQuery] string? search = null, [FromQuery] string? status = null, [FromQuery] Guid? companyId = null)
@@ -54,7 +54,7 @@ public class EngineerController(
     // ---- Enquiry detail ---------------------------------------------------------
 
     [HttpGet("enquiries/{id:guid}")]
-    [ProducesResponseType<UpdaterEnquiryDetailDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<EngineerEnquiryDetailDto>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetEnquiry(Guid id)
     {

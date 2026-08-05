@@ -13,8 +13,8 @@ export interface AdminProduct {
 export interface AdminCategory { id: string; name: string; slug: string | null; description: string | null; parentId: string | null; displayOrder: number; isVisible: boolean; }
 export interface AdminIndustry { id: string; name: string; description: string | null; exampleComponents: string | null; isActive: boolean; displayOrder: number; }
 
-/** Admin Enquiry detail (mirrors UpdaterEnquiryDetailDto). */
-export interface UpdaterEnquiryDetail {
+/** Admin Enquiry detail (mirrors EngineerEnquiryDetailDto). */
+export interface EngineerEnquiryDetail {
   id: string;
   companyId: string;
   fullName: string;
@@ -50,7 +50,7 @@ export interface UpdaterEnquiryDetail {
 
 export const adminApi = {
   // ---- Enquiries ---------------------------------------------------------------
-  enquiry: (id: string) => apiGet<UpdaterEnquiryDetail>(`${base}/enquiries/${id}`),
+  enquiry: (id: string) => apiGet<EngineerEnquiryDetail>(`${base}/enquiries/${id}`),
 
   // ---- Quotes ---------------------------------------------------------
   quotations: (page = 1, pageSize = 20, search?: string, status?: string) => {
@@ -83,7 +83,11 @@ export const adminApi = {
   orderHistory: (id: string) => apiGet<{ fromStatus: string; toStatus: string; changedByRole: string; note: string | null; occurredAtUtc: string }[]>(`${base}/orders/${id}/history`),
 
   // ---- Users ---------------------------------------------------------------
-  users: () => apiGet<{ id: string; fullName: string | null; email: string }[]>(`${base}/users`),
+  users: () => apiGet<{ id: string; fullName: string | null; email: string; role: string }[]>(`${base}/users`),
+
+  // ---- Order assignment ---------------------------------------------------
+  assignOrder: (orderId: string, assignedToUserId: string | null) =>
+    apiPatch<{ message: string }>(`${base}/orders/${orderId}/assign`, { assignedToUserId }),
 
   // ---- Companies -----------------------------------------------------------
   companies: () => apiGet<{ id: string; name: string }[]>(`${base}/companies`),

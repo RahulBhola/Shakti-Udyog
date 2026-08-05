@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { adminApi } from "../../api/adminApi";
-import { updaterApi } from "../../api/updaterApi";
+import { engineerApi } from "../../api/engineerApi";
 import { apiDownload } from "../../api/client";
 import { tokenStorage } from "../../auth/tokenStorage";
 import { config } from "../../config";
@@ -86,9 +86,9 @@ export default function AdminReportsPage() {
   const load = useCallback(() => {
     setLoading(true);
     Promise.all([
-      updaterApi.enquiries(1, 1).then((r) => r.totalCount).catch(() => 0),
-      updaterApi.quotations(1, 1).then((r) => r.totalCount).catch(() => 0),
-      updaterApi.orders(1, 1).then((r) => r.totalCount).catch(() => 0),
+      engineerApi.enquiries(1, 1).then((r) => r.totalCount).catch(() => 0),
+      engineerApi.quotations(1, 1).then((r) => r.totalCount).catch(() => 0),
+      engineerApi.orders(1, 1).then((r) => r.totalCount).catch(() => 0),
       adminApi.invoices(1, 1).then((r) => r.totalCount).catch(() => 0),
       adminApi.financialDashboard().then(setFinance).catch(() => {}),
     ]).then(([enquiries, quotations, orders, invoices]) => {

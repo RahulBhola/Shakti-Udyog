@@ -8,9 +8,9 @@ using ShaktiUdyog.Domain.Constants;
 namespace ShaktiUdyog.Api.Controllers;
 
 [ApiController]
-[Route("api/v1/updater")]
+[Route("api/v1/engineer")]
 [Authorize(Policy = AuthPolicies.EngineerOnly)]
-public class QuotationUpdaterController(IQuotationUpdaterService service) : ControllerBase
+public class QuotationEngineerController(IQuotationEngineerService service) : ControllerBase
 {
     private string? ClientIp => HttpContext.Connection.RemoteIpAddress?.ToString();
     private Guid UserId => Guid.Parse(

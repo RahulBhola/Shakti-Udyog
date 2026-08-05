@@ -1,13 +1,16 @@
 import { useCallback, useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { updaterApi } from "../../../api/updaterApi";
+import { engineerApi } from "../../../api/engineerApi";
+import { adminApi } from "../../../api/adminApi";
+import { useAuth } from "../../../auth/AuthContext";
+import { Roles } from "../../../auth/roles";
 import type { OrderListItem, Paged } from "../../../api/customerApi";
 import { EmptyState, Loading } from "../../../components/ui";
 import { formatDate } from "../../shared";
 import {
   Search, RefreshCw, ChevronLeft, ChevronRight, X, Download, Clock,
-  Eye, MoreVertical, FileText,
-  Package, CheckCircle2, Cog, ShieldCheck, Truck, PackageCheck,
+  Eye, MoreVertical, FileText, Loader2,
+  Package, CheckCircle2, Cog, ShieldCheck, Truck, PackageCheck, UserCog,
 } from "lucide-react";
 import "../erpListView.css";
 
@@ -63,7 +66,7 @@ function DaysTag({ date }: { date: string | null | undefined }) {
 
 /* ---- main page ----------------------------------------------------- */
 
-export default function UpdaterOrderListPage() {
+export default function EngineerOrderListPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const companyId = searchParams.get("company") ?? "";
@@ -76,20 +79,26 @@ export default function UpdaterOrderListPage() {
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [assignedFilter, setAssignedFilter] = useState("");
 
   // Row action menu
   const [openMenu, setOpenMenu] = useState<string | null>(null);
+
+  const { user } = useAuth();
+  const isAdmin = !!user?.roles.includes(Roles.Admin);
+  const [engineers, setEngineers] = useState<{ id: string; fullName: string | null; email: string; role: string }[]>([]);
+  const [assigningId, setAssigningId] = useState<string | null>(null);
 
   const [stats, setStats] = useState<{
     total: number; confirmed: number; production: number;
     qualityCheck: number; readyToDispatch: number; delivered: number;
   } | null>(null);
 
-  const load = useCallback(async (p: number, s: string, st: string, cid: string) => {
+  const load = useCallback(async (p: number, s: string, st: string, cid: string, asg: string) => {
     setLoading(true);
     setError(null);
     try {
-      const result = await updaterApi.orders(p, pageSize, s || undefined, st || undefined, cid || undefined);
+      const result = await engineerApi.orders(p, pageSize, s || undefined, st || undefined, cid || undefined, asg || undefined);
       setData(result);
     } catch (e: any) {
       setError(e.message ?? "Failed to load orders");
@@ -102,9 +111,9 @@ export default function UpdaterOrderListPage() {
     try {
       const statuses = ["confirmed", "production", "quality_check", "ready_to_dispatch", "delivered"];
       const results = await Promise.all(
-        statuses.map((st) => updaterApi.orders(1, 1, undefined, st).catch(() => null)),
+        statuses.map((st) => engineerApi.orders(1, 1, undefined, st).catch(() => null)),
       );
-      const totalResult = await updaterApi.orders(1, 1).catch(() => null);
+      const totalResult = await engineerApi.orders(1, 1).catch(() => null);
       setStats({
         total: totalResult?.totalCount ?? 0,
         confirmed: results[0]?.totalCount ?? 0,
@@ -118,9 +127,27 @@ export default function UpdaterOrderListPage() {
     }
   }, []);
 
-  useEffect(() => { load(page, search, statusFilter, companyId); }, [page, search, statusFilter, companyId, load]);
+  useEffect(() => { load(page, search, statusFilter, companyId, assignedFilter); }, [page, search, statusFilter, companyId, assignedFilter, load]);
   useEffect(() => { loadStats(); }, [loadStats]);
-  useEffect(() => { setPage(1); }, [search, statusFilter, pageSize]);
+  useEffect(() => { setPage(1); }, [search, statusFilter, assignedFilter, pageSize]);
+
+  // Load the engineer list (admins only) for the inline assign control.
+  useEffect(() => {
+    if (!isAdmin) return;
+    adminApi.users().then((users) => setEngineers(users)).catch(() => {});
+  }, [isAdmin]);
+
+  const handleAssignOrder = async (orderId: string, engineerId: string) => {
+    setAssigningId(orderId);
+    try {
+      await adminApi.assignOrder(orderId, engineerId || null);
+      load(page, search, statusFilter, companyId, assignedFilter);
+    } catch {
+      // Ignore list-level assign errors; detail page shows them.
+    } finally {
+      setAssigningId(null);
+    }
+  };
   // Close the row menu on outside click
   useEffect(() => {
     if (!openMenu) return;
@@ -131,7 +158,7 @@ export default function UpdaterOrderListPage() {
 
   const totalPages = data ? Math.max(1, Math.ceil(data.totalCount / data.pageSize)) : 1;
 
-  const handleRefresh = () => { load(page, search, statusFilter, companyId); loadStats(); };
+  const handleRefresh = () => { load(page, search, statusFilter, companyId, assignedFilter); loadStats(); };
 
   const handleExport = () => {
     if (!data?.items.length) return;
@@ -151,8 +178,8 @@ export default function UpdaterOrderListPage() {
     URL.revokeObjectURL(url);
   };
 
-  const hasFilters = !!search || !!statusFilter;
-  const clearFilters = () => { setSearchInput(""); setSearch(""); setStatusFilter(""); };
+  const hasFilters = !!search || !!statusFilter || !!assignedFilter;
+  const clearFilters = () => { setSearchInput(""); setSearch(""); setStatusFilter(""); setAssignedFilter(""); };
 
   const kpis = [
     { label: "Total Orders", value: stats?.total ?? 0, hint: "All orders", icon: Package, color: "var(--kpi-blue)", bg: "var(--kpi-blue-bg)", glow: "rgba(59,130,246,0.25)" },
@@ -195,6 +222,37 @@ export default function UpdaterOrderListPage() {
         </td>
         <td>
           <div className="inv-date">{formatDate(o.lastUpdatedAtUtc)}</div>
+        </td>
+        <td>
+          {isAdmin ? (
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              {assigningId === o.id ? (
+                <Loader2 size={14} className="animate-spin" style={{ color: "var(--text-muted)" }} />
+              ) : (
+                <UserCog size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
+              )}
+              <select
+                className="inv-select"
+                aria-label="Assign engineer"
+                style={{ padding: "5px 8px", fontSize: 12, maxWidth: 150 }}
+                value={o.assignedToUserId ?? ""}
+                disabled={assigningId === o.id}
+                onClick={(e) => e.stopPropagation()}
+                onChange={(e) => handleAssignOrder(o.id, e.target.value)}
+              >
+                <option value="">Unassigned</option>
+                {engineers.map((eng) => (
+                  <option key={eng.id} value={eng.id}>{eng.fullName || eng.email}</option>
+                ))}
+              </select>
+            </div>
+          ) : o.assignedToName ? (
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, color: "var(--text-secondary)" }}>
+              <UserCog size={13} style={{ color: "var(--text-muted)" }} /> {o.assignedToName}
+            </span>
+          ) : (
+            <span className="inv-badge inv-badge--gray">Unassigned</span>
+          )}
         </td>
         <td><OrderBadge status={o.status} /></td>
         <td>
@@ -251,6 +309,10 @@ export default function UpdaterOrderListPage() {
           <div className="inv-card__cell">
             <span className="inv-card__label">Promised Dispatch</span>
             <span className="inv-card__value">{formatDate(o.promisedDispatchDateUtc)}</span>
+          </div>
+          <div className="inv-card__cell">
+            <span className="inv-card__label">Engineer</span>
+            <span className="inv-card__value">{o.assignedToName ?? "Unassigned"}</span>
           </div>
         </div>
       </div>
@@ -309,6 +371,15 @@ export default function UpdaterOrderListPage() {
           </select>
         </div>
 
+        <div className="inv-field">
+          <label className="inv-field__label">Assignment</label>
+          <select className="inv-select" value={assignedFilter} onChange={(e) => setAssignedFilter(e.target.value)}>
+            <option value="">All</option>
+            <option value="true">Assigned</option>
+            <option value="false">Unassigned</option>
+          </select>
+        </div>
+
         <button className="inv-btn inv-btn--icon" title="Refresh" aria-label="Refresh" onClick={handleRefresh}>
           <RefreshCw size={16} />
         </button>
@@ -338,12 +409,13 @@ export default function UpdaterOrderListPage() {
           <div className="inv-scroll">
             <table className="inv-table">
               <colgroup>
-                <col style={{ width: "16%" }} />
-                <col style={{ width: "22%" }} />
-                <col style={{ width: "9%" }} />
                 <col style={{ width: "15%" }} />
-                <col style={{ width: "14%" }} />
+                <col style={{ width: "20%" }} />
+                <col style={{ width: "8%" }} />
+                <col style={{ width: "13%" }} />
+                <col style={{ width: "13%" }} />
                 <col style={{ width: "12%" }} />
+                <col style={{ width: "11%" }} />
                 <col style={{ width: 90 }} />
               </colgroup>
               <thead>
@@ -353,6 +425,7 @@ export default function UpdaterOrderListPage() {
                   <th>Quantity</th>
                   <th>Promised Dispatch</th>
                   <th>Last Updated</th>
+                  <th>Assigned</th>
                   <th>Status</th>
                   <th style={{ textAlign: "right" }}>Actions</th>
                 </tr>

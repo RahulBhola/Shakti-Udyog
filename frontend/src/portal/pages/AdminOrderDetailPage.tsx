@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, Package, Calendar, MapPin, FileText, Truck, CheckCircle2, Clock, Loader2, MessageSquare, Download, Upload, Plus, ChevronDown, ChevronUp } from "lucide-react";
-import { updaterApi } from "../../api/updaterApi";
+import { ArrowLeft, Package, Calendar, MapPin, FileText, Truck, CheckCircle2, Clock, Loader2, MessageSquare, Download, Upload, Plus, ChevronDown, ChevronUp, X, UserCog, UserPlus } from "lucide-react";
+import { engineerApi } from "../../api/engineerApi";
 import { adminApi } from "../../api/adminApi";
 import { apiDownload } from "../../api/client";
+import { useAuth } from "../../auth/AuthContext";
+import { Roles } from "../../auth/roles";
 import type { OrderDetail, InvoiceDetail } from "../../api/customerApi";
 import { ConfirmActionModal } from "./orders/ConfirmModal";
 
@@ -110,6 +112,8 @@ function InfoCard({ icon: Icon, label, value, color }: { icon: any; label: strin
 export default function AdminOrderDetailPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isAdmin = !!user?.roles.includes(Roles.Admin);
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -146,13 +150,29 @@ export default function AdminOrderDetailPage() {
   const [docCategory, setDocCategory] = useState("Inspection Report");
   const [docFile, setDocFile] = useState<File | null>(null);
 
+  // ── Engineer assignment state ──
+  const [engineers, setEngineers] = useState<{ id: string; fullName: string | null; email: string; role: string }[]>([]);
+  const [assignBusy, setAssignBusy] = useState(false);
+  const [assignMsg, setAssignMsg] = useState<string | null>(null);
+
+  // ── Shipment creation state ──
+  const [showShipmentModal, setShowShipmentModal] = useState(false);
+  const [shipmentBusy, setShipmentBusy] = useState(false);
+  const [shipmentMsg, setShipmentMsg] = useState<string | null>(null);
+  const [shipmentForm, setShipmentForm] = useState({
+    transporter: "",
+    trackingNumber: "",
+    dispatchDate: "",
+    eta: "",
+  });
+
   async function handlePostOrderComment() {
     if (!newOrderComment.trim() || postingComment) return;
     setPostingComment(true);
     try {
-      await updaterApi.addOrderComment(id, newOrderComment.trim());
+      await engineerApi.addOrderComment(id, newOrderComment.trim());
       setNewOrderComment("");
-      updaterApi.getOrderComments(id).then(setOrderComments).catch(() => {});
+      engineerApi.getOrderComments(id).then(setOrderComments).catch(() => {});
     } catch {}
     setPostingComment(false);
   }
@@ -222,13 +242,13 @@ export default function AdminOrderDetailPage() {
     setDocBusy(true);
     setDocMsg(null);
     try {
-      await updaterApi.uploadOrderDocument(id, docFile, docCategory);
+      await engineerApi.uploadOrderDocument(id, docFile, docCategory);
       setDocMsg(`✅ ${docCategory} uploaded successfully.`);
       setShowDocModal(false);
       setDocFile(null);
       setDocCategory("Inspection Report");
       // Refresh order to show new document
-      const o = await updaterApi.order(id);
+      const o = await engineerApi.order(id);
       setOrder(o);
     } catch {
       setDocMsg("❌ Failed to upload document.");
@@ -241,13 +261,57 @@ export default function AdminOrderDetailPage() {
     if (!id) return;
     setLoading(true);
     setError(null);
-    updaterApi.order(id)
+    engineerApi.order(id)
       .then((o) => setOrder(o))
       .catch((e) => setError(e.message ?? "Order not found"))
       .finally(() => setLoading(false));
-    updaterApi.getOrderComments(id).then(setOrderComments).catch(() => {});
+    engineerApi.getOrderComments(id).then(setOrderComments).catch(() => {});
     adminApi.orderInvoices(id).then(setOrderInvoices).catch(() => {});
   }, [id]);
+
+  // Load engineer list (admins only) for the assignment dropdown.
+  useEffect(() => {
+    if (!isAdmin || !id) return;
+    adminApi.users().then((users) => setEngineers(users)).catch(() => {});
+  }, [isAdmin, id]);
+
+  async function handleAssign(assignedToUserId: string | null) {
+    setAssignBusy(true);
+    setAssignMsg(null);
+    try {
+      await adminApi.assignOrder(id, assignedToUserId);
+      const o = await engineerApi.order(id);
+      setOrder(o);
+      setAssignMsg(assignedToUserId ? "Order assigned to engineer." : "Order unassigned.");
+    } catch {
+      setAssignMsg("Could not update assignment.");
+    } finally { setAssignBusy(false); }
+  }
+
+  async function handleCreateShipment() {
+    if (!shipmentForm.transporter.trim() && !shipmentForm.trackingNumber.trim()) {
+      setShipmentMsg("Enter at least a transporter or a tracking number.");
+      return;
+    }
+    setShipmentBusy(true);
+    setShipmentMsg(null);
+    try {
+      await engineerApi.createShipment(
+        id,
+        shipmentForm.transporter.trim() || undefined,
+        shipmentForm.trackingNumber.trim() || undefined,
+        shipmentForm.dispatchDate ? new Date(shipmentForm.dispatchDate).toISOString() : undefined,
+        shipmentForm.eta ? new Date(shipmentForm.eta).toISOString() : undefined,
+      );
+      setShowShipmentModal(false);
+      setShipmentForm({ transporter: "", trackingNumber: "", dispatchDate: "", eta: "" });
+      const o = await engineerApi.order(id);
+      setOrder(o);
+      setActionMsg("Shipment created.");
+    } catch {
+      setShipmentMsg("Could not create shipment.");
+    } finally { setShipmentBusy(false); }
+  }
 
   // Open milestone confirmation modal
   const handleAdvanceMilestone = () => {
@@ -267,8 +331,8 @@ export default function AdminOrderDetailPage() {
     setActionBusy(true);
     setActionMsg(null);
     try {
-      await updaterApi.updateMilestone(id, milestoneModal.nextStatus, customerMsg);
-      const o = await updaterApi.order(id);
+      await engineerApi.updateMilestone(id, milestoneModal.nextStatus, customerMsg);
+      const o = await engineerApi.order(id);
       setOrder(o);
       setActionMsg(`Status updated to ${milestoneModal.label}`);
     } catch {
@@ -448,13 +512,21 @@ export default function AdminOrderDetailPage() {
                   </div>
                 ))}
               </div>
+              <button type="button" onClick={() => setShowShipmentModal(true)}
+                className="mt-4 w-full flex items-center justify-center gap-1.5 px-4 h-9 rounded-lg border border-dashed border-[var(--border-default)] text-[12px] font-medium text-[var(--text-muted)] hover:text-[var(--color-primary)] hover:border-[var(--color-primary)]/30 transition-all">
+                <Truck size={14} /> Add Shipment
+              </button>
             </Section>
           )}
 
           {/* No shipments yet */}
           {order.shipments.length === 0 && (
             <Section title="Shipments">
-              <p className="text-[13px] text-[var(--text-muted)] text-center py-4">No shipments recorded yet.</p>
+              <p className="text-[13px] text-[var(--text-muted)] text-center py-2">No shipments recorded yet.</p>
+              <button type="button" onClick={() => setShowShipmentModal(true)}
+                className="w-full flex items-center justify-center gap-1.5 px-4 h-9 rounded-lg border border-dashed border-[var(--border-default)] text-[12px] font-medium text-[var(--text-muted)] hover:text-[var(--color-primary)] hover:border-[var(--color-primary)]/30 transition-all">
+                <Truck size={14} /> Add Shipment
+              </button>
             </Section>
           )}
 
@@ -627,6 +699,49 @@ export default function AdminOrderDetailPage() {
             <div className="mt-3 text-[11px] text-[var(--text-muted)] font-medium">
               Status code: <code className="text-[var(--text-primary)]">{order.status}</code>
             </div>
+          </Section>
+
+          {/* Assigned Engineer */}
+          <Section title="Assigned Engineer">
+            <div className="flex items-center gap-3 mb-3">
+              <span className="w-9 h-9 rounded-lg bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)] shrink-0">
+                <UserCog size={16} />
+              </span>
+              <div className="min-w-0">
+                <div className="text-[13px] font-semibold text-[var(--text-primary)] truncate">{order.assignedToName ?? "Unassigned"}</div>
+                <div className="text-[11px] text-[var(--text-muted)]">Engineer responsible for this order</div>
+              </div>
+            </div>
+            {isAdmin && (
+              <div>
+                {assignMsg && (
+                  <div className={`mb-2 text-[12px] font-medium ${assignMsg.includes("Could") ? "text-red-500" : "text-emerald-500"}`}>{assignMsg}</div>
+                )}
+                <div className="flex gap-2">
+                  <select
+                    value={order.assignedToUserId ?? ""}
+                    onChange={(e) => handleAssign(e.target.value || null)}
+                    disabled={assignBusy}
+                    className="flex-1 h-9 rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3 text-[12px] text-[var(--text-primary)] outline-none focus:border-[var(--color-primary)] disabled:opacity-50"
+                  >
+                    <option value="">Unassigned</option>
+                    {engineers.map((eng) => (
+                      <option key={eng.id} value={eng.id}>{eng.fullName || eng.email}</option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    disabled={assignBusy}
+                    onClick={() => handleAssign(null)}
+                    title="Unassign"
+                    aria-label="Unassign"
+                    className="flex items-center justify-center w-9 h-9 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all shrink-0 disabled:opacity-50"
+                  >
+                    {assignBusy ? <Loader2 size={14} className="animate-spin" /> : <UserPlus size={14} />}
+                  </button>
+                </div>
+              </div>
+            )}
           </Section>
 
           {/* Delivery Info */}
@@ -898,6 +1013,79 @@ export default function AdminOrderDetailPage() {
                   className="px-5 h-9 rounded-xl bg-blue-500 text-white text-[12px] font-semibold hover:bg-blue-600 disabled:opacity-50 transition-all flex items-center gap-1.5 shadow-sm">
                   {docBusy ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
                   {docBusy ? "Uploading..." : "Upload Document"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Shipment Creation Modal ──────────────────────── */}
+      {showShipmentModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-md" onClick={() => { setShowShipmentModal(false); setShipmentMsg(null); }} />
+          <div className="relative w-full max-w-md mx-4 rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="h-1.5 bg-gradient-to-r from-teal-500 to-teal-400" />
+            <div className="p-6">
+              <div className="flex items-start gap-4 mb-5">
+                <span className="flex items-center justify-center w-12 h-12 rounded-2xl bg-teal-50 dark:bg-teal-500/10 text-teal-500 shrink-0 mt-1">
+                  <Truck size={22} />
+                </span>
+                <div>
+                  <h3 className="text-[16px] font-bold text-[var(--text-primary)] m-0">Add Shipment</h3>
+                  <p className="text-[12px] text-[var(--text-muted)] m-0 mt-1 leading-relaxed">
+                    Record the dispatch details for this order.
+                  </p>
+                </div>
+                <button type="button" onClick={() => setShowShipmentModal(false)} className="ml-auto bg-[var(--bg-surface)] rounded-lg p-1.5 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors shrink-0">
+                  <X size={16} />
+                </button>
+              </div>
+
+              {shipmentMsg && (
+                <div className={`mb-4 px-4 py-2.5 rounded-xl text-[13px] font-medium ${
+                  shipmentMsg.includes("Could") ? "bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400" : "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                }`}>{shipmentMsg}</div>
+              )}
+
+              <div className="space-y-4">
+                <div>
+                  <label className="text-[12px] font-medium text-[var(--text-primary)] block mb-1">Transporter</label>
+                  <input type="text" value={shipmentForm.transporter} onChange={(e) => setShipmentForm(f => ({ ...f, transporter: e.target.value }))}
+                    placeholder="e.g. XYZ Transport Co."
+                    className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2.5 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--color-primary)]" />
+                </div>
+                <div>
+                  <label className="text-[12px] font-medium text-[var(--text-primary)] block mb-1">Tracking / LR Number</label>
+                  <input type="text" value={shipmentForm.trackingNumber} onChange={(e) => setShipmentForm(f => ({ ...f, trackingNumber: e.target.value }))}
+                    placeholder="e.g. LR-102938"
+                    className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2.5 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--color-primary)]" />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[12px] font-medium text-[var(--text-primary)] block mb-1">Dispatch Date</label>
+                    <input type="date" value={shipmentForm.dispatchDate} onChange={(e) => setShipmentForm(f => ({ ...f, dispatchDate: e.target.value }))}
+                      className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2.5 text-[13px] text-[var(--text-primary)] outline-none focus:border-[var(--color-primary)]" />
+                  </div>
+                  <div>
+                    <label className="text-[12px] font-medium text-[var(--text-primary)] block mb-1">Estimated Arrival</label>
+                    <input type="date" value={shipmentForm.eta} onChange={(e) => setShipmentForm(f => ({ ...f, eta: e.target.value }))}
+                      className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2.5 text-[13px] text-[var(--text-primary)] outline-none focus:border-[var(--color-primary)]" />
+                  </div>
+                </div>
+                <p className="text-[11px] text-[var(--text-muted)]">Enter at least a transporter or a tracking number.</p>
+              </div>
+
+              <div className="border-t border-[var(--border-default)] my-4" />
+              <div className="flex items-center justify-end gap-2.5">
+                <button type="button" disabled={shipmentBusy} onClick={() => { setShowShipmentModal(false); setShipmentMsg(null); }}
+                  className="px-4 h-9 rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all disabled:opacity-50">
+                  Cancel
+                </button>
+                <button type="button" disabled={shipmentBusy} onClick={handleCreateShipment}
+                  className="px-5 h-9 rounded-xl bg-teal-500 text-white text-[12px] font-semibold hover:bg-teal-600 disabled:opacity-50 transition-all flex items-center gap-1.5 shadow-sm">
+                  {shipmentBusy ? <Loader2 size={14} className="animate-spin" /> : <Truck size={14} />}
+                  {shipmentBusy ? "Adding..." : "Add Shipment"}
                 </button>
               </div>
             </div>

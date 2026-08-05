@@ -73,7 +73,7 @@ public class InvoiceManagementService(AppDbContext db, IAuditWriter audit) : IIn
         db.Invoices.Add(invoice);
         db.InvoiceStatusHistories.Add(new InvoiceStatusHistory { Id = Guid.NewGuid(), InvoiceId = invoice.Id, FromStatus = "New", ToStatus = InvoiceStatuses.Issued, ChangedByUserId = userId, ChangedByRole = "Engineer", Note = "Invoice created" });
         await db.SaveChangesAsync();
-        await audit.WriteAsync("updater.invoice.created", userId, "Invoice", invoice.Id.ToString(), ip);
+        await audit.WriteAsync("engineer.invoice.created", userId, "Invoice", invoice.Id.ToString(), ip);
         return (await GetInvoiceAsync(invoice.Id))!;
     }
 
@@ -94,7 +94,7 @@ public class InvoiceManagementService(AppDbContext db, IAuditWriter audit) : IIn
         invoice.Status = invoice.BalanceDue <= 0 ? InvoiceStatuses.Paid : InvoiceStatuses.PartiallyPaid;
         db.InvoiceStatusHistories.Add(new InvoiceStatusHistory { Id = Guid.NewGuid(), InvoiceId = invoiceId, FromStatus = invoice.Status, ToStatus = invoice.Status, ChangedByUserId = userId, ChangedByRole = "Engineer", Note = $"Payment recorded: {request.Amount}" });
         await db.SaveChangesAsync();
-        await audit.WriteAsync("updater.payment.recorded", userId, "Payment", payment.Id.ToString(), ip);
+        await audit.WriteAsync("engineer.payment.recorded", userId, "Payment", payment.Id.ToString(), ip);
         return true;
     }
 

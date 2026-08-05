@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { apiDelete, apiGet, apiPost, apiPut } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import { formatDate } from "../portal/shared";
-import { updaterApi } from "../api/updaterApi";
+import { engineerApi } from "../api/engineerApi";
 import { adminApi } from "../api/adminApi";
 
 /* ── Types ─────────────────────────────────────────────────────────────────── */
@@ -170,7 +170,7 @@ export function ProductionBoard() {
   // Load data based on view mode
   useEffect(() => {
     if (viewMode === "orders") {
-      updaterApi.orders(1, 200).then((all) => {
+      engineerApi.orders(1, 200).then((all) => {
         const mapped = (all.items || []).map((o) => ({
           id: o.id, jobNumber: o.orderNumber, castingName: o.productType || o.orderNumber,
           currentStage: statusToStage(o.status), stagePosition: 0,
@@ -954,14 +954,14 @@ function OrderDetailPanel({ job, onClose, onMaximize }: { job: ProductionJob; on
   const [posting, setPosting] = useState(false);
 
   useEffect(() => {
-    updaterApi.getOrderComments(job.id).then(setComments).catch(() => {});
+    engineerApi.getOrderComments(job.id).then(setComments).catch(() => {});
   }, [job.id]);
 
   async function handlePostComment() {
     if (!newComment.trim() || posting) return;
     setPosting(true);
     try {
-      await updaterApi.addOrderComment(job.id, newComment.trim());
+      await engineerApi.addOrderComment(job.id, newComment.trim());
       setComments(prev => [...prev, {authorRole: "Admin", message: newComment.trim(), createdAtUtc: new Date().toISOString()}]);
       setNewComment("");
     } catch {}

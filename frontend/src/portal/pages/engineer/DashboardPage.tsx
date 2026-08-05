@@ -1,15 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { updaterApi, type UpdaterDashboard as Dash } from "../../../api/updaterApi";
+import { engineerApi, type EngineerDashboard as Dash } from "../../../api/engineerApi";
 import { Loading } from "../../../components/ui";
 import { Panel } from "../../shared";
 
-export default function UpdaterDashboardPage() {
+export default function EngineerDashboardPage() {
   const [data, setData] = useState<Dash | null>(null);
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    updaterApi.dashboard().then(setData).catch(() => setError(true));
+    engineerApi.dashboard().then(setData).catch(() => setError(true));
   }, []);
 
   if (error) return <p className="form-status form-status--error">Dashboard unavailable</p>;

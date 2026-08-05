@@ -31,14 +31,15 @@ public class OrderAdminService(AppDbContext db, IAuditWriter audit) : IOrderAdmi
             query = query.Where(o => o.Status == status);
         var total = await query.CountAsync();
         var items = await query.OrderByDescending(o => o.PlacedAtUtc).Skip((page - 1) * pageSize).Take(pageSize)
-            .Select(o => new OrderListItemDto(o.Id, o.OrderNumber, o.Status, o.Status, o.PlacedAtUtc, o.PromisedDispatchDateUtc, o.Items.Sum(i => i.QuantityOrdered), o.LastUpdatedAtUtc, o.Company!.Name, o.Quotation!.Enquiry!.ProductType))
+            .Select(o => new OrderListItemDto(o.Id, o.OrderNumber, o.Status, o.Status, o.PlacedAtUtc, o.PromisedDispatchDateUtc, o.Items.Sum(i => i.QuantityOrdered), o.LastUpdatedAtUtc, o.Company!.Name, o.Quotation!.Enquiry!.ProductType,
+                o.AssignedToUserId, o.AssignedToUser != null ? o.AssignedToUser.FullName : null))
             .ToListAsync();
         return new PagedResult<OrderListItemDto>(items, page, pageSize, total);
     }
 
     public async Task<OrderDetailDto?> GetOrderAsync(Guid id)
     {
-        var o = await db.Orders.IgnoreQueryFilters().Include(x => x.Items).Include(x => x.Shipments).SingleOrDefaultAsync(x => x.Id == id);
+        var o = await db.Orders.IgnoreQueryFilters().Include(x => x.Items).Include(x => x.Shipments).Include(x => x.AssignedToUser).SingleOrDefaultAsync(x => x.Id == id);
         if (o is null) return null;
         var (label, desc) = OrderStatuses.Labels.TryGetValue(o.Status, out var l) ? l : (o.Status, "");
         return new OrderDetailDto(o.Id, o.OrderNumber, o.PurchaseOrderReference, o.Status, label, desc, o.PlacedAtUtc, o.PromisedDispatchDateUtc, o.DeliveryAddress, o.LastUpdatedAtUtc,
@@ -48,7 +49,8 @@ public class OrderAdminService(AppDbContext db, IAuditWriter audit) : IOrderAdmi
             o.AdvancePercent, o.AdvanceAmount, o.AdvancePaid, o.AdvancePaidAtUtc,
             o.AdvancePaymentRef, o.AdvanceVerifiedAtUtc,
             o.QuotationTotal, o.PaymentTerms, o.QuotationId,
-            o.Milestones.Select(m => new OrderMilestoneDto(m.Id, m.StatusCode, m.CustomerMessage, m.OccurredAtUtc)).ToList());
+            o.Milestones.Select(m => new OrderMilestoneDto(m.Id, m.StatusCode, m.CustomerMessage, m.OccurredAtUtc)).ToList(),
+            o.AssignedToUserId, o.AssignedToUser != null ? o.AssignedToUser.FullName : null);
     }
 
     public async Task<bool?> ApproveCustomerUpdateAsync(Guid id, Guid userId, string? ip)

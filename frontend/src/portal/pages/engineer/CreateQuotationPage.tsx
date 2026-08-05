@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { updaterApi, type UpdaterEnquiryDetail } from "../../../api/updaterApi";
+import { engineerApi, type EngineerEnquiryDetail } from "../../../api/engineerApi";
 import { adminApi } from "../../../api/adminApi";
 import {
   ArrowLeft, Building2, Mail, Phone, Package, Calendar, Clock,
@@ -77,7 +77,7 @@ export default function CreateQuotationPage() {
   const editQuotationId = searchParams.get("editQuotationId") ?? "";
 
   // ── State ─────────────────────────────────────────────────────
-  const [enquiry, setEnquiry] = useState<UpdaterEnquiryDetail | null>(null);
+  const [enquiry, setEnquiry] = useState<EngineerEnquiryDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -104,9 +104,9 @@ export default function CreateQuotationPage() {
   // ── Load Enquiry (or load existing quotation for editing) ────────
   useEffect(() => {
     if (editQuotationId) {
-      updaterApi.quotation(editQuotationId).then(async (q) => {
+      engineerApi.quotation(editQuotationId).then(async (q) => {
         // Load the originating Enquiry for context
-        const enquiryData = await updaterApi.enquiry(q.enquiryId).catch(() => null);
+        const enquiryData = await engineerApi.enquiry(q.enquiryId).catch(() => null);
         setEnquiry(enquiryData);
         // Pre-fill form fields from existing quotation
         setValidUntil(q.validUntilUtc ? q.validUntilUtc.slice(0, 10) : "");
@@ -138,7 +138,7 @@ export default function CreateQuotationPage() {
       return;
     }
     if (!enquiryIdParam) { setLoading(false); setError("No Enquiry ID provided."); return; }
-    updaterApi.enquiry(enquiryIdParam)
+    engineerApi.enquiry(enquiryIdParam)
       .then((data) => { setEnquiry(data); setLoading(false); })
       .catch(() => { setError("Enquiry not found or inaccessible."); setLoading(false); });
   }, [enquiryIdParam, editQuotationId]);
@@ -226,18 +226,18 @@ export default function CreateQuotationPage() {
       };
 
       if (editQuotationId) {
-        await updaterApi.updateQuotation(editQuotationId, payload);
+        await engineerApi.updateQuotation(editQuotationId, payload);
         if (submit) {
           // Advance Enquiry to Quoted and submit the quotation
-          await updaterApi.updateEnquiryStatus(enquiry?.id ?? "", "Quoted").catch(() => {});
-          await updaterApi.submitQuotation(editQuotationId);
+          await engineerApi.updateEnquiryStatus(enquiry?.id ?? "", "Quoted").catch(() => {});
+          await engineerApi.submitQuotation(editQuotationId);
         }
         navigate(`/admin/quotations/${editQuotationId}`);
       } else {
-        const { id } = await updaterApi.createQuotation(payload);
+        const { id } = await engineerApi.createQuotation(payload);
         if (submit) {
-          await updaterApi.updateEnquiryStatus(enquiry.id, "Quoted").catch(() => {});
-          await updaterApi.submitQuotation(id);
+          await engineerApi.updateEnquiryStatus(enquiry.id, "Quoted").catch(() => {});
+          await engineerApi.submitQuotation(id);
         }
         navigate(`/admin/quotations/${id}`);
       }

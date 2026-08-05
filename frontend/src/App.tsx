@@ -59,7 +59,7 @@ const SupportPage = lazy(() => import("./portal/pages/SupportPage"));
 const PaymentsPage = lazy(() => import("./portal/pages/PaymentsPage"));
 const CompanyPage = lazy(() => import("./portal/pages/CompanyPage"));
 const SettingsPage = lazy(() => import("./portal/pages/SettingsPage"));
-const CreateQuotationPage = lazy(() => import("./portal/pages/updater/CreateQuotationPage"));
+const CreateQuotationPage = lazy(() => import("./portal/pages/engineer/CreateQuotationPage"));
 const AdminQuotationDetailPage = lazy(() => import("./portal/pages/AdminQuotationPage"));
 const AdminOrderDetailPage = lazy(() => import("./portal/pages/AdminOrderDetailPage"));
 const AdminInvoiceCreatePage = lazy(() => import("./portal/pages/AdminInvoicePage").then(m => ({ default: m.AdminInvoiceCreatePage })));
@@ -76,10 +76,10 @@ const AdminDealPage = lazy(() => import("./portal/pages/AdminDealPage"));
 const AdminProductPage = lazy(() => import("./portal/pages/AdminProductPage"));
 const AdminProductDetailPage = lazy(() => import("./portal/pages/AdminProductDetailPage"));
 const AdminCategoryPage = lazy(() => import("./portal/pages/AdminCategoryPage"));
-const UpdaterEnquiryListPage = lazy(() => import("./portal/pages/updater/EnquiryListPage"));
-const UpdaterEnquiryDetailPage = lazy(() => import("./portal/pages/updater/EnquiryDetailPage"));
-const UpdaterQuotationListPage = lazy(() => import("./portal/pages/updater/QuotationListPage"));
-const UpdaterOrderListPage = lazy(() => import("./portal/pages/updater/OrderListPage"));
+const EngineerEnquiryListPage = lazy(() => import("./portal/pages/engineer/EnquiryListPage"));
+const EngineerEnquiryDetailPage = lazy(() => import("./portal/pages/engineer/EnquiryDetailPage"));
+const EngineerQuotationListPage = lazy(() => import("./portal/pages/engineer/QuotationListPage"));
+const EngineerOrderListPage = lazy(() => import("./portal/pages/engineer/OrderListPage"));
 
 function App() {
   return (
@@ -160,12 +160,12 @@ function App() {
               <Route index element={<Navigate to="/admin/dashboard" replace />} />
               <Route path="dashboard" element={<AdminDashboardPage />} />
               {/* Sales */}
-              <Route path="enquiries" element={<UpdaterEnquiryListPage />} />
-              <Route path="enquiries/:id" element={<UpdaterEnquiryDetailPage />} />
-              <Route path="quotations" element={<UpdaterQuotationListPage />} />
+              <Route path="enquiries" element={<EngineerEnquiryListPage />} />
+              <Route path="enquiries/:id" element={<EngineerEnquiryDetailPage />} />
+              <Route path="quotations" element={<EngineerQuotationListPage />} />
               <Route path="quotations/new" element={<CreateQuotationPage />} />
               <Route path="quotations/:id" element={<AdminQuotationDetailPage />} />
-              <Route path="orders" element={<UpdaterOrderListPage />} />
+              <Route path="orders" element={<EngineerOrderListPage />} />
               <Route path="orders/:id" element={<AdminOrderDetailPage />} />
               {/* Production */}
               <Route path="production" element={<AdminProductionPage />} />

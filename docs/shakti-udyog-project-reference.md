@@ -31,7 +31,7 @@
 
 - **Public Website** — Marketing site with product catalogue, capabilities, quality info, Enquiry/contact forms
 - **Customer Portal** — Logged-in customer dashboard for Enquiries, quotations, orders, invoices, payments, documents
-- **Data Updater Portal** — Internal staff portal for managing Enquiries, quotations, orders, content
+- **Engineer Portal** — Internal staff portal for managing Enquiries, quotations, orders, content
 - **Admin Portal** — Full administration: users, roles, content, orders, production, audit logs, reports
 
 **Company:** Shakti Udyog (est. 1965), Ludhiana, Punjab, India  
@@ -44,7 +44,7 @@
 2. Authentication, password reset, roles, authorization policies ✅
 3. Public website and Enquiry flow ✅
 4. Customer portal: Enquiries, quotations, orders, tracking, documents, invoices, payments ✅
-5. Data Updater and Admin portals ✅
+5. Engineer and Admin portals ✅
 6. Jira integration, reports, and refinements 🔲
 
 ---
@@ -93,7 +93,7 @@ D:\Projects\Shakti Udyog\
 │   │   │   ├── client.ts              # Base fetch wrapper (JWT, auto-refresh, error handling)
 │   │   │   ├── publicApi.ts           # Public endpoints
 │   │   │   ├── customerApi.ts         # Customer portal endpoints
-│   │   │   ├── updaterApi.ts          # Data updater endpoints
+│   │   │   ├── engineerApi.ts          # Engineer endpoints
 │   │   │   └── adminApi.ts            # Admin endpoints
 │   │   ├── auth/                      # Authentication
 │   │   │   ├── AuthContext.tsx         # React context for auth state
@@ -176,7 +176,7 @@ App.tsx (BrowserRouter)
   ├── /customer/* (ProtectedRoute: Customer role)
   │   └── CustomerLayout → customer portal pages
   └── /admin/* (ProtectedRoute: Admin or Engineer role)
-      └── AdminLayout → admin/updater portal pages
+      └── AdminLayout → admin/engineer portal pages
 ```
 
 ### API Client Layer
@@ -351,23 +351,23 @@ Requires `Admin` or `Engineer` role.
 
 | Route | Page | Role Access |
 |-------|------|-------------|
-| `/admin/dashboard` | AdminDashboardPage | Admin + Updater |
-| `/admin/enquirys` | UpdaterEnquiryListPage | Admin + Updater |
-| `/admin/enquirys/:id` | UpdaterEnquiryDetailPage | Admin + Updater |
-| `/admin/quotations` | UpdaterQuotationListPage | Admin + Updater |
-| `/admin/quotations/new` | CreateQuotationPage | Admin + Updater |
-| `/admin/quotations/:id` | AdminQuotationDetailPage | Admin + Updater |
-| `/admin/orders` | UpdaterOrderListPage | Admin + Updater |
-| `/admin/orders/:id` | AdminOrderDetailPage | Admin + Updater |
-| `/admin/production` | AdminProductionPage | Admin + Updater |
-| `/admin/documents` | AdminDocumentsPage | Admin + Updater |
+| `/admin/dashboard` | AdminDashboardPage | Admin + Engineer |
+| `/admin/enquirys` | EngineerEnquiryListPage | Admin + Engineer |
+| `/admin/enquirys/:id` | EngineerEnquiryDetailPage | Admin + Engineer |
+| `/admin/quotations` | EngineerQuotationListPage | Admin + Engineer |
+| `/admin/quotations/new` | CreateQuotationPage | Admin + Engineer |
+| `/admin/quotations/:id` | AdminQuotationDetailPage | Admin + Engineer |
+| `/admin/orders` | EngineerOrderListPage | Admin + Engineer |
+| `/admin/orders/:id` | AdminOrderDetailPage | Admin + Engineer |
+| `/admin/production` | AdminProductionPage | Admin + Engineer |
+| `/admin/documents` | AdminDocumentsPage | Admin + Engineer |
 | `/admin/invoices` | AdminInvoiceManagePage | Admin |
 | `/admin/invoices/new` | AdminInvoiceCreatePage | Admin |
 | `/admin/users` | AdminUsersPage | Admin only |
 | `/admin/companies` | AdminCompaniesPage | Admin only |
-| `/admin/products` | AdminProductPage | Admin + Updater |
-| `/admin/products/:id` | AdminProductDetailPage | Admin + Updater |
-| `/admin/categories` | AdminCategoryPage | Admin + Updater |
+| `/admin/products` | AdminProductPage | Admin + Engineer |
+| `/admin/products/:id` | AdminProductDetailPage | Admin + Engineer |
+| `/admin/categories` | AdminCategoryPage | Admin + Engineer |
 | `/admin/settings` | AdminSettingsPage | Admin |
 | `/admin/audit-logs` | AdminAuditLogsPage | Admin |
 | `/admin/reports` | AdminReportsPage | Admin |
@@ -441,24 +441,24 @@ All endpoints are under `/api/v1/`. Authentication: JWT Bearer.
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/v1/updater/dashboard` | Updater dashboard summary |
-| GET | `/api/v1/updater/enquirys` | List all Enquiries (paginated) |
-| GET | `/api/v1/updater/enquirys/{id}` | Get Enquiry detail with internal data |
-| PATCH | `/api/v1/updater/enquirys/{id}/status` | Update Enquiry status |
-| PATCH | `/api/v1/updater/enquirys/{id}/assign` | Assign Enquiry to user |
-| POST | `/api/v1/updater/enquirys/{id}/comments` | Add Enquiry comment |
-| GET | `/api/v1/updater/quotations` | List all quotations |
-| GET | `/api/v1/updater/quotations/{id}` | Get quotation detail |
-| POST | `/api/v1/updater/quotations` | Create quotation |
-| PUT | `/api/v1/updater/quotations/{id}` | Update quotation |
-| POST | `/api/v1/updater/quotations/{id}/submit` | Submit for approval |
-| POST | `/api/v1/updater/quotations/{id}/attachments` | Upload attachment |
-| POST | `/api/v1/updater/quotations/{id}/comments` | Add comment |
-| GET | `/api/v1/updater/orders` | List all orders |
-| GET | `/api/v1/updater/orders/{id}` | Get order detail |
-| PATCH | `/api/v1/updater/orders/{id}/milestones` | Update order milestone |
-| POST | `/api/v1/updater/orders/{id}/shipment` | Create shipment record |
-| POST | `/api/v1/updater/orders/{id}/documents` | Upload order document |
+| GET | `/api/v1/engineer/dashboard` | Engineer dashboard summary |
+| GET | `/api/v1/engineer/enquirys` | List all Enquiries (paginated) |
+| GET | `/api/v1/engineer/enquirys/{id}` | Get Enquiry detail with internal data |
+| PATCH | `/api/v1/engineer/enquirys/{id}/status` | Update Enquiry status |
+| PATCH | `/api/v1/engineer/enquirys/{id}/assign` | Assign Enquiry to user |
+| POST | `/api/v1/engineer/enquirys/{id}/comments` | Add Enquiry comment |
+| GET | `/api/v1/engineer/quotations` | List all quotations |
+| GET | `/api/v1/engineer/quotations/{id}` | Get quotation detail |
+| POST | `/api/v1/engineer/quotations` | Create quotation |
+| PUT | `/api/v1/engineer/quotations/{id}` | Update quotation |
+| POST | `/api/v1/engineer/quotations/{id}/submit` | Submit for approval |
+| POST | `/api/v1/engineer/quotations/{id}/attachments` | Upload attachment |
+| POST | `/api/v1/engineer/quotations/{id}/comments` | Add comment |
+| GET | `/api/v1/engineer/orders` | List all orders |
+| GET | `/api/v1/engineer/orders/{id}` | Get order detail |
+| PATCH | `/api/v1/engineer/orders/{id}/milestones` | Update order milestone |
+| POST | `/api/v1/engineer/orders/{id}/shipment` | Create shipment record |
+| POST | `/api/v1/engineer/orders/{id}/documents` | Upload order document |
 
 ### Admin Endpoints (Requires Admin role)
 
@@ -714,14 +714,14 @@ Internal codes: `pending_advance`, `awaiting_approval`, `advance_paid`, `confirm
 
 ```
 Customer submits Enquiry
-  → Data Updater validates details
+  → Engineer validates details
   → Admin/authorized sales approver reviews
   → Quotation issued to customer
   → Customer accepts or declines
   → Admin creates order from accepted quotation (with 30% advance)
   → Customer submits advance payment proof
   → Admin verifies payment → production starts
-  → Data Updater records production milestones
+  → Engineer records production milestones
   → Customer receives status and approved documents
   → Invoice issued
   → Payment status recorded or online payment completed
@@ -731,7 +731,7 @@ Customer submits Enquiry
 ### Content Publishing Workflow
 
 ```
-Data Updater creates/edits draft
+Engineer creates/edits draft
   → Admin reviews the change
   → Admin approves or rejects with comment
   → Approved content published

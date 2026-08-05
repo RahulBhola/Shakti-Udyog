@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { updaterApi } from "../../../api/updaterApi";
+import { engineerApi } from "../../../api/engineerApi";
 import type { Paged, QuotationListItem } from "../../../api/customerApi";
 import { EmptyState, Loading } from "../../../components/ui";
 import { formatDate } from "../../shared";
@@ -66,7 +66,7 @@ export default function QuotationListPage() {
   const [quickStatus, setQuickStatus] = useState("All");
 
   const load = useCallback(() => {
-    updaterApi.quotations(page, pageSize, search || undefined, statusFilter === "All" ? undefined : statusFilter)
+    engineerApi.quotations(page, pageSize, search || undefined, statusFilter === "All" ? undefined : statusFilter)
       .then(setData).catch((e: Error) => setError(e.message));
   }, [page, pageSize, search, statusFilter]);
   useEffect(load, [load]);

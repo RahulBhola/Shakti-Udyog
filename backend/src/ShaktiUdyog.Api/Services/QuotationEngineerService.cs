@@ -8,7 +8,7 @@ using ShaktiUdyog.Infrastructure.Storage;
 
 namespace ShaktiUdyog.Api.Services;
 
-public interface IQuotationUpdaterService
+public interface IQuotationEngineerService
 {
     Task<PagedResult<QuotationListItemDto>> GetQuotationsAsync(int page, int pageSize, string? search, string? status);
     Task<QuotationDetailDto?> GetQuotationAsync(Guid id);
@@ -46,10 +46,10 @@ public record QuotationCommentDto(
 
 public record AddCommentRequest(string Message, bool IsCustomerVisible = true);
 
-public class QuotationUpdaterService(
+public class QuotationEngineerService(
     AppDbContext db,
     IFileStorageService storage,
-    IAuditWriter audit) : IQuotationUpdaterService
+    IAuditWriter audit) : IQuotationEngineerService
 {
     private static readonly string[] AllowedStatuses = [QuotationStatuses.Draft, QuotationStatuses.PendingApproval, QuotationStatuses.Negotiating];
 
@@ -126,7 +126,7 @@ public class QuotationUpdaterService(
         };
         db.Quotations.Add(quotation);
         await db.SaveChangesAsync();
-        await audit.WriteAsync("updater.quotation.created", userId, "Quotation", quotation.Id.ToString(), ip);
+        await audit.WriteAsync("engineer.quotation.created", userId, "Quotation", quotation.Id.ToString(), ip);
         return quotation.Id;
     }
 
@@ -192,7 +192,7 @@ public class QuotationUpdaterService(
         {
             throw new InvalidOperationException($"UpdateQuotation error for {id}: {ex.GetType().Name} - {ex.Message}", ex);
         }
-        await audit.WriteAsync("updater.quotation.updated", userId, "Quotation", q.Id.ToString(), ip);
+        await audit.WriteAsync("engineer.quotation.updated", userId, "Quotation", q.Id.ToString(), ip);
         return true;
     }
 
@@ -211,7 +211,7 @@ public class QuotationUpdaterService(
             ChangedByUserId = userId, ChangedByRole = "Engineer",
         });
         await db.SaveChangesAsync();
-        await audit.WriteAsync("updater.quotation.submitted", userId, "Quotation", q.Id.ToString(), ip);
+        await audit.WriteAsync("engineer.quotation.submitted", userId, "Quotation", q.Id.ToString(), ip);
         return true;
     }
 
@@ -231,7 +231,7 @@ public class QuotationUpdaterService(
         };
         db.QuotationAttachments.Add(attachment);
         await db.SaveChangesAsync();
-        await audit.WriteAsync("updater.quotation.attachment_uploaded", userId, "QuotationAttachment", attachment.Id.ToString(), ip);
+        await audit.WriteAsync("engineer.quotation.attachment_uploaded", userId, "QuotationAttachment", attachment.Id.ToString(), ip);
         return new QuotationAttachmentDto(attachment.Id, attachment.FileName, attachment.ContentType, attachment.SizeBytes, attachment.Description);
     }
 
@@ -249,7 +249,7 @@ public class QuotationUpdaterService(
         };
         db.QuotationComments.Add(comment);
         await db.SaveChangesAsync();
-        await audit.WriteAsync("updater.quotation.comment_added", userId, "QuotationComment", comment.Id.ToString(), ip);
+        await audit.WriteAsync("engineer.quotation.comment_added", userId, "QuotationComment", comment.Id.ToString(), ip);
         return new QuotationCommentDto(comment.Id, comment.Message, comment.AuthorRole, comment.IsCustomerVisible, comment.CreatedAtUtc);
     }
 

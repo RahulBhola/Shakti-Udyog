@@ -114,6 +114,8 @@ export interface OrderListItem {
   lastUpdatedAtUtc: string;
   companyName: string | null;
   productType: string | null;
+  assignedToUserId: string | null;
+  assignedToName: string | null;
 }
 
 export interface OrderDetail {
@@ -149,6 +151,8 @@ export interface OrderDetail {
     paymentStatus: string | null;
   } | null;
   documents: DocumentItem[];
+  assignedToUserId: string | null;
+  assignedToName: string | null;
 }
 
 export interface Shipment {

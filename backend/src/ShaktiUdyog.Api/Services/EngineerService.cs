@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using ShaktiUdyog.Api.Contracts.Customer;
-using ShaktiUdyog.Api.Contracts.Updater;
+using ShaktiUdyog.Api.Contracts.Engineer;
 using ShaktiUdyog.Api.Validation;
 using ShaktiUdyog.Domain.Constants;
 using ShaktiUdyog.Domain.Entities;
@@ -11,15 +11,15 @@ namespace ShaktiUdyog.Api.Services;
 
 public interface IEngineerService
 {
-    Task<UpdaterDashboardDto> GetDashboardAsync();
-    Task<PagedResult<UpdaterEnquiryListItemDto>> GetEnquiriesAsync(int page = 1, int pageSize = 20, string? search = null, string? status = null, Guid? companyId = null);
-    Task<UpdaterEnquiryDetailDto?> GetEnquiryAsync(Guid enquiryId);
+    Task<EngineerDashboardDto> GetDashboardAsync();
+    Task<PagedResult<EngineerEnquiryListItemDto>> GetEnquiriesAsync(int page = 1, int pageSize = 20, string? search = null, string? status = null, Guid? companyId = null);
+    Task<EngineerEnquiryDetailDto?> GetEnquiryAsync(Guid enquiryId);
     Task<bool?> UpdateEnquiryStatusAsync(Guid enquiryId, EnquiryStatusChangeRequest request, Guid userId, string? ip);
     Task<EnquiryCommentDto?> AddEnquiryCommentAsync(Guid enquiryId, EnquiryCommentRequest request, Guid userId, string role, string? ip);
     Task<bool?> AssignEnquiryAsync(Guid enquiryId, EnquiryAssignmentRequest request, Guid userId, string? ip);
 }
 
-public record UpdaterDashboardDto(int PendingEnquiries, int PendingQuotations, int OrdersInProduction, int OrdersAwaitingShipment);
+public record EngineerDashboardDto(int PendingEnquiries, int PendingQuotations, int OrdersInProduction, int OrdersAwaitingShipment);
 
 public class EngineerService(
     AppDbContext db,
@@ -27,18 +27,18 @@ public class EngineerService(
 {
     // ---- Dashboard ---------------------------------------------------------
 
-    public async Task<UpdaterDashboardDto> GetDashboardAsync()
+    public async Task<EngineerDashboardDto> GetDashboardAsync()
     {
         var pendingEnquiries = await db.Enquiries.CountAsync(r => r.Status == "Received");
         var pendingQuotations = await db.Quotations.CountAsync(q => q.Status == "Draft" || q.Status == "Pending Approval");
         var ordersInProduction = await db.Orders.CountAsync(o => o.Status == "production" || o.Status == "quality_check");
         var ordersAwaitingShipment = await db.Orders.CountAsync(o => o.Status == "packed" || o.Status == "ready_to_dispatch");
-        return new UpdaterDashboardDto(pendingEnquiries, pendingQuotations, ordersInProduction, ordersAwaitingShipment);
+        return new EngineerDashboardDto(pendingEnquiries, pendingQuotations, ordersInProduction, ordersAwaitingShipment);
     }
 
     // ---- Enquiry list -----------------------------------------------------------
 
-    public async Task<PagedResult<UpdaterEnquiryListItemDto>> GetEnquiriesAsync(
+    public async Task<PagedResult<EngineerEnquiryListItemDto>> GetEnquiriesAsync(
         int page = 1, int pageSize = 20, string? search = null, string? status = null, Guid? companyId = null)
     {
         page = Math.Max(1, page);
@@ -68,7 +68,7 @@ public class EngineerService(
             .OrderByDescending(r => r.CreatedAtUtc)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(r => new UpdaterEnquiryListItemDto(
+            .Select(r => new EngineerEnquiryListItemDto(
                 r.Id, r.ProductType, r.CompanyName, r.Quantity,
                 r.Status, r.IsDraft,
                 r.Assignments.Where(a => a.IsActive).Select(a => (Guid?)a.AssignedToUserId).FirstOrDefault(),
@@ -77,12 +77,12 @@ public class EngineerService(
                 r.Files.OrderBy(f => f.UploadedAtUtc).Select(f => f.ContentType).FirstOrDefault()))
             .ToListAsync();
 
-        return new PagedResult<UpdaterEnquiryListItemDto>(items, page, pageSize, total);
+        return new PagedResult<EngineerEnquiryListItemDto>(items, page, pageSize, total);
     }
 
     // ---- Enquiry detail ---------------------------------------------------------
 
-    public async Task<UpdaterEnquiryDetailDto?> GetEnquiryAsync(Guid enquiryId)
+    public async Task<EngineerEnquiryDetailDto?> GetEnquiryAsync(Guid enquiryId)
     {
         var enquiry = await db.Enquiries
             .Include(r => r.Files)
@@ -99,12 +99,12 @@ public class EngineerService(
             .Select(q => (Guid?)q.Id)
             .FirstOrDefaultAsync();
 
-        return new UpdaterEnquiryDetailDto(
+        return new EngineerEnquiryDetailDto(
             enquiry.Id, enquiry.CompanyId ?? Guid.Empty, enquiry.FullName, enquiry.CompanyName, enquiry.Email, enquiry.Phone,
             enquiry.ProductType, enquiry.MaterialGrade, enquiry.Quantity,
             enquiry.DeliveryLocation, enquiry.RequirementDetails, enquiry.Status, enquiry.IsDraft,
             enquiry.SubmittedByIp, enquiry.CreatedAtUtc,
-            enquiry.Files.Select(f => new UpdaterEnquiryFileDto(
+            enquiry.Files.Select(f => new EngineerEnquiryFileDto(
                 f.Id, f.FileName, f.ContentType, f.SizeBytes,
                 f.StorageKey, f.UploadedByUserId, f.UploadedAtUtc)).ToList(),
             enquiry.StatusHistory.Select(h => new EnquiryTimelineEntryDto(
@@ -154,7 +154,7 @@ public class EngineerService(
         });
 
         await db.SaveChangesAsync();
-        await audit.WriteAsync("updater.enquiry.status_changed", userId, "Enquiry", enquiry.Id.ToString(), ip);
+        await audit.WriteAsync("engineer.enquiry.status_changed", userId, "Enquiry", enquiry.Id.ToString(), ip);
         return true;
     }
 
@@ -177,7 +177,7 @@ public class EngineerService(
 
         db.EnquiryComments.Add(comment);
         await db.SaveChangesAsync();
-        await audit.WriteAsync("updater.enquiry.comment_added", userId, "EnquiryComment", comment.Id.ToString(), ip);
+        await audit.WriteAsync("engineer.enquiry.comment_added", userId, "EnquiryComment", comment.Id.ToString(), ip);
 
         return new EnquiryCommentDto(
             comment.Id, comment.AuthorUserId, comment.AuthorRole,
@@ -210,7 +210,7 @@ public class EngineerService(
         });
 
         await db.SaveChangesAsync();
-        await audit.WriteAsync("updater.enquiry.assigned", userId, "Enquiry", enquiryId.ToString(), ip);
+        await audit.WriteAsync("engineer.enquiry.assigned", userId, "Enquiry", enquiryId.ToString(), ip);
         return true;
     }
 }

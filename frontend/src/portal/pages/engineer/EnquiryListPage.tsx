@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { updaterApi, type UpdaterEnquiryListItem } from "../../../api/updaterApi";
+import { engineerApi, type EngineerEnquiryListItem } from "../../../api/engineerApi";
 import type { Paged } from "../../../api/customerApi";
 import { EmptyState, Loading } from "../../../components/ui";
 import { tokenStorage } from "../../../auth/tokenStorage";
@@ -56,7 +56,7 @@ function PriorityBadge({ priority }: { priority: string }) {
 }
 
 /*  CSV export                                                        */
-function exportToCsv(items: UpdaterEnquiryListItem[]) {
+function exportToCsv(items: EngineerEnquiryListItem[]) {
   const headers = ["Enquiry No.", "Customer", "Product", "Quantity", "Status", "Date", "Files", "Assigned"];
   const rows = items.map((r) => [
     enquiryNo(r.id),
@@ -88,7 +88,7 @@ function ListEnquiryImage({ enquiryId, fileId }: { enquiryId: string; fileId: st
     let cancelled = false;
     let objectUrl: string | null = null;
     const token = tokenStorage.getAccessToken();
-    fetch(`${config.apiBaseUrl}/api/v1/updater/enquiries/${enquiryId}/files/${fileId}/download`, {
+    fetch(`${config.apiBaseUrl}/api/v1/engineer/enquiries/${enquiryId}/files/${fileId}/download`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {}, credentials: "include",
     }).then((r) => { if (!r.ok) throw new Error(); return r.blob(); })
       .then((blob) => { if (!cancelled) { objectUrl = URL.createObjectURL(blob); setUrl(objectUrl); } })
@@ -101,12 +101,12 @@ function ListEnquiryImage({ enquiryId, fileId }: { enquiryId: string; fileId: st
 
 /* ---- main page ----------------------------------------------------- */
 
-export default function UpdaterEnquiryListPage() {
+export default function EngineerEnquiryListPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const companyId = searchParams.get("company") ?? "";
 
-  const [data, setData] = useState<Paged<UpdaterEnquiryListItem> | null>(null);
+  const [data, setData] = useState<Paged<EngineerEnquiryListItem> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -118,7 +118,7 @@ export default function UpdaterEnquiryListPage() {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
 
   const load = useCallback(() => {
-    updaterApi.enquiries(page, pageSize, search || undefined, statusFilter === "All" ? undefined : statusFilter, companyId || undefined)
+    engineerApi.enquiries(page, pageSize, search || undefined, statusFilter === "All" ? undefined : statusFilter, companyId || undefined)
       .then(setData)
       .catch((e: Error) => setError(e.message));
   }, [page, pageSize, search, statusFilter, companyId]);
@@ -172,9 +172,9 @@ export default function UpdaterEnquiryListPage() {
     { label: "Rejected", value: rejectedCount, hint: "Rejected", icon: XCircle, color: "var(--color-danger)", bg: "rgba(239,68,68,0.10)", glow: "rgba(239,68,68,0.22)" },
   ];
 
-  const openEnquiry = (r: UpdaterEnquiryListItem) => navigate(`/admin/enquiries/${r.id}`);
+  const openEnquiry = (r: EngineerEnquiryListItem) => navigate(`/admin/enquiries/${r.id}`);
 
-  const renderThumb = (r: UpdaterEnquiryListItem) => {
+  const renderThumb = (r: EngineerEnquiryListItem) => {
     if (r.firstFileId && r.firstFileContentType?.startsWith("image/")) {
       return <ListEnquiryImage enquiryId={r.id} fileId={r.firstFileId} />;
     }
@@ -184,7 +184,7 @@ export default function UpdaterEnquiryListPage() {
     return <span className="inv-avatar" style={{ background: "var(--bg-surface)" }} />;
   };
 
-  const renderRow = (r: UpdaterEnquiryListItem) => {
+  const renderRow = (r: EngineerEnquiryListItem) => {
     return (
       <tr key={r.id} onClick={() => openEnquiry(r)}>
         <td onClick={(e) => e.stopPropagation()}>
@@ -245,7 +245,7 @@ export default function UpdaterEnquiryListPage() {
     );
   };
 
-  const renderCard = (r: UpdaterEnquiryListItem) => {
+  const renderCard = (r: EngineerEnquiryListItem) => {
     return (
       <div key={r.id} className="inv-card" onClick={() => openEnquiry(r)}>
         <div className="inv-card__top">

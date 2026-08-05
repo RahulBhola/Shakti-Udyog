@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { adminApi } from "../../api/adminApi";
-import { updaterApi } from "../../api/updaterApi";
+import { engineerApi } from "../../api/engineerApi";
 import type { QuotationDetail as QD, QuotationTimelineEntry } from "../../api/customerApi";
 import { Loading } from "../../components/ui";
 import { formatDate, formatMoney } from "../shared";
@@ -149,7 +149,7 @@ export default function AdminQuotationDetailPage() {
                 className="inline-flex items-center gap-1.5 px-4 h-8 rounded-lg border border-[var(--border-default)] text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all">
                 <FileEdit size={15} /> Edit
               </button>
-              <button type="button" disabled={busy} onClick={() => void doAction(() => updaterApi.submitQuotation(id))}
+              <button type="button" disabled={busy} onClick={() => void doAction(() => engineerApi.submitQuotation(id))}
                 className="inline-flex items-center gap-1.5 px-4 h-8 rounded-lg bg-[var(--color-primary)] text-white text-[12px] font-semibold hover:bg-[var(--color-primary-hover)] disabled:opacity-50 transition-all">
                 {busy ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />} Submit
               </button>

@@ -3,7 +3,7 @@ import type { QuotationListItem, QuotationDetail, OrderListItem, OrderDetail, Pa
 
 /* ---- Updater-specific types ---------------------------------------------- */
 
-export interface UpdaterEnquiryListItem {
+export interface EngineerEnquiryListItem {
   id: string;
   productType: string;
   companyName: string | null;
@@ -18,7 +18,7 @@ export interface UpdaterEnquiryListItem {
   firstFileContentType: string | null;
 }
 
-export interface UpdaterEnquiryDetail {
+export interface EngineerEnquiryDetail {
   id: string;
   companyId: string;
   fullName: string;
@@ -58,19 +58,19 @@ export interface UpdaterEnquiryDetail {
   draftQuotationId: string | null;
 }
 
-export interface UpdaterDashboard {
+export interface EngineerDashboard {
   pendingEnquiries: number;
   pendingQuotations: number;
   ordersInProduction: number;
   ordersAwaitingShipment: number;
 }
 
-const base = "/api/v1/updater";
+const base = "/api/v1/engineer";
 
-export const updaterApi = {
+export const engineerApi = {
   // ---- Dashboard ----------------------------------------------------------
 
-  dashboard: () => apiGet<UpdaterDashboard>(`${base}/dashboard`),
+  dashboard: () => apiGet<EngineerDashboard>(`${base}/dashboard`),
 
   // ---- Enquiries ---------------------------------------------------------------
 
@@ -79,9 +79,9 @@ export const updaterApi = {
     if (search) params.set("search", search);
     if (status) params.set("status", status);
     if (companyId) params.set("companyId", companyId);
-    return apiGet<Paged<UpdaterEnquiryListItem>>(`${base}/enquiries?${params}`);
+    return apiGet<Paged<EngineerEnquiryListItem>>(`${base}/enquiries?${params}`);
   },
-  enquiry: (id: string) => apiGet<UpdaterEnquiryDetail>(`${base}/enquiries/${id}`),
+  enquiry: (id: string) => apiGet<EngineerEnquiryDetail>(`${base}/enquiries/${id}`),
   updateEnquiryStatus: (id: string, newStatus: string, note?: string) =>
     apiPatch<{ message: string }>(`${base}/enquiries/${id}/status`, { newStatus, note }),
   assignEnquiry: (id: string, assignedToUserId: string) =>
@@ -115,18 +115,19 @@ export const updaterApi = {
 
   // ---- Orders -------------------------------------------------------------
 
-  orders: (page = 1, pageSize = 20, search?: string, status?: string, companyId?: string) => {
+  orders: (page = 1, pageSize = 20, search?: string, status?: string, companyId?: string, assigned?: string) => {
     const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
     if (search) params.set("search", search);
     if (status) params.set("status", status);
     if (companyId) params.set("companyId", companyId);
+    if (assigned) params.set("assigned", assigned);
     return apiGet<Paged<OrderListItem>>(`${base}/orders?${params}`);
   },
   order: (id: string) => apiGet<OrderDetail>(`${base}/orders/${id}`),
   updateMilestone: (id: string, statusCode: string, customerMessage?: string) =>
     apiPatch<{ message: string }>(`${base}/orders/${id}/milestones`, { statusCode, customerMessage }),
-  createShipment: (id: string, transporter?: string, trackingNumber?: string) =>
-    apiPost<{ message: string }>(`${base}/orders/${id}/shipment`, { transporter, trackingNumber }),
+  createShipment: (id: string, transporter?: string, trackingNumber?: string, dispatchDateUtc?: string, estimatedArrivalUtc?: string) =>
+    apiPost<{ message: string }>(`${base}/orders/${id}/shipment`, { transporter, trackingNumber, dispatchDateUtc, estimatedArrivalUtc }),
   uploadOrderDocument: (id: string, file: File, category: string) => {
     const form = new FormData();
     form.append("file", file);

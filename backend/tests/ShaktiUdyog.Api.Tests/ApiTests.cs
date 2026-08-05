@@ -62,7 +62,7 @@ public class RoleConstantTests
     public void All_three_roles_are_defined()
     {
         Assert.Equal(
-            ["Admin", "DataUpdater", "Customer"],
+            ["Admin", "Engineer", "Customer"],
             ShaktiUdyog.Domain.Constants.Roles.All);
     }
 }

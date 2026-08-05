@@ -114,7 +114,8 @@ public record OrderListItemDto(
     Guid Id, string OrderNumber, string Status, string StatusLabel,
     DateTimeOffset PlacedAtUtc, DateTimeOffset? PromisedDispatchDateUtc,
     int TotalQuantity, DateTimeOffset LastUpdatedAtUtc,
-    string? CompanyName, string? ProductType);
+    string? CompanyName, string? ProductType,
+    Guid? AssignedToUserId, string? AssignedToName);
 
 public record OrderDetailDto(
     Guid Id, string OrderNumber, string? PurchaseOrderReference,
@@ -129,7 +130,8 @@ public record OrderDetailDto(
     DateTimeOffset? AdvancePaidAtUtc, string? AdvancePaymentRef,
     DateTimeOffset? AdvanceVerifiedAtUtc,
     decimal? QuotationTotal, string? PaymentTerms, Guid? QuotationId,
-    IReadOnlyList<OrderMilestoneDto> Milestones);
+    IReadOnlyList<OrderMilestoneDto> Milestones,
+    Guid? AssignedToUserId, string? AssignedToName);
 
 public record OrderItemDto(
     Guid Id, string PartNumber, string Description, string? MaterialGrade, string? DrawingRevision,
