@@ -146,6 +146,7 @@ public record OrderCommercialDto(
 
 public record ShipmentDto(
     Guid Id, string? Transporter, string? TrackingNumber,
+    string? VehicleNumber, string? PhoneNumber,
     DateTimeOffset? DispatchDateUtc, DateTimeOffset? EstimatedArrivalUtc,
     DateTimeOffset? DeliveredAtUtc, bool HasProofOfDelivery);
 

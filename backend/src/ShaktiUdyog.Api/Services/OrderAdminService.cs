@@ -44,7 +44,7 @@ public class OrderAdminService(AppDbContext db, IAuditWriter audit) : IOrderAdmi
         var (label, desc) = OrderStatuses.Labels.TryGetValue(o.Status, out var l) ? l : (o.Status, "");
         return new OrderDetailDto(o.Id, o.OrderNumber, o.PurchaseOrderReference, o.Status, label, desc, o.PlacedAtUtc, o.PromisedDispatchDateUtc, o.DeliveryAddress, o.LastUpdatedAtUtc,
             o.Items.Select(i => new OrderItemDto(i.Id, i.PartNumber, i.Description, i.MaterialGrade, i.DrawingRevision, i.Unit, i.QuantityOrdered, i.QuantityProduced, i.QuantityDispatched, i.UnitRate)).ToList(),
-            o.Shipments.Select(s => new ShipmentDto(s.Id, s.Transporter, s.TrackingNumber, s.DispatchDateUtc, s.EstimatedArrivalUtc, s.DeliveredAtUtc, s.ProofOfDeliveryDocumentId != null)).ToList(),
+            o.Shipments.Select(s => new ShipmentDto(s.Id, s.Transporter, s.TrackingNumber, s.VehicleNumber, s.PhoneNumber, s.DispatchDateUtc, s.EstimatedArrivalUtc, s.DeliveredAtUtc, s.ProofOfDeliveryDocumentId != null)).ToList(),
             null, [],
             o.AdvancePercent, o.AdvanceAmount, o.AdvancePaid, o.AdvancePaidAtUtc,
             o.AdvancePaymentRef, o.AdvanceVerifiedAtUtc,

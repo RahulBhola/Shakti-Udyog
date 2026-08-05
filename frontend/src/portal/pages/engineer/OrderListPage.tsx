@@ -134,7 +134,9 @@ export default function EngineerOrderListPage() {
   // Load the engineer list (admins only) for the inline assign control.
   useEffect(() => {
     if (!isAdmin) return;
-    adminApi.users().then((users) => setEngineers(users)).catch(() => {});
+    adminApi.users()
+      .then((users) => setEngineers(users.filter((u) => u.role === Roles.Engineer)))
+      .catch(() => {});
   }, [isAdmin]);
 
   const handleAssignOrder = async (orderId: string, engineerId: string) => {

@@ -126,8 +126,8 @@ export const engineerApi = {
   order: (id: string) => apiGet<OrderDetail>(`${base}/orders/${id}`),
   updateMilestone: (id: string, statusCode: string, customerMessage?: string) =>
     apiPatch<{ message: string }>(`${base}/orders/${id}/milestones`, { statusCode, customerMessage }),
-  createShipment: (id: string, transporter?: string, trackingNumber?: string, dispatchDateUtc?: string, estimatedArrivalUtc?: string) =>
-    apiPost<{ message: string }>(`${base}/orders/${id}/shipment`, { transporter, trackingNumber, dispatchDateUtc, estimatedArrivalUtc }),
+  createShipment: (id: string, transporter?: string, vehicleNumber?: string, phoneNumber?: string, dispatchDateUtc?: string, estimatedArrivalUtc?: string) =>
+    apiPost<{ message: string }>(`${base}/orders/${id}/shipment`, { transporter, vehicleNumber, phoneNumber, dispatchDateUtc, estimatedArrivalUtc }),
   uploadOrderDocument: (id: string, file: File, category: string) => {
     const form = new FormData();
     form.append("file", file);

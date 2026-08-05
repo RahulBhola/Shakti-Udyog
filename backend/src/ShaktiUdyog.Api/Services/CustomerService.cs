@@ -514,7 +514,8 @@ public class CustomerService(
                 i.Id, i.PartNumber, i.Description, i.MaterialGrade, i.DrawingRevision,
                 i.Unit, i.QuantityOrdered, i.QuantityProduced, i.QuantityDispatched, i.UnitRate)).ToList(),
             order.Shipments.Select(s => new ShipmentDto(
-                s.Id, s.Transporter, s.TrackingNumber, s.DispatchDateUtc,
+                s.Id, s.Transporter, s.TrackingNumber,
+                s.VehicleNumber, s.PhoneNumber, s.DispatchDateUtc,
                 s.EstimatedArrivalUtc, s.DeliveredAtUtc, s.ProofOfDeliveryDocumentId != null)).ToList(),
             invoice is null ? null : new OrderCommercialDto(
                 invoice.InvoiceNumber, invoice.IssueDateUtc, invoice.DueDateUtc,

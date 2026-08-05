@@ -51,14 +51,14 @@ public class PublicApiTests(AuthApiFactory factory) : IClassFixture<AuthApiFacto
         var resources = await _client.GetFromJsonAsync<List<Resource>>("/api/v1/public/resources");
         Assert.Equal(3, resources!.Count);
 
-        var detail = await _client.GetAsync("/api/v1/public/resources/how-to-prepare-a-casting-rfq");
+        var detail = await _client.GetAsync("/api/v1/public/resources/how-to-prepare-a-casting-enquiry");
         Assert.Equal(HttpStatusCode.OK, detail.StatusCode);
     }
 
     [Fact]
     public async Task Enquiry_with_valid_payload_is_accepted_and_returns_id()
     {
-        var response = await _client.PostAsJsonAsync("/api/v1/public/enquiries", ValidEnquiry());
+        var response = await _client.PostAsJsonAsync("/api/v1/public/contact-requests", ValidEnquiry());
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var body = await response.Content.ReadFromJsonAsync<Accepted>();
@@ -68,7 +68,7 @@ public class PublicApiTests(AuthApiFactory factory) : IClassFixture<AuthApiFacto
     [Fact]
     public async Task Enquiry_honeypot_returns_fake_success_without_persisting()
     {
-        var response = await _client.PostAsJsonAsync("/api/v1/public/enquiries", ValidEnquiry(website: "http://spam.example"));
+        var response = await _client.PostAsJsonAsync("/api/v1/public/contact-requests", ValidEnquiry(website: "http://spam.example"));
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var body = await response.Content.ReadFromJsonAsync<Accepted>();
@@ -78,7 +78,7 @@ public class PublicApiTests(AuthApiFactory factory) : IClassFixture<AuthApiFacto
     [Fact]
     public async Task Enquiry_with_invalid_email_returns_400()
     {
-        var response = await _client.PostAsJsonAsync("/api/v1/public/enquiries", new
+        var response = await _client.PostAsJsonAsync("/api/v1/public/contact-requests", new
         {
             fullName = "Test Person",
             companyName = "Test Co",
@@ -103,14 +103,14 @@ public class PublicApiTests(AuthApiFactory factory) : IClassFixture<AuthApiFacto
             message = "A valid-length test message.",
             consentGiven = false,
         };
-        var response = await _client.PostAsJsonAsync("/api/v1/public/enquiries", payload);
+        var response = await _client.PostAsJsonAsync("/api/v1/public/contact-requests", payload);
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Fact]
     public async Task Rfq_with_valid_payload_is_accepted()
     {
-        var response = await _client.PostAsJsonAsync("/api/v1/public/rfqs", new
+        var response = await _client.PostAsJsonAsync("/api/v1/public/enquiries", new
         {
             fullName = "Test Person",
             companyName = "Test Engineering Co",
@@ -130,7 +130,7 @@ public class PublicApiTests(AuthApiFactory factory) : IClassFixture<AuthApiFacto
     [Fact]
     public async Task Rfq_with_unknown_product_type_returns_400()
     {
-        var response = await _client.PostAsJsonAsync("/api/v1/public/rfqs", new
+        var response = await _client.PostAsJsonAsync("/api/v1/public/enquiries", new
         {
             fullName = "Test Person",
             companyName = "Test Co",

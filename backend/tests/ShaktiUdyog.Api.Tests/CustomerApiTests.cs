@@ -48,7 +48,7 @@ public class CustomerApiTests(AuthApiFactory factory) : IClassFixture<AuthApiFac
     {
         foreach (var path in new[]
         {
-            "/api/v1/customer/dashboard", "/api/v1/customer/rfqs", "/api/v1/customer/quotations",
+            "/api/v1/customer/dashboard", "/api/v1/customer/enquiries", "/api/v1/customer/quotations",
             "/api/v1/customer/orders", "/api/v1/customer/invoices", "/api/v1/customer/documents",
             "/api/v1/customer/notifications", "/api/v1/customer/profile",
         })
@@ -89,7 +89,7 @@ public class CustomerApiTests(AuthApiFactory factory) : IClassFixture<AuthApiFac
 
         foreach (var path in new[]
         {
-            $"/api/v1/customer/rfqs/{Guid.NewGuid()}",
+            $"/api/v1/customer/enquiries/{Guid.NewGuid()}",
             $"/api/v1/customer/quotations/{Guid.NewGuid()}",
             $"/api/v1/customer/orders/{Guid.NewGuid()}",
             $"/api/v1/customer/orders/{Guid.NewGuid()}/timeline",
@@ -166,7 +166,7 @@ public class CustomerApiTests(AuthApiFactory factory) : IClassFixture<AuthApiFac
         var token = await LoginCustomerAsync();
         if (token is null) return;
 
-        var request = new HttpRequestMessage(HttpMethod.Post, "/api/v1/customer/rfqs")
+        var request = new HttpRequestMessage(HttpMethod.Post, "/api/v1/customer/enquiries")
         {
             Content = JsonContent.Create(new
             {

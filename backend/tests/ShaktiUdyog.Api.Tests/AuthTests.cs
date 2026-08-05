@@ -155,7 +155,7 @@ public class PermissionConstantTests
         string[] required =
         [
             "users.manage", "roles.manage", "content.edit", "content.publish",
-            "rfq.read.assigned", "rfq.update.assigned", "quotation.create",
+            "enquiry.read.assigned", "enquiry.update.assigned", "quotation.create",
             "order.update.assigned", "order.publish.customer_status",
             "invoice.manage", "payment.verify", "audit.read",
         ];

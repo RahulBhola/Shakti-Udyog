@@ -27,7 +27,7 @@ public interface IOrderEngineerService
 }
 
 public record MilestoneRequest(string StatusCode, string? CustomerMessage, string? InternalNote);
-public record CreateShipmentRequest(string? Transporter, string? TrackingNumber, DateTimeOffset? DispatchDateUtc, DateTimeOffset? EstimatedArrivalUtc);
+public record CreateShipmentRequest(string? Transporter, string? VehicleNumber, string? PhoneNumber, DateTimeOffset? DispatchDateUtc, DateTimeOffset? EstimatedArrivalUtc);
 public record OrderCommentRequest(string Message, bool IsCustomerVisible = true);
 public record OrderCommentResponseDto(string AuthorRole, string? AuthorName, string Message, DateTimeOffset CreatedAtUtc);
 
@@ -97,6 +97,7 @@ public class OrderEngineerService(
             o.Items.Select(i => new OrderItemDto(i.Id, i.PartNumber, i.Description, i.MaterialGrade,
                 i.DrawingRevision, i.Unit, i.QuantityOrdered, i.QuantityProduced, i.QuantityDispatched, i.UnitRate)).ToList(),
             o.Shipments.Select(s => new ShipmentDto(s.Id, s.Transporter, s.TrackingNumber,
+                s.VehicleNumber, s.PhoneNumber,
                 s.DispatchDateUtc, s.EstimatedArrivalUtc, s.DeliveredAtUtc, s.ProofOfDeliveryDocumentId != null)).ToList(),
             latestInvoice, documents,
             o.AdvancePercent, o.AdvanceAmount, o.AdvancePaid, o.AdvancePaidAtUtc,
@@ -129,7 +130,7 @@ public class OrderEngineerService(
         var o = await db.Orders.SingleOrDefaultAsync(x => x.Id == id);
         if (o is null) return null;
         if (!CanManage(o, userId, callerIsAdmin)) throw new OrderAccessException();
-        db.Shipments.Add(new Shipment { Id = Guid.NewGuid(), OrderId = id, Transporter = request.Transporter, TrackingNumber = request.TrackingNumber, DispatchDateUtc = request.DispatchDateUtc, EstimatedArrivalUtc = request.EstimatedArrivalUtc });
+        db.Shipments.Add(new Shipment { Id = Guid.NewGuid(), OrderId = id, Transporter = request.Transporter, VehicleNumber = request.VehicleNumber, PhoneNumber = request.PhoneNumber, DispatchDateUtc = request.DispatchDateUtc, EstimatedArrivalUtc = request.EstimatedArrivalUtc });
         await db.SaveChangesAsync();
         await audit.WriteAsync("engineer.order.shipment_created", userId, "Shipment", id.ToString(), ip);
         return true;

@@ -159,6 +159,8 @@ export interface Shipment {
   id: string;
   transporter: string | null;
   trackingNumber: string | null;
+  vehicleNumber: string | null;
+  phoneNumber: string | null;
   dispatchDateUtc: string | null;
   estimatedArrivalUtc: string | null;
   deliveredAtUtc: string | null;

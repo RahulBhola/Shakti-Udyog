@@ -303,17 +303,16 @@ public class AdminService(
     /// </summary>
     public async Task<bool?> AssignOrderAsync(Guid orderId, Guid? assignedToUserId, Guid userId, string? ip)
     {
-        var order = await db.Orders.Include(o => o.Assignments).SingleOrDefaultAsync(o => o.Id == orderId);
+        var order = await db.Orders.SingleOrDefaultAsync(o => o.Id == orderId);
         if (order is null) return null;
 
         // Unassign
         if (!assignedToUserId.HasValue)
         {
-            var active = order.Assignments.Where(a => a.IsActive).ToList();
-            foreach (var a in active) { a.IsActive = false; a.UnassignedAtUtc = DateTimeOffset.UtcNow; }
+            await DeactivateActiveAssignmentsAsync(orderId);
             order.AssignedToUserId = null;
             order.LastUpdatedAtUtc = DateTimeOffset.UtcNow;
-            await db.SaveChangesAsync();
+            await SaveWithConcurrencyRetryAsync();
             await audit.WriteAsync("admin.order.unassigned", userId, "Order", order.Id.ToString(), ip);
             return true;
         }
@@ -325,26 +324,55 @@ public class AdminService(
         var targetIsCustomer = await db.UserRoles.AnyAsync(ur => ur.UserId == assignedToUserId.Value && ur.RoleId == customerRoleId);
         if (targetIsCustomer) return false;
 
-        // Deactivate previous active assignments, preserving history.
-        foreach (var a in order.Assignments.Where(a => a.IsActive))
-        {
-            a.IsActive = false;
-            a.UnassignedAtUtc = DateTimeOffset.UtcNow;
-        }
+        // Deactivate any previous active assignment, preserving history.
+        await DeactivateActiveAssignmentsAsync(orderId);
 
         order.AssignedToUserId = assignedToUserId.Value;
         order.LastUpdatedAtUtc = DateTimeOffset.UtcNow;
-        order.Assignments.Add(new OrderAssignment
+        db.OrderAssignments.Add(new OrderAssignment
         {
             Id = Guid.NewGuid(),
-            OrderId = order.Id,
+            OrderId = orderId,
             AssignedToUserId = assignedToUserId.Value,
             AssignedByUserId = userId,
         });
 
-        await db.SaveChangesAsync();
+        await SaveWithConcurrencyRetryAsync();
         await audit.WriteAsync("admin.order.assigned", userId, "Order", order.Id.ToString(), ip);
         return true;
+    }
+
+    private async Task DeactivateActiveAssignmentsAsync(Guid orderId)
+    {
+        var active = await db.OrderAssignments
+            .Where(a => a.OrderId == orderId && a.IsActive)
+            .ToListAsync();
+        var now = DateTimeOffset.UtcNow;
+        foreach (var a in active)
+        {
+            a.IsActive = false;
+            a.UnassignedAtUtc = now;
+        }
+    }
+
+    /// <summary>
+    /// Saves, and on an optimistic-concurrency conflict reloads the modified rows
+    /// to their current database values and retries once. Keeps assign/reassign
+    /// resilient to concurrent order updates (e.g. a milestone change landing at
+    /// the same moment) without losing data.
+    /// </summary>
+    private async Task SaveWithConcurrencyRetryAsync()
+    {
+        try
+        {
+            await db.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            foreach (var entry in db.ChangeTracker.Entries().Where(e => e.State == EntityState.Modified))
+                await entry.ReloadAsync();
+            await db.SaveChangesAsync();
+        }
     }
 
     private static OrderDetailDto MapOrderDetail(Order o) => new(

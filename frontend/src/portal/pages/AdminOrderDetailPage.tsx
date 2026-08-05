@@ -161,7 +161,8 @@ export default function AdminOrderDetailPage() {
   const [shipmentMsg, setShipmentMsg] = useState<string | null>(null);
   const [shipmentForm, setShipmentForm] = useState({
     transporter: "",
-    trackingNumber: "",
+    vehicleNumber: "",
+    phoneNumber: "",
     dispatchDate: "",
     eta: "",
   });
@@ -272,7 +273,9 @@ export default function AdminOrderDetailPage() {
   // Load engineer list (admins only) for the assignment dropdown.
   useEffect(() => {
     if (!isAdmin || !id) return;
-    adminApi.users().then((users) => setEngineers(users)).catch(() => {});
+    adminApi.users()
+      .then((users) => setEngineers(users.filter((u) => u.role === Roles.Engineer)))
+      .catch(() => {});
   }, [isAdmin, id]);
 
   async function handleAssign(assignedToUserId: string | null) {
@@ -289,8 +292,8 @@ export default function AdminOrderDetailPage() {
   }
 
   async function handleCreateShipment() {
-    if (!shipmentForm.transporter.trim() && !shipmentForm.trackingNumber.trim()) {
-      setShipmentMsg("Enter at least a transporter or a tracking number.");
+    if (!shipmentForm.transporter.trim() && !shipmentForm.vehicleNumber.trim() && !shipmentForm.phoneNumber.trim()) {
+      setShipmentMsg("Enter at least a transporter, a vehicle number, or a phone number.");
       return;
     }
     setShipmentBusy(true);
@@ -299,12 +302,13 @@ export default function AdminOrderDetailPage() {
       await engineerApi.createShipment(
         id,
         shipmentForm.transporter.trim() || undefined,
-        shipmentForm.trackingNumber.trim() || undefined,
+        shipmentForm.vehicleNumber.trim() || undefined,
+        shipmentForm.phoneNumber.trim() || undefined,
         shipmentForm.dispatchDate ? new Date(shipmentForm.dispatchDate).toISOString() : undefined,
         shipmentForm.eta ? new Date(shipmentForm.eta).toISOString() : undefined,
       );
       setShowShipmentModal(false);
-      setShipmentForm({ transporter: "", trackingNumber: "", dispatchDate: "", eta: "" });
+      setShipmentForm({ transporter: "", vehicleNumber: "", phoneNumber: "", dispatchDate: "", eta: "" });
       const o = await engineerApi.order(id);
       setOrder(o);
       setActionMsg("Shipment created.");
@@ -503,7 +507,8 @@ export default function AdminOrderDetailPage() {
                   <div key={s.id} className="border border-[var(--border-default)] rounded-lg p-4">
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                       <Field label="Transporter" value={s.transporter ?? "—"} icon={Truck} />
-                      <Field label="Tracking #" value={s.trackingNumber ?? "—"} />
+                      <Field label="Vehicle #" value={s.vehicleNumber ?? "—"} icon={Truck} />
+                      <Field label="Phone" value={s.phoneNumber ?? "—"} icon={Truck} />
                       <Field label="Dispatch Date" value={formatDate(s.dispatchDateUtc)} icon={Calendar} />
                       <Field label="ETA" value={formatDate(s.estimatedArrivalUtc)} icon={Clock} />
                       <Field label="Delivered" value={formatDate(s.deliveredAtUtc)} icon={CheckCircle2} />
@@ -1055,11 +1060,19 @@ export default function AdminOrderDetailPage() {
                     placeholder="e.g. XYZ Transport Co."
                     className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2.5 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--color-primary)]" />
                 </div>
-                <div>
-                  <label className="text-[12px] font-medium text-[var(--text-primary)] block mb-1">Tracking / LR Number</label>
-                  <input type="text" value={shipmentForm.trackingNumber} onChange={(e) => setShipmentForm(f => ({ ...f, trackingNumber: e.target.value }))}
-                    placeholder="e.g. LR-102938"
-                    className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2.5 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--color-primary)]" />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[12px] font-medium text-[var(--text-primary)] block mb-1">Vehicle Number</label>
+                    <input type="text" value={shipmentForm.vehicleNumber} onChange={(e) => setShipmentForm(f => ({ ...f, vehicleNumber: e.target.value }))}
+                      placeholder="e.g. PB10 AB 1234"
+                      className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2.5 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--color-primary)]" />
+                  </div>
+                  <div>
+                    <label className="text-[12px] font-medium text-[var(--text-primary)] block mb-1">Phone Number</label>
+                    <input type="tel" value={shipmentForm.phoneNumber} onChange={(e) => setShipmentForm(f => ({ ...f, phoneNumber: e.target.value }))}
+                      placeholder="e.g. +91 98xxx xxxxx"
+                      className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2.5 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--color-primary)]" />
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -1073,7 +1086,7 @@ export default function AdminOrderDetailPage() {
                       className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2.5 text-[13px] text-[var(--text-primary)] outline-none focus:border-[var(--color-primary)]" />
                   </div>
                 </div>
-                <p className="text-[11px] text-[var(--text-muted)]">Enter at least a transporter or a tracking number.</p>
+                <p className="text-[11px] text-[var(--text-muted)]">Enter at least a transporter, a vehicle number, or a phone number.</p>
               </div>
 
               <div className="border-t border-[var(--border-default)] my-4" />

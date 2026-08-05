@@ -8,6 +8,10 @@ public class Shipment
     public Order Order { get; set; } = null!;
     public string? Transporter { get; set; }
     public string? TrackingNumber { get; set; }
+    /// <summary>Vehicle/lorry registration number used for this dispatch.</summary>
+    public string? VehicleNumber { get; set; }
+    /// <summary>Transporter contact phone number for this dispatch.</summary>
+    public string? PhoneNumber { get; set; }
     public DateTimeOffset? DispatchDateUtc { get; set; }
     public DateTimeOffset? EstimatedArrivalUtc { get; set; }
     public DateTimeOffset? DeliveredAtUtc { get; set; }

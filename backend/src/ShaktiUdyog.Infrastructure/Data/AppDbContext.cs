@@ -510,6 +510,8 @@ public DbSet<KanbanTask> KanbanTasks => Set<KanbanTask>();
             entity.ToTable("Shipments");
             entity.Property(s => s.Transporter).HasMaxLength(200);
             entity.Property(s => s.TrackingNumber).HasMaxLength(100);
+            entity.Property(s => s.VehicleNumber).HasMaxLength(50);
+            entity.Property(s => s.PhoneNumber).HasMaxLength(30);
             entity.HasOne(s => s.Order).WithMany(o => o.Shipments)
                 .HasForeignKey(s => s.OrderId).OnDelete(DeleteBehavior.Cascade);
         });
