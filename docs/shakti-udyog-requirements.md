@@ -458,7 +458,7 @@ frontend:
   alternative: Angular with TypeScript
   responsibilities:
     - Public marketing website and product catalogue
-    - Customer portal, data-updater portal, and administrator portal
+    - Customer portal, engineer portal, and administrator portal
     - Responsive design, form validation, dashboard charts, and role-based routing
 backend:
   framework: ASP.NET Core Web API (.NET 8 or later)
@@ -502,7 +502,7 @@ applications:
 
 > Customer accounts must be created only after approval by an administrator. A user may have more than one role only where business policy allows it.
 
-| Capability | Visitor | Customer | Data Updater | Admin |
+| Capability | Visitor | Customer | Engineer | Admin |
 | --- | :---: | :---: | :---: | :---: |
 | View public site and catalogue | Yes | Yes | Yes | Yes |
 | Submit an Enquiry | Yes | Yes | Yes (on behalf of customer) | Yes |
@@ -549,7 +549,7 @@ customer_features:
     - Manage personal password and multi-factor authentication settings
 ```
 
-### Data-Updater Portal
+### Engineer Portal
 
 ```yaml
 data_updater_features:
@@ -689,14 +689,14 @@ customer_api:
   - "POST /api/v1/customer/payments/proof"
   - "GET /api/v1/customer/documents/{id}/download"
 updater_api:
-  - "POST /api/v1/updater/products"
-  - "PATCH /api/v1/updater/products/{id}"
-  - "PATCH /api/v1/updater/enquirys/{id}/status"
-  - "PATCH /api/v1/updater/orders/{id}/milestones"
-  - "PATCH /api/v1/updater/orders/{id}/fulfilment"
-  - "POST /api/v1/updater/orders/{id}/shipments"
-  - "POST /api/v1/updater/invoices"
-  - "POST /api/v1/updater/documents"
+  - "POST /api/v1/engineer/products"
+  - "PATCH /api/v1/engineer/products/{id}"
+  - "PATCH /api/v1/engineer/enquirys/{id}/status"
+  - "PATCH /api/v1/engineer/orders/{id}/milestones"
+  - "PATCH /api/v1/engineer/orders/{id}/fulfilment"
+  - "POST /api/v1/engineer/orders/{id}/shipments"
+  - "POST /api/v1/engineer/invoices"
+  - "POST /api/v1/engineer/documents"
 admin_api:
   - "GET /api/v1/admin/users"
   - "POST /api/v1/admin/users/invite"
@@ -753,12 +753,12 @@ security_requirements:
 
 ```text
 Customer submits Enquiry
-  → Data Updater validates details
+  → Engineer validates details
   → Admin / authorized sales approver reviews
   → Quotation issued to customer
   → Customer accepts or declines
   → Admin confirms order creation
-  → Data Updater records production milestones
+  → Engineer records production milestones
   → Customer receives status and approved documents
   → Invoice issued
   → Payment status recorded or online payment completed
@@ -768,7 +768,7 @@ Customer submits Enquiry
 ### Content Publishing Workflow
 
 ```text
-Data Updater creates or edits a draft
+Engineer creates or edits a draft
   → Admin reviews the change
   → Admin approves or rejects with a comment
   → Approved content is published
@@ -829,7 +829,7 @@ order_details_screen:
 
 ```yaml
 order_update_rules:
-  data_updater:
+  engineer:
     - "Can prepare milestone, quantity, shipment, document, and order-detail updates only for assigned work."
     - "Can mark a customer update as draft and attach supporting documents."
     - "Cannot change commercial totals, final invoice status, user access, or historical audit records without explicit permission."
@@ -853,7 +853,7 @@ authentication_requirements:
   login:
     - "Use email or approved username plus password."
     - "Support secure session renewal using short-lived JWT access tokens and rotated refresh tokens."
-    - "Require multi-factor authentication for Admin users; make it available for Data Updaters and Customers."
+    - "Require multi-factor authentication for Admin users; make it available for Engineers and Customers."
     - "Detect and rate-limit repeated failed login attempts; temporarily lock accounts according to policy."
   session_management:
     - "Allow users to view and revoke active sessions."
@@ -1017,7 +1017,7 @@ jira_automations:
     action: "Create an Order Epic with linked Tasks for pattern, production, quality, packing, and dispatch as applicable."
   - trigger: "Production or quality task is blocked"
     action: "Mark the Jira issue Blocked, notify the assignee and administrator, and record the reason."
-  - trigger: "Data Updater submits website content"
+  - trigger: "Engineer submits website content"
     action: "Create a content-approval Task and assign an administrator."
   - trigger: "Jira issue reaches Done"
     action: "Update only the corresponding internal task status after API validation; do not automatically alter customer-visible order status without authorization."
@@ -1052,7 +1052,7 @@ jira_api:
   - "POST /api/v1/admin/jira/sync/orders/{id}"
   - "GET /api/v1/admin/jira/issues/{issueKey}"
   - "POST /api/v1/integrations/jira/webhook"
-  - "GET /api/v1/updater/work-items"
+  - "GET /api/v1/engineer/work-items"
 ```
 
 ### Implementation Priority

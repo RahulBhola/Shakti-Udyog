@@ -1,6 +1,6 @@
 # Shakti Udyog Platform
 
-Secure iron-casting business platform for Shakti Udyog: public website plus Admin, Data Updater, and Customer portals.
+Secure iron-casting business platform for Shakti Udyog: public website plus Admin, Engineer, and Customer portals.
 
 - Functional source of truth: [`docs/shakti-udyog-requirements.md`](docs/shakti-udyog-requirements.md)
 - Project rules: [`CLAUDE.md`](CLAUDE.md)
@@ -142,4 +142,9 @@ npm run build
 
 - ✅ Milestone 1 — foundation: solution structure, EF Core + SQL Server, initial migration, role seeding, Swagger, health check, error handling, frontend scaffold.
 - ✅ Milestone 2 — authentication & authorization: JWT + refresh-token rotation, login/logout/refresh/forgot/reset/me endpoints, permission model and policy-based authorization, rate limiting, auth auditing, frontend auth foundation (context, protected routes, login page).
-- ⏭ Milestone 3 — public website & RFQ flow: marketing pages from the requirements copy, enquiry + RFQ forms with server-side validation, secure drawing uploads, spam protection.
+- ✅ Milestone 3 — public website & RFQ flow: marketing pages from the requirements copy, enquiry + RFQ forms with server-side validation, secure drawing uploads, spam protection.
+- ✅ Milestone 4 — customer portal: Enquiries, quotations, orders, tracking, documents, invoices, payments.
+- ✅ Milestone 5 — Engineer and Admin portals, including the production kanban board.
+- ⏭ Milestone 6 — Jira integration, reports, and refinements.
+
+Orders carry an **assigned engineer** (`Order.AssignedToUserId` + `OrderAssignments` history). Admins assign/reassign/unassign an order to an engineer (`PATCH /api/v1/admin/orders/{id}/assign`); engineers see and manage **only their assigned orders** (milestones, shipments, documents), with invalid access returning 403.

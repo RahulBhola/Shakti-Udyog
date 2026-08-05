@@ -1,6 +1,6 @@
 # Portal UI Design System (ERP List Views)
 
-> Source of truth for the premium ERP look used by the Admin / Data Updater / Customer
+> Source of truth for the premium ERP look used by the Admin / Engineer / Customer
 > **list pages** (Invoices, Quotations, Orders, Enquiries, Payments, etc.).
 > Read this before restyling or building any new list/table page in a portal.
 

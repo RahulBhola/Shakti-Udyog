@@ -845,6 +845,7 @@ Supported via `[data-theme="light"]` overrides with white backgrounds, darker te
 
 - **Backend-enforced**: Every non-public endpoint has `[Authorize]` — never rely on frontend-only hiding
 - **Customer isolation**: All customer queries filtered by authenticated user's company ID — never trust browser-supplied IDs
+- **Engineer order ownership**: Engineers can list/manage only orders **assigned to them** (`Order.AssignedToUserId`). Updating milestones, shipments, or documents on a non-assigned order returns **403** (`OrderAccessException` → `OrderEngineerController`). Admins manage all orders and assign/reassign/unassign via `PATCH /api/v1/admin/orders/{id}/assign`. The current assignee is exposed to admin/engineer views as `assignedToUserId` / `assignedToName` on the order list and detail DTOs (customers never receive it).
 - **Least privilege**: New users have no company access until approved by admin
 - **Role changes**: Require admin confirmation
 

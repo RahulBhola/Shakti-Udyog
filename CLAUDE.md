@@ -2,7 +2,7 @@
 
 ## Product
 
-Build a secure iron-casting business platform for Shakti Udyog, including a public website and portals for Admin, Data Updater, and Customer users.
+Build a secure iron-casting business platform for Shakti Udyog, including a public website and portals for Admin, Engineer, and Customer users.
 
 Before planning or implementing significant work, read:
 
@@ -58,5 +58,5 @@ This is the source of truth for the premium ERP list UI (theme tokens, `.inv-*` 
 2. Authentication, password reset, roles, and authorization policies
 3. Public website and RFQ flow
 4. Customer portal: RFQs, quotations, orders, tracking, documents, invoices, and payments
-5. Data Updater and Admin portals
+5. Engineer and Admin portals
 6. Jira integration, reports, and refinements
