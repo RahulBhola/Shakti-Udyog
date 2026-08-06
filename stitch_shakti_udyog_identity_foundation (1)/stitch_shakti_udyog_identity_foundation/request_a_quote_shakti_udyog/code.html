@@ -1,0 +1,355 @@
+<!DOCTYPE html><html class="dark" lang="en"><head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Contact &amp; Request a Quote - Shakti Udyog</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-container-lowest": "#0a0e1a",
+                        "secondary-container": "#1a3a4e",
+                        "on-background": "#e0e8f0",
+                        "outline": "#4a6070",
+                        "secondary-fixed": "#c0d8e8",
+                        "on-secondary-fixed-variant": "#2a4a5e",
+                        "inverse-primary": "#0a4c6e",
+                        "inverse-on-surface": "#0a0e1a",
+                        "on-error": "#1a0000",
+                        "primary-container": "#0e4d6e",
+                        "background": "#0a0e1a",
+                        "on-tertiary-container": "#e8d0ff",
+                        "on-tertiary-fixed-variant": "#4d2a73",
+                        "on-secondary-fixed": "#0d1f2b",
+                        "tertiary": "#c8a0f0",
+                        "surface-bright": "#1a2438",
+                        "on-tertiary": "#1a002e",
+                        "surface-container": "#141c2e",
+                        "on-primary-fixed": "#001f2e",
+                        "inverse-surface": "#e0e8f0",
+                        "on-secondary": "#001f2e",
+                        "surface": "#0f1524",
+                        "tertiary-container": "#3d2060",
+                        "surface-container-low": "#111828",
+                        "surface-container-high": "#1a2438",
+                        "primary": "#7dd3fc",
+                        "tertiary-fixed": "#e8d0ff",
+                        "outline-variant": "#2a3a48",
+                        "primary-fixed-dim": "#7dd3fc",
+                        "on-primary-fixed-variant": "#004d73",
+                        "primary-fixed": "#c8eaff",
+                        "secondary": "#88b4cc",
+                        "on-primary": "#001f2e",
+                        "error-container": "#3d1414",
+                        "tertiary-fixed-dim": "#c8a0f0",
+                        "on-secondary-container": "#c0d8e8",
+                        "surface-dim": "#0f1524",
+                        "surface-tint": "#7dd3fc",
+                        "error": "#ff6b6b",
+                        "on-tertiary-fixed": "#1a002e",
+                        "secondary-fixed-dim": "#88b4cc",
+                        "surface-variant": "#1a2438",
+                        "on-surface-variant": "#a0b4c4",
+                        "on-surface": "#e0e8f0",
+                        "on-error-container": "#ffb3b3",
+                        "surface-container-highest": "#202c42",
+                        "on-primary-container": "#c8eaff"
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.5rem",
+                        lg: "1rem",
+                        xl: "1.5rem",
+                        full: "9999px"
+                    },
+                    fontFamily: {
+                        headline: ["Inter", "sans-serif"],
+                        display: ["Inter", "sans-serif"],
+                        body: ["Inter", "sans-serif"],
+                        label: ["Inter", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0a0e1a;
+            color: #e0e8f0;
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .glass-panel {
+            background: rgba(15, 21, 36, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(125, 211, 252, 0.1);
+        }
+
+        .glass-panel-elevated {
+            background: rgba(15, 21, 36, 0.75);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(125, 211, 252, 0.15);
+        }
+
+        .glass-input {
+            background: rgba(26, 36, 56, 0.4);
+            border: 1px solid rgba(125, 211, 252, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .glass-input:focus {
+            background: rgba(26, 36, 56, 0.6);
+            border-color: rgba(125, 211, 252, 0.5);
+            box-shadow: 0 0 15px rgba(125, 211, 252, 0.1);
+            outline: none;
+        }
+
+        .btn-glass {
+            background: rgba(125, 211, 252, 0.1);
+            border: 1px solid rgba(125, 211, 252, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .btn-glass:hover {
+            background: rgba(125, 211, 252, 0.2);
+            border-color: rgba(125, 211, 252, 0.4);
+            box-shadow: 0 0 20px rgba(125, 211, 252, 0.1);
+        }
+
+        .text-glow {
+            text-shadow: 0 0 20px rgba(125, 211, 252, 0.3);
+        }
+
+        .nav-link {
+            position: relative;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background-color: #7dd3fc;
+            transition: width 0.3s ease;
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body min-h-screen flex flex-col antialiased selection:bg-primary/30 selection:text-primary overflow-x-hidden">
+
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 bg-surface/60 backdrop-blur-xl border-b border-primary/10 shadow-[0_0_30px_rgba(125,211,252,0.05)] transition-all duration-300" id="main-nav"><div class="max-w-7xl mx-auto px-6 md:px-12 h-20 flex items-center justify-between">
+    <div class="flex-shrink-0">
+        <a href="#" class="flex items-center gap-2 group">
+            <span class="text-2xl font-bold tracking-tight text-on-surface">
+                SHAKTI <span class="text-primary">UDYOG</span>
+            </span>
+        </a>
+    </div>
+
+    <nav class="hidden md:flex items-center gap-8">
+        <a href="#" class="text-sm font-medium text-on-surface-variant hover:text-primary transition-colors">Capabilities</a>
+        <a href="#" class="text-sm font-medium text-on-surface-variant hover:text-primary transition-colors">Products</a>
+        <a href="#" class="text-sm font-medium text-on-surface-variant hover:text-primary transition-colors">Industries</a>
+        <a href="#" class="text-sm font-medium text-on-surface-variant hover:text-primary transition-colors">About Us</a>
+    </nav>
+
+    <div class="flex items-center gap-4">
+        <button class="bg-primary text-on-primary px-6 py-2.5 rounded-lg font-semibold text-sm hover:shadow-[0_0_20px_rgba(125,211,252,0.3)] transition-all active:scale-95">
+            Request a Quote
+        </button>
+        <button class="md:hidden text-on-surface p-2">
+            <span class="material-symbols-outlined">menu</span>
+        </button>
+    </div>
+</div></header>
+
+<!-- Main Content -->
+<main class="flex-grow pt-40 pb-32 relative overflow-hidden">
+    <!-- Atmospheric Background Glow -->
+    <div class="absolute inset-0 z-0">
+        <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[100px] pointer-events-none"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-64 h-64 bg-tertiary/10 rounded-full blur-[80px] pointer-events-none"></div>
+    </div>
+
+    <div class="container mx-auto px-6 md:px-12 relative z-10 max-w-7xl">
+        <!-- Header -->
+        <div class="mb-16 text-center max-w-3xl mx-auto">
+            <h1 class="text-4xl md:text-5xl lg:text-7xl font-headline font-bold text-glow tracking-tight mb-6">
+                Let’s Discuss Your <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-tertiary">Casting Requirement</span>
+            </h1>
+            <p class="text-xl text-on-surface-variant font-light leading-relaxed">
+                Connect with our engineering experts to discuss specifications, material grades, and production capabilities for your next precision casting project.
+            </p>
+        </div>
+
+        <!-- Bento Grid Layout -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 relative">
+            <!-- RFQ Form -->
+            <div class="lg:col-span-7 glass-panel-elevated rounded-2xl p-8 md:p-10 relative overflow-hidden group">
+                <div class="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-32 -mt-32 transition-transform duration-700 group-hover:scale-150"></div>
+                <h2 class="text-2xl font-headline font-semibold text-primary mb-8 flex items-center gap-3 relative z-10">
+                    <span class="material-symbols-outlined">description</span>
+                    Request for Quotation
+                </h2>
+                <form class="space-y-6 relative z-10">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium text-on-surface-variant ml-1">Full Name</label>
+                            <input class="w-full glass-input rounded-lg px-4 py-3 text-on-surface placeholder:text-outline-variant focus:ring-0" placeholder="John Doe" type="text">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium text-on-surface-variant ml-1">Company</label>
+                            <input class="w-full glass-input rounded-lg px-4 py-3 text-on-surface placeholder:text-outline-variant focus:ring-0" placeholder="Acme Corp" type="text">
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium text-on-surface-variant ml-1">Email Address</label>
+                        <input class="w-full glass-input rounded-lg px-4 py-3 text-on-surface placeholder:text-outline-variant focus:ring-0" placeholder="john@acmecorp.com" type="email">
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium text-on-surface-variant ml-1">Requirement Type</label>
+                            <select class="w-full glass-input rounded-lg px-4 py-3 text-on-surface focus:ring-0 appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%237dd3fc%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_1rem_center] bg-[length:0.75rem_auto]">
+                                <option class="bg-surface text-on-surface">Grey Iron</option>
+                                <option class="bg-surface text-on-surface">Ductile Iron</option>
+                                <option class="bg-surface text-on-surface">Machined Casting</option>
+                            </select>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium text-on-surface-variant ml-1">Material Grade</label>
+                            <input class="w-full glass-input rounded-lg px-4 py-3 text-on-surface placeholder:text-outline-variant focus:ring-0" placeholder="e.g. SG 500/7" type="text">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium text-on-surface-variant ml-1">Est. Quantity</label>
+                            <input class="w-full glass-input rounded-lg px-4 py-3 text-on-surface placeholder:text-outline-variant focus:ring-0" placeholder="1000" type="number">
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium text-on-surface-variant ml-1">Project Details / Message</label>
+                        <textarea class="w-full glass-input rounded-lg px-4 py-3 text-on-surface placeholder:text-outline-variant focus:ring-0 resize-none" placeholder="Describe your casting requirements, dimensional tolerances, and any specific machining needs..." rows="4"></textarea>
+                    </div>
+                    <button class="w-full bg-primary/20 hover:bg-primary/30 border border-primary/40 text-primary px-8 py-4 rounded-xl font-semibold tracking-wide transition-all duration-300 hover:shadow-[0_0_30px_rgba(125,211,252,0.2)] flex items-center justify-center gap-3 active:scale-[0.98]" type="submit">
+                        Submit Quotation Request
+                        <span class="material-symbols-outlined">arrow_right_alt</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Contact Details & Map -->
+            <div class="lg:col-span-5 flex flex-col gap-8">
+                <!-- Contact Info Card -->
+                <div class="glass-panel rounded-2xl p-8 flex flex-col h-full">
+                    <h3 class="text-xl font-headline font-semibold text-tertiary mb-8">Contact Information</h3>
+                    <div class="space-y-8 flex-grow">
+                        <div class="flex items-start gap-4 group">
+                            <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 group-hover:bg-primary/20 transition-colors shrink-0">
+                                <span class="material-symbols-outlined text-primary">location_on</span>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-on-surface-variant mb-1">Corporate Office &amp; Foundry</p>
+                                <p class="text-on-surface leading-relaxed">St No. 5, Daba Road<br>Ludhiana, Punjab, India</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-4 group">
+                            <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 group-hover:bg-primary/20 transition-colors shrink-0">
+                                <span class="material-symbols-outlined text-primary">call</span>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-on-surface-variant mb-1">Direct Line</p>
+                                <p class="text-on-surface leading-relaxed font-semibold">+91 8043848014</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-4 group">
+                            <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 group-hover:bg-primary/20 transition-colors shrink-0">
+                                <span class="material-symbols-outlined text-primary">mail</span>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-on-surface-variant mb-1">Email Inquiries</p>
+                                <p class="text-on-surface leading-relaxed">sales@shaktiudyog.com</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-8 pt-6 border-t border-primary/10">
+                        <div class="flex items-center gap-3 text-on-surface-variant">
+                            <span class="material-symbols-outlined text-primary">schedule</span>
+                            <div>
+                                <p class="text-sm font-medium text-on-surface">Business Hours</p>
+                                <p class="text-xs mt-1">Mon - Sat: 9:00 AM - 6:00 PM (IST)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Map Card -->
+                <div class="glass-panel rounded-2xl p-2 relative overflow-hidden h-64 lg:h-auto lg:flex-grow min-h-[250px]">
+                    <img class="w-full h-full object-cover rounded-xl opacity-60 hover:opacity-100 transition-opacity duration-700" data-alt="A highly detailed satellite map view of Ludhiana, India, presented in a dark-mode UI aesthetic. The map features deep navy and charcoal blacks for landmasses, with ethereal ice-blue glowing lines representing major roads and highways. The aesthetic is modern, sophisticated, and technological, aligning with a premium glassmorphic UI design. Soft lavender accents highlight key industrial zones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCGSAVqYsmfUmQUxEWjHRH4hr7q2Owsm49TXKriGwT9GkSP8vI4cro5GX8sfDyguJdwPfj4iLa-1iiIdOv1piC187w4d6RkEYWDs9EjdcpXO543VZndUOQQibbDJ7kgvRkoIBdieTZnYVH-wCqNzQjSiI-wJ3xrlKuqkNhD7nCByHI7TjDq4SyzTW_L1MzXl-jvO76_DQorvF4T_DF-s9DQL_r-FTSXQUmaJjGl5w2kjpYCdci_A7nvgGB9YNhvD6CJaJ9QJZPlRkQ">
+                    <div class="absolute inset-0 bg-gradient-to-t from-background/40 to-transparent pointer-events-none"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Footer -->
+<footer class="bg-surface-container-lowest w-full rounded-t-xl border-t border-outline-variant relative z-10">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-8 px-12 py-16 w-full max-w-7xl mx-auto">
+        <!-- Brand Column -->
+        <div class="col-span-1 md:col-span-1">
+            <a class="text-lg font-bold text-on-surface flex items-center gap-2 mb-4" href="#">
+                <span class="material-symbols-outlined text-primary">factory</span>
+                SHAKTI UDYOG
+            </a>
+            <p class="font-body text-sm text-on-surface-variant mb-6 leading-relaxed">
+                Precision Iron Casting Excellence. Delivering robust solutions for demanding manufacturing sectors worldwide.
+            </p>
+            <p class="font-body text-xs text-on-surface-variant/60">
+                © 2024 Shakti Udyog. Precision Iron Casting Excellence.
+            </p>
+        </div>
+        <!-- Links -->
+        <div class="col-span-1 flex flex-col gap-3">
+            <h4 class="text-on-surface font-semibold mb-2">Company</h4>
+            <a class="font-body text-sm text-on-surface-variant hover:text-tertiary transition-colors opacity-80 hover:opacity-100" href="#">About Us</a>
+            <a class="font-body text-sm text-on-surface-variant hover:text-tertiary transition-colors opacity-80 hover:opacity-100" href="#">Quality Policy</a>
+            <a class="font-body text-sm text-on-surface-variant hover:text-tertiary transition-colors opacity-80 hover:opacity-100" href="#">Accreditations</a>
+            <a class="font-body text-sm text-on-surface-variant hover:text-tertiary transition-colors opacity-80 hover:opacity-100" href="#">Career</a>
+        </div>
+        <!-- Capabilities -->
+        <div class="col-span-1 flex flex-col gap-3">
+            <h4 class="text-on-surface font-semibold mb-2">Capabilities</h4>
+            <a class="font-body text-sm text-on-surface-variant hover:text-tertiary transition-colors opacity-80 hover:opacity-100" href="#">Grey Iron Castings</a>
+            <a class="font-body text-sm text-on-surface-variant hover:text-tertiary transition-colors opacity-80 hover:opacity-100" href="#">Ductile Iron Castings</a>
+            <a class="font-body text-sm text-on-surface-variant hover:text-tertiary transition-colors opacity-80 hover:opacity-100" href="#">Custom Tooling</a>
+            <a class="font-body text-sm text-on-surface-variant hover:text-tertiary transition-colors opacity-80 hover:opacity-100" href="#">CNC Machining</a>
+        </div>
+        <!-- Contact -->
+        <div class="col-span-1 flex flex-col gap-3">
+            <h4 class="text-on-surface font-semibold mb-2">Connect</h4>
+            <a class="font-body text-sm text-on-surface-variant hover:text-tertiary transition-colors opacity-80 hover:opacity-100 flex items-center gap-2" href="#">
+                <span class="material-symbols-outlined text-sm">mail</span>
+                Contact Support
+            </a>
+            <a class="font-body text-sm text-on-surface-variant hover:text-tertiary transition-colors opacity-80 hover:opacity-100 flex items-center gap-2" href="#">
+                <span class="material-symbols-outlined text-sm">phone</span>
+                +91 (0) 123 456 7890
+            </a>
+            <a class="font-body text-sm text-on-surface-variant hover:text-tertiary transition-colors opacity-80 hover:opacity-100 flex items-center gap-2 mt-4" href="#">
+                <span class="material-symbols-outlined text-sm">location_on</span>
+                Industrial Area, Phase 1, India
+            </a>
+        </div>
+    </div>
+
+</footer></body></html>

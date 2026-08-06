@@ -1,0 +1,590 @@
+<!-- Read `CLAUDE.md` and `docs/shakti-udyog-requirements.md` again before making any changes.
+
+Start **Milestone 11 only**: Invoice & Payment Management.
+
+First inspect the existing codebase and provide a concise implementation plan. Wait for my approval before making changes.
+
+Implement ONLY the complete Invoice & Payment Management module.
+
+Reuse the existing Authentication, Customer Portal, Admin Portal, Data Updater Portal, Order Management, Document Management, and Reporting modules.
+
+Do NOT duplicate business logic.
+
+Do NOT implement:
+
+- Payment Gateway Integration
+- Razorpay
+- Stripe
+- PayPal
+- UPI Integration
+- Banking APIs
+- Jira Integration
+- Email Providers
+- SMS Providers
+- Accounting ERP Integration
+- CRM Integration
+
+Use interfaces/placeholders where external integrations are required.
+
+--------------------------------------------------
+GOAL
+--------------------------------------------------
+
+Implement a complete Invoice & Payment Management System supporting the complete financial workflow after Order fulfillment.
+
+The system should support:
+
+• Invoice Generation
+• Invoice Approval
+• Customer Invoice Portal
+• Payment Recording
+• Payment Verification
+• Partial Payments
+• Outstanding Tracking
+• Credit Notes
+• Debit Notes
+• Payment History
+• Financial Dashboard
+
+--------------------------------------------------
+WORKFLOW
+--------------------------------------------------
+
+Delivered Order
+
+↓
+
+Invoice Draft
+
+↓
+
+Invoice Approved
+
+↓
+
+Invoice Issued
+
+↓
+
+Customer Payment
+
+↓
+
+Payment Verification
+
+↓
+
+Paid
+
+↓
+
+Closed
+
+Additional statuses:
+
+Cancelled
+
+Overdue
+
+Partially Paid
+
+Pending Verification
+
+Disputed
+
+--------------------------------------------------
+INVOICE FEATURES
+--------------------------------------------------
+
+Generate Invoice
+
+Invoice Numbering
+
+Invoice Revisions
+
+GST Details
+
+HSN/SAC Codes
+
+Taxes
+
+Discounts
+
+Freight
+
+Packing Charges
+
+Other Charges
+
+Due Date
+
+Payment Terms
+
+Notes
+
+Attachments
+
+Invoice History
+
+Invoice PDF Placeholder
+
+--------------------------------------------------
+PAYMENT FEATURES
+--------------------------------------------------
+
+Record Payment
+
+Offline Payment
+
+Cheque
+
+NEFT
+
+RTGS
+
+IMPS
+
+Bank Transfer
+
+Cash
+
+UPI Placeholder
+
+Partial Payment
+
+Multiple Payments
+
+Outstanding Balance
+
+Payment Notes
+
+Payment Verification
+
+Payment History
+
+--------------------------------------------------
+CUSTOMER PORTAL
+--------------------------------------------------
+
+Customers can:
+
+View Invoices
+
+Search
+
+Filter
+
+Download Invoice PDF (Placeholder)
+
+Upload Payment Proof
+
+View Outstanding Balance
+
+View Payment History
+
+Track Verification Status
+
+View Credit Notes
+
+View Debit Notes
+
+--------------------------------------------------
+DATA UPDATER
+--------------------------------------------------
+
+Can:
+
+Create Invoice
+
+Edit Draft
+
+Upload Invoice
+
+Upload Supporting Documents
+
+Record Offline Payments
+
+View Outstanding
+
+Cannot Approve Payments
+
+--------------------------------------------------
+ADMIN
+--------------------------------------------------
+
+Can:
+
+Approve Invoice
+
+Cancel Invoice
+
+Verify Payments
+
+Approve Payment Proof
+
+Issue Credit Note
+
+Issue Debit Note
+
+Override Status
+
+View Financial Reports
+
+--------------------------------------------------
+DATABASE
+--------------------------------------------------
+
+Create entities:
+
+Invoice
+
+InvoiceItem
+
+InvoiceStatusHistory
+
+InvoiceAttachment
+
+Payment
+
+PaymentProof
+
+PaymentAllocation
+
+PaymentHistory
+
+CreditNote
+
+DebitNote
+
+PaymentMethod
+
+Relationships:
+
+Order → Invoice
+
+Invoice → Items
+
+Invoice → Payments
+
+Invoice → Documents
+
+Payment → Proof
+
+Generate EF Core migrations.
+
+--------------------------------------------------
+BACKEND APIs
+--------------------------------------------------
+
+Customer
+
+GET /api/v1/customer/invoices
+
+GET /api/v1/customer/invoices/{id}
+
+GET /api/v1/customer/payments
+
+POST /api/v1/customer/payments/proof
+
+GET /api/v1/customer/outstanding
+
+Data Updater
+
+GET /api/v1/updater/invoices
+
+POST /api/v1/updater/invoices
+
+PUT /api/v1/updater/invoices/{id}
+
+POST /api/v1/updater/payments
+
+Admin
+
+GET /api/v1/admin/invoices
+
+PATCH /api/v1/admin/invoices/{id}/approve
+
+PATCH /api/v1/admin/invoices/{id}/cancel
+
+PATCH /api/v1/admin/payments/{id}/verify
+
+PATCH /api/v1/admin/payments/{id}/reject
+
+POST /api/v1/admin/credit-notes
+
+POST /api/v1/admin/debit-notes
+
+--------------------------------------------------
+FINANCIAL DASHBOARD
+--------------------------------------------------
+
+Implement dashboard widgets:
+
+Total Revenue (Placeholder)
+
+Outstanding Amount
+
+Collected Amount
+
+Pending Verification
+
+Overdue Invoices
+
+Invoices This Month
+
+Payments This Month
+
+Average Payment Time
+
+Top Customers by Revenue
+
+Monthly Invoice Trend
+
+Monthly Payment Trend
+
+Collection Efficiency
+
+Aging Analysis
+
+Recent Financial Activities
+
+--------------------------------------------------
+GRAPHS & CHARTS
+--------------------------------------------------
+
+Implement interactive dashboards with filters.
+
+Charts:
+
+• Monthly Invoice Trend (Line)
+
+• Monthly Payment Collection (Bar)
+
+• Invoice Status Distribution (Pie)
+
+• Payment Method Distribution (Donut)
+
+• Revenue by Month (Line)
+
+• Outstanding Aging (Bar)
+
+• Top Customers by Revenue (Horizontal Bar)
+
+• Collection Trend (Area)
+
+• Payment Verification Status (Pie)
+
+Support:
+
+Date Range
+
+Export Placeholder
+
+Refresh
+
+Responsive Charts
+
+--------------------------------------------------
+VALIDATION
+--------------------------------------------------
+
+Implement FluentValidation for:
+
+Invoice
+
+Invoice Item
+
+Payment
+
+Payment Proof
+
+Credit Note
+
+Debit Note
+
+Payment Verification
+
+--------------------------------------------------
+SECURITY
+--------------------------------------------------
+
+Implement:
+
+JWT Authentication
+
+Role Authorization
+
+Policy Authorization
+
+IDOR Prevention
+
+Secure Document Access
+
+Audit Sensitive Operations
+
+--------------------------------------------------
+AUDIT LOGGING
+--------------------------------------------------
+
+Audit:
+
+Invoice Created
+
+Invoice Updated
+
+Invoice Approved
+
+Invoice Cancelled
+
+Payment Recorded
+
+Payment Verified
+
+Payment Rejected
+
+Credit Note Created
+
+Debit Note Created
+
+Invoice Downloaded
+
+Include:
+
+User
+
+Role
+
+Company
+
+Timestamp
+
+Trace ID
+
+IP Address
+
+--------------------------------------------------
+REPORTING
+--------------------------------------------------
+
+Generate reports:
+
+Invoice Summary
+
+Outstanding Report
+
+Revenue Report
+
+Payment Report
+
+Overdue Report
+
+Customer Statement
+
+Credit Note Report
+
+Debit Note Report
+
+Export placeholders only.
+
+--------------------------------------------------
+PERFORMANCE
+--------------------------------------------------
+
+Server-side Pagination
+
+Optimized Financial Queries
+
+Dashboard Aggregation
+
+Caching
+
+Lazy Loading
+
+--------------------------------------------------
+SWAGGER
+--------------------------------------------------
+
+Document every API.
+
+JWT Authentication.
+
+Role requirements.
+
+Request/Response examples.
+
+Validation errors.
+
+--------------------------------------------------
+TESTING
+--------------------------------------------------
+
+Run:
+
+Backend Build
+
+Frontend Build
+
+EF Core Migration
+
+Swagger
+
+CRUD Tests
+
+Authorization Tests
+
+Validation Tests
+
+Financial Calculation Tests
+
+Integration Tests
+
+Fix every build error before completion.
+
+--------------------------------------------------
+WHEN COMPLETE
+--------------------------------------------------
+
+Stop and report:
+
+1. Files created/modified
+
+2. React pages created
+
+3. Dashboard widgets implemented
+
+4. Financial charts implemented
+
+5. Database entities
+
+6. EF Core migrations
+
+7. APIs implemented
+
+8. Security implemented
+
+9. Validation implemented
+
+10. Audit logging implemented
+
+11. Build results
+
+12. Test results
+
+13. Remaining placeholders
+
+14. Recommended Milestone 12
+
+Follow every rule in `CLAUDE.md`.
+
+Do NOT implement:
+
+- Payment Gateway Integration
+- Razorpay
+- Stripe
+- PayPal
+- Banking APIs
+- Jira Integration
+- Email Providers
+- SMS Providers
+- ERP Accounting Integration
+- CRM Integration -->

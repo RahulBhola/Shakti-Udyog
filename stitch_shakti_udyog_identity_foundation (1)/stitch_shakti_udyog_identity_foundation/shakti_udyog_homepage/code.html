@@ -1,0 +1,374 @@
+<!DOCTYPE html><html class="dark" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Shakti Udyog - Precision Iron Castings</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-lowest": "#0a0e1a",
+                        "secondary-container": "#1a3a4e",
+                        "on-background": "#e0e8f0",
+                        "outline": "#4a6070",
+                        "secondary-fixed": "#c0d8e8",
+                        "on-secondary-fixed-variant": "#2a4a5e",
+                        "inverse-primary": "#0a4c6e",
+                        "inverse-on-surface": "#0a0e1a",
+                        "on-error": "#1a0000",
+                        "primary-container": "#0e4d6e",
+                        "background": "#0a0e1a",
+                        "on-tertiary-container": "#e8d0ff",
+                        "on-tertiary-fixed-variant": "#4d2a73",
+                        "on-secondary-fixed": "#0d1f2b",
+                        "tertiary": "#c8a0f0",
+                        "surface-bright": "#1a2438",
+                        "on-tertiary": "#1a002e",
+                        "surface-container": "#141c2e",
+                        "on-primary-fixed": "#001f2e",
+                        "inverse-surface": "#e0e8f0",
+                        "on-secondary": "#001f2e",
+                        "surface": "#0f1524",
+                        "tertiary-container": "#3d2060",
+                        "surface-container-low": "#111828",
+                        "surface-container-high": "#1a2438",
+                        "primary": "#7dd3fc",
+                        "tertiary-fixed": "#e8d0ff",
+                        "outline-variant": "#2a3a48",
+                        "primary-fixed-dim": "#7dd3fc",
+                        "on-primary-fixed-variant": "#004d73",
+                        "primary-fixed": "#c8eaff",
+                        "secondary": "#88b4cc",
+                        "on-primary": "#001f2e",
+                        "error-container": "#3d1414",
+                        "tertiary-fixed-dim": "#c8a0f0",
+                        "on-secondary-container": "#c0d8e8",
+                        "surface-dim": "#0f1524",
+                        "surface-tint": "#7dd3fc",
+                        "error": "#ff6b6b",
+                        "on-tertiary-fixed": "#1a002e",
+                        "secondary-fixed-dim": "#88b4cc",
+                        "surface-variant": "#1a2438",
+                        "on-surface-variant": "#a0b4c4",
+                        "on-surface": "#e0e8f0",
+                        "on-error-container": "#ffb3b3",
+                        "surface-container-highest": "#202c42",
+                        "on-primary-container": "#c8eaff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter", "sans-serif"],
+                        "display": ["Inter", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Inter", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #0a0e1a;
+            color: #e0e8f0;
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .glass-panel {
+            background: rgba(15, 21, 36, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(125, 211, 252, 0.1);
+        }
+        
+        .glass-panel-elevated {
+            background: rgba(15, 21, 36, 0.75);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(125, 211, 252, 0.15);
+        }
+        
+        .glow-effect:hover {
+            box-shadow: 0 0 30px rgba(125, 211, 252, 0.05);
+        }
+        
+        .text-glow {
+            text-shadow: 0 0 20px rgba(125, 211, 252, 0.3);
+        }
+        
+        .btn-glass {
+            background: rgba(125, 211, 252, 0.1);
+            border: 1px solid rgba(125, 211, 252, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-glass:hover {
+            background: rgba(125, 211, 252, 0.2);
+            border-color: rgba(125, 211, 252, 0.4);
+            box-shadow: 0 0 20px rgba(125, 211, 252, 0.1);
+        }
+        
+        .nav-link {
+            position: relative;
+        }
+        
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background-color: #7dd3fc;
+            transition: width 0.3s ease;
+        }
+        
+        .nav-link:hover::after, .nav-link.active::after {
+            width: 100%;
+        }
+        
+        .process-line::before {
+            content: '';
+            position: absolute;
+            top: 24px;
+            left: 50%;
+            width: 100%;
+            height: 2px;
+            background: rgba(125, 211, 252, 0.1);
+            z-index: 0;
+        }
+        
+        @media (max-width: 768px) {
+            .process-line::before {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col overflow-x-hidden selection:bg-primary/30 selection:text-primary">
+<!-- TopNavBar -->
+<header class="backdrop-blur-xl fixed top-0 w-full border-b border-primary/10 shadow-[0_0_30px_rgba(125,211,252,0.05)] z-50 bg-surface/60"><div class="flex justify-between items-center px-8 py-4 max-w-full mx-auto z-50"><div class="flex items-center gap-2"><span class="text-xl font-headline font-extrabold text-on-surface tracking-tight">SHAKTI</span><span class="text-xl font-headline font-extrabold text-primary tracking-tight">UDYOG</span></div><nav class="hidden md:flex items-center gap-8 font-body text-sm font-medium mx-auto"><a class="nav-link text-primary font-semibold active" href="#">Home</a><a class="nav-link text-on-surface-variant hover:text-primary transition-colors duration-300" href="#capabilities">Capabilities</a><a class="nav-link text-on-surface-variant hover:text-primary transition-colors duration-300" href="#products">Products</a><a class="nav-link text-on-surface-variant hover:text-primary transition-colors duration-300" href="#industries">Industries</a><a class="nav-link text-on-surface-variant hover:text-primary transition-colors duration-300" href="#about">About Us</a></nav><div class="flex items-center"><button class="bg-primary text-on-primary px-6 py-2.5 rounded-lg font-headline font-semibold text-sm transition-all duration-200 active:scale-95 hover:bg-primary/90 shadow-[0_0_15px_rgba(125,211,252,0.2)]">Request a Quote</button></div></div></header>
+<main class="flex-grow pt-20">
+<!-- Hero Section -->
+<section class="relative min-h-[921px] flex items-center pt-20 pb-32 overflow-hidden">
+<!-- Background Image with Overlay -->
+<div class="absolute inset-0 z-0">
+<div class="absolute inset-0 bg-cover bg-center" data-alt="Close up view of glowing molten metal being poured in a highly advanced, dark, and sleek industrial foundry. The intense bright orange and yellow glow contrasts with the deep navy blue and black background. Subtle reflections on futuristic metallic surfaces. High-end industrial photography, dramatic lighting, glassmorphic atmospheric overlays, premium manufacturing aesthetic." style="background-image: url(&quot;https://lh3.googleusercontent.com/aida-public/AB6AXuBOr87Xs_zkl8wwFuznBNOletB1srTySknchHcfO6GVe6A-oOomyUWJGeSbQI_SGLpRkkaxeENvXotdmomkd7EFKJJrMebk9Bl1jj5W5cZr7Z4CbDDoXnZyQzYnc3gfI289os8qkjFLvY5sQVTtblPxcofO-ivcC6YmAcVdno7lgDjNlarjV78fjtyRrE0ke3I5xjxRcnRY3o9CoQYcrCqapJjGBxJ96VRrYnuGQjRjGO80lsszsBXwyjYFTwgSBJBa_rYXZlKNL-E&quot;);"></div>
+<div class="absolute inset-0 bg-gradient-to-b from-surface-container-lowest/80 via-surface-container-lowest/90 to-surface-container-lowest"></div>
+<!-- Abstract glowing orbs -->
+<div class="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[100px] pointer-events-none"></div>
+<div class="absolute bottom-1/4 right-1/4 w-64 h-64 bg-tertiary/10 rounded-full blur-[80px] pointer-events-none"></div>
+</div>
+<div class="container mx-auto px-6 md:px-12 relative z-10 max-w-7xl">
+<div class="max-w-4xl">
+<div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-panel mb-8 border-primary/20">
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+<span class="text-sm font-medium tracking-wide text-primary">Precision Foundry Solutions</span>
+</div>
+<h1 class="text-5xl md:text-7xl font-extrabold tracking-tight font-headline mb-6 leading-tight text-glow">
+                        Precision Iron Castings for <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-tertiary">Demanding Industries</span>
+</h1>
+<p class="text-xl md:text-2xl text-on-surface-variant font-light mb-10 max-w-3xl leading-relaxed">
+                        Shakti Udyog delivers robust, quality-focused iron casting solutions—from drawing review and pattern development to machining and dependable dispatch.
+                    </p>
+<div class="flex flex-col sm:flex-row gap-6">
+<button class="bg-primary/20 hover:bg-primary/30 border border-primary/40 text-primary px-8 py-4 rounded-xl font-semibold tracking-wide transition-all duration-300 hover:shadow-[0_0_30px_rgba(125,211,252,0.2)] flex items-center justify-center gap-3 group">
+                            Request a Quote
+                            <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_right_alt</span>
+</button>
+<button class="glass-panel hover:bg-surface-container text-on-surface px-8 py-4 rounded-xl font-medium tracking-wide transition-all duration-300 flex items-center justify-center gap-3">
+                            Explore Our Capabilities
+                        </button>
+</div>
+</div>
+</div>
+<!-- Trust Strip (Overlapping) -->
+<div class="absolute bottom-0 left-0 w-full translate-y-1/2 z-20 px-6">
+<div class="max-w-7xl mx-auto">
+<div class="glass-panel-elevated rounded-2xl p-6 md:p-8 flex flex-wrap justify-between items-center gap-8 py-8 py-10">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
+<span class="material-symbols-outlined text-primary">history</span>
+</div>
+<div>
+<h4 class="text-2xl font-bold text-primary">60+</h4>
+<p class="text-sm text-on-surface-variant">Years of Foundry Experience</p>
+</div>
+</div>
+<div class="hidden md:block w-px h-12 bg-outline-variant"></div>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
+<span class="material-symbols-outlined text-primary">category</span>
+</div>
+<div>
+<h4 class="text-2xl font-bold text-primary">50+</h4>
+<p class="text-sm text-on-surface-variant">Casting Grades / Specifications</p>
+</div>
+</div>
+<div class="hidden lg:block w-px h-12 bg-outline-variant"></div>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
+<span class="material-symbols-outlined text-primary">weight</span>
+</div>
+<div><h4 class="text-2xl font-bold text-primary" style="opacity: 0;">299</h4><p class="text-sm text-on-surface-variant">Tons Monthly Capacity</p></div>
+</div>
+<div class="hidden xl:block w-px h-12 bg-outline-variant"></div>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
+<span class="material-symbols-outlined text-primary">groups</span>
+</div>
+<div>
+<h4 class="text-2xl font-bold text-primary">9000+</h4>
+<p class="text-sm text-on-surface-variant">Customers Served</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Introduction Section -->
+<section class="py-32 relative bg-surface-container-lowest" id="about">
+<div class="container mx-auto px-6 max-w-7xl pt-16">
+<div class="grid lg:grid-cols-2 gap-16 items-center">
+<div>
+<h2 class="text-4xl md:text-5xl font-bold font-headline mb-6 tracking-tight text-on-surface">
+                            Engineered for Strength.<br>
+<span class="text-primary">Made for Service.</span>
+</h2>
+<p class="text-lg text-on-surface-variant leading-relaxed mb-8">
+                            We are more than just a foundry; we are a dedicated partner for manufacturers who demand consistency, dimensional accuracy, and material integrity. Our state-of-the-art facilities and decades of metallurgical expertise ensure that every casting meets stringent quality standards before it reaches your assembly line.
+                        </p>
+<button class="text-primary font-medium hover:text-primary-fixed transition-colors flex items-center gap-2 group">
+                            Learn more about our heritage
+                            <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</button>
+</div>
+<div class="relative rounded-2xl overflow-hidden glass-panel p-2">
+<div class="w-full h-[400px] rounded-xl bg-cover bg-center opacity-80 mix-blend-luminosity hover:mix-blend-normal transition-all duration-500" data-alt="A highly detailed close-up of a perfectly machined dark grey iron casting component resting on a sleek blueprint table. Soft, cool blue illumination highlights the precision edges and smooth metallic surface against a deep navy background. High contrast, premium engineering aesthetic, sharp focus." style="background-image: url(&quot;https://lh3.googleusercontent.com/aida-public/AB6AXuCyuQwFpFsECzMFVJPnoSl9uFRbGYg4mXjYfgZdmMVPB4iCA43mD7u5hsYr_gXGG_DZ43KsalcwJIOluDnAhAH7ps8vL8UH30Qp4QEg1huS5tJ-2QeDjofy0QQg4ZPZDEslLEwpj5TqrxaCzsZfK2GLsoCQqdcNMFjb6CO5Q2rpggFk1YIniNWcK7GKlRfdT_onHn0--MA1RMmgY1iLTNFL4wjvL55yHHWFWYSvbHpAJSXl0YrIHt87U3Q8SNqooORwE91Wy7CAYiY&quot;);"></div>
+<div class="absolute inset-0 bg-gradient-to-tr from-surface-container-lowest/80 to-transparent pointer-events-none"></div>
+</div>
+</div>
+</div>
+</section><section class="py-32 relative bg-surface-container-lowest" id="advantages">
+    <div class="container mx-auto px-6 max-w-7xl">
+        <div class="text-center mb-16">
+            <h2 class="text-4xl md:text-5xl font-bold font-headline mb-4 tracking-tight text-on-surface">Our Advantages</h2>
+            <p class="text-lg text-on-surface-variant max-w-2xl mx-auto">Delivering excellence through precision engineering and dedicated service.</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Engineering Support -->
+            <div class="glass-panel bg-surface/40 backdrop-blur-xl border border-primary/20 rounded-xl p-8 transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(125,211,252,0.1)] group">
+                <div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-6 border border-primary/20 group-hover:bg-primary/20 transition-colors">
+                    <span class="material-symbols-outlined text-primary">architecture</span>
+                </div>
+                <h3 class="text-xl font-bold font-headline mb-4 text-on-surface">Engineering Support</h3>
+                <p class="text-on-surface-variant font-body leading-relaxed">Early review of drawings, material requirements, tolerances, and manufacturability.</p>
+            </div>
+            <!-- Controlled Production -->
+            <div class="glass-panel bg-surface/40 backdrop-blur-xl border border-primary/20 rounded-xl p-8 transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(125,211,252,0.1)] group">
+                <div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-6 border border-primary/20 group-hover:bg-primary/20 transition-colors">
+                    <span class="material-symbols-outlined text-primary">speed</span>
+                </div>
+                <h3 class="text-xl font-bold font-headline mb-4 text-on-surface">Controlled Production</h3>
+                <p class="text-on-surface-variant font-body leading-relaxed">Process checks at key stages help maintain consistency across lots.</p>
+            </div>
+            <!-- Flexible Supply -->
+            <div class="glass-panel bg-surface/40 backdrop-blur-xl border border-primary/20 rounded-xl p-8 transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(125,211,252,0.1)] group">
+                <div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-6 border border-primary/20 group-hover:bg-primary/20 transition-colors">
+                    <span class="material-symbols-outlined text-primary">view_in_ar</span>
+                </div>
+                <h3 class="text-xl font-bold font-headline mb-4 text-on-surface">Flexible Supply</h3>
+                <p class="text-on-surface-variant font-body leading-relaxed">Support for development samples, small batches, and repeat production, subject to agreed capacity.</p>
+            </div>
+            <!-- Clear Communication -->
+            <div class="glass-panel bg-surface/40 backdrop-blur-xl border border-primary/20 rounded-xl p-8 transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(125,211,252,0.1)] group">
+                <div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-6 border border-primary/20 group-hover:bg-primary/20 transition-colors">
+                    <span class="material-symbols-outlined text-primary">chat_bubble</span>
+                </div>
+                <h3 class="text-xl font-bold font-headline mb-4 text-on-surface">Clear Communication</h3>
+                <p class="text-on-surface-variant font-body leading-relaxed">Responsive quotation, order updates, inspection documentation, and dispatch coordination.</p>
+            </div>
+        </div>
+    </div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container-lowest w-full rounded-t-xl border-t border-outline-variant relative z-10 mt-20">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-8 px-12 py-16 w-full max-w-7xl mx-auto">
+<!-- Brand Column -->
+<div class="col-span-1 md:col-span-1">
+<a class="text-lg font-bold text-on-surface flex items-center gap-2 mb-4" href="#">
+<span class="material-symbols-outlined text-primary">factory</span>
+                    SHAKTI UDYOG
+                </a>
+<p class="font-body text-sm text-on-surface-variant mb-6 leading-relaxed">
+                    Precision Iron Casting Excellence. Delivering robust solutions for demanding manufacturing sectors worldwide.
+                </p>
+<p class="font-body text-xs text-on-surface-variant/60">
+                    © 2024 Shakti Udyog. Precision Iron Casting Excellence.
+                </p>
+</div>
+<!-- Links -->
+<div class="col-span-1 flex flex-col gap-3">
+<h4 class="text-on-surface font-semibold mb-2">Company</h4>
+<a class="font-body text-sm text-on-surface-variant hover:text-tertiary transition-colors opacity-80 hover:opacity-100" href="#">About Us</a>
+<a class="font-body text-sm text-on-surface-variant hover:text-tertiary transition-colors opacity-80 hover:opacity-100" href="#">Quality Policy</a>
+<a class="font-body text-sm text-on-surface-variant hover:text-tertiary transition-colors opacity-80 hover:opacity-100" href="#">Accreditations</a>
+<a class="font-body text-sm text-on-surface-variant hover:text-tertiary transition-colors opacity-80 hover:opacity-100" href="#">Career</a>
+</div>
+<!-- Capabilities -->
+<div class="col-span-1 flex flex-col gap-3">
+<h4 class="text-on-surface font-semibold mb-2">Capabilities</h4>
+<a class="font-body text-sm text-on-surface-variant hover:text-tertiary transition-colors opacity-80 hover:opacity-100" href="#">Grey Iron Castings</a>
+<a class="font-body text-sm text-on-surface-variant hover:text-tertiary transition-colors opacity-80 hover:opacity-100" href="#">Ductile Iron Castings</a>
+<a class="font-body text-sm text-on-surface-variant hover:text-tertiary transition-colors opacity-80 hover:opacity-100" href="#">Custom Tooling</a>
+<a class="font-body text-sm text-on-surface-variant hover:text-tertiary transition-colors opacity-80 hover:opacity-100" href="#">CNC Machining</a>
+</div>
+<!-- Contact -->
+<div class="col-span-1 flex flex-col gap-3">
+<h4 class="text-on-surface font-semibold mb-2">Connect</h4>
+<a class="font-body text-sm text-on-surface-variant hover:text-tertiary transition-colors opacity-80 hover:opacity-100 flex items-center gap-2" href="#">
+<span class="material-symbols-outlined text-sm">mail</span>
+                    Contact Support
+                </a>
+<a class="font-body text-sm text-on-surface-variant hover:text-tertiary transition-colors opacity-80 hover:opacity-100 flex items-center gap-2" href="#">
+<span class="material-symbols-outlined text-sm">phone</span>
+                    +91 (0) 123 456 7890
+                </a>
+<a class="font-body text-sm text-on-surface-variant hover:text-tertiary transition-colors opacity-80 hover:opacity-100 flex items-center gap-2 mt-4" href="#">
+<span class="material-symbols-outlined text-sm">location_on</span>
+                    Industrial Area, Phase 1, India
+                </a>
+</div>
+</div>
+</footer>
+<script>
+        // Simple nav background effect on scroll
+        window.addEventListener('scroll', () => {
+            const nav = document.getElementById('main-nav');
+            if (window.scrollY > 50) {
+                nav.style.background = 'rgba(15, 21, 36, 0.85)';
+            } else {
+                nav.style.background = 'rgba(15, 21, 36, 0.6)';
+            }
+        });
+    </script>
+
+
+
+
+
+
+
+
+</body></html>

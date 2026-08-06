@@ -1,0 +1,675 @@
+<!-- Read `CLAUDE.md` and `docs/shakti-udyog-requirements.md` again before making any changes.
+
+Start **Milestone 10 only**: Documents & File Management.
+
+First inspect the existing codebase and provide a concise implementation plan. Wait for my approval before making changes.
+
+Implement ONLY the complete Document & File Management module.
+
+Reuse the existing Authentication, Customer Portal, Data Updater Portal, Admin Portal, RFQ, Quotation, Order, and Product modules.
+
+Do NOT duplicate business logic.
+
+Do NOT implement:
+
+- Payment Gateway
+- Jira Integration
+- Email Providers
+- SMS Providers
+- Cloud Storage Providers (Azure Blob, AWS S3, Google Cloud Storage)
+- OCR
+- AI Document Processing
+- CRM Integration
+
+Use interfaces/placeholders where external integrations are required.
+
+--------------------------------------------------
+GOAL
+--------------------------------------------------
+
+Develop a centralized Document Management System (DMS) that securely stores, organizes, versions, and manages files used across the entire application.
+
+The module must support:
+
+• Secure Upload
+• Secure Download
+• Versioning
+• Categories
+• Metadata
+• Preview
+• Approval Workflow
+• Access Control
+• Audit Logging
+• Search
+• Folder Management
+
+--------------------------------------------------
+SUPPORTED DOCUMENT TYPES
+--------------------------------------------------
+
+RFQ Drawings
+
+CAD Files
+
+PDF
+
+Images
+
+Inspection Reports
+
+Quality Certificates
+
+Packing Lists
+
+Invoices
+
+Delivery Challans
+
+Purchase Orders
+
+Technical Specifications
+
+Material Certificates
+
+Compliance Documents
+
+Customer Documents
+
+Internal Documents
+
+--------------------------------------------------
+DOCUMENT CATEGORIES
+--------------------------------------------------
+
+Drawings
+
+Certificates
+
+Invoices
+
+Orders
+
+RFQs
+
+Quotations
+
+Products
+
+Gallery
+
+Resources
+
+Contracts
+
+Other
+
+--------------------------------------------------
+FILE TYPES
+--------------------------------------------------
+
+Allow configurable whitelist.
+
+Examples:
+
+pdf
+
+doc
+
+docx
+
+xls
+
+xlsx
+
+csv
+
+png
+
+jpg
+
+jpeg
+
+gif
+
+bmp
+
+svg
+
+zip
+
+rar
+
+dwg
+
+dxf
+
+step
+
+iges
+
+stp
+
+txt
+
+Maximum size configurable.
+
+--------------------------------------------------
+STORAGE
+--------------------------------------------------
+
+Create abstraction:
+
+IFileStorageProvider
+
+Implement:
+
+LocalFileStorageProvider
+
+Future placeholders:
+
+Azure Blob Storage
+
+AWS S3
+
+Google Cloud Storage
+
+Never expose physical file paths.
+
+Store outside the web root.
+
+--------------------------------------------------
+DOCUMENT FEATURES
+--------------------------------------------------
+
+Upload
+
+Download
+
+Preview
+
+Rename
+
+Move
+
+Copy
+
+Archive
+
+Restore
+
+Soft Delete
+
+Permanent Delete (Admin only)
+
+Version History
+
+Metadata
+
+Tags
+
+Comments
+
+Approval
+
+Reject
+
+Favorite
+
+Recent Files
+
+--------------------------------------------------
+FOLDER MANAGEMENT
+--------------------------------------------------
+
+Support:
+
+Folders
+
+Nested Folders
+
+Move Files
+
+Folder Permissions
+
+Folder Search
+
+Folder Breadcrumbs
+
+--------------------------------------------------
+SEARCH
+--------------------------------------------------
+
+Search by:
+
+Name
+
+Category
+
+Tags
+
+File Type
+
+Uploader
+
+Date
+
+Module
+
+Status
+
+Customer
+
+Company
+
+--------------------------------------------------
+VERSION CONTROL
+--------------------------------------------------
+
+Support:
+
+Automatic Version Numbers
+
+Current Version
+
+Previous Versions
+
+Download Previous Versions
+
+Restore Previous Version
+
+Version Comments
+
+--------------------------------------------------
+DOCUMENT APPROVAL
+--------------------------------------------------
+
+Workflow:
+
+Uploaded
+
+↓
+
+Pending Review
+
+↓
+
+Approved
+
+↓
+
+Published
+
+↓
+
+Archived
+
+↓
+
+Deleted
+
+Approval required for customer-visible documents.
+
+--------------------------------------------------
+DOCUMENT PREVIEW
+--------------------------------------------------
+
+Preview support:
+
+PDF
+
+Images
+
+Text Files
+
+Office Placeholder
+
+CAD Placeholder
+
+Unsupported Files Download Only
+
+--------------------------------------------------
+ACCESS CONTROL
+--------------------------------------------------
+
+Role-based permissions.
+
+Admin
+
+Full access
+
+Data Updater
+
+Upload
+
+Edit
+
+Approve (where permitted)
+
+Customer
+
+Download authorized files only
+
+Public
+
+Public resources only
+
+--------------------------------------------------
+DATABASE
+--------------------------------------------------
+
+Create entities:
+
+Document
+
+DocumentVersion
+
+DocumentFolder
+
+DocumentCategory
+
+DocumentTag
+
+DocumentComment
+
+DocumentPermission
+
+DocumentAudit
+
+DocumentShare
+
+Relationships:
+
+Document → Versions
+
+Document → Folder
+
+Document → Tags
+
+Document → Comments
+
+Document → Permissions
+
+Generate EF Core migrations.
+
+--------------------------------------------------
+BACKEND APIs
+--------------------------------------------------
+
+General
+
+POST /api/v1/documents/upload
+
+GET /api/v1/documents
+
+GET /api/v1/documents/{id}
+
+PUT /api/v1/documents/{id}
+
+DELETE /api/v1/documents/{id}
+
+POST /api/v1/documents/{id}/restore
+
+GET /api/v1/documents/{id}/download
+
+GET /api/v1/documents/{id}/preview
+
+GET /api/v1/documents/{id}/versions
+
+POST /api/v1/documents/{id}/approve
+
+POST /api/v1/documents/{id}/reject
+
+Folders
+
+GET /api/v1/folders
+
+POST /api/v1/folders
+
+PUT /api/v1/folders/{id}
+
+DELETE /api/v1/folders/{id}
+
+--------------------------------------------------
+FRONTEND
+--------------------------------------------------
+
+Create:
+
+Document Dashboard
+
+File Explorer
+
+Folder Explorer
+
+Upload Dialog
+
+Preview Dialog
+
+Version History
+
+Approval Queue
+
+Search Panel
+
+Metadata Panel
+
+Download Manager
+
+--------------------------------------------------
+VALIDATION
+--------------------------------------------------
+
+Validate:
+
+File Extension
+
+File Size
+
+Duplicate Names
+
+MIME Type
+
+File Signature
+
+Folder Permissions
+
+Maximum Upload Count
+
+--------------------------------------------------
+SECURITY
+--------------------------------------------------
+
+Implement:
+
+JWT Authentication
+
+Role Authorization
+
+Policy Authorization
+
+IDOR Prevention
+
+Secure Download Tokens
+
+File Name Sanitization
+
+Path Traversal Protection
+
+Virus Scan Interface (Placeholder)
+
+Checksum Validation
+
+--------------------------------------------------
+AUDIT LOGGING
+--------------------------------------------------
+
+Audit:
+
+Upload
+
+Download
+
+Preview
+
+Rename
+
+Move
+
+Delete
+
+Restore
+
+Approval
+
+Rejection
+
+Version Restore
+
+Include:
+
+User
+
+Role
+
+Company
+
+Timestamp
+
+Trace ID
+
+IP Address
+
+--------------------------------------------------
+REPORTING
+--------------------------------------------------
+
+Dashboard should display:
+
+Total Documents
+
+Storage Usage
+
+Uploads Today
+
+Downloads Today
+
+Most Downloaded Files
+
+Pending Approvals
+
+Storage by Category
+
+Storage by Module
+
+Largest Files
+
+Recent Activity
+
+--------------------------------------------------
+PERFORMANCE
+--------------------------------------------------
+
+Chunked Upload Placeholder
+
+Pagination
+
+Lazy Loading
+
+Thumbnail Generation Placeholder
+
+Streaming Downloads
+
+Caching
+
+--------------------------------------------------
+SWAGGER
+--------------------------------------------------
+
+Document every API.
+
+JWT Authentication.
+
+Role requirements.
+
+Example requests.
+
+Example responses.
+
+--------------------------------------------------
+TESTING
+--------------------------------------------------
+
+Run:
+
+Backend Build
+
+Frontend Build
+
+EF Core Migration
+
+Swagger
+
+CRUD Tests
+
+Upload Tests
+
+Download Tests
+
+Authorization Tests
+
+Validation Tests
+
+Integration Tests
+
+Fix every build error before completion.
+
+--------------------------------------------------
+WHEN COMPLETE
+--------------------------------------------------
+
+Stop and report:
+
+1. Files created/modified
+
+2. React pages created
+
+3. Components created
+
+4. Database entities
+
+5. EF Core migrations
+
+6. APIs implemented
+
+7. Storage abstraction implemented
+
+8. Security implemented
+
+9. Validation implemented
+
+10. Audit logging implemented
+
+11. Dashboard implemented
+
+12. Build results
+
+13. Test results
+
+14. Remaining placeholders
+
+15. Recommended Milestone 11
+
+Follow every rule in `CLAUDE.md`.
+
+Do NOT implement:
+
+- Azure Blob Storage
+- AWS S3
+- Google Cloud Storage
+- Jira Integration
+- Email Providers
+- SMS Providers
+- Payment Gateway
+- OCR
+- AI Document Processing
+- CRM Integration -->

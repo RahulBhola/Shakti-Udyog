@@ -1,0 +1,635 @@
+<!-- Read `CLAUDE.md` and `docs/shakti-udyog-requirements.md` again before making any changes.
+
+Start **Milestone 9 only**: Admin Portal & Executive Dashboard.
+
+First inspect the existing codebase and provide a concise implementation plan. Wait for my approval before making changes.
+
+Implement ONLY the complete Admin Portal.
+
+Reuse the existing Authentication, RFQ, Quotation, Order, Customer Portal, Data Updater Portal, Product, Document, and Reporting services.
+
+Do NOT duplicate business logic or APIs.
+
+Do NOT implement:
+
+- Jira Integration
+- Email Providers
+- SMS Providers
+- Payment Gateway
+- Production Cloud Storage
+- CRM
+- Analytics integrations (Power BI, Tableau, etc.)
+
+Use interfaces/placeholders where external integrations are required.
+
+--------------------------------------------------
+GOAL
+--------------------------------------------------
+
+Develop a complete Admin Portal for administrators to manage the entire system from a centralized dashboard.
+
+The Admin Portal should provide:
+
+• Executive Dashboard
+• Business KPIs
+• Interactive Graphs & Charts
+• User & Role Management
+• Company Management
+• Product Management
+• RFQ Management
+• Quotation Management
+• Order Management
+• Invoice & Payment Monitoring
+• Reports
+• Audit Logs
+• System Settings
+
+--------------------------------------------------
+ADMIN LAYOUT
+--------------------------------------------------
+
+Create:
+
+AdminLayout
+
+Sidebar
+
+Top Navigation
+
+Header
+
+Breadcrumbs
+
+Notification Center
+
+Profile Menu
+
+Responsive Navigation
+
+Dashboard Widgets
+
+--------------------------------------------------
+ROUTES
+--------------------------------------------------
+
+/admin
+
+/admin/dashboard
+
+/admin/users
+
+/admin/roles
+
+/admin/permissions
+
+/admin/companies
+
+/admin/products
+
+/admin/categories
+
+/admin/rfqs
+
+/admin/quotations
+
+/admin/orders
+
+/admin/invoices
+
+/admin/payments
+
+/admin/documents
+
+/admin/reports
+
+/admin/audit-logs
+
+/admin/settings
+
+--------------------------------------------------
+EXECUTIVE DASHBOARD
+--------------------------------------------------
+
+Display KPI Cards:
+
+Total Customers
+
+Active Customers
+
+New Customers
+
+Pending RFQs
+
+Approved RFQs
+
+Pending Quotations
+
+Accepted Quotations
+
+Orders In Production
+
+Orders Dispatched
+
+Orders Delivered
+
+Pending Payments
+
+Revenue (placeholder)
+
+Outstanding Balance
+
+Support Tickets
+
+Recent Activities
+
+--------------------------------------------------
+GRAPHS & CHARTS
+--------------------------------------------------
+
+Implement interactive dashboards with filters.
+
+Charts include:
+
+• RFQs per Month (Line Chart)
+
+• Quotations Created vs Accepted (Bar Chart)
+
+• Orders by Status (Pie Chart)
+
+• Revenue Trend (Line Chart - Placeholder)
+
+• Monthly Customer Growth (Area Chart)
+
+• Products by Category (Donut Chart)
+
+• Orders by Industry (Bar Chart)
+
+• Top Customers (Horizontal Bar Chart)
+
+• Shipment Status Distribution (Pie Chart)
+
+• Invoice Status Distribution
+
+• Payment Status
+
+• User Registration Trend
+
+• Daily Login Activity
+
+• System Usage Trend
+
+• Support Ticket Status
+
+• Order Fulfillment Trend
+
+Provide:
+
+Date Filters
+
+Export to Excel (placeholder)
+
+Export PDF (placeholder)
+
+Refresh
+
+Responsive charts
+
+--------------------------------------------------
+USER MANAGEMENT
+--------------------------------------------------
+
+Manage:
+
+Users
+
+Activation
+
+Deactivation
+
+Password Reset
+
+Role Assignment
+
+Company Assignment
+
+Search
+
+Filter
+
+Pagination
+
+--------------------------------------------------
+ROLE MANAGEMENT
+--------------------------------------------------
+
+Manage:
+
+Roles
+
+Permissions
+
+Policies
+
+Claims
+
+Menu Access
+
+--------------------------------------------------
+COMPANY MANAGEMENT
+--------------------------------------------------
+
+Manage:
+
+Companies
+
+Approval
+
+Suspension
+
+Contacts
+
+GST
+
+Addresses
+
+Status
+
+--------------------------------------------------
+RFQ MANAGEMENT
+--------------------------------------------------
+
+Reuse existing RFQ services.
+
+Support:
+
+View
+
+Assign
+
+Approve
+
+Reject
+
+Status Override
+
+History
+
+--------------------------------------------------
+QUOTATION MANAGEMENT
+--------------------------------------------------
+
+Reuse existing services.
+
+Support:
+
+Review
+
+Approve
+
+Reject
+
+Issue
+
+Override
+
+History
+
+--------------------------------------------------
+ORDER MANAGEMENT
+--------------------------------------------------
+
+Reuse existing services.
+
+Support:
+
+Monitor Orders
+
+Approve Updates
+
+Override Status
+
+Shipment Review
+
+Production Review
+
+--------------------------------------------------
+INVOICE & PAYMENT MONITORING
+--------------------------------------------------
+
+View:
+
+Invoices
+
+Outstanding
+
+Paid
+
+Overdue
+
+Payment Proofs
+
+Verification Status
+
+Placeholder only.
+
+--------------------------------------------------
+DOCUMENT MANAGEMENT
+--------------------------------------------------
+
+Manage:
+
+Documents
+
+Approvals
+
+Downloads
+
+Categories
+
+Visibility
+
+--------------------------------------------------
+REPORTS
+--------------------------------------------------
+
+Generate reports:
+
+Customer Report
+
+RFQ Report
+
+Quotation Report
+
+Order Report
+
+Invoice Report
+
+Payment Report
+
+Production Report
+
+Shipment Report
+
+Support Report
+
+Audit Report
+
+Support:
+
+Filtering
+
+Export Placeholder
+
+Scheduling Placeholder
+
+--------------------------------------------------
+AUDIT LOGS
+--------------------------------------------------
+
+View:
+
+User Activity
+
+Login History
+
+Changes
+
+Approvals
+
+Downloads
+
+Status Changes
+
+Security Events
+
+Search
+
+Filtering
+
+Pagination
+
+--------------------------------------------------
+SYSTEM SETTINGS
+--------------------------------------------------
+
+Manage:
+
+Company Settings
+
+Application Settings
+
+Business Rules
+
+Master Data
+
+Lookup Values
+
+Feature Flags (placeholder)
+
+--------------------------------------------------
+BACKEND
+--------------------------------------------------
+
+Reuse existing services.
+
+Only add APIs required for:
+
+Dashboard Aggregation
+
+KPI Summary
+
+Reporting
+
+Audit Queries
+
+Charts
+
+--------------------------------------------------
+SECURITY
+--------------------------------------------------
+
+Every request must:
+
+Validate JWT
+
+Require Admin role
+
+Use Policy-based Authorization
+
+Prevent IDOR
+
+Log sensitive operations
+
+Include Trace IDs
+
+--------------------------------------------------
+VALIDATION
+--------------------------------------------------
+
+Implement FluentValidation for:
+
+Users
+
+Roles
+
+Companies
+
+Settings
+
+Reports
+
+--------------------------------------------------
+AUDIT LOGGING
+--------------------------------------------------
+
+Audit:
+
+User Changes
+
+Role Changes
+
+Permission Changes
+
+Approvals
+
+Settings Changes
+
+Report Downloads
+
+Dashboard Access
+
+Include:
+
+User
+
+Role
+
+Timestamp
+
+Trace ID
+
+--------------------------------------------------
+UI REQUIREMENTS
+--------------------------------------------------
+
+Responsive
+
+Modern Admin Dashboard
+
+Interactive Charts
+
+Dark Mode
+
+Light Mode
+
+Skeleton Loading
+
+Pagination
+
+Searching
+
+Filtering
+
+Sorting
+
+Reusable Components
+
+Toast Notifications
+
+Confirmation Dialogs
+
+--------------------------------------------------
+PERFORMANCE
+--------------------------------------------------
+
+Lazy Loading
+
+Route Splitting
+
+Dashboard Caching
+
+Server-side Pagination
+
+Optimized Aggregation Queries
+
+--------------------------------------------------
+SWAGGER
+--------------------------------------------------
+
+Document every new API.
+
+JWT Authentication.
+
+Role requirements.
+
+Request/Response examples.
+
+--------------------------------------------------
+TESTING
+--------------------------------------------------
+
+Run:
+
+Backend Build
+
+Frontend Build
+
+Swagger
+
+CRUD Tests
+
+Authorization Tests
+
+Dashboard Tests
+
+Chart Rendering Tests
+
+Integration Tests
+
+Fix every build error before completion.
+
+--------------------------------------------------
+WHEN COMPLETE
+--------------------------------------------------
+
+Stop and report:
+
+1. Files created/modified
+
+2. React pages created
+
+3. Dashboard widgets implemented
+
+4. Graphs & charts implemented
+
+5. APIs reused
+
+6. New APIs added
+
+7. Dashboard aggregation services
+
+8. Security implemented
+
+9. Validation implemented
+
+10. Audit logging implemented
+
+11. Build results
+
+12. Test results
+
+13. Remaining placeholders
+
+14. Recommended Milestone 10
+
+Follow every rule in `CLAUDE.md`.
+
+Do NOT implement:
+
+- Jira Integration
+- Email Providers
+- SMS Providers
+- Payment Gateway
+- Production Cloud Storage
+- CRM
+- External Analytics Platforms -->

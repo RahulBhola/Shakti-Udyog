@@ -1,0 +1,458 @@
+<!-- Read `CLAUDE.md` and `docs/shakti-udyog-requirements.md` again before making any changes.
+
+Start **Milestone 4 only**: RFQ (Request for Quotation) Module.
+
+First inspect the existing codebase and provide a concise implementation plan. Wait for my approval before making changes.
+
+Implement ONLY the complete RFQ module. Do NOT implement Orders, Invoices, Payments, Jira integration, Email providers, SMS providers, or Production Cloud Storage. Use interfaces/placeholders where external integrations are required.
+
+--------------------------------------------------
+GOAL
+--------------------------------------------------
+
+Implement a complete RFQ lifecycle that allows:
+
+• Public visitors to submit RFQs
+• Authenticated customers to create and manage RFQs
+• Data Updaters to review and update RFQs
+• Admins to approve/reject RFQs where required
+
+The RFQ module must become the foundation for the future Quotation module.
+
+--------------------------------------------------
+RFQ WORKFLOW
+--------------------------------------------------
+
+Workflow:
+
+Visitor/Customer
+
+↓
+
+RFQ Submitted
+
+↓
+
+Validation
+
+↓
+
+Data Updater Review
+
+↓
+
+Admin Approval (if required)
+
+↓
+
+Ready for Quotation
+
+↓
+
+Quotation Module (future milestone)
+
+Supported statuses:
+
+Draft
+
+Submitted
+
+Received
+
+Under Review
+
+Waiting for Customer
+
+Approved
+
+Rejected
+
+Quoted
+
+Accepted
+
+Declined
+
+Expired
+
+Cancelled
+
+Every status transition must be validated.
+
+--------------------------------------------------
+FRONTEND
+--------------------------------------------------
+
+Implement pages for:
+
+Public RFQ Form
+
+Customer RFQ List
+
+Customer RFQ Details
+
+Create RFQ
+
+Edit Draft RFQ
+
+Upload Drawings
+
+RFQ Timeline
+
+RFQ Status Tracker
+
+RFQ Success Page
+
+--------------------------------------------------
+CUSTOMER FEATURES
+--------------------------------------------------
+
+Customer can:
+
+Create RFQ
+
+Save Draft
+
+Edit Draft
+
+Submit RFQ
+
+Upload Drawings
+
+View RFQ Timeline
+
+View RFQ Status
+
+Download Approved Documents
+
+View Quotation Placeholder
+
+Cancel Draft
+
+Cannot edit RFQs after submission unless returned for clarification.
+
+--------------------------------------------------
+PUBLIC RFQ
+--------------------------------------------------
+
+Visitors may submit RFQs without an account.
+
+Required fields:
+
+Company Name
+
+Contact Name
+
+Email
+
+Phone
+
+Material Grade
+
+Product Type
+
+Quantity
+
+Delivery Location
+
+Requirement Details
+
+Drawing Upload
+
+Consent Checkbox
+
+Use server-side validation.
+
+Return a generic success response.
+
+--------------------------------------------------
+DRAWING UPLOAD
+--------------------------------------------------
+
+Implement secure upload.
+
+Validate:
+
+Allowed extensions
+
+Allowed MIME types
+
+Maximum size
+
+File signature
+
+Create abstraction:
+
+IFileStorageService
+
+Local placeholder implementation
+
+Future cloud storage interface
+
+Store files outside public folders.
+
+Never expose physical paths.
+
+--------------------------------------------------
+DATA UPDATER FEATURES
+--------------------------------------------------
+
+View RFQs
+
+Search
+
+Filter
+
+Assign RFQs
+
+Update Status
+
+Add Internal Notes
+
+Add Customer Notes
+
+Upload Documents
+
+Request Clarification
+
+Return RFQ
+
+Prepare RFQ for quotation
+
+Cannot approve restricted actions.
+
+--------------------------------------------------
+ADMIN FEATURES
+--------------------------------------------------
+
+Approve RFQ
+
+Reject RFQ
+
+Assign Staff
+
+View Timeline
+
+View Attachments
+
+Override Status
+
+Audit History
+
+--------------------------------------------------
+DATABASE
+--------------------------------------------------
+
+Create or extend entities:
+
+RFQ
+
+RFQItem
+
+RFQAttachment
+
+RFQStatusHistory
+
+RFQComment
+
+RFQAssignment
+
+RFQDocument
+
+CustomerCompany
+
+Relationships must follow requirements.
+
+Create EF Core migrations.
+
+--------------------------------------------------
+BACKEND APIs
+--------------------------------------------------
+
+Public
+
+POST /api/v1/public/rfqs
+
+Customer
+
+GET /api/v1/customer/rfqs
+
+GET /api/v1/customer/rfqs/{id}
+
+POST /api/v1/customer/rfqs
+
+PUT /api/v1/customer/rfqs/{id}
+
+DELETE /api/v1/customer/rfqs/{id}
+
+POST /api/v1/customer/rfqs/{id}/submit
+
+POST /api/v1/customer/rfqs/{id}/attachments
+
+Data Updater
+
+GET /api/v1/updater/rfqs
+
+PATCH /api/v1/updater/rfqs/{id}/status
+
+POST /api/v1/updater/rfqs/{id}/comment
+
+POST /api/v1/updater/rfqs/{id}/documents
+
+PATCH /api/v1/updater/rfqs/{id}/assign
+
+Admin
+
+GET /api/v1/admin/rfqs
+
+PATCH /api/v1/admin/rfqs/{id}/approve
+
+PATCH /api/v1/admin/rfqs/{id}/reject
+
+PATCH /api/v1/admin/rfqs/{id}/override-status
+
+GET /api/v1/admin/rfqs/{id}/history
+
+--------------------------------------------------
+BUSINESS RULES
+--------------------------------------------------
+
+• Customers may only view RFQs belonging to their approved company.
+• Public RFQs must not expose internal data.
+• Every update must create a history record.
+• Soft delete only.
+• Validate all status transitions.
+• Never trust IDs from the frontend.
+• Prevent IDOR attacks.
+• Use optimistic concurrency.
+• Use pagination for listing APIs.
+• Support searching and filtering.
+• Use DTOs for requests and responses.
+
+--------------------------------------------------
+VALIDATION
+--------------------------------------------------
+
+Implement FluentValidation for:
+
+Create RFQ
+
+Update RFQ
+
+Submit RFQ
+
+Upload Attachment
+
+Comments
+
+Status Changes
+
+--------------------------------------------------
+AUDIT LOGGING
+--------------------------------------------------
+
+Log:
+
+RFQ Created
+
+RFQ Updated
+
+RFQ Submitted
+
+Status Changed
+
+Assignment Changed
+
+Document Uploaded
+
+Comment Added
+
+Approval
+
+Rejection
+
+Include:
+
+User
+
+Role
+
+Company
+
+Timestamp
+
+Trace ID
+
+--------------------------------------------------
+SWAGGER
+--------------------------------------------------
+
+Document all RFQ APIs.
+
+JWT Authentication
+
+Role requirements
+
+Example requests
+
+Example responses
+
+Error responses
+
+--------------------------------------------------
+TESTING
+--------------------------------------------------
+
+Run:
+
+Backend Build
+
+Frontend Build
+
+EF Migration
+
+Swagger
+
+CRUD Tests
+
+Authorization Tests
+
+Validation Tests
+
+Routing Tests
+
+Fix every build error before completion.
+
+--------------------------------------------------
+WHEN COMPLETE
+--------------------------------------------------
+
+Stop and report:
+
+1. Files created/modified
+2. React pages implemented
+3. APIs implemented
+4. Database entities
+5. EF Core migrations
+6. Authorization implemented
+7. Validation implemented
+8. Audit logging implemented
+9. Upload system implemented
+10. Build results
+11. Test results
+12. Remaining placeholders
+13. Recommended next milestone
+
+Follow every rule in `CLAUDE.md`.
+
+Do NOT implement:
+
+- Orders
+- Invoices
+- Payments
+- Payment Gateway
+- Jira Integration
+- Email Providers
+- SMS Providers
+- Production Cloud Storage
+- CRM Integration -->
