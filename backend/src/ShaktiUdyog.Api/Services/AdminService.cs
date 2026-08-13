@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using ShaktiUdyog.Api.Contracts.Auth;
 using ShaktiUdyog.Api.Contracts.Customer;
 using ShaktiUdyog.Api.Contracts.Engineer;
 using ShaktiUdyog.Domain.Constants;
@@ -20,11 +22,28 @@ public interface IAdminService
     Task<bool?> VerifyAdvancePaymentAsync(Guid orderId, Guid userId, string? ip);
     Task<bool?> UpdateOrderStageAsync(Guid orderId, string newStage, string? note, Guid userId, string? ip);
     Task<bool?> AssignOrderAsync(Guid orderId, Guid? assignedToUserId, Guid userId, string? ip);
+    Task<CreateEngineerResponse?> CreateEngineerAsync(Guid adminId, CreateEngineerRequest request, string? ip);
 }
 
-public class AdminService(
-    AppDbContext db,
-    IAuditWriter audit) : IAdminService
+private readonly AppDbContext db;
+    private readonly IAuditWriter audit;
+    private readonly UserManager<ApplicationUser> userManager;
+    private readonly RoleManager<ApplicationRole> roleManager;
+    private readonly ILogger<AdminService> logger;
+
+    public AdminService(
+        AppDbContext db,
+        IAuditWriter audit,
+        UserManager<ApplicationUser> userManager,
+        RoleManager<ApplicationRole> roleManager,
+        ILogger<AdminService> logger) : IAdminService
+    {
+        this.db = db;
+        this.audit = audit;
+        this.userManager = userManager;
+        this.roleManager = roleManager;
+        this.logger = logger;
+    }
 {
     /// <summary>
     /// Lists Enquirys, optionally including soft-deleted records for administrative review.
@@ -388,4 +407,63 @@ public class AdminService(
         o.Milestones.Select(m => new OrderMilestoneDto(
             m.Id, m.StatusCode, m.CustomerMessage, m.OccurredAtUtc)).ToList(),
         null, null);
+
+/// <summary>
+/// Creates a new engineer user account (admin only).
+/// Auto-generates email from fullname as "firstname.lastname@shaktiudyog.local".
+/// Assigns the Engineer role. Returns the created user details.
+/// </summary>
+public async Task<CreateEngineerResponse?> CreateEngineerAsync(Guid adminId, CreateEngineerRequest request, string? ip)
+{
+    // Check if engineer with same email already exists
+    var email = GenerateEngineerEmail(request.FullName);
+    var existing = await db.Users.AnyAsync(u => u.Email == email);
+    if (existing)
+    {
+        await audit.WriteAsync("admin.engineer.exists", adminId, "User", email, ip);
+        return null;
+    }
+
+    var user = new ApplicationUser
+    {
+        UserName = email,
+        Email = email,
+        FullName = request.FullName,
+        EmailConfirmed = true,
+        IsActive = true,
+    };
+
+    var result = await userManager.CreateAsync(user, request.Password);
+    if (!result.Succeeded)
+    {
+        var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+        logger.LogWarning("Admin engineer creation failed for {Email}: {Errors}", email, errors);
+        await audit.WriteAsync("admin.engineer.creation_failed", adminId, "User", email, ip);
+        return null;
+    }
+
+    // Assign Engineer role
+    await userManager.AddToRoleAsync(user, Roles.Engineer);
+
+    // Audit trail
+    await audit.WriteAsync("admin.engineer.created", adminId, "User", user.Id.ToString(), ip);
+
+    return new CreateEngineerResponse
+    {
+        UserId = user.Id,
+        Email = user.Email,
+        FullName = user.FullName
+    };
+}
+
+/// <summary>
+/// Generates an engineer email from full name: "firstname.lastname@shaktiudyog.local"
+/// </summary>
+private static string GenerateEngineerEmail(string fullName)
+{
+    var parts = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+    var firstName = parts.Length > 0 ? parts[0] : "engineer";
+    var lastName = parts.Length > 1 ? parts[parts.Length - 1] : "user";
+    var email = $"{firstName.ToLower()}.{lastName.ToLower()}@shaktiudyog.local";
+    return email;
 }
