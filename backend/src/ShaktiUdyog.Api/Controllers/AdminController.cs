@@ -356,7 +356,19 @@ public class AdminController(IAdminService adminService, AppDbContext db, UserMa
         };
     }
 
-// ---- Charts ---------------------------------------------------------------
+[HttpPost("engineer")]
+    public async Task<IActionResult> CreateEngineer([FromBody] CreateEngineerRequest request)
+    {
+        var result = await adminService.CreateEngineerAsync(UserId, request, ClientIp);
+        if (result is null)
+        {
+            return Conflict(new MessageResponse("An engineer with this name already exists."));
+        }
+
+        return Ok(result);
+    }
+
+    // ---- Charts ---------------------------------------------------------------
 
     [HttpGet("charts")]
     public async Task<IActionResult> GetCharts()
