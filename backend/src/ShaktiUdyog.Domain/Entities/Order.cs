@@ -21,6 +21,11 @@ public class Order
     public string? DeliveryAddress { get; set; }
     public DateTimeOffset LastUpdatedAtUtc { get; set; } = DateTimeOffset.UtcNow;
 
+    // Engineer manufacturing board (requirements §18): the current stage on the
+    // order's manufacturing Kanban and the timestamp of the last stage change.
+    public string? ManufacturingStage { get; set; }
+    public DateTimeOffset? StageUpdatedAt { get; set; }
+
     // Advance payment
     public int AdvancePercent { get; set; } = 30;
     public decimal? AdvanceAmount { get; set; }

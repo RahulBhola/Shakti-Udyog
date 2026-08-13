@@ -461,6 +461,7 @@ public DbSet<KanbanTask> KanbanTasks => Set<KanbanTask>();
             entity.Property(o => o.PurchaseOrderReference).HasMaxLength(100);
             entity.Property(o => o.Status).HasMaxLength(30);
             entity.Property(o => o.DeliveryAddress).HasMaxLength(500);
+            entity.Property(o => o.ManufacturingStage).HasMaxLength(30);
             entity.HasIndex(o => o.CompanyId);
             entity.HasIndex(o => o.AssignedToUserId);
             entity.HasOne(o => o.Company).WithMany()

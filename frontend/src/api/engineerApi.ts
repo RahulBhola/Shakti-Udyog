@@ -141,4 +141,21 @@ export const engineerApi = {
   getOrderComments: (id: string) => apiGet<{authorRole: string; authorName: string | null; message: string; createdAtUtc: string}[]>(`${base}/orders/${id}/comments`),
   addOrderComment: (id: string, message: string) =>
     apiPost<{ message: string }>(`${base}/orders/${id}/comments`, { message, isCustomerVisible: true }),
-};
+
+  // ---- Manufacturing Board ------------------------------------------------
+  ordersBoard: () => apiGet<EngineerOrder[]>(`${base}/orders`),
+  updateStage: (id: string, stage: string) =>
+    apiPatch<{ message: string }>(`${base}/orders/${id}/stage`, { stage }),
+  };
+
+  export interface EngineerOrder {
+  id: string;
+  orderNumber: string;
+  companyName: string | null;
+  productType: string | null;
+  totalQuantity: number;
+  manufacturingStage: string;
+  stageUpdatedAt: string | null;
+  placedAtUtc: string;
+  }
+

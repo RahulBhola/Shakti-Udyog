@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using ShaktiUdyog.Api.Authorization;
+using ShaktiUdyog.Api.Hubs;
 using ShaktiUdyog.Api.Infrastructure;
 using ShaktiUdyog.Api.Services;
 using ShaktiUdyog.Domain.Constants;
@@ -179,13 +180,15 @@ builder.Services.AddScoped<IDocumentService, DocumentService>();
 builder.Services.AddScoped<IInvoiceAdminService, InvoiceAdminService>();
 builder.Services.AddScoped<IInvoiceManagementService, InvoiceManagementService>();
 builder.Services.AddSingleton<INotificationService, PlaceholderNotificationService>();
-builder.Services.AddScoped<IOrderEngineerService, OrderEngineerService>();
 builder.Services.AddScoped<IOrderAdminService, OrderAdminService>();
 builder.Services.AddScoped<IProductionBoardService, ProductionBoardService>();
 builder.Services.AddScoped<IProductMasterService, ProductMasterService>();
+builder.Services.AddScoped<IEngineerManufacturingService, EngineerManufacturingService>();
+builder.Services.AddScoped<IPortalPush, PortalPushService>();
 
 // --- API plumbing -----------------------------------------------------------
 builder.Services.AddControllers();
+builder.Services.AddSignalR();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddSwaggerDocumentation();
@@ -246,6 +249,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<PortalHub>("/api/v1/portal-hub");
 app.MapHealthChecks("/health");
 
 // Seed fixed roles (idempotent) and, in Development only, a demo admin.
