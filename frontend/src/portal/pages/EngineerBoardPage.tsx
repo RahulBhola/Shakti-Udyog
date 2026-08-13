@@ -16,7 +16,7 @@ const COLUMNS: BoardColumn[] = [
   { code: "production", label: "Production", color: "#6366f1" },
   { code: "quality_check", label: "QC", color: "#a78bfa" },
   { code: "packed", label: "Packed", color: "#14b8a6" },
-  { code: "ready_to_dispatch", label: "Ready To Dispatch", color: "#06b6d4" },
+  { code: "ready_to_dispatch", label: "Ready To Dispatch", color: "#06b6d4" }
 ];
 
 const columnIndex = (code: string): number => COLUMNS.findIndex((c) => c.code === code);
