@@ -356,7 +356,9 @@ public class AdminController(IAdminService adminService, AppDbContext db, UserMa
         };
     }
 
-[HttpPost("engineer")]
+// ---- Engineers --------------------------------------------------------------
+
+    [HttpPost("engineers")]
     public async Task<IActionResult> CreateEngineer([FromBody] CreateEngineerRequest request)
     {
         var result = await adminService.CreateEngineerAsync(UserId, request, ClientIp);

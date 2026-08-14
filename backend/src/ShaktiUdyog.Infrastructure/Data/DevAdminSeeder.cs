@@ -7,14 +7,14 @@ using ShaktiUdyog.Domain.Entities;
 namespace ShaktiUdyog.Infrastructure.Data;
 
 /// <summary>
-/// DEVELOPMENT ONLY: seeds a demo admin account so authentication can be
-/// exercised before the invitation/approval flows exist. The password must be
-/// supplied via configuration (DevAdmin:Password — user secrets or env var);
-/// nothing is seeded when it is absent. Never called outside Development.
+/// DEVELOPMENT ONLY: seeds demo admin, engineers, and customer accounts so authentication
+/// and operations can be exercised in development. The password must be supplied via
+/// configuration (DevAdmin:Password / DevCustomer:Password — user secrets or env var).
+/// Never called outside Development.
 /// </summary>
 public static class DevAdminSeeder
 {
-    public const string Email = "admin@shaktiudyog.local";
+    public const string Email = "lovebhola8283@gmail.com";
 
     public static async Task SeedAsync(
         UserManager<ApplicationUser> userManager,
@@ -28,33 +28,81 @@ public static class DevAdminSeeder
             return;
         }
 
-        if (await userManager.FindByEmailAsync(Email) is not null)
+        var adminUser = await userManager.FindByEmailAsync(Email);
+        if (adminUser is null)
         {
-            // Still seed categories if they're missing
-            await SeedCategoriesAsync(dbContext, logger);
-            return;
+            adminUser = new ApplicationUser
+            {
+                Id = Guid.NewGuid(),
+                UserName = Email,
+                Email = Email,
+                EmailConfirmed = true,
+                FullName = "System Administrator",
+                IsActive = true,
+            };
+
+            var created = await userManager.CreateAsync(adminUser, password);
+            if (!created.Succeeded)
+            {
+                var errors = string.Join("; ", created.Errors.Select(e => e.Description));
+                throw new InvalidOperationException($"Failed to seed development admin: {errors}");
+            }
+
+            await userManager.AddToRoleAsync(adminUser, Roles.Admin);
+            logger.LogWarning("Seeded DEVELOPMENT demo admin '{Email}'.", Email);
+        }
+        else
+        {
+            var resetToken = await userManager.GeneratePasswordResetTokenAsync(adminUser);
+            await userManager.ResetPasswordAsync(adminUser, resetToken, password);
+            if (!await userManager.IsInRoleAsync(adminUser, Roles.Admin))
+            {
+                await userManager.AddToRoleAsync(adminUser, Roles.Admin);
+            }
         }
 
-        var user = new ApplicationUser
+        // Seed Engineers (1 primary + multiple secondary engineers)
+        var engineers = new[]
         {
-            Id = Guid.NewGuid(),
-            UserName = Email,
-            Email = Email,
-            EmailConfirmed = true,
-            FullName = "Demo Administrator [placeholder]",
-            IsActive = true,
+            ("engineer@shaktiudyog.local", "Primary Staff Engineer"),
+            ("engineer2@shaktiudyog.local", "Senior Foundry Engineer"),
+            ("engineer3@shaktiudyog.local", "Quality Assurance Engineer")
         };
 
-        var created = await userManager.CreateAsync(user, password);
-        if (!created.Succeeded)
+        foreach (var (engEmail, fullName) in engineers)
         {
-            var errors = string.Join("; ", created.Errors.Select(e => e.Description));
-            throw new InvalidOperationException($"Failed to seed development admin: {errors}");
+            var engUser = await userManager.FindByEmailAsync(engEmail);
+            if (engUser is null)
+            {
+                engUser = new ApplicationUser
+                {
+                    Id = Guid.NewGuid(),
+                    UserName = engEmail,
+                    Email = engEmail,
+                    EmailConfirmed = true,
+                    FullName = fullName,
+                    IsActive = true,
+                };
+
+                var res = await userManager.CreateAsync(engUser, password);
+                if (res.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(engUser, Roles.Engineer);
+                    logger.LogInformation("Seeded demo engineer '{Email}'.", engEmail);
+                }
+            }
+            else
+            {
+                var token = await userManager.GeneratePasswordResetTokenAsync(engUser);
+                await userManager.ResetPasswordAsync(engUser, token, password);
+                if (!await userManager.IsInRoleAsync(engUser, Roles.Engineer))
+                {
+                    await userManager.AddToRoleAsync(engUser, Roles.Engineer);
+                }
+            }
         }
 
-        await userManager.AddToRoleAsync(user, Roles.Admin);
         await SeedCategoriesAsync(dbContext, logger);
-        logger.LogWarning("Seeded DEVELOPMENT demo admin '{Email}'. Do not use in production.", Email);
     }
 
     private static async Task SeedCategoriesAsync(AppDbContext db, ILogger logger)
@@ -76,3 +124,4 @@ public static class DevAdminSeeder
         logger.LogInformation("Seeded {Count} product categories for development.", categories.Count);
     }
 }
+

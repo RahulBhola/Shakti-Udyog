@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace ShaktiUdyog.Infrastructure.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class AddCompanyNameToUser : Migration
+    public partial class AddCompanyNameColumn : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -13,8 +13,7 @@ namespace ShaktiUdyog.Infrastructure.Data.Migrations
             migrationBuilder.AddColumn<string>(
                 name: "CompanyName",
                 table: "AspNetUsers",
-                type: "nvarchar(200)",
-                maxLength: 200,
+                type: "nvarchar(max)",
                 nullable: true);
         }
 
