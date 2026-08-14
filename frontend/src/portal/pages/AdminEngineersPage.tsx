@@ -6,8 +6,8 @@ import { useAuth } from "../../auth/AuthContext";
 import { formatDate } from "../shared";
 import {
   RefreshCw, ChevronLeft, ChevronRight, X as CloseIcon, Eye, MoreVertical,
-  Mail, Phone, Ban, CheckCircle2, Filter, UserCheck, UserPlus, ShieldAlert,
-  KeyRound, Lock, EyeOff, Sparkles, Check,
+  Mail, Ban, CheckCircle2, Filter, UserCheck, UserPlus,
+  EyeOff, Sparkles, Check,
 } from "lucide-react";
 import "./erpListView.css";
 
