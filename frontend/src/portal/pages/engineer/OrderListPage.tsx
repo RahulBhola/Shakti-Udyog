@@ -406,7 +406,7 @@ export default function EngineerOrderListPage() {
       )}
 
       {/* Desktop table */}
-      {data && data.items.length > 0 && (
+      {(data?.items?.length > 0 ?? false) && (
         <div className="inv-table-wrap">
           <div className="inv-scroll">
             <table className="inv-table">
@@ -443,14 +443,14 @@ export default function EngineerOrderListPage() {
       {/* Mobile cards */}
       <div className="inv-mobile">
         {loading && !data && !error && <Loading label="Loading orders" />}
-        {!loading && data && data.items.length === 0 && !error && <div className="inv-status">No orders found.</div>}
-        {data && data.items.map((o) => renderCard(o))}
+        {!loading && data && (data.items ?? []).length === 0 && !error && <div className="inv-status">No orders found.</div>}
+        {(data?.items ?? []).map((o) => renderCard(o))}
       </div>
 
       {/* Errors / loading / empty (desktop) */}
       {error && <EmptyState title="Failed to load orders" text={error} />}
       {loading && !data && !error && <div className="inv-status"><Loading label="Loading orders" /></div>}
-      {!error && data && data.items.length === 0 && (
+      {!error && data && (data.items ?? []).length === 0 && (
         <div className="inv-status">
           <FileText size={40} style={{ opacity: 0.4, marginBottom: 12 }} />
           <div>{hasFilters ? "No orders match the current filters." : "No orders found."}</div>
@@ -460,7 +460,7 @@ export default function EngineerOrderListPage() {
       {/* Pagination */}
       <div className="inv-pagination">
         <span className="inv-pagination__info">
-          {data ? `Showing ${data.items.length} of ${data.totalCount} orders` : ""}
+          {data ? `Showing ${(data.items ?? []).length} of ${data.totalCount} orders` : ""}
         </span>
 
         <div className="inv-field" style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
