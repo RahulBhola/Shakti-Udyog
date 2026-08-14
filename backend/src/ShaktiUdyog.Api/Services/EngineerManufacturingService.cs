@@ -37,10 +37,10 @@ public class EngineerManufacturingService(
     public async Task<IReadOnlyList<EngineerOrderDto>> GetBoardOrdersAsync(Guid userId, bool isAdmin)
     {
         var query = db.Orders
-            .Where(o => o.AssignedToUserId != null && o.Status != OrderStatuses.Cancelled);
+            .Where(o => o.Status != OrderStatuses.Cancelled);
 
         if (!isAdmin)
-            query = query.Where(o => o.AssignedToUserId == userId);
+            query = query.Where(o => o.AssignedToUserId == userId || o.AssignedToUserId == null);
 
         return await query
             .OrderByDescending(o => o.StageUpdatedAt ?? o.PlacedAtUtc)
@@ -60,7 +60,7 @@ public class EngineerManufacturingService(
     {
         var order = await db.Orders.SingleOrDefaultAsync(o => o.Id == orderId);
         if (order is null) return null;
-        if (!isAdmin && order.AssignedToUserId != userId) return null;
+        if (!isAdmin && order.AssignedToUserId != null && order.AssignedToUserId != userId) return null;
         if (order.Status == OrderStatuses.Cancelled) return false;
 
         var fromStage = order.ManufacturingStage ?? ManufacturingStages.PatternDevelopment;

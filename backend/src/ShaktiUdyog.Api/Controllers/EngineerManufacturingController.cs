@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ShaktiUdyog.Api.Contracts.Auth;
 using ShaktiUdyog.Api.Services;
+using ShaktiUdyog.Api.Validation;
 using ShaktiUdyog.Domain.Constants;
 
 namespace ShaktiUdyog.Api.Controllers;

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { Bell, User, Settings, LogOut, ExternalLink, Sun, Moon } from "lucide-react";
 import { useAuth } from "../auth/AuthContext";
@@ -79,14 +79,29 @@ export default function AdminLayout() {
   const displayName = user?.fullName ?? user?.email ?? "User";
   const initials = displayName.charAt(0).toUpperCase();
 
+  const isAdmin = user?.roles.includes("Admin");
+  const isEngineer = user?.roles.includes("Engineer");
+
+  const navSections = useMemo(() => {
+    if (isAdmin) return adminSections;
+    if (isEngineer) {
+      return adminSections.filter(
+        (s) => s.label === null || s.label === "Sales" || s.label === "Production"
+      );
+    }
+    return adminSections;
+  }, [isAdmin, isEngineer]);
+
+  const portalTitle = isAdmin ? "Admin Portal" : isEngineer ? "Engineer Portal" : "Portal";
+
   return (
     <div className="admin-portal-layout">
-      <Sidebar sections={adminSections} />
+      <Sidebar sections={navSections} />
 
       <div className="admin-portal-main">
         {/* Top Bar */}
         <header className="portal__topbar">
-          <strong className="text-[15px] font-semibold text-[var(--text-primary)]">Admin Portal</strong>
+          <strong className="text-[15px] font-semibold text-[var(--text-primary)]">{portalTitle}</strong>
 
           <span className="nav-spacer" />
 

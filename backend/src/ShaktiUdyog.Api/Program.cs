@@ -250,6 +250,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapHub<PortalHub>("/api/v1/portal-hub");
+app.MapHub<PortalHub>("/hubs/portal");
 app.MapHealthChecks("/health");
 
 // Seed fixed roles (idempotent) and, in Development only, a demo admin.

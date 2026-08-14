@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { apiDelete, apiGet, apiPost, apiPut } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import { formatDate } from "../portal/shared";
-import { engineerApi } from "../api/engineerApi";
 import { adminApi } from "../api/adminApi";
 
 /* ── Types ─────────────────────────────────────────────────────────────────── */
@@ -133,11 +132,6 @@ function stageToStatus(stage: string): string {
   return map[stage] || "confirmed";
 }
 
-function stageProgress(stage: string): number {
-  const idx = WORKFLOW.indexOf(stage);
-  return idx >= 0 ? Math.round((idx / (WORKFLOW.length - 1)) * 100) : 0;
-}
-
 function remainingDays(dateStr: string | null): number | null {
   if (!dateStr) return null;
   const diff = new Date(dateStr).getTime() - Date.now();
@@ -170,8 +164,9 @@ export function ProductionBoard() {
   // Load data based on view mode
   useEffect(() => {
     if (viewMode === "orders") {
-      engineerApi.orders(1, 200).then((all) => {
-        const mapped = (all.items || []).map((o) => ({
+      apiGet<any>("/api/v1/engineer/orders").then((all) => {
+        const items = Array.isArray(all) ? all : (all?.items || []);
+        const mapped = items.map((o: any) => ({
           id: o.id, jobNumber: o.orderNumber, castingName: o.productType || o.orderNumber,
           currentStage: statusToStage(o.status), stagePosition: 0,
           priority: "Medium", quantity: o.totalQuantity || 0,
@@ -718,7 +713,7 @@ interface JobDetailFull {
   assignedEngineer: string | null; assignedSupervisor: string | null;
   department: string | null; status: string; isBlocked: boolean; blockReason: string | null;
   companyId: string; companyName: string; orderId: string | null; orderNumber: string | null;
-  enquiryId: string | null; enquiryProductType: string | null;
+  rfqId: string | null; rfqProductType: string | null;
   quotationId: string | null; quotationNumber: string | null;
   createdAtUtc: string; updatedAtUtc: string | null;
   stageHistory: Array<{ id: string; fromStage: string; toStage: string; changedByName: string | null; remarks: string | null; occurredAtUtc: string; }>;
@@ -803,7 +798,7 @@ function OverviewTab({ detail }: { detail: JobDetailFull }) {
         <h4>Business Links</h4>
         <div className="prod-detail__field"><span>Customer:</span><strong>{detail.companyName}</strong></div>
         {detail.orderNumber && <div className="prod-detail__field"><span>Order:</span><strong>{detail.orderNumber}</strong></div>}
-        {detail.enquiryProductType && <div className="prod-detail__field"><span>Enquiry:</span><strong>{detail.enquiryProductType}</strong></div>}
+        {detail.rfqProductType && <div className="prod-detail__field"><span>RFQ:</span><strong>{detail.rfqProductType}</strong></div>}
       </div>
       <div className="prod-detail__field-group">
         <h4>Dates</h4>
@@ -954,14 +949,14 @@ function OrderDetailPanel({ job, onClose, onMaximize }: { job: ProductionJob; on
   const [posting, setPosting] = useState(false);
 
   useEffect(() => {
-    engineerApi.getOrderComments(job.id).then(setComments).catch(() => {});
+    apiGet<any>(`/api/v1/engineer/orders/${job.id}/comments`).then(setComments).catch(() => {});
   }, [job.id]);
 
   async function handlePostComment() {
     if (!newComment.trim() || posting) return;
     setPosting(true);
     try {
-      await engineerApi.addOrderComment(job.id, newComment.trim());
+      await apiPost(`/api/v1/engineer/orders/${job.id}/comments`, { message: newComment.trim() });
       setComments(prev => [...prev, {authorRole: "Admin", message: newComment.trim(), createdAtUtc: new Date().toISOString()}]);
       setNewComment("");
     } catch {}

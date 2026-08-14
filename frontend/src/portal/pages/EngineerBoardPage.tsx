@@ -1,7 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { engineerApi, type EngineerOrder } from "../../api/engineerApi";
+import { apiGet, apiPatch } from "../../api/client";
 import { connectRealtime, getRealtimeConnection, type StageChangedPayload } from "../../realtime/signalR";
 import { formatDate } from "../shared";
+
+export interface EngineerOrder {
+  id: string;
+  orderNumber: string;
+  companyName: string | null;
+  productType: string | null;
+  totalQuantity: number;
+  manufacturingStage: string;
+  placedAtUtc: string;
+  stageUpdatedAt: string | null;
+}
 
 /* ── Board columns (forward-only workflow) ────────────────────────────────── */
 
@@ -16,7 +27,7 @@ const COLUMNS: BoardColumn[] = [
   { code: "production", label: "Production", color: "#6366f1" },
   { code: "quality_check", label: "QC", color: "#a78bfa" },
   { code: "packed", label: "Packed", color: "#14b8a6" },
-  { code: "ready_to_dispatch", label: "Ready To Dispatch", color: "#06b6d4" }
+  { code: "ready_to_dispatch", label: "Ready To Dispatch", color: "#06b6d4" },
 ];
 
 const columnIndex = (code: string): number => COLUMNS.findIndex((c) => c.code === code);
@@ -33,7 +44,7 @@ export default function EngineerBoardPage() {
   const dragOrder = useRef<EngineerOrder | null>(null);
 
   const load = useCallback(() => {
-    engineerApi.ordersBoard()
+    apiGet<EngineerOrder[]>("/api/v1/engineer/orders")
       .then((data) => { setOrders(data); setError(null); })
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
@@ -46,8 +57,8 @@ export default function EngineerBoardPage() {
     void connectRealtime();
     const conn = getRealtimeConnection();
     const handler = (_p: StageChangedPayload) => load();
-    conn.on("StageChanged", handler);
-    return () => { conn.off("StageChanged", handler); };
+    conn.on("stageChanged", handler);
+    return () => { conn.off("stageChanged", handler); };
   }, [load]);
 
   const handleDragStart = useCallback((order: EngineerOrder) => {
@@ -88,7 +99,7 @@ export default function EngineerBoardPage() {
     setDraggedId(null);
     dragOrder.current = null;
     try {
-      await engineerApi.updateStage(order.id, targetStage);
+      await apiPatch(`/api/v1/engineer/orders/${order.id}/stage`, { stage: targetStage });
       load();
     } catch {
       setOrders((prev) => prev?.map((o) => o.id === order.id ? { ...o, manufacturingStage: order.manufacturingStage } : o) ?? prev);

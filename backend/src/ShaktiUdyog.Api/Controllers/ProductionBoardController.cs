@@ -9,7 +9,9 @@ namespace ShaktiUdyog.Api.Controllers;
 
 [ApiController]
 [Route("api/v1/admin/production-board")]
-[Authorize(Policy = AuthPolicies.AdminOnly)]
+// Engineers and Admins share the manufacturing board; only genuinely
+// admin-only operations (deleting jobs) remain Admin-only.
+[Authorize(Policy = AuthPolicies.EngineerOnly)]
 public class ProductionBoardController(IProductionBoardService service) : ControllerBase
 {
     private string? ClientIp => HttpContext.Connection.RemoteIpAddress?.ToString();
@@ -60,6 +62,7 @@ public class ProductionBoardController(IProductionBoardService service) : Contro
     }
 
     [HttpDelete("jobs/{id:guid}")]
+    [Authorize(Policy = AuthPolicies.AdminOnly)]
     public async Task<IActionResult> DeleteJob(Guid id)
     {
         return await service.DeleteJobAsync(id, UserId, ClientIp) ? Ok(new MessageResponse("Job deleted.")) : NotFound();

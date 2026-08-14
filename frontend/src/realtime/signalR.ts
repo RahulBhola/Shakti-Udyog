@@ -43,7 +43,7 @@ export function getRealtimeConnection(): HubConnection {
   };
 
   connection = new HubConnectionBuilder()
-    .withUrl(`${config.apiBaseUrl}/api/v1/portal-hub`, options)
+    .withUrl(`${config.apiBaseUrl}/hubs/portal`, options)
     .withAutomaticReconnect()
     .configureLogging(LogLevel.Warning)
     .build();
@@ -51,8 +51,7 @@ export function getRealtimeConnection(): HubConnection {
   return connection;
 }
 
-/** Starts the connection if not already connected; failures are tolerated (auto-reconnect will retry).
- */
+/** Starts the connection if not already connected; failures are tolerated (auto-reconnect will retry). */
 export async function connectRealtime(): Promise<void> {
   const conn = getRealtimeConnection();
   if (conn.state === "Connected") return;

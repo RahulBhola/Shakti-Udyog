@@ -1,6 +1,6 @@
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { AuthProvider } from "./auth/AuthContext";
+import { AuthProvider, useAuth } from "./auth/AuthContext";
 import { ThemeProvider } from "./auth/ThemeContext";
 import { ProtectedRoute } from "./auth/ProtectedRoute";
 import { Roles } from "./auth/roles";
@@ -65,13 +65,14 @@ const AdminOrderDetailPage = lazy(() => import("./portal/pages/AdminOrderDetailP
 const AdminInvoiceCreatePage = lazy(() => import("./portal/pages/AdminInvoicePage").then(m => ({ default: m.AdminInvoiceCreatePage })));
 const AdminLayout = lazy(() => import("./portal/AdminLayout"));
 const AdminDashboardPage = lazy(() => import("./portal/pages/AdminDashboardPage"));
+const EngineerDashboardPage = lazy(() => import("./portal/pages/engineer/EngineerDashboardPage"));
+const EngineerBoardPage = lazy(() => import("./portal/pages/EngineerBoardPage"));
 const AdminUsersPage = lazy(() => import("./portal/pages/AdminUsersPage"));
 const AdminEngineersPage = lazy(() => import("./portal/pages/AdminEngineersPage"));
 const AdminCompaniesPage = lazy(() => import("./portal/pages/AdminCompaniesPage"));
 const AdminAuditLogsPage = lazy(() => import("./portal/pages/AdminAuditLogsPage"));
 const AdminReportsPage = lazy(() => import("./portal/pages/AdminReportsPage"));
 const AdminSettingsPage = lazy(() => import("./portal/pages/AdminSettingsPage"));
-const AdminProductionPage = lazy(() => import("./portal/pages/AdminProductionPage"));
 const AdminInvoiceManagePage = lazy(() => import("./portal/pages/AdminInvoiceManagePage"));
 const AdminDealPage = lazy(() => import("./portal/pages/AdminDealPage"));
 const AdminProductPage = lazy(() => import("./portal/pages/AdminProductPage"));
@@ -81,6 +82,14 @@ const EngineerEnquiryListPage = lazy(() => import("./portal/pages/engineer/Enqui
 const EngineerEnquiryDetailPage = lazy(() => import("./portal/pages/engineer/EnquiryDetailPage"));
 const EngineerQuotationListPage = lazy(() => import("./portal/pages/engineer/QuotationListPage"));
 const EngineerOrderListPage = lazy(() => import("./portal/pages/engineer/OrderListPage"));
+
+function PortalDashboardSwitch() {
+  const { user } = useAuth();
+  if (user?.roles.includes("Admin")) {
+    return <AdminDashboardPage />;
+  }
+  return <EngineerDashboardPage />;
+}
 
 function App() {
   return (
@@ -159,7 +168,7 @@ function App() {
                 <ProtectedRoute roles={[Roles.Admin, Roles.Engineer]}><AdminLayout /></ProtectedRoute>
               }>
               <Route index element={<Navigate to="/admin/dashboard" replace />} />
-              <Route path="dashboard" element={<AdminDashboardPage />} />
+              <Route path="dashboard" element={<PortalDashboardSwitch />} />
               {/* Sales */}
               <Route path="enquiries" element={<EngineerEnquiryListPage />} />
               <Route path="enquiries/:id" element={<EngineerEnquiryDetailPage />} />
@@ -169,7 +178,8 @@ function App() {
               <Route path="orders" element={<EngineerOrderListPage />} />
               <Route path="orders/:id" element={<AdminOrderDetailPage />} />
               {/* Production */}
-              <Route path="production" element={<AdminProductionPage />} />
+              <Route path="production" element={<EngineerBoardPage />} />
+              <Route path="manufacturing" element={<EngineerBoardPage />} />
               {/* Finance */}
               <Route path="invoices" element={<AdminInvoiceManagePage />} />
               <Route path="invoices/new" element={<AdminInvoiceCreatePage />} />

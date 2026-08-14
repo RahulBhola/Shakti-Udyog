@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiPatch, apiDelete, apiUpload } from "./client";
+import { apiGet, apiPost, apiPut, apiPatch, apiDelete, apiUpload } from "./client";
 
 /* ---- Types mirroring backend Contracts/Customer ---------------------------- */
 
