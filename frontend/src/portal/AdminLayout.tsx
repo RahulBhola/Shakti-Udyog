@@ -33,6 +33,7 @@ const adminSections: NavSection[] = [
     label: "Administration",
     items: [
       { label: "Users", href: "/admin/users" },
+      { label: "Engineers", href: "/admin/engineers" },
       { label: "Companies", href: "/admin/companies" },
       { label: "Products", href: "/admin/products" },
       { label: "Categories", href: "/admin/categories" },

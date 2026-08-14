@@ -66,6 +66,7 @@ const AdminInvoiceCreatePage = lazy(() => import("./portal/pages/AdminInvoicePag
 const AdminLayout = lazy(() => import("./portal/AdminLayout"));
 const AdminDashboardPage = lazy(() => import("./portal/pages/AdminDashboardPage"));
 const AdminUsersPage = lazy(() => import("./portal/pages/AdminUsersPage"));
+const AdminEngineersPage = lazy(() => import("./portal/pages/AdminEngineersPage"));
 const AdminCompaniesPage = lazy(() => import("./portal/pages/AdminCompaniesPage"));
 const AdminAuditLogsPage = lazy(() => import("./portal/pages/AdminAuditLogsPage"));
 const AdminReportsPage = lazy(() => import("./portal/pages/AdminReportsPage"));
@@ -175,6 +176,7 @@ function App() {
               <Route path="deals/:orderId" element={<AdminDealPage />} />
               {/* Administration */}
               <Route path="users" element={<AdminUsersPage />} />
+              <Route path="engineers" element={<AdminEngineersPage />} />
               <Route path="companies" element={<AdminCompaniesPage />} />
               <Route path="products" element={<AdminProductPage />} />
               <Route path="products/:id" element={<AdminProductDetailPage />} />

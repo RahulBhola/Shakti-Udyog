@@ -417,8 +417,11 @@ public class AdminService : IAdminService
     /// </summary>
     public async Task<CreateEngineerResponse?> CreateEngineerAsync(Guid adminId, CreateEngineerRequest request, string? ip)
     {
+        var email = !string.IsNullOrWhiteSpace(request.Email)
+            ? request.Email.Trim().ToLowerInvariant()
+            : GenerateEngineerEmail(request.FullName);
+
         // Check if engineer with same email already exists
-        var email = GenerateEngineerEmail(request.FullName);
         var existing = await db.Users.AnyAsync(u => u.Email == email);
         if (existing)
         {

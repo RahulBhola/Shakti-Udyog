@@ -82,8 +82,10 @@ export const adminApi = {
   cancelOrder: (id: string, reason: string) => apiPatch<{ message: string }>(`${base}/orders/${id}/cancel`, reason),
   orderHistory: (id: string) => apiGet<{ fromStatus: string; toStatus: string; changedByRole: string; note: string | null; occurredAtUtc: string }[]>(`${base}/orders/${id}/history`),
 
-  // ---- Users ---------------------------------------------------------------
+  // ---- Users & Engineers ---------------------------------------------------
   users: () => apiGet<{ id: string; fullName: string | null; email: string; role: string }[]>(`${base}/users`),
+  createEngineer: (payload: { fullName: string; password?: string; email?: string }) =>
+    apiPost<{ userId: string; email: string; fullName: string }>(`${base}/engineers`, payload),
 
   // ---- Order assignment ---------------------------------------------------
   assignOrder: (orderId: string, assignedToUserId: string | null) =>
