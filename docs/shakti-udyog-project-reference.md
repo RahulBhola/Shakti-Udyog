@@ -44,8 +44,8 @@
 2. Authentication, password reset, roles, authorization policies ✅
 3. Public website and Enquiry flow ✅
 4. Customer portal: Enquiries, quotations, orders, tracking, documents, invoices, payments ✅
-5. Engineer and Admin portals ✅
-6. Jira integration, reports, and refinements 🔲
+5. Engineer and Admin portals (Dedicated Engineer Dashboard, Real-time SignalR Hub, Production Kanban Board, Advanced Shipments) ✅
+6. Full Reports Module (QuestPDF PDF generation, CSV/Excel exports, Reporting Dashboard), UI Dark Theme Refinements ✅
 
 ---
 

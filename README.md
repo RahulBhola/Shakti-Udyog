@@ -144,7 +144,8 @@ npm run build
 - ✅ Milestone 2 — authentication & authorization: JWT + refresh-token rotation, login/logout/refresh/forgot/reset/me endpoints, permission model and policy-based authorization, rate limiting, auth auditing, frontend auth foundation (context, protected routes, login page).
 - ✅ Milestone 3 — public website & RFQ flow: marketing pages from the requirements copy, enquiry + RFQ forms with server-side validation, secure drawing uploads, spam protection.
 - ✅ Milestone 4 — customer portal: Enquiries, quotations, orders, tracking, documents, invoices, payments.
-- ✅ Milestone 5 — Engineer and Admin portals, including the production kanban board.
-- ⏭ Milestone 6 — Jira integration, reports, and refinements.
+- ✅ Milestone 5 — Engineer and Admin portals: dedicated Engineer Dashboard, real-time SignalR hub (`/hubs/portal`), role-filtered navigation, and dynamic 5-stage manufacturing Kanban board (`EngineerBoardPage.tsx`).
+- ✅ Milestone 6 — Full reports module (QuestPDF PDF generation, CSV/Excel exports), Advanced Shipment Management (Vehicle #, Phone, Edit, Delete), and UI dark theme token adaptivity.
 
-Orders carry an **assigned engineer** (`Order.AssignedToUserId` + `OrderAssignments` history). Admins assign/reassign/unassign an order to an engineer (`PATCH /api/v1/admin/orders/{id}/assign`); engineers see and manage **only their assigned orders** (milestones, shipments, documents), with invalid access returning 403.
+Orders carry an **assigned engineer** (`Order.AssignedToUserId` + `OrderAssignments` history). Admins assign/reassign/unassign an order to an engineer (`PATCH /api/v1/admin/orders/{id}/assign`); engineers see and manage **only their assigned orders** (milestones, shipments, documents), with invalid access returning 403. Real-time updates are pushed via SignalR (`PortalHub.cs`).
+
