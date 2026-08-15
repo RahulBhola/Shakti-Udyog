@@ -11,18 +11,18 @@ import {
 /* ------------------------------------------------------------------ */
 
 const colors = {
-  bg: "#F7F9FC",
-  card: "#FFFFFF",
-  primary: "#2563EB",
-  primaryHover: "#1D4ED8",
-  primaryLight: "rgba(37, 99, 235, 0.08)",
-  success: "#22C55E",
-  danger: "#EF4444",
-  text: "#0F172A",
-  textSecondary: "#64748B",
-  textMuted: "#94A3B8",
-  border: "#E2E8F0",
-  borderLight: "#F1F5F9",
+  bg: "transparent",
+  card: "var(--bg-card)",
+  primary: "var(--color-primary)",
+  primaryHover: "var(--color-primary-hover)",
+  primaryLight: "rgba(59, 130, 246, 0.15)",
+  success: "var(--color-success)",
+  danger: "var(--color-danger)",
+  text: "var(--text-primary)",
+  textSecondary: "var(--text-secondary)",
+  textMuted: "var(--text-muted)",
+  border: "var(--border-default)",
+  borderLight: "var(--border-input, var(--border-default))",
 };
 
 const cardStyle: CSSProperties = {
@@ -30,20 +30,20 @@ const cardStyle: CSSProperties = {
   border: `1px solid ${colors.border}`,
   borderRadius: 16,
   padding: 24,
-  boxShadow: "0 1px 2px 0 rgba(0,0,0,0.05), 0 1px 3px 0 rgba(0,0,0,0.03)",
+  boxShadow: "var(--shadow-sm)",
 };
 
 const inputStyle: CSSProperties = {
   width: "100%",
   padding: "10px 14px",
-  border: `1px solid ${colors.border}`,
+  border: `1px solid ${colors.borderLight}`,
   borderRadius: 10,
   fontSize: 14,
   color: colors.text,
-  background: colors.card,
+  background: "var(--bg-input, var(--bg-surface))",
   outline: "none",
   boxSizing: "border-box",
-  transition: "border-color 0.15s ease",
+  transition: "border-color 0.15s ease, box-shadow 0.15s ease",
   fontFamily: "inherit",
 };
 
@@ -57,7 +57,7 @@ const labelStyle: CSSProperties = {
 
 const btnPrimary: CSSProperties = {
   background: colors.primary,
-  color: "#fff",
+  color: "#ffffff",
   border: "none",
   borderRadius: 10,
   padding: "10px 20px",
@@ -68,8 +68,8 @@ const btnPrimary: CSSProperties = {
 };
 
 const btnSecondary: CSSProperties = {
-  background: "transparent",
-  color: colors.textSecondary,
+  background: "var(--bg-surface)",
+  color: colors.text,
   border: `1px solid ${colors.border}`,
   borderRadius: 10,
   padding: "9px 16px",
