@@ -48,6 +48,15 @@ export interface EngineerEnquiryDetail {
   remarks: string | null;
 }
 
+export interface CreateShipmentPayload {
+  transporter?: string | null;
+  trackingNumber?: string | null;
+  vehicleNumber?: string | null;
+  phoneNumber?: string | null;
+  dispatchDateUtc?: string | null;
+  estimatedArrivalUtc?: string | null;
+}
+
 export const adminApi = {
   // ---- Enquiries ---------------------------------------------------------------
   enquiry: (id: string) => apiGet<EngineerEnquiryDetail>(`${base}/enquiries/${id}`),
@@ -147,6 +156,16 @@ export const adminApi = {
       total: number; amountPaid: number; balanceDue: number; currency: string; status: string;
       documentId: string | null; hasPdf: boolean;
     }[]>(`${base}/orders/${orderId}/invoices`),
+
+  // ── Shipments ─────────────────────────────────────────────────────────
+  createShipment: (orderId: string, payload: CreateShipmentPayload) =>
+    apiPost<{ message: string }>(`${base}/orders/${orderId}/shipments`, payload),
+
+  updateShipment: (orderId: string, shipmentId: string, payload: CreateShipmentPayload) =>
+    apiPut<{ message: string }>(`${base}/orders/${orderId}/shipments/${shipmentId}`, payload),
+
+  deleteShipment: (orderId: string, shipmentId: string) =>
+    apiDelete<{ message: string }>(`${base}/orders/${orderId}/shipments/${shipmentId}`),
 
   // ── Payments ──────────────────────────────────────────────────────────
   pendingPayments: () =>

@@ -15,6 +15,9 @@ public interface IOrderAdminService
     Task<bool?> OverrideStatusAsync(Guid id, string newStatus, string? note, Guid userId, string? ip);
     Task<bool?> CancelOrderAsync(Guid id, string reason, Guid userId, string? ip);
     Task<IReadOnlyList<OrderStatusHistoryEntryDto>> GetHistoryAsync(Guid id);
+    Task<bool?> CreateShipmentAsync(Guid orderId, CreateShipmentRequest request, Guid userId, string? ip);
+    Task<bool?> UpdateShipmentAsync(Guid orderId, Guid shipmentId, CreateShipmentRequest request, Guid userId, string? ip);
+    Task<bool?> DeleteShipmentAsync(Guid orderId, Guid shipmentId, Guid userId, string? ip);
 }
 
 public record OrderStatusHistoryEntryDto(string FromStatus, string ToStatus, string ChangedByRole, string? Note, DateTimeOffset OccurredAtUtc);
@@ -96,5 +99,65 @@ public class OrderAdminService(AppDbContext db, IAuditWriter audit) : IOrderAdmi
         return await db.OrderStatusHistories.IgnoreQueryFilters().Where(h => h.OrderId == id).OrderBy(h => h.CreatedAtUtc)
             .Select(h => new OrderStatusHistoryEntryDto(h.FromStatus, h.ToStatus, h.ChangedByRole, h.Note, h.CreatedAtUtc))
             .ToListAsync();
+    }
+
+    public async Task<bool?> CreateShipmentAsync(Guid orderId, CreateShipmentRequest request, Guid userId, string? ip)
+    {
+        var o = await db.Orders.IgnoreQueryFilters().SingleOrDefaultAsync(x => x.Id == orderId);
+        if (o is null) return null;
+
+        var shipment = new Shipment
+        {
+            Id = Guid.NewGuid(),
+            OrderId = orderId,
+            Transporter = request.Transporter,
+            TrackingNumber = request.TrackingNumber,
+            VehicleNumber = request.VehicleNumber,
+            PhoneNumber = request.PhoneNumber,
+            DispatchDateUtc = request.DispatchDateUtc,
+            EstimatedArrivalUtc = request.EstimatedArrivalUtc,
+            CreatedAtUtc = DateTimeOffset.UtcNow
+        };
+
+        db.Shipments.Add(shipment);
+        o.LastUpdatedAtUtc = DateTimeOffset.UtcNow;
+        await db.SaveChangesAsync();
+        await audit.WriteAsync("admin.order.shipment_created", userId, "Shipment", shipment.Id.ToString(), ip);
+        return true;
+    }
+
+    public async Task<bool?> UpdateShipmentAsync(Guid orderId, Guid shipmentId, CreateShipmentRequest request, Guid userId, string? ip)
+    {
+        var shipment = await db.Shipments.SingleOrDefaultAsync(s => s.Id == shipmentId && s.OrderId == orderId);
+        if (shipment is null) return null;
+
+        shipment.Transporter = request.Transporter;
+        shipment.TrackingNumber = request.TrackingNumber;
+        shipment.VehicleNumber = request.VehicleNumber;
+        shipment.PhoneNumber = request.PhoneNumber;
+        shipment.DispatchDateUtc = request.DispatchDateUtc;
+        shipment.EstimatedArrivalUtc = request.EstimatedArrivalUtc;
+
+        var order = await db.Orders.IgnoreQueryFilters().SingleOrDefaultAsync(x => x.Id == orderId);
+        if (order != null) order.LastUpdatedAtUtc = DateTimeOffset.UtcNow;
+
+        await db.SaveChangesAsync();
+        await audit.WriteAsync("admin.order.shipment_updated", userId, "Shipment", shipmentId.ToString(), ip);
+        return true;
+    }
+
+    public async Task<bool?> DeleteShipmentAsync(Guid orderId, Guid shipmentId, Guid userId, string? ip)
+    {
+        var shipment = await db.Shipments.SingleOrDefaultAsync(s => s.Id == shipmentId && s.OrderId == orderId);
+        if (shipment is null) return null;
+
+        db.Shipments.Remove(shipment);
+
+        var order = await db.Orders.IgnoreQueryFilters().SingleOrDefaultAsync(x => x.Id == orderId);
+        if (order != null) order.LastUpdatedAtUtc = DateTimeOffset.UtcNow;
+
+        await db.SaveChangesAsync();
+        await audit.WriteAsync("admin.order.shipment_deleted", userId, "Shipment", shipmentId.ToString(), ip);
+        return true;
     }
 }

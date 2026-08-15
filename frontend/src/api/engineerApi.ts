@@ -131,10 +131,10 @@ export const engineerApi = {
   updateMilestone: (id: string, statusCode: string, customerMessage?: string) =>
     apiPatch<{ message: string }>(`${base}/orders/${id}/milestones`, { statusCode, customerMessage }),
   createShipment: (id: string, transporter?: string, vehicleNumber?: string, phoneNumber?: string, dispatchDateUtc?: string, estimatedArrivalUtc?: string) =>
-    apiPost<{ message: string }>(`${base}/orders/${id}/shipment`, { transporter, vehicleNumber, phoneNumber, dispatchDateUtc, estimatedArrivalUtc }),
+    apiPost<{ message: string }>(`/api/v1/admin/orders/${id}/shipments`, { transporter, vehicleNumber, phoneNumber, dispatchDateUtc, estimatedArrivalUtc }),
   updateShipment: (orderId: string, shipmentId: string, transporter?: string, vehicleNumber?: string, phoneNumber?: string, dispatchDateUtc?: string, estimatedArrivalUtc?: string) =>
-    apiPatch<{ message: string }>(`${base}/orders/${orderId}/shipments/${shipmentId}`, { transporter, vehicleNumber, phoneNumber, dispatchDateUtc, estimatedArrivalUtc }),
-  deleteShipment: (orderId: string, shipmentId: string) => apiDelete<{ message: string }>(`${base}/orders/${orderId}/shipments/${shipmentId}`),
+    apiPut<{ message: string }>(`/api/v1/admin/orders/${orderId}/shipments/${shipmentId}`, { transporter, vehicleNumber, phoneNumber, dispatchDateUtc, estimatedArrivalUtc }),
+  deleteShipment: (orderId: string, shipmentId: string) => apiDelete<{ message: string }>(`/api/v1/admin/orders/${orderId}/shipments/${shipmentId}`),
   uploadOrderDocument: (id: string, file: File, category: string) => {
     const form = new FormData();
     form.append('file', file);

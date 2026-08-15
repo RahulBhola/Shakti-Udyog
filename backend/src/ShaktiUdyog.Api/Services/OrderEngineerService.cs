@@ -29,7 +29,6 @@ public interface IOrderEngineerService
 }
 
 public record MilestoneRequest(string StatusCode, string? CustomerMessage, string? InternalNote);
-public record CreateShipmentRequest(string? Transporter, string? VehicleNumber, string? PhoneNumber, DateTimeOffset? DispatchDateUtc, DateTimeOffset? EstimatedArrivalUtc);
 public record OrderCommentRequest(string Message, bool IsCustomerVisible = true);
 public record OrderCommentResponseDto(string AuthorRole, string? AuthorName, string Message, DateTimeOffset CreatedAtUtc);
 

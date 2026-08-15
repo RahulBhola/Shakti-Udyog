@@ -20,7 +20,7 @@ namespace ShaktiUdyog.Api.Controllers;
 [ApiController]
 [Route("api/v1/admin")]
 [Authorize(Policy = AuthPolicies.AdminOnly)]
-public class AdminController(IAdminService adminService, AppDbContext db, UserManager<ApplicationUser> userManager) : ControllerBase
+public class AdminController(IAdminService adminService, IOrderAdminService orderAdminService, AppDbContext db, UserManager<ApplicationUser> userManager) : ControllerBase
 {
     private string? ClientIp => HttpContext.Connection.RemoteIpAddress?.ToString();
 
@@ -354,6 +354,29 @@ public class AdminController(IAdminService adminService, AppDbContext db, UserMa
             false => BadRequest(new MessageResponse("Assignment failed. Ensure the user exists and is not a Customer.")),
             _ => Ok(new MessageResponse(request.AssignedToUserId.HasValue ? "Order assigned." : "Order unassigned.")),
         };
+    }
+
+    // ---- Shipments -----------------------------------------------------------
+
+    [HttpPost("orders/{orderId:guid}/shipments")]
+    public async Task<IActionResult> CreateShipment(Guid orderId, [FromBody] CreateShipmentRequest request)
+    {
+        var result = await orderAdminService.CreateShipmentAsync(orderId, request, UserId, ClientIp);
+        return result is null ? NotFound() : Ok(new MessageResponse("Shipment created."));
+    }
+
+    [HttpPut("orders/{orderId:guid}/shipments/{shipmentId:guid}")]
+    public async Task<IActionResult> UpdateShipment(Guid orderId, Guid shipmentId, [FromBody] CreateShipmentRequest request)
+    {
+        var result = await orderAdminService.UpdateShipmentAsync(orderId, shipmentId, request, UserId, ClientIp);
+        return result is null ? NotFound() : Ok(new MessageResponse("Shipment updated."));
+    }
+
+    [HttpDelete("orders/{orderId:guid}/shipments/{shipmentId:guid}")]
+    public async Task<IActionResult> DeleteShipment(Guid orderId, Guid shipmentId)
+    {
+        var result = await orderAdminService.DeleteShipmentAsync(orderId, shipmentId, UserId, ClientIp);
+        return result is null ? NotFound() : Ok(new MessageResponse("Shipment deleted."));
     }
 
 // ---- Engineers --------------------------------------------------------------

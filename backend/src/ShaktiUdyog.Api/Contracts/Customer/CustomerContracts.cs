@@ -150,6 +150,11 @@ public record ShipmentDto(
     DateTimeOffset? DispatchDateUtc, DateTimeOffset? EstimatedArrivalUtc,
     DateTimeOffset? DeliveredAtUtc, bool HasProofOfDelivery);
 
+public record CreateShipmentRequest(
+    string? Transporter, string? TrackingNumber,
+    string? VehicleNumber, string? PhoneNumber,
+    DateTimeOffset? DispatchDateUtc, DateTimeOffset? EstimatedArrivalUtc);
+
 public record TimelineEntryDto(
     string StatusCode, string StatusLabel, string? Message,
     string ActorType, DateTimeOffset OccurredAtUtc);
