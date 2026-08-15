@@ -948,6 +948,20 @@ public DbSet<KanbanTask> KanbanTasks => Set<KanbanTask>();
             entity.HasOne(p => p.User).WithMany()
                 .HasForeignKey(p => p.UserId).OnDelete(DeleteBehavior.Cascade);
         });
+
+        builder.Entity<ContactRequest>(entity =>
+        {
+            entity.ToTable("ContactRequests");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.FullName).HasMaxLength(150).IsRequired();
+            entity.Property(e => e.CompanyName).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.Email).HasMaxLength(256).IsRequired();
+            entity.Property(e => e.Phone).HasMaxLength(30).IsRequired();
+            entity.Property(e => e.City).HasMaxLength(100);
+            entity.Property(e => e.Message).HasMaxLength(4000).IsRequired();
+            entity.Property(e => e.Status).HasMaxLength(50).HasDefaultValue("New");
+            entity.HasIndex(e => e.CreatedAtUtc);
+        });
     }
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
