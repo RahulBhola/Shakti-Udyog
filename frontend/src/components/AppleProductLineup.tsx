@@ -18,7 +18,6 @@ export interface LineupCardModel {
   moq: string;
   detailSlug: string;
   defaultBadge: string;
-  isFeatured?: boolean;
   variants: ProductGradeVariant[];
 }
 
@@ -117,7 +116,6 @@ const LINEUP_PRODUCTS: LineupCardModel[] = [
     weightRange: '0.8 to 12.0 kg',
     moq: 'Batch MOQ: 50 to 3,000 pcs/mo',
     defaultBadge: 'SG 600/3 HIGH TENSILE',
-    isFeatured: true,
     detailSlug: '/products/ductile-iron-castings',
     variants: [
       {
@@ -224,30 +222,23 @@ export const AppleProductLineup: React.FC = () => {
           {LINEUP_PRODUCTS.map((prod) => {
             const currentVarIdx = activeVariantMap[prod.id] || 0;
             const currentVar = prod.variants[currentVarIdx] || prod.variants[0];
-            const isFeatured = prod.isFeatured;
 
             return (
               <div
                 key={prod.id}
                 className={`group relative rounded-3xl p-5 sm:p-6 flex flex-col justify-between border transition-all duration-300 ${
                   isLight
-                    ? isFeatured
-                      ? 'bg-white border-orange-500 ring-2 ring-orange-500/20 shadow-xl'
-                      : 'bg-white border-neutral-200/90 hover:border-blue-300 hover:shadow-lg shadow-[0_4px_20px_rgba(0,0,0,0.03)]'
-                    : isFeatured
-                      ? 'bg-[#0a0b10] border-orange-500 shadow-[0_0_30px_rgba(255,109,0,0.25)]'
-                      : 'bg-[#08090e] border-white/[0.08] hover:border-white/20 hover:bg-[#0c0d14]'
+                    ? 'bg-white border-neutral-200/90 hover:border-blue-400 hover:shadow-xl shadow-[0_4px_20px_rgba(0,0,0,0.03)]'
+                    : 'bg-[#08090e] border-white/[0.08] hover:border-sky-500/40 hover:bg-[#0c0d14] hover:shadow-[0_0_25px_rgba(56,189,248,0.15)]'
                 }`}
               >
                 
                 {/* Top Row: Grade Badge + Weight Range */}
                 <div className="flex items-center justify-between text-xs mb-4">
                   <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-mono text-[10px] font-bold tracking-wide ${
-                    isFeatured
-                      ? 'bg-orange-500/15 text-orange-400 border border-orange-500/30'
-                      : isLight
-                        ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                        : 'bg-blue-500/10 text-sky-400 border border-blue-500/20'
+                    isLight
+                      ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                      : 'bg-blue-500/10 text-sky-400 border border-blue-500/20'
                   }`}>
                     <Atom className="w-3 h-3 shrink-0" />
                     <span>{currentVar.badge}</span>
@@ -293,11 +284,9 @@ export const AppleProductLineup: React.FC = () => {
                         aria-label={`Select variant ${v.name}`}
                         className={`w-2.5 h-2.5 rounded-full transition-all duration-200 ${
                           isSelected
-                            ? isFeatured
-                              ? 'bg-orange-500 scale-125 shadow-[0_0_8px_rgba(255,109,0,0.8)]'
-                              : isLight
-                                ? 'bg-blue-600 scale-125'
-                                : 'bg-sky-400 scale-125 shadow-[0_0_8px_rgba(56,189,248,0.8)]'
+                            ? isLight
+                              ? 'bg-blue-600 scale-125'
+                              : 'bg-sky-400 scale-125 shadow-[0_0_8px_rgba(56,189,248,0.8)]'
                             : isLight
                               ? 'bg-neutral-300 hover:bg-neutral-400'
                               : 'bg-neutral-700 hover:bg-neutral-500'
@@ -325,11 +314,7 @@ export const AppleProductLineup: React.FC = () => {
                 <div className="space-y-2 pt-3.5 mb-5 border-t border-neutral-200/80 dark:border-white/10">
                   <div className="flex items-center gap-2.5 text-xs sm:text-sm font-mono font-bold">
                     <ShieldCheck className={`w-4 h-4 shrink-0 ${
-                      isFeatured
-                        ? 'text-orange-500'
-                        : isLight
-                          ? 'text-blue-600'
-                          : 'text-sky-400'
+                      isLight ? 'text-blue-600' : 'text-sky-400'
                     }`} />
                     <span className={isLight ? 'text-neutral-800' : 'text-neutral-200'}>
                       {currentVar.specSummary}
@@ -345,11 +330,9 @@ export const AppleProductLineup: React.FC = () => {
                   <Link
                     to={prod.detailSlug}
                     className={`py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-center inline-flex items-center justify-center gap-1.5 transition-all ${
-                      isFeatured
-                        ? 'bg-orange-500 hover:bg-orange-600 text-white shadow-md shadow-orange-500/20'
-                        : isLight
-                          ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm'
-                          : 'bg-blue-600 hover:bg-blue-500 text-white shadow-md'
+                      isLight
+                        ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm'
+                        : 'bg-blue-600 hover:bg-blue-500 text-white shadow-md'
                     }`}
                   >
                     <span>Learn more</span>
