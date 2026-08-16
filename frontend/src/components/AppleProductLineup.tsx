@@ -191,14 +191,14 @@ export const AppleProductLineup: React.FC = () => {
         >
           
           {/* Left Title */}
-          <div className="space-y-2.5">
-            <div className={`text-xs font-mono font-bold tracking-widest uppercase ${
+          <div className="space-y-3">
+            <div className={`text-sm sm:text-base font-mono font-extrabold tracking-widest uppercase ${
               isLight ? 'text-blue-600' : 'text-sky-400'
             }`}>
               OUR PRODUCT LINE-UP
             </div>
 
-            <h2 className={`text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight ${
+            <h2 className={`text-5xl sm:text-7xl lg:text-8xl font-black tracking-tight leading-[1.04] ${
               isLight ? 'text-neutral-900' : 'text-white'
             }`}>
               Explore the line-up<span className={isLight ? 'text-blue-600' : 'text-sky-400'}>.</span>
