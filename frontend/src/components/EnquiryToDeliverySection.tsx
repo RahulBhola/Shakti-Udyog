@@ -24,31 +24,31 @@ export const EnquiryToDeliverySection: React.FC = () => {
       step: 1,
       title: 'Share Requirement',
       description: 'Share your drawing, sample, or requirement with us.',
-      icon: <FileEdit className="w-7 h-7" />,
+      icon: <FileEdit className="w-8 h-8" />,
     },
     {
       step: 2,
       title: 'Review & Quote',
       description: 'We review manufacturability and prepare a detailed quotation.',
-      icon: <ClipboardCheck className="w-7 h-7" />,
+      icon: <ClipboardCheck className="w-8 h-8" />,
     },
     {
       step: 3,
       title: 'Planning & Approval',
       description: 'Pattern and process planning are finalized after approval.',
-      icon: <Cog className="w-7 h-7" />,
+      icon: <Cog className="w-8 h-8" />,
     },
     {
       step: 4,
       title: 'Production & Inspection',
       description: 'Castings are produced and inspected as per the agreed specification.',
-      icon: <Search className="w-7 h-7" />,
+      icon: <Search className="w-8 h-8" />,
     },
     {
       step: 5,
       title: 'Finishing & Delivery',
       description: 'Machining, finishing, packing, and delivery are completed as required.',
-      icon: <Truck className="w-7 h-7" />,
+      icon: <Truck className="w-8 h-8" />,
     },
   ];
 
@@ -86,7 +86,7 @@ export const EnquiryToDeliverySection: React.FC = () => {
           
           {/* Left Column: Headline & CTA */}
           <div className="lg:col-span-7 space-y-6">
-            <div className="inline-block text-xs font-mono font-bold tracking-widest uppercase text-blue-600 dark:text-orange-500">
+            <div className="inline-block text-xs sm:text-sm font-mono font-bold tracking-widest uppercase text-blue-600 dark:text-orange-500">
               HOW WE WORK
             </div>
 
@@ -105,7 +105,7 @@ export const EnquiryToDeliverySection: React.FC = () => {
             <div className="pt-2">
               <Link
                 to="/request-a-quote"
-                className={`inline-flex items-center gap-3 px-8 py-3.5 rounded-full text-sm sm:text-base font-semibold tracking-wide text-white transition-all transform hover:scale-105 shadow-md ${
+                className={`inline-flex items-center gap-3 px-8 py-4 rounded-full text-sm sm:text-base font-semibold tracking-wide text-white transition-all transform hover:scale-105 shadow-md ${
                   isLight
                     ? 'bg-[#0a2540] hover:bg-[#071a2e]'
                     : 'bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-500 hover:to-amber-400 shadow-[0_0_20px_rgba(255,109,0,0.3)]'
@@ -118,39 +118,44 @@ export const EnquiryToDeliverySection: React.FC = () => {
             </div>
           </div>
 
-          {/* Right Column: 3D Stage with Concentric Rings & User Casting Image */}
+          {/* Right Column: 3D Pedestal Stage with Concentric Ripple Lines & Clean Transparent Casting */}
           <div className="lg:col-span-5 relative flex items-center justify-center">
             
-            {/* Concentric Wave Rings SVG Background */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-40 dark:opacity-20">
-              <div className="w-[320px] h-[320px] sm:w-[420px] sm:h-[420px] rounded-full border border-blue-300 dark:border-white/10 animate-pulse" />
-              <div className="absolute w-[240px] h-[240px] sm:w-[320px] sm:h-[320px] rounded-full border border-blue-400/50 dark:border-white/10" />
-              <div className="absolute w-[160px] h-[160px] sm:w-[220px] sm:h-[220px] rounded-full border border-blue-500/40 dark:border-white/10" />
+            {/* Concentric Wave Rings Background */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-50 dark:opacity-20">
+              <div className="w-[340px] h-[340px] sm:w-[440px] sm:h-[440px] rounded-full border border-blue-200 dark:border-white/10 animate-pulse" />
+              <div className="absolute w-[260px] h-[260px] sm:w-[340px] sm:h-[340px] rounded-full border border-blue-300/60 dark:border-white/10" />
+              <div className="absolute w-[180px] h-[180px] sm:w-[240px] sm:h-[240px] rounded-full border border-blue-400/40 dark:border-white/10" />
             </div>
 
-            {/* Floating 3D Pedestal Disc */}
-            <div className={`relative w-[280px] h-[280px] sm:w-[360px] sm:h-[360px] rounded-full flex items-center justify-center p-6 border shadow-2xl transition-all ${
-              isLight
-                ? 'bg-gradient-to-b from-white via-blue-50/50 to-blue-100/60 border-blue-100 shadow-[0_25px_60px_rgba(10,37,64,0.12)]'
-                : 'bg-gradient-to-b from-[#181a24] via-[#101118] to-[#0a0b10] border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.9)]'
-            }`}>
+            {/* 3D Round Pedestal Stage */}
+            <div className="relative w-[300px] h-[300px] sm:w-[380px] sm:h-[380px] flex items-center justify-center">
               
+              {/* Bottom 3D Pedestal Disc */}
+              <div className={`absolute bottom-4 w-[280px] h-[110px] sm:w-[340px] sm:h-[130px] rounded-[100%] border shadow-2xl transition-all ${
+                isLight
+                  ? 'bg-gradient-to-b from-white via-blue-50/80 to-blue-100/90 border-blue-200/80 shadow-[0_25px_50px_rgba(10,37,64,0.14)]'
+                  : 'bg-gradient-to-b from-[#1c1e2a] via-[#12131c] to-[#0a0b10] border-white/10 shadow-[0_25px_50px_rgba(0,0,0,0.9)]'
+              }`} />
+
               {/* Top Surface Pedestal Ring */}
-              <div className={`absolute inset-4 rounded-full border ${
-                isLight ? 'border-blue-200/50 bg-white/70' : 'border-white/5 bg-[#0f1017]/80'
-              } shadow-inner flex items-center justify-center overflow-hidden`}>
-                
-                {/* The User-Provided Casting Image */}
+              <div className={`absolute bottom-10 w-[240px] h-[90px] sm:w-[290px] sm:h-[105px] rounded-[100%] border ${
+                isLight ? 'border-blue-100 bg-white/95' : 'border-white/5 bg-[#14151f]'
+              } shadow-inner flex items-center justify-center`} />
+
+              {/* Transparent Isolated Casting Floating on Pedestal */}
+              <div className="relative z-10 w-full h-full flex items-center justify-center pb-6">
                 <img
-                  src="/images/enquiry-delivery-casting.jpg"
+                  src="/images/enquiry-delivery-casting-transparent.png"
                   alt="Precision Cast Iron Component"
-                  className="max-h-[82%] max-w-[82%] object-contain drop-shadow-[0_20px_35px_rgba(0,0,0,0.85)] transform hover:scale-105 transition-transform duration-500"
-                  style={{
-                    WebkitMaskImage: 'radial-gradient(ellipse 90% 90% at 50% 50%, black 70%, transparent 100%)',
-                    maskImage: 'radial-gradient(ellipse 90% 90% at 50% 50%, black 70%, transparent 100%)',
-                  }}
+                  className={`max-h-[75%] max-w-[75%] object-contain transform hover:scale-105 transition-transform duration-500 ${
+                    isLight
+                      ? 'drop-shadow-[0_25px_25px_rgba(10,37,64,0.28)]'
+                      : 'drop-shadow-[0_25px_35px_rgba(0,0,0,0.95)]'
+                  }`}
                 />
               </div>
+
             </div>
 
           </div>
@@ -187,7 +192,9 @@ export const EnquiryToDeliverySection: React.FC = () => {
                   
                   {/* Step Icon Badge */}
                   <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-5 ${
-                    isLight ? 'bg-blue-50 text-blue-600 border border-blue-100' : 'bg-white/5 text-orange-400 border border-white/10'
+                    isLight
+                      ? 'bg-[#eff6ff] text-[#2563eb] border border-blue-100/90'
+                      : 'bg-white/5 text-orange-400 border border-white/10'
                   }`}>
                     {s.icon}
                   </div>
@@ -226,7 +233,7 @@ export const EnquiryToDeliverySection: React.FC = () => {
                 {/* Round Icon Badge */}
                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border ${
                   isLight
-                    ? 'bg-blue-50 text-blue-600 border-blue-100'
+                    ? 'bg-[#eff6ff] text-[#2563eb] border-blue-100'
                     : 'bg-white/5 text-orange-400 border-white/10'
                 }`}>
                   {vp.icon}
