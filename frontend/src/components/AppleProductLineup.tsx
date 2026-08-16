@@ -1,64 +1,53 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, Sparkles } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ArrowRight, ShieldCheck, LayoutGrid, Atom } from 'lucide-react';
 import { useTheme } from '../auth/ThemeContext';
 
 export interface ProductGradeVariant {
   name: string;
-  colorHex: string;
-  bgGradient: string;
+  badge: string;
   specSummary: string;
-  tensileStrength: string;
-  hardness: string;
   image: string;
 }
 
-export interface AppleProductModel {
+export interface LineupCardModel {
   id: string;
   name: string;
   tagline: string;
-  description: string;
   weightRange: string;
-  batchCapacity: string;
-  variants: ProductGradeVariant[];
+  moq: string;
   detailSlug: string;
+  defaultBadge: string;
+  isFeatured?: boolean;
+  variants: ProductGradeVariant[];
 }
 
-const LINEUP_PRODUCTS: AppleProductModel[] = [
+const LINEUP_PRODUCTS: LineupCardModel[] = [
   {
     id: 'v-belt-pulley',
     name: 'V-Belt Pulley Systems',
     tagline: 'Precision dynamically balanced for high-RPM vibration-free drives.',
-    description: 'Deep V-groove geometry with high wear-resistance and zero belt slippage under continuous torque load.',
     weightRange: '1.2 to 45.0 kg',
-    batchCapacity: '50 to 5,000 pcs/mo',
+    moq: 'Batch MOQ: 50 to 5,000 pcs/mo',
+    defaultBadge: 'FG 220 STANDARD',
     detailSlug: '/products/grey-iron-castings',
     variants: [
       {
         name: 'FG 220 Standard',
-        colorHex: '#475569',
-        bgGradient: 'from-[#1a1c24] via-[#12131a] to-[#0a0a0f]',
-        specSummary: '220 MPa Tensile · 180-220 HBW',
-        tensileStrength: '220 N/mm²',
-        hardness: '190 HBW',
+        badge: 'FG 220 STANDARD',
+        specSummary: '220 MPa Tensile  •  180–220 HBW',
         image: '/images/V Belt Pulley/Cast Iron V Belt Pulley Set.png',
       },
       {
         name: 'FG 260 Heavy Duty',
-        colorHex: '#EA580C',
-        bgGradient: 'from-[#221612] via-[#160f0d] to-[#0a0a0f]',
-        specSummary: '260 MPa Tensile · High Damping',
-        tensileStrength: '260 N/mm²',
-        hardness: '215 HBW',
+        badge: 'FG 260 HEAVY DUTY',
+        specSummary: '260 MPa Tensile  •  High Damping',
         image: '/images/V Belt Pulley/Cast Iron V Belt Pulley Set 1.png',
       },
       {
         name: 'SG 500 High Torque',
-        colorHex: '#0284C7',
-        bgGradient: 'from-[#101c28] via-[#0c131c] to-[#0a0a0f]',
-        specSummary: '500 MPa Tensile · 7% Elongation',
-        tensileStrength: '500 N/mm²',
-        hardness: '230 HBW',
+        badge: 'SG 500/7 DUCTILE',
+        specSummary: '500 MPa Tensile  •  7% Elongation',
         image: '/images/V Belt Pulley/Cast Iron V Belt Pulley Set 2.png',
       },
     ],
@@ -67,113 +56,87 @@ const LINEUP_PRODUCTS: AppleProductModel[] = [
     id: 'rotary-pump',
     name: 'Rotary Pump Casings',
     tagline: 'Hydrostatically tested for 350+ bar fluid containment.',
-    description: 'High-density grain structure preventing micro-porosity and hydraulic fluid seepage in extreme OEM pump systems.',
     weightRange: '3.5 to 68.0 kg',
-    batchCapacity: '25 to 2,500 pcs/mo',
-    detailSlug: '/products/ductile-iron-castings',
+    moq: 'Batch MOQ: 25 to 2,500 pcs/mo',
+    defaultBadge: 'FG 260 HYDRAULIC',
+    detailSlug: '/products/grey-iron-castings',
     variants: [
       {
         name: 'FG 260 Hydraulic',
-        colorHex: '#334155',
-        bgGradient: 'from-[#181a22] via-[#101218] to-[#0a0a0f]',
-        specSummary: 'Zero Leakage · Hydro Tested',
-        tensileStrength: '260 N/mm²',
-        hardness: '200 HBW',
+        badge: 'FG 260 HYDRAULIC',
+        specSummary: 'Zero Leakage  •  Hydro Tested',
         image: '/images/cast_iron_casting/Cast Iron Rotary Barrel Pump Casting.png',
       },
       {
-        name: 'SG 400 Ductile Iron',
-        colorHex: '#F59E0B',
-        bgGradient: 'from-[#241c10] via-[#16120b] to-[#0a0a0f]',
-        specSummary: '400 MPa Tensile · 15% Elongation',
-        tensileStrength: '400 N/mm²',
-        hardness: '160 HBW',
-        image: '/images/cast_iron_casting/Cast Iron Tractor Part Casting.png',
+        name: 'FG 300 High Pressure',
+        badge: 'FG 300 PRESSURE',
+        specSummary: '300 MPa Tensile  •  Machined Flanges',
+        image: '/images/Collar Plug/Cast Iron Collar Plug.png',
       },
       {
-        name: 'SG 600 Severe Duty',
-        colorHex: '#9333EA',
-        bgGradient: 'from-[#1e1226] via-[#140c1a] to-[#0a0a0f]',
-        specSummary: '600 MPa Tensile · Anti-Corrosive',
-        tensileStrength: '600 N/mm²',
-        hardness: '250 HBW',
-        image: '/images/cast_iron_casting/Cast Iron Button Machine Casting.png',
+        name: 'SG 600 Heavy Pump',
+        badge: 'SG 600/3 DUCTILE',
+        specSummary: '600 MPa Tensile  •  Impact Proof',
+        image: '/images/Industrial Iron Casting.png',
       },
     ],
   },
   {
-    id: 'sewing-brackets',
+    id: 'precision-brackets',
     name: 'Precision Brackets',
     tagline: 'Micron-tolerance CNC machined for high-cycle automation.',
-    description: 'Superior vibration attenuation ensuring continuous 5000+ RPM sewing needle kinematics without fatigue failure.',
     weightRange: '0.15 to 8.5 kg',
-    batchCapacity: '100 to 10,000 pcs/mo',
-    detailSlug: '/products/custom-castings',
+    moq: 'Batch MOQ: 100 to 10,000 pcs/mo',
+    defaultBadge: 'FG 200 FINE GRAIN',
+    detailSlug: '/products/grey-iron-castings',
     variants: [
       {
         name: 'FG 200 Fine Grain',
-        colorHex: '#64748B',
-        bgGradient: 'from-[#1a1c24] via-[#111218] to-[#0a0a0f]',
-        specSummary: 'Class A Finish · High Damping',
-        tensileStrength: '200 N/mm²',
-        hardness: '180 HBW',
+        badge: 'FG 200 FINE GRAIN',
+        specSummary: 'Class A Finish  •  High Damping',
         image: '/images/Sewing_machine_parts/Cast Iron TA 1 Bracket Industrial Sewing Machine Part.png',
       },
       {
-        name: 'SG 500 Impact Ductile',
-        colorHex: '#EA580C',
-        bgGradient: 'from-[#221612] via-[#160f0d] to-[#0a0a0f]',
-        specSummary: '500 MPa Tensile · Fatigue Proof',
-        tensileStrength: '500 N/mm²',
-        hardness: '220 HBW',
+        name: 'Chal T1 Bracket',
+        badge: 'FG 220 CHAL T1',
+        specSummary: 'Kinematic Link  •  Vibration Proof',
         image: '/images/Sewing_machine_parts/Cast Iron Chal T1 Industrial Sewing Machine Part.png',
       },
       {
-        name: 'CNC Ready Machined',
-        colorHex: '#10B981',
-        bgGradient: 'from-[#0e201a] via-[#0a1612] to-[#0a0a0f]',
-        specSummary: '±0.015mm CMM Tolerance',
-        tensileStrength: '550 N/mm²',
-        hardness: '225 HBW',
+        name: 'SV Came Cam Link',
+        badge: 'SG 500/7 DUCTILE',
+        specSummary: 'Micron Ground Cam  •  Low Inertia',
         image: '/images/Sewing_machine_parts/Cast Iron SV Came Industrial Sewing Machine Part.png',
       },
     ],
   },
   {
-    id: 'gear-shift-lever',
+    id: 'automotive-shift-levers',
     name: 'Automotive Shift Levers',
     tagline: 'High-tensile nodular iron built for heavy transmission shock loads.',
-    description: 'Engineered with optimized section thickness and smooth radii preventing stress concentrations under cyclic gear shifting.',
     weightRange: '0.8 to 12.0 kg',
-    batchCapacity: '50 to 3,000 pcs/mo',
-    detailSlug: '/products/machining-finishing',
+    moq: 'Batch MOQ: 50 to 3,000 pcs/mo',
+    defaultBadge: 'SG 600/3 HIGH TENSILE',
+    isFeatured: true,
+    detailSlug: '/products/ductile-iron-castings',
     variants: [
       {
-        name: 'SG 600/3 High Tensile',
-        colorHex: '#EA580C',
-        bgGradient: 'from-[#221612] via-[#160f0d] to-[#0a0a0f]',
-        specSummary: '600 MPa Tensile · Impact Tested',
-        tensileStrength: '600 N/mm²',
-        hardness: '240 HBW',
+        name: 'SG 600/3 Nodular',
+        badge: 'SG 600/3 HIGH TENSILE',
+        specSummary: '600 MPa Tensile  •  Impact Tested',
         image: '/images/Gear Lever Parts/Cast Iron Car Gear Lever Part.png',
       },
       {
-        name: 'SG 700 Ultra Hard',
-        colorHex: '#0284C7',
-        bgGradient: 'from-[#101c28] via-[#0c131c] to-[#0a0a0f]',
-        specSummary: '700 MPa Tensile · Wear Resistant',
-        tensileStrength: '700 N/mm²',
-        hardness: '280 HBW',
+        name: 'SG 700 Heavy Truck',
+        badge: 'SG 700/2 HIGH TORQUE',
+        specSummary: '700 MPa Tensile  •  Induction Hardened',
         image: '/images/Gear Lever Parts/Cast Iron Car Gear Lever Part 1.png',
       },
       {
-        name: 'SG 450 Tough Ductile',
-        colorHex: '#64748B',
-        bgGradient: 'from-[#181a22] via-[#101218] to-[#0a0a0f]',
-        specSummary: '450 MPa Tensile · 10% Elongation',
-        tensileStrength: '450 N/mm²',
-        hardness: '180 HBW',
-        image: '/images/Cast Iron Nut/Cast Iron Door Closer Nut.png',
+        name: 'SG 500 Shift Fork',
+        badge: 'SG 500/7 OEM FORK',
+        specSummary: '500 MPa Tensile  •  Ductile Yield',
+        image: '/images/cast_iron_casting/Cast Iron Tractor Part Casting.png',
       },
     ],
   },
@@ -182,141 +145,251 @@ const LINEUP_PRODUCTS: AppleProductModel[] = [
 export const AppleProductLineup: React.FC = () => {
   const { theme } = useTheme();
   const isLight = theme === 'light';
-  const [selectedVariants, setSelectedVariants] = useState<{ [key: string]: number }>({
+
+  // Track active variant index for each product card
+  const [activeVariantMap, setActiveVariantMap] = useState<Record<string, number>>({
     'v-belt-pulley': 0,
     'rotary-pump': 0,
-    'sewing-brackets': 0,
-    'gear-shift-lever': 0,
+    'precision-brackets': 0,
+    'automotive-shift-levers': 0,
   });
 
-  const handleSelectVariant = (productId: string, variantIndex: number) => {
-    setSelectedVariants((prev) => ({ ...prev, [productId]: variantIndex }));
+  const [activeCardIndex, setActiveCardIndex] = useState(0);
+
+  const handlePrev = () => {
+    setActiveCardIndex((prev) => (prev > 0 ? prev - 1 : LINEUP_PRODUCTS.length - 1));
+  };
+
+  const handleNext = () => {
+    setActiveCardIndex((prev) => (prev < LINEUP_PRODUCTS.length - 1 ? prev + 1 : 0));
   };
 
   return (
-    <section className={`relative py-16 sm:py-24 transition-colors duration-300 ${
-      isLight ? 'bg-white' : 'bg-[#000000]'
+    <section className={`relative py-16 sm:py-24 overflow-hidden transition-colors duration-300 ${
+      isLight ? 'bg-[#f4f7fb]' : 'bg-[#050608]'
     }`}>
-      {/* Header Container — Extra Large Typography, Centered */}
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 mb-12 sm:mb-16">
-        <h2 className={`text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight ${
-          isLight ? 'text-neutral-900' : 'text-white'
-        }`}>
-          Explore the line-up.
-        </h2>
-      </div>
-
-      {/* Product Cards Grid */}
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-7 sm:gap-8">
-          {LINEUP_PRODUCTS.map((product) => {
-            const currentVariantIdx = selectedVariants[product.id] || 0;
-            const currentVariant = product.variants[currentVariantIdx] || product.variants[0];
+        
+        {/* Section Header */}
+        <div className="flex items-end justify-between gap-6 mb-12 sm:mb-16">
+          
+          {/* Left Title */}
+          <div className="space-y-2.5">
+            <div className={`text-xs font-mono font-bold tracking-widest uppercase ${
+              isLight ? 'text-blue-600' : 'text-sky-400'
+            }`}>
+              OUR PRODUCT LINE-UP
+            </div>
+
+            <h2 className={`text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight ${
+              isLight ? 'text-neutral-900' : 'text-white'
+            }`}>
+              Explore the line-up<span className={isLight ? 'text-blue-600' : 'text-sky-400'}>.</span>
+            </h2>
+          </div>
+
+          {/* Right Navigation Arrows */}
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={handlePrev}
+              aria-label="Previous Product"
+              className={`w-12 h-12 rounded-full flex items-center justify-center border transition-all duration-200 ${
+                isLight
+                  ? 'bg-white border-neutral-300 text-neutral-700 hover:bg-neutral-100 shadow-sm'
+                  : 'bg-[#0c0d14] border-white/10 text-neutral-400 hover:text-white hover:border-white/20'
+              }`}
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+
+            <button
+              type="button"
+              onClick={handleNext}
+              aria-label="Next Product"
+              className={`w-12 h-12 rounded-full flex items-center justify-center border transition-all duration-200 ${
+                isLight
+                  ? 'bg-blue-600 border-blue-600 text-white hover:bg-blue-700 shadow-md'
+                  : 'bg-blue-950/60 border-blue-500/60 text-blue-400 hover:bg-blue-900/80 shadow-[0_0_15px_rgba(59,130,246,0.3)]'
+              }`}
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+
+        </div>
+
+        {/* 4-Column Product Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-6">
+          {LINEUP_PRODUCTS.map((prod) => {
+            const currentVarIdx = activeVariantMap[prod.id] || 0;
+            const currentVar = prod.variants[currentVarIdx] || prod.variants[0];
+            const isFeatured = prod.isFeatured;
 
             return (
               <div
-                key={product.id}
-                className="flex flex-col justify-between"
+                key={prod.id}
+                className={`group relative rounded-3xl p-5 sm:p-6 flex flex-col justify-between border transition-all duration-300 ${
+                  isLight
+                    ? isFeatured
+                      ? 'bg-white border-orange-500 ring-2 ring-orange-500/20 shadow-xl'
+                      : 'bg-white border-neutral-200/90 hover:border-blue-300 hover:shadow-lg shadow-[0_4px_20px_rgba(0,0,0,0.03)]'
+                    : isFeatured
+                      ? 'bg-[#0a0b10] border-orange-500 shadow-[0_0_30px_rgba(255,109,0,0.25)]'
+                      : 'bg-[#08090e] border-white/[0.08] hover:border-white/20 hover:bg-[#0c0d14]'
+                }`}
               >
-                {/* Large Rounded Media Capsule Container with Smooth Edge-Faded Vignette */}
-                <div
-                  className={`relative w-full aspect-[4/5] rounded-[32px] overflow-hidden p-6 flex flex-col justify-between border transition-all duration-500 shadow-2xl bg-gradient-to-b ${currentVariant.bgGradient} border-white/[0.08] shadow-[0_16px_40px_rgba(0,0,0,0.85)]`}
-                >
-                  {/* Top Spec Chip */}
-                  <div className="flex items-center justify-between z-10">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold tracking-wider uppercase bg-white/10 text-orange-400 border border-orange-500/30 backdrop-blur-md shadow-sm">
-                      <Sparkles className="w-3.5 h-3.5 text-orange-400" />
-                      <span>{currentVariant.name}</span>
-                    </span>
-                    <span className="text-xs font-mono font-semibold text-neutral-300 shrink-0">
-                      {product.weightRange}
-                    </span>
+                
+                {/* Top Row: Grade Badge + Weight Range */}
+                <div className="flex items-center justify-between text-xs mb-4">
+                  <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-mono text-[10px] font-bold tracking-wide ${
+                    isFeatured
+                      ? 'bg-orange-500/15 text-orange-400 border border-orange-500/30'
+                      : isLight
+                        ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                        : 'bg-blue-500/10 text-sky-400 border border-blue-500/20'
+                  }`}>
+                    <Atom className="w-3 h-3 shrink-0" />
+                    <span>{currentVar.badge}</span>
                   </div>
 
-                  {/* Centered Product Image with Radial Mask to Eliminate Square Edges */}
-                  <div className="relative my-auto w-full h-48 sm:h-56 flex items-center justify-center overflow-hidden">
-                    <img
-                      src={currentVariant.image}
-                      alt={`${product.name} - ${currentVariant.name}`}
-                      loading="lazy"
-                      style={{
-                        WebkitMaskImage: 'radial-gradient(ellipse 90% 90% at 50% 50%, black 60%, transparent 100%)',
-                        maskImage: 'radial-gradient(ellipse 90% 90% at 50% 50%, black 60%, transparent 100%)',
-                      }}
-                      className="max-h-44 sm:max-h-52 max-w-[92%] object-contain transition-all duration-500 drop-shadow-[0_20px_35px_rgba(0,0,0,0.9)] hover:scale-105"
-                    />
-                  </div>
-
-                  {/* Bottom Grade Color Switcher Dots */}
-                  <div className="flex items-center justify-center gap-3.5 z-10 pt-2">
-                    {product.variants.map((v, vIdx) => {
-                      const isSelected = vIdx === currentVariantIdx;
-                      return (
-                        <button
-                          key={v.name}
-                          type="button"
-                          onClick={() => handleSelectVariant(product.id, vIdx)}
-                          aria-label={`Select ${v.name}`}
-                          title={v.name}
-                          className={`relative w-4 h-4 rounded-full transition-all duration-200 flex items-center justify-center ${
-                            isSelected
-                              ? 'scale-125 ring-2 ring-offset-2 ring-orange-500 ring-offset-black'
-                              : 'opacity-70 hover:opacity-100 hover:scale-110'
-                          }`}
-                          style={{ backgroundColor: v.colorHex }}
-                        />
-                      );
-                    })}
-                  </div>
+                  <span className="font-mono text-[11px] text-neutral-400 font-medium">
+                    {prod.weightRange}
+                  </span>
                 </div>
 
-                {/* Typography & Actions (Apple Clean Style with Standardized Fixed Heights for Perfect Alignment) */}
-                <div className="pt-6 text-center space-y-3 px-2 flex flex-col items-center flex-grow">
-                  <h3 className={`text-2xl sm:text-3xl font-bold tracking-tight ${
+                {/* Central Product Image Container with Dark/Light Studio */}
+                <div className={`relative w-full h-48 sm:h-52 rounded-2xl flex items-center justify-center p-3 overflow-hidden transition-all ${
+                  isLight
+                    ? 'bg-gradient-to-b from-neutral-50 to-neutral-100/60'
+                    : 'bg-gradient-to-b from-[#10121a] to-[#06070b]'
+                }`}>
+                  <img
+                    src={currentVar.image}
+                    alt={prod.name}
+                    loading="lazy"
+                    style={{
+                      WebkitMaskImage: 'radial-gradient(ellipse 90% 90% at 50% 50%, black 70%, transparent 100%)',
+                      maskImage: 'radial-gradient(ellipse 90% 90% at 50% 50%, black 70%, transparent 100%)',
+                    }}
+                    className="max-h-36 sm:max-h-40 max-w-[90%] object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.65)] transform group-hover:scale-105 transition-transform duration-500"
+                  />
+                </div>
+
+                {/* 3 Variant Dots Selector */}
+                <div className="flex items-center justify-center gap-2 my-4">
+                  {prod.variants.map((v, vIdx) => {
+                    const isSelected = vIdx === currentVarIdx;
+                    return (
+                      <button
+                        key={v.name}
+                        type="button"
+                        onClick={() =>
+                          setActiveVariantMap((prev) => ({
+                            ...prev,
+                            [prod.id]: vIdx,
+                          }))
+                        }
+                        aria-label={`Select variant ${v.name}`}
+                        className={`w-2.5 h-2.5 rounded-full transition-all duration-200 ${
+                          isSelected
+                            ? isFeatured
+                              ? 'bg-orange-500 scale-125 shadow-[0_0_8px_rgba(255,109,0,0.8)]'
+                              : isLight
+                                ? 'bg-blue-600 scale-125'
+                                : 'bg-sky-400 scale-125 shadow-[0_0_8px_rgba(56,189,248,0.8)]'
+                            : isLight
+                              ? 'bg-neutral-300 hover:bg-neutral-400'
+                              : 'bg-neutral-700 hover:bg-neutral-500'
+                        }`}
+                      />
+                    );
+                  })}
+                </div>
+
+                {/* Title & Tagline */}
+                <div className="space-y-2 mb-4">
+                  <h3 className={`text-lg sm:text-xl font-bold tracking-tight ${
                     isLight ? 'text-neutral-900' : 'text-white'
                   }`}>
-                    {product.name}
+                    {prod.name}
                   </h3>
-
-                  <p className={`text-sm sm:text-base leading-relaxed max-w-xs min-h-[48px] flex items-center justify-center ${
-                    isLight ? 'text-neutral-600' : 'text-neutral-300'
+                  <p className={`text-xs leading-relaxed min-h-[36px] ${
+                    isLight ? 'text-neutral-600' : 'text-neutral-400'
                   }`}>
-                    {product.tagline}
+                    {prod.tagline}
                   </p>
+                </div>
 
-                  <div className="pt-1 text-sm font-mono space-y-1 min-h-[50px] flex flex-col justify-center">
-                    <span className="block font-bold text-sm sm:text-base text-orange-600 dark:text-orange-400">
-                      {currentVariant.specSummary}
-                    </span>
-                    <span className={`text-xs sm:text-sm block ${
-                      isLight ? 'text-neutral-600' : 'text-neutral-400'
-                    }`}>
-                      Batch MOQ: {product.batchCapacity}
+                {/* Key Specs Box */}
+                <div className="space-y-1.5 pt-3 mb-5 border-t border-neutral-100 dark:border-white/[0.06]">
+                  <div className="flex items-center gap-2 text-xs font-mono font-medium">
+                    <ShieldCheck className={`w-4 h-4 shrink-0 ${
+                      isFeatured
+                        ? 'text-orange-500'
+                        : isLight
+                          ? 'text-blue-600'
+                          : 'text-sky-400'
+                    }`} />
+                    <span className={isLight ? 'text-neutral-800' : 'text-neutral-200'}>
+                      {currentVar.specSummary}
                     </span>
                   </div>
-
-                  {/* Dual Action Buttons */}
-                  <div className="pt-4 flex items-center justify-center gap-4 mt-auto">
-                    <Link
-                      to="/request-a-quote"
-                      className="px-6 py-2.5 rounded-full text-sm font-semibold tracking-wide text-white bg-blue-600 hover:bg-blue-500 shadow-md transition-all transform hover:scale-105"
-                    >
-                      Learn more
-                    </Link>
-
-                    <Link
-                      to="/request-a-quote"
-                      className="inline-flex items-center text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline transition-colors group"
-                    >
-                      <span>Request RFQ</span>
-                      <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
-                    </Link>
+                  <div className="text-[11px] font-mono text-neutral-500 pl-6">
+                    {prod.moq}
                   </div>
                 </div>
+
+                {/* Action Buttons: Learn More + Request RFQ */}
+                <div className="grid grid-cols-2 gap-2.5 pt-1">
+                  <Link
+                    to={prod.detailSlug}
+                    className={`py-2.5 px-3 rounded-xl text-xs font-bold text-center inline-flex items-center justify-center gap-1.5 transition-all ${
+                      isFeatured
+                        ? 'bg-orange-500 hover:bg-orange-600 text-white shadow-md shadow-orange-500/20'
+                        : isLight
+                          ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm'
+                          : 'bg-blue-600 hover:bg-blue-500 text-white shadow-md'
+                    }`}
+                  >
+                    <span>Learn more</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+
+                  <Link
+                    to="/request-a-quote"
+                    className={`py-2.5 px-3 rounded-xl text-xs font-semibold text-center border inline-flex items-center justify-center gap-1 transition-colors ${
+                      isLight
+                        ? 'border-neutral-300 text-neutral-800 hover:bg-neutral-100'
+                        : 'border-white/15 text-neutral-300 hover:bg-white/5 hover:text-white'
+                    }`}
+                  >
+                    <span>Request RFQ</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
+                  </Link>
+                </div>
+
               </div>
             );
           })}
         </div>
+
+        {/* Centered Bottom Action Pill: View All Products */}
+        <div className="flex justify-center mt-12 sm:mt-14">
+          <Link
+            to="/products"
+            className={`inline-flex items-center gap-2.5 px-7 py-3 rounded-full text-xs sm:text-sm font-mono font-bold tracking-wider transition-all transform hover:scale-105 border shadow-md ${
+              isLight
+                ? 'bg-white border-neutral-300 text-neutral-800 hover:bg-neutral-100'
+                : 'bg-blue-950/40 border-blue-500/40 text-sky-400 hover:bg-blue-900/60 shadow-[0_0_20px_rgba(56,189,248,0.15)]'
+            }`}
+          >
+            <LayoutGrid className="w-4 h-4" />
+            <span>View All Products</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+
       </div>
     </section>
   );
