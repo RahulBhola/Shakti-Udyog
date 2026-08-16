@@ -1,11 +1,10 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getProducts, type Product } from "../api/publicApi";
 import { Seo } from "../components/Seo";
 import { seoPages } from "../content/seo";
 import { AppleProductLineup } from "../components/AppleProductLineup";
 import { ProductMarqueeGallery } from "../components/ProductMarqueeGallery";
-import { MetallurgicalBentoGrid } from "../components/MetallurgicalBentoGrid";
 import { useTheme } from "../auth/ThemeContext";
 import {
   ArrowRight,
@@ -87,9 +86,6 @@ export default function ProductsPage() {
 
       {/* Infinite Scrolling Dual-Row Marquee Gallery */}
       <ProductMarqueeGallery />
-
-      {/* High-Fidelity Detail Control Bento Grid */}
-      <MetallurgicalBentoGrid />
 
       {/* Metallurgical Material Matrix (Grey Iron vs Ductile Iron) */}
       <section className={`py-16 sm:py-24 border-t transition-colors ${

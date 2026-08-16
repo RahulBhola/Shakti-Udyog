@@ -3,7 +3,6 @@ import { Seo, localBusinessJsonLd } from "../components/Seo";
 import { ScrollytellingCanvas } from "../components/ScrollytellingCanvas";
 import { ProductMarqueeGallery } from "../components/ProductMarqueeGallery";
 import { AppleProductLineup } from "../components/AppleProductLineup";
-import { MetallurgicalBentoGrid } from "../components/MetallurgicalBentoGrid";
 import {
   CtaBand,
   FaqAccordion,
@@ -47,9 +46,6 @@ export default function HomePage() {
 
       {/* Infinite Dual-Row Scrolling Marquee Gallery */}
       <ProductMarqueeGallery />
-
-      {/* High-Fidelity Detail Control Bento Grid */}
-      <MetallurgicalBentoGrid />
 
       {/* Who We Are Introduction */}
       <Section tint labelledBy="intro-heading">
