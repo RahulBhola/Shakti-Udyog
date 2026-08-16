@@ -37,37 +37,37 @@ export const FaqSection: React.FC = () => {
   };
 
   return (
-    <section className={`py-16 sm:py-24 transition-colors duration-300 ${
+    <section className={`py-20 sm:py-28 transition-colors duration-300 ${
       isLight ? 'bg-[#f4f7fb]' : 'bg-[#050608]'
     }`}>
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
         
         {/* Main Card Container */}
-        <div className={`rounded-3xl p-8 sm:p-12 border transition-all duration-300 ${
+        <div className={`rounded-3xl p-8 sm:p-14 border transition-all duration-300 ${
           isLight
             ? 'bg-white border-neutral-200/90 shadow-[0_10px_40px_rgba(0,0,0,0.04)] text-neutral-900'
             : 'bg-[#080a0f] border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.9)] text-white'
         }`}>
           
           {/* Top Header: Left Title + Right 3D Molten Pour Visual */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-10 pb-8 border-b border-neutral-100 dark:border-white/5">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-12 pb-10 border-b border-neutral-100 dark:border-white/5">
             
             {/* Left Title */}
-            <div className="space-y-2">
-              <div className={`text-xs font-mono font-bold tracking-widest uppercase ${
+            <div className="space-y-3">
+              <div className={`text-sm sm:text-base font-mono font-bold tracking-widest uppercase ${
                 isLight ? 'text-blue-600' : 'text-sky-400'
               }`}>
                 COMMON QUESTIONS
               </div>
-              <h2 className={`text-3xl sm:text-5xl font-extrabold tracking-tight ${
+              <h2 className={`text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight ${
                 isLight ? 'text-neutral-900' : 'text-white'
               }`}>
                 FAQs
               </h2>
             </div>
 
-            {/* Right: Cinematic Molten Foundry Ladle Visual */}
-            <div className="relative w-full md:w-80 h-32 sm:h-36 rounded-2xl overflow-hidden border border-orange-500/20 shadow-lg shrink-0">
+            {/* Right: Large Cinematic Molten Foundry Ladle Visual */}
+            <div className="relative w-full md:w-96 h-40 sm:h-48 rounded-2xl overflow-hidden border border-orange-500/20 shadow-xl shrink-0">
               <img
                 src="/images/faq-molten-ladle.jpg"
                 alt="Foundry Molten Metal Casting Process"
@@ -78,8 +78,8 @@ export const FaqSection: React.FC = () => {
 
           </div>
 
-          {/* Accordion Questions List */}
-          <div className="space-y-3">
+          {/* Accordion Questions List with Larger Typography */}
+          <div className="space-y-4">
             {faqs.map((faq, index) => {
               const isOpen = expandedIndex === index;
               return (
@@ -99,10 +99,10 @@ export const FaqSection: React.FC = () => {
                     type="button"
                     onClick={() => toggleFaq(index)}
                     aria-expanded={isOpen}
-                    className="w-full p-5 sm:p-6 text-left flex items-center justify-between gap-4 transition-colors"
+                    className="w-full p-6 sm:p-7 text-left flex items-center justify-between gap-4 transition-colors"
                   >
-                    <div className="flex items-center gap-3.5">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                    <div className="flex items-center gap-4">
+                      <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
                         isOpen
                           ? isLight
                             ? 'bg-blue-600 text-white'
@@ -111,16 +111,16 @@ export const FaqSection: React.FC = () => {
                             ? 'bg-neutral-200 text-neutral-600'
                             : 'bg-white/5 text-neutral-400'
                       }`}>
-                        <HelpCircle className="w-4 h-4" />
+                        <HelpCircle className="w-5 h-5" />
                       </div>
-                      <span className={`text-sm sm:text-base font-bold tracking-tight ${
+                      <span className={`text-base sm:text-lg lg:text-xl font-bold tracking-tight ${
                         isLight ? 'text-neutral-900' : 'text-white'
                       }`}>
                         {faq.question}
                       </span>
                     </div>
 
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 transition-transform ${
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-transform ${
                       isOpen
                         ? isLight
                           ? 'bg-blue-100 text-blue-700'
@@ -129,12 +129,12 @@ export const FaqSection: React.FC = () => {
                           ? 'bg-neutral-200 text-neutral-600'
                           : 'bg-white/10 text-neutral-400'
                     }`}>
-                      {isOpen ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                      {isOpen ? <Minus className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
                     </div>
                   </button>
 
                   {isOpen && (
-                    <div className="px-6 pb-6 pt-1 text-xs sm:text-sm leading-relaxed text-neutral-600 dark:text-neutral-300 pl-16">
+                    <div className="px-7 pb-7 pt-1 text-sm sm:text-base leading-relaxed text-neutral-600 dark:text-neutral-300 pl-19">
                       {faq.answer}
                     </div>
                   )}
@@ -144,10 +144,10 @@ export const FaqSection: React.FC = () => {
           </div>
 
           {/* Bottom Bar: More questions link + View All FAQs Button */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 pt-6 border-t border-neutral-100 dark:border-white/5">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-10 pt-8 border-t border-neutral-100 dark:border-white/5">
             <Link
               to="/resources"
-              className={`inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold transition-colors ${
+              className={`inline-flex items-center gap-2 text-sm sm:text-base font-semibold transition-colors ${
                 isLight ? 'text-blue-600 hover:text-blue-700' : 'text-sky-400 hover:text-sky-300'
               }`}
             >
@@ -157,13 +157,13 @@ export const FaqSection: React.FC = () => {
 
             <Link
               to="/resources"
-              className={`inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-xs font-mono font-bold tracking-wider transition-all border shadow-sm ${
+              className={`inline-flex items-center gap-2.5 px-7 py-3 rounded-full text-xs sm:text-sm font-mono font-bold tracking-wider transition-all border shadow-sm ${
                 isLight
                   ? 'bg-white border-neutral-300 text-neutral-800 hover:bg-neutral-100'
                   : 'bg-blue-950/40 border-blue-500/40 text-sky-400 hover:bg-blue-900/60 shadow-[0_0_15px_rgba(56,189,248,0.15)]'
               }`}
             >
-              <FileText className="w-3.5 h-3.5" />
+              <FileText className="w-4 h-4" />
               <span>View All FAQs</span>
             </Link>
           </div>
