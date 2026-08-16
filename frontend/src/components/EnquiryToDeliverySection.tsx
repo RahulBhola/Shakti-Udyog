@@ -15,6 +15,7 @@ import {
   Search,
 } from 'lucide-react';
 import { useTheme } from '../auth/ThemeContext';
+import { getThemedImage } from '../utils/themeImage';
 
 export const EnquiryToDeliverySection: React.FC = () => {
   const { theme } = useTheme();
@@ -154,13 +155,19 @@ export const EnquiryToDeliverySection: React.FC = () => {
                 
                 {/* The User-Provided Casting Image */}
                 <img
-                  src="/images/enquiry-delivery-casting.jpg"
+                  src={getThemedImage('/images/enquiry-delivery-casting.jpg', isLight)}
                   alt="Precision Cast Iron Component"
-                  className="max-h-[82%] max-w-[82%] object-contain drop-shadow-[0_20px_35px_rgba(0,0,0,0.85)] transform hover:scale-105 transition-transform duration-500"
-                  style={{
-                    WebkitMaskImage: 'radial-gradient(ellipse 90% 90% at 50% 50%, black 70%, transparent 100%)',
-                    maskImage: 'radial-gradient(ellipse 90% 90% at 50% 50%, black 70%, transparent 100%)',
-                  }}
+                  className={`max-h-[82%] max-w-[82%] object-contain transform hover:scale-105 transition-transform duration-500 ${
+                    isLight ? 'drop-shadow-[0_12px_24px_rgba(0,0,0,0.12)]' : 'drop-shadow-[0_20px_35px_rgba(0,0,0,0.85)]'
+                  }`}
+                  style={
+                    isLight
+                      ? undefined
+                      : {
+                          WebkitMaskImage: 'radial-gradient(ellipse 90% 90% at 50% 50%, black 70%, transparent 100%)',
+                          maskImage: 'radial-gradient(ellipse 90% 90% at 50% 50%, black 70%, transparent 100%)',
+                        }
+                  }
                 />
               </div>
             </div>

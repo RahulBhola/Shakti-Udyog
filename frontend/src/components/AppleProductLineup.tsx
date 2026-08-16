@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, ArrowRight, ShieldCheck, LayoutGrid, Atom } from 'lucide-react';
 import { useTheme } from '../auth/ThemeContext';
+import { getThemedImage } from '../utils/themeImage';
 
 export interface ProductGradeVariant {
   name: string;
@@ -280,14 +281,20 @@ export const AppleProductLineup: React.FC = () => {
                     : 'bg-gradient-to-b from-[#10121a] to-[#06070b]'
                 }`}>
                   <img
-                    src={currentVar.image}
+                    src={getThemedImage(currentVar.image, isLight)}
                     alt={prod.name}
                     loading="lazy"
-                    style={{
-                      WebkitMaskImage: 'radial-gradient(ellipse 92% 92% at 50% 50%, black 75%, transparent 100%)',
-                      maskImage: 'radial-gradient(ellipse 92% 92% at 50% 50%, black 75%, transparent 100%)',
-                    }}
-                    className="max-h-48 sm:max-h-56 max-w-[92%] w-auto h-auto object-contain drop-shadow-[0_16px_32px_rgba(0,0,0,0.7)] transform group-hover:scale-110 transition-transform duration-500"
+                    style={
+                      isLight
+                        ? undefined
+                        : {
+                            WebkitMaskImage: 'radial-gradient(ellipse 92% 92% at 50% 50%, black 75%, transparent 100%)',
+                            maskImage: 'radial-gradient(ellipse 92% 92% at 50% 50%, black 75%, transparent 100%)',
+                          }
+                    }
+                    className={`max-h-48 sm:max-h-56 max-w-[92%] w-auto h-auto object-contain transform group-hover:scale-110 transition-transform duration-500 ${
+                      isLight ? 'drop-shadow-[0_10px_20px_rgba(0,0,0,0.12)]' : 'drop-shadow-[0_16px_32px_rgba(0,0,0,0.7)]'
+                    }`}
                   />
                 </div>
 

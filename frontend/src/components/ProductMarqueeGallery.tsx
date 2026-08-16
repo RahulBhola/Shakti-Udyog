@@ -12,6 +12,7 @@ import {
   LayoutGrid,
 } from 'lucide-react';
 import { useTheme } from '../auth/ThemeContext';
+import { getThemedImage } from '../utils/themeImage';
 
 export interface GalleryProductItem {
   id: string;
@@ -377,14 +378,20 @@ export const ProductMarqueeGallery: React.FC = () => {
                   : 'bg-gradient-to-b from-[#12131a] to-[#07080b]'
               }`}>
                 <img
-                  src={item.image}
+                  src={getThemedImage(item.image, isLight)}
                   alt={item.title}
                   loading="lazy"
-                  style={{
-                    WebkitMaskImage: 'radial-gradient(ellipse 92% 92% at 50% 50%, black 75%, transparent 100%)',
-                    maskImage: 'radial-gradient(ellipse 92% 92% at 50% 50%, black 75%, transparent 100%)',
-                  }}
-                  className="max-h-36 sm:max-h-40 max-w-[92%] w-auto h-auto object-contain transition-transform duration-500 group-hover:scale-110 drop-shadow-[0_12px_24px_rgba(0,0,0,0.6)]"
+                  style={
+                    isLight
+                      ? undefined
+                      : {
+                          WebkitMaskImage: 'radial-gradient(ellipse 92% 92% at 50% 50%, black 75%, transparent 100%)',
+                          maskImage: 'radial-gradient(ellipse 92% 92% at 50% 50%, black 75%, transparent 100%)',
+                        }
+                  }
+                  className={`max-h-36 sm:max-h-40 max-w-[92%] w-auto h-auto object-contain transition-transform duration-500 group-hover:scale-110 ${
+                    isLight ? 'drop-shadow-[0_8px_16px_rgba(0,0,0,0.12)]' : 'drop-shadow-[0_12px_24px_rgba(0,0,0,0.6)]'
+                  }`}
                 />
               </div>
 
