@@ -4,6 +4,8 @@ import { getProducts, type Product } from "../api/publicApi";
 import { Seo } from "../components/Seo";
 import { CtaBand, EmptyState, Loading, Section } from "../components/ui";
 import { seoPages } from "../content/seo";
+import { AppleProductLineup } from "../components/AppleProductLineup";
+import { ProductMarqueeGallery } from "../components/ProductMarqueeGallery";
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[] | null>(null);
@@ -28,14 +30,20 @@ export default function ProductsPage() {
             Our Portfolio
           </div>
           <h1>
-            Precision <span className="text-gradient">Engineered</span>
+            Precision <span className="text-gradient">Engineered Castings</span>
           </h1>
           <p>
             Delivering high-integrity Grey Iron and Ductile Iron components for demanding
-            industrial applications worldwide.
+            industrial OEM applications worldwide.
           </p>
         </div>
       </section>
+
+      {/* Apple-Style Product Lineup */}
+      <AppleProductLineup />
+
+      {/* Infinite Scrolling Dual-Row Marquee Gallery */}
+      <ProductMarqueeGallery />
 
       <Section labelledBy="catalogue-heading">
         {error && (
@@ -154,19 +162,6 @@ export default function ProductsPage() {
                 </div>
               </div>
             </div>
-
-            {/* Remaining products as cards */}
-            {products.length > 2 && (
-              <div className="grid grid--2" style={{ marginBottom: "var(--sp-7)" }}>
-                {products.slice(2).map((p) => (
-                  <Link key={p.slug} to={`/products/${p.slug}`} className="card" style={{ display: "block" }}>
-                    <h3>{p.title}</h3>
-                    <p>{p.summary}</p>
-                    <span className="card__link">Learn more →</span>
-                  </Link>
-                ))}
-              </div>
-            )}
 
             {/* Value-added services */}
             <section style={{ marginBottom: "var(--sp-7)" }}>
