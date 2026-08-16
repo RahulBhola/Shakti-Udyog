@@ -200,13 +200,13 @@ export const EnquiryToDeliverySection: React.FC = () => {
                   </div>
 
                   <div className="space-y-2.5">
-                    <h3 className={`text-base sm:text-lg font-bold tracking-tight ${
+                    <h3 className={`text-lg sm:text-xl font-extrabold tracking-tight ${
                       isLight ? 'text-neutral-900' : 'text-white'
                     }`}>
                       {s.title}
                     </h3>
-                    <p className={`text-xs sm:text-sm leading-relaxed ${
-                      isLight ? 'text-neutral-600' : 'text-neutral-400'
+                    <p className={`text-xs sm:text-sm leading-relaxed font-normal ${
+                      isLight ? 'text-neutral-600' : 'text-neutral-300'
                     }`}>
                       {s.description}
                     </p>
@@ -220,38 +220,34 @@ export const EnquiryToDeliverySection: React.FC = () => {
 
         </div>
 
-        {/* Bottom Feature Strip Bar */}
-        <div className={`rounded-2xl sm:rounded-3xl p-6 sm:p-7 border shadow-sm transition-colors ${
+        {/* 4-Column Value Proposition Bottom Strip */}
+        <div className={`rounded-3xl p-7 sm:p-9 border transition-all duration-300 shadow-xl ${
           isLight
-            ? 'bg-white border-neutral-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)]'
-            : 'bg-[#0c0d14] border-white/[0.08]'
+            ? 'bg-white border-neutral-200/90 shadow-[0_4px_20px_rgba(0,0,0,0.03)]'
+            : 'bg-[#0a0b12] border-white/[0.08]'
         }`}>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
-            {valueProps.map((vp) => (
-              <div key={vp.title} className="flex items-center gap-4">
-                
-                {/* Round Icon Badge */}
+            {valueProps.map((v) => (
+              <div key={v.title} className="flex items-start gap-4">
                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border ${
                   isLight
-                    ? 'bg-[#eff6ff] text-[#2563eb] border-blue-100'
-                    : 'bg-white/5 text-orange-400 border-white/10'
+                    ? 'bg-blue-50 text-blue-600 border-blue-200/80 shadow-sm'
+                    : 'bg-orange-500/10 text-orange-400 border border-orange-500/20'
                 }`}>
-                  {vp.icon}
+                  {v.icon}
                 </div>
-
-                <div>
-                  <h4 className={`text-sm sm:text-base font-bold tracking-tight ${
+                <div className="space-y-1.5">
+                  <h4 className={`text-base sm:text-lg font-extrabold tracking-tight ${
                     isLight ? 'text-neutral-900' : 'text-white'
                   }`}>
-                    {vp.title}
+                    {v.title}
                   </h4>
-                  <p className={`text-xs sm:text-sm ${
+                  <p className={`text-xs sm:text-sm leading-relaxed ${
                     isLight ? 'text-neutral-600' : 'text-neutral-400'
                   }`}>
-                    {vp.description}
+                    {v.description}
                   </p>
                 </div>
-
               </div>
             ))}
           </div>

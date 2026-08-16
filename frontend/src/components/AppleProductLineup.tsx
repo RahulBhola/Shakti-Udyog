@@ -309,21 +309,21 @@ export const AppleProductLineup: React.FC = () => {
 
                 {/* Title & Tagline */}
                 <div className="space-y-2 mb-4">
-                  <h3 className={`text-lg sm:text-xl font-bold tracking-tight ${
+                  <h3 className={`text-xl sm:text-2xl font-extrabold tracking-tight ${
                     isLight ? 'text-neutral-900' : 'text-white'
                   }`}>
                     {prod.name}
                   </h3>
-                  <p className={`text-xs leading-relaxed min-h-[36px] ${
-                    isLight ? 'text-neutral-600' : 'text-neutral-400'
+                  <p className={`text-sm sm:text-base leading-relaxed min-h-[44px] ${
+                    isLight ? 'text-neutral-600' : 'text-neutral-300'
                   }`}>
                     {prod.tagline}
                   </p>
                 </div>
 
                 {/* Key Specs Box */}
-                <div className="space-y-1.5 pt-3 mb-5 border-t border-neutral-100 dark:border-white/[0.06]">
-                  <div className="flex items-center gap-2 text-xs font-mono font-medium">
+                <div className="space-y-2 pt-3.5 mb-5 border-t border-neutral-200/80 dark:border-white/10">
+                  <div className="flex items-center gap-2.5 text-xs sm:text-sm font-mono font-bold">
                     <ShieldCheck className={`w-4 h-4 shrink-0 ${
                       isFeatured
                         ? 'text-orange-500'
@@ -335,16 +335,16 @@ export const AppleProductLineup: React.FC = () => {
                       {currentVar.specSummary}
                     </span>
                   </div>
-                  <div className="text-[11px] font-mono text-neutral-500 pl-6">
+                  <div className="text-xs font-mono text-neutral-500 pl-6">
                     {prod.moq}
                   </div>
                 </div>
 
                 {/* Action Buttons: Learn More + Request RFQ */}
-                <div className="grid grid-cols-2 gap-2.5 pt-1">
+                <div className="grid grid-cols-2 gap-3 pt-1">
                   <Link
                     to={prod.detailSlug}
-                    className={`py-2.5 px-3 rounded-xl text-xs font-bold text-center inline-flex items-center justify-center gap-1.5 transition-all ${
+                    className={`py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-center inline-flex items-center justify-center gap-1.5 transition-all ${
                       isFeatured
                         ? 'bg-orange-500 hover:bg-orange-600 text-white shadow-md shadow-orange-500/20'
                         : isLight
@@ -358,7 +358,7 @@ export const AppleProductLineup: React.FC = () => {
 
                   <Link
                     to="/request-a-quote"
-                    className={`py-2.5 px-3 rounded-xl text-xs font-semibold text-center border inline-flex items-center justify-center gap-1 transition-colors ${
+                    className={`py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-center border inline-flex items-center justify-center gap-1 transition-colors ${
                       isLight
                         ? 'border-neutral-300 text-neutral-800 hover:bg-neutral-100'
                         : 'border-white/15 text-neutral-300 hover:bg-white/5 hover:text-white'
