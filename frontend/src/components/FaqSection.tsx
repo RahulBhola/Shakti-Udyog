@@ -37,7 +37,7 @@ export const FaqSection: React.FC = () => {
   };
 
   return (
-    <section className={`py-20 sm:py-28 transition-colors duration-300 ${
+    <section className={`py-6 sm:py-8 transition-colors duration-300 ${
       isLight ? 'bg-[#f4f7fb]' : 'bg-[#050608]'
     }`}>
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">

@@ -21,10 +21,10 @@ export const ContactPreviewAndCtaSection: React.FC = () => {
   const isLight = theme === 'light';
 
   return (
-    <section className={`py-16 sm:py-24 transition-colors duration-300 ${
+    <section className={`pt-6 sm:pt-8 pb-4 sm:pb-6 transition-colors duration-300 ${
       isLight ? 'bg-[#f4f7fb]' : 'bg-[#050608]'
     }`}>
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 space-y-8 sm:space-y-10">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 space-y-6 sm:space-y-8">
         
         {/* 1. Talk to Our Team Card */}
         <div className={`rounded-3xl p-7 sm:p-10 lg:p-12 border transition-all duration-300 ${

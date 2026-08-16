@@ -33,7 +33,7 @@ export const SiteFooter: React.FC = () => {
   ];
 
   return (
-    <footer className={`relative pt-6 pb-12 transition-colors duration-300 ${
+    <footer className={`relative pt-4 pb-12 transition-colors duration-300 ${
       isLight ? 'bg-[#f4f7fb]' : 'bg-[#050608]'
     }`}>
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">

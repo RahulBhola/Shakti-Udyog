@@ -85,7 +85,7 @@ export const IndustriesWeServeSection: React.FC = () => {
   ];
 
   return (
-    <section className={`py-20 sm:py-28 transition-colors duration-300 ${
+    <section className={`pt-10 sm:pt-14 pb-6 sm:pb-8 transition-colors duration-300 ${
       isLight ? 'bg-[#f4f7fb]' : 'bg-[#050608]'
     }`}>
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">

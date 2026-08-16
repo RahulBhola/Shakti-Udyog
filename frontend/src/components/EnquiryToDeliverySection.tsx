@@ -76,7 +76,7 @@ export const EnquiryToDeliverySection: React.FC = () => {
   ];
 
   return (
-    <section className={`relative py-16 sm:py-24 overflow-hidden transition-colors duration-300 ${
+    <section className={`relative py-10 sm:py-14 overflow-hidden transition-colors duration-300 ${
       isLight ? 'bg-[#f4f7fb]' : 'bg-[#050608]'
     }`}>
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
