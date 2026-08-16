@@ -1,22 +1,19 @@
-import { Link } from "react-router-dom";
 import { Seo, localBusinessJsonLd } from "../components/Seo";
 import { ScrollytellingCanvas } from "../components/ScrollytellingCanvas";
 import { ProductMarqueeGallery } from "../components/ProductMarqueeGallery";
 import { AppleProductLineup } from "../components/AppleProductLineup";
 import { EnquiryToDeliverySection } from "../components/EnquiryToDeliverySection";
+import { IndustriesWeServeSection } from "../components/IndustriesWeServeSection";
+import { FaqSection } from "../components/FaqSection";
 import { ContactPreviewAndCtaSection } from "../components/ContactPreviewAndCtaSection";
 import {
-  FaqAccordion,
   FeatureCard,
-  IndustryCard,
   Section,
   SectionHeading,
   StatStrip,
 } from "../components/ui";
 import { highlights } from "../content/company";
-import { faqs } from "../content/faqs";
 import { advantages, introduction } from "../content/home";
-import { industriesShort } from "../content/industries";
 import { seoPages } from "../content/seo";
 
 export default function HomePage() {
@@ -69,28 +66,11 @@ export default function HomePage() {
         </div>
       </Section>
 
-      {/* Industries We Serve */}
-      <Section tint labelledBy="industries-heading">
-        <SectionHeading
-          id="industries-heading"
-          eyebrow="Where our castings work"
-          title="Industries We Serve"
-        />
-        <div className="grid grid--4">
-          {industriesShort.map((name) => (
-            <IndustryCard key={name} industry={name} />
-          ))}
-        </div>
-      </Section>
+      {/* Modern Industries We Serve Showcase */}
+      <IndustriesWeServeSection />
 
-      {/* Frequently Asked Questions */}
-      <Section labelledBy="faq-heading">
-        <SectionHeading id="faq-heading" eyebrow="Common questions" title="FAQs" />
-        <FaqAccordion items={faqs.slice(0, 3)} />
-        <p style={{ marginTop: "var(--sp-4)" }}>
-          <Link to="/resources">More questions? See our resources →</Link>
-        </p>
-      </Section>
+      {/* Frequently Asked Questions with Molten Pouring Ladle */}
+      <FaqSection />
 
       {/* Talk to Our Team & Casting Requirement CTA Sections */}
       <ContactPreviewAndCtaSection />
