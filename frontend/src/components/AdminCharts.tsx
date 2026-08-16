@@ -40,7 +40,7 @@ function renderCustomLabel({ cx, cy, midAngle, innerRadius, outerRadius, percent
 /*  Chart colors                                                       */
 /* ------------------------------------------------------------------ */
 
-const CHART = {
+const CHART: Record<string, [string, string]> = {
   blue: ["#3B82F6", "#60A5FA"],
   purple: ["#8B5CF6", "#A78BFA"],
   green: ["#22C55E", "#4ADE80"],
@@ -69,28 +69,38 @@ function DoughnutChartCard({ data, gradients, title, subtitle }: DoughnutChartPr
     );
   }
 
-  const total = data.reduce((s, d) => s + d.value, 0);
-
   return (
     <ChartCard title={title} subtitle={subtitle}>
-      <div className="flex items-center gap-5">
-        <div className="shrink-0">
-          <ResponsiveContainer width={150} height={150}>
+      <div className="flex flex-col sm:flex-row items-center gap-4">
+        <div className="w-[140px] h-[140px] shrink-0">
+          <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <defs>
                 {gradients.map(([from, to], i) => (
-                  <linearGradient key={i} id={`dg-${i}`} x1="0" y1="0" x2="1" y2="1">
+                  <linearGradient key={i} id={`grad-${i}`} x1="0" y1="0" x2="1" y2="1">
                     <stop offset="0%" stopColor={from} />
                     <stop offset="100%" stopColor={to} />
                   </linearGradient>
                 ))}
               </defs>
               <Pie
-                data={data} cx="50%" cy="50%" innerRadius={45} outerRadius={65}
-                dataKey="value" strokeWidth={0} label={renderCustomLabel} labelLine={false}
-                animationBegin={100} animationDuration={800} animationEasing="ease-out"
+                data={data}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                innerRadius={36}
+                outerRadius={60}
+                paddingAngle={3}
+                labelLine={false}
+                label={renderCustomLabel}
+                animationBegin={100}
+                animationDuration={700}
+                animationEasing="ease-out"
               >
-                {data.map((_, i) => <Cell key={i} fill={`url(#dg-${i % gradients.length})`} />)}
+                {data.map((_, i) => (
+                  <Cell key={i} fill={`url(#grad-${i % gradients.length})`} stroke="var(--bg-card)" strokeWidth={2} />
+                ))}
               </Pie>
               <Tooltip content={<CustomTooltip />} />
             </PieChart>
@@ -99,7 +109,6 @@ function DoughnutChartCard({ data, gradients, title, subtitle }: DoughnutChartPr
         <div className="flex flex-col gap-2 min-w-0 flex-1">
           {data.map((item, i) => {
             const [from] = gradients[i % gradients.length];
-            const pct = total > 0 ? ((item.value / total) * 100).toFixed(1) : "0";
             return (
               <div key={item.name} className="flex items-center justify-between gap-2 text-[12px]">
                 <div className="flex items-center gap-2 min-w-0">
@@ -262,7 +271,6 @@ export function RevenueLineChart({ data }: { data?: { year: number; month: numbe
     name: new Date(d.year, d.month - 1).toLocaleString("en", { month: "short" }),
     revenue: d.revenue,
   }));
-  const maxRevenue = Math.max(...chartData.map(d => d.revenue), 0);
 
   return (
     <ChartCard title="Revenue Trend" subtitle="Monthly billed revenue">

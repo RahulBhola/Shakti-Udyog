@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, ShieldCheck, Sparkles, Check, ArrowUpRight } from 'lucide-react';
+import { ChevronRight, Sparkles } from 'lucide-react';
 import { useTheme } from '../auth/ThemeContext';
 
 export interface ProductGradeVariant {
@@ -37,7 +37,7 @@ const LINEUP_PRODUCTS: AppleProductModel[] = [
       {
         name: 'FG 220 Standard',
         colorHex: '#475569',
-        bgGradient: 'from-slate-900/60 via-slate-800/40 to-slate-950/80',
+        bgGradient: 'from-slate-900/90 via-slate-800/80 to-slate-950',
         specSummary: '220 MPa Tensile · 180-220 HBW',
         tensileStrength: '220 N/mm²',
         hardness: '190 HBW',
@@ -46,7 +46,7 @@ const LINEUP_PRODUCTS: AppleProductModel[] = [
       {
         name: 'FG 260 Heavy Duty',
         colorHex: '#EA580C',
-        bgGradient: 'from-orange-950/60 via-amber-950/40 to-slate-950/80',
+        bgGradient: 'from-orange-950/90 via-amber-950/80 to-slate-950',
         specSummary: '260 MPa Tensile · High Damping',
         tensileStrength: '260 N/mm²',
         hardness: '215 HBW',
@@ -55,7 +55,7 @@ const LINEUP_PRODUCTS: AppleProductModel[] = [
       {
         name: 'SG 500 High Torque',
         colorHex: '#0284C7',
-        bgGradient: 'from-sky-950/60 via-slate-900/40 to-slate-950/80',
+        bgGradient: 'from-sky-950/90 via-slate-900/80 to-slate-950',
         specSummary: '500 MPa Tensile · 7% Elongation',
         tensileStrength: '500 N/mm²',
         hardness: '230 HBW',
@@ -75,7 +75,7 @@ const LINEUP_PRODUCTS: AppleProductModel[] = [
       {
         name: 'FG 260 Hydraulic',
         colorHex: '#334155',
-        bgGradient: 'from-slate-900/60 via-neutral-800/40 to-slate-950/80',
+        bgGradient: 'from-slate-900/90 via-neutral-800/80 to-slate-950',
         specSummary: 'Zero Leakage · Hydro Tested',
         tensileStrength: '260 N/mm²',
         hardness: '200 HBW',
@@ -84,7 +84,7 @@ const LINEUP_PRODUCTS: AppleProductModel[] = [
       {
         name: 'SG 400 Ductile Iron',
         colorHex: '#F59E0B',
-        bgGradient: 'from-amber-950/60 via-orange-900/40 to-neutral-950/80',
+        bgGradient: 'from-amber-950/90 via-orange-900/80 to-neutral-950',
         specSummary: '400 MPa Tensile · 15% Elongation',
         tensileStrength: '400 N/mm²',
         hardness: '160 HBW',
@@ -93,7 +93,7 @@ const LINEUP_PRODUCTS: AppleProductModel[] = [
       {
         name: 'SG 600 Severe Duty',
         colorHex: '#9333EA',
-        bgGradient: 'from-purple-950/60 via-slate-900/40 to-slate-950/80',
+        bgGradient: 'from-purple-950/90 via-slate-900/80 to-slate-950',
         specSummary: '600 MPa Tensile · Anti-Corrosive',
         tensileStrength: '600 N/mm²',
         hardness: '250 HBW',
@@ -103,7 +103,7 @@ const LINEUP_PRODUCTS: AppleProductModel[] = [
   },
   {
     id: 'sewing-brackets',
-    name: 'Precision Mechanism Brackets',
+    name: 'Precision Brackets',
     tagline: 'Micron-tolerance CNC machined for high-cycle industrial automation.',
     description: 'Superior vibration attenuation ensuring continuous 5000+ RPM sewing needle kinematics without fatigue failure.',
     weightRange: '0.15 kg to 8.5 kg',
@@ -113,7 +113,7 @@ const LINEUP_PRODUCTS: AppleProductModel[] = [
       {
         name: 'FG 200 Fine Grain',
         colorHex: '#64748B',
-        bgGradient: 'from-slate-900/60 via-stone-800/40 to-slate-950/80',
+        bgGradient: 'from-slate-900/90 via-stone-800/80 to-slate-950',
         specSummary: 'Class A Finish · High Damping',
         tensileStrength: '200 N/mm²',
         hardness: '180 HBW',
@@ -122,7 +122,7 @@ const LINEUP_PRODUCTS: AppleProductModel[] = [
       {
         name: 'SG 500 Impact Ductile',
         colorHex: '#EA580C',
-        bgGradient: 'from-orange-950/60 via-stone-900/40 to-slate-950/80',
+        bgGradient: 'from-orange-950/90 via-stone-900/80 to-slate-950',
         specSummary: '500 MPa Tensile · Fatigue Resistant',
         tensileStrength: '500 N/mm²',
         hardness: '220 HBW',
@@ -131,7 +131,7 @@ const LINEUP_PRODUCTS: AppleProductModel[] = [
       {
         name: 'CNC Ready Machined',
         colorHex: '#10B981',
-        bgGradient: 'from-emerald-950/60 via-slate-900/40 to-slate-950/80',
+        bgGradient: 'from-emerald-950/90 via-slate-900/80 to-slate-950',
         specSummary: '±0.015mm CMM Tolerance',
         tensileStrength: '550 N/mm²',
         hardness: '225 HBW',
@@ -151,7 +151,7 @@ const LINEUP_PRODUCTS: AppleProductModel[] = [
       {
         name: 'SG 600/3 High Tensile',
         colorHex: '#EA580C',
-        bgGradient: 'from-orange-950/60 via-neutral-900/40 to-slate-950/80',
+        bgGradient: 'from-orange-950/90 via-neutral-900/80 to-slate-950',
         specSummary: '600 MPa Tensile · Impact Tested',
         tensileStrength: '600 N/mm²',
         hardness: '240 HBW',
@@ -160,7 +160,7 @@ const LINEUP_PRODUCTS: AppleProductModel[] = [
       {
         name: 'SG 700 Ultra Hard',
         colorHex: '#0284C7',
-        bgGradient: 'from-sky-950/60 via-neutral-900/40 to-slate-950/80',
+        bgGradient: 'from-sky-950/90 via-neutral-900/80 to-slate-950',
         specSummary: '700 MPa Tensile · Wear Resistant',
         tensileStrength: '700 N/mm²',
         hardness: '280 HBW',
@@ -169,7 +169,7 @@ const LINEUP_PRODUCTS: AppleProductModel[] = [
       {
         name: 'SG 450 Tough Ductile',
         colorHex: '#64748B',
-        bgGradient: 'from-slate-900/60 via-neutral-900/40 to-slate-950/80',
+        bgGradient: 'from-slate-900/90 via-neutral-900/80 to-slate-950',
         specSummary: '450 MPa Tensile · 10% Elongation',
         tensileStrength: '450 N/mm²',
         hardness: '180 HBW',
@@ -197,9 +197,9 @@ export const AppleProductLineup: React.FC = () => {
     <section className={`relative py-16 sm:py-24 transition-colors duration-300 ${
       isLight ? 'bg-white' : 'bg-[#000000]'
     }`}>
-      {/* Header Container */}
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 sm:mb-16">
-        <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-3">
+      {/* Header Container — Perfectly Centered */}
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 mb-12 sm:mb-16">
+        <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-4">
           <h2 className={`text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight ${
             isLight ? 'text-neutral-900' : 'text-white'
           }`}>
@@ -208,17 +208,17 @@ export const AppleProductLineup: React.FC = () => {
 
           <Link
             to="/products"
-            className="group inline-flex items-center gap-1 text-sm font-semibold text-orange-500 hover:text-orange-400 transition-colors"
+            className="group inline-flex items-center gap-1.5 text-base sm:text-lg font-semibold text-orange-600 dark:text-orange-400 hover:text-orange-500 transition-colors"
           >
-            <span>Compare all grades & specs</span>
-            <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+            <span>Compare all grades &amp; specs</span>
+            <ChevronRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
           </Link>
         </div>
       </div>
 
-      {/* Product Cards Grid / Horizontal Scroll */}
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 sm:gap-8">
+      {/* Product Cards Grid */}
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-7 sm:gap-8">
           {LINEUP_PRODUCTS.map((product) => {
             const currentVariantIdx = selectedVariants[product.id] || 0;
             const currentVariant = product.variants[currentVariantIdx] || product.variants[0];
@@ -228,37 +228,37 @@ export const AppleProductLineup: React.FC = () => {
                 key={product.id}
                 className="flex flex-col justify-between"
               >
-                {/* Large Rounded Media Capsule Container */}
+                {/* Large Rounded Media Capsule Container with Rich Metallic Studio Backdrop */}
                 <div
-                  className={`relative w-full aspect-[4/5] rounded-[32px] overflow-hidden p-6 sm:p-7 flex flex-col justify-between border transition-all duration-500 shadow-xl ${
+                  className={`relative w-full aspect-[4/5] rounded-[32px] overflow-hidden p-6 flex flex-col justify-between border transition-all duration-500 shadow-2xl ${
                     isLight
-                      ? 'bg-gradient-to-b from-[#f0f2f5] to-[#e4e7ec] border-neutral-200/80 shadow-[0_12px_36px_rgba(0,0,0,0.06)]'
-                      : `bg-gradient-to-b ${currentVariant.bgGradient} border-white/[0.08] shadow-[0_16px_40px_rgba(0,0,0,0.8)]`
+                      ? 'bg-gradient-to-b from-[#1c1e26] via-[#14151c] to-[#0a0b0f] border-neutral-800 shadow-[0_16px_40px_rgba(0,0,0,0.18)]'
+                      : `bg-gradient-to-b ${currentVariant.bgGradient} border-white/[0.08] shadow-[0_16px_40px_rgba(0,0,0,0.85)]`
                   }`}
                 >
                   {/* Top Spec Chip */}
                   <div className="flex items-center justify-between z-10">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-bold tracking-wider uppercase bg-black/40 text-orange-400 border border-orange-500/30 backdrop-blur-md">
-                      <Sparkles className="w-3 h-3 text-orange-500" />
+                    <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-mono font-bold tracking-wider uppercase bg-white/10 text-orange-400 border border-orange-500/30 backdrop-blur-md shadow-sm">
+                      <Sparkles className="w-3.5 h-3.5 text-orange-400" />
                       <span>{currentVariant.name}</span>
                     </span>
-                    <span className="text-[11px] font-mono text-neutral-400">
+                    <span className="text-xs sm:text-sm font-mono font-semibold text-neutral-300">
                       {product.weightRange}
                     </span>
                   </div>
 
                   {/* Centered Product Image */}
-                  <div className="relative my-auto w-full h-44 sm:h-52 flex items-center justify-center">
+                  <div className="relative my-auto w-full h-48 sm:h-56 flex items-center justify-center">
                     <img
                       src={currentVariant.image}
                       alt={`${product.name} - ${currentVariant.name}`}
                       loading="lazy"
-                      className="max-h-40 sm:max-h-48 max-w-[90%] object-contain transition-all duration-500 drop-shadow-[0_15px_30px_rgba(0,0,0,0.85)] hover:scale-105"
+                      className="max-h-44 sm:max-h-52 max-w-[92%] object-contain transition-all duration-500 drop-shadow-[0_20px_35px_rgba(0,0,0,0.9)] hover:scale-105"
                     />
                   </div>
 
                   {/* Bottom Grade Color Switcher Dots */}
-                  <div className="flex items-center justify-center gap-3 z-10 pt-2">
+                  <div className="flex items-center justify-center gap-3.5 z-10 pt-2">
                     {product.variants.map((v, vIdx) => {
                       const isSelected = vIdx === currentVariantIdx;
                       return (
@@ -271,7 +271,7 @@ export const AppleProductLineup: React.FC = () => {
                           className={`relative w-4 h-4 rounded-full transition-all duration-200 flex items-center justify-center ${
                             isSelected
                               ? 'scale-125 ring-2 ring-offset-2 ring-orange-500 ring-offset-black'
-                              : 'opacity-70 hover:opacity-100'
+                              : 'opacity-70 hover:opacity-100 hover:scale-110'
                           }`}
                           style={{ backgroundColor: v.colorHex }}
                         />
@@ -280,26 +280,26 @@ export const AppleProductLineup: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Typography & Actions (Apple Clean Style) */}
-                <div className="pt-6 sm:pt-7 text-center space-y-3 px-2 flex flex-col items-center flex-grow">
-                  <h3 className={`text-xl sm:text-2xl font-bold tracking-tight ${
+                {/* Typography & Actions (Apple Clean Style with Larger Font Size) */}
+                <div className="pt-6 text-center space-y-3.5 px-2 flex flex-col items-center flex-grow">
+                  <h3 className={`text-2xl sm:text-3xl font-bold tracking-tight ${
                     isLight ? 'text-neutral-900' : 'text-white'
                   }`}>
                     {product.name}
                   </h3>
 
-                  <p className={`text-xs sm:text-sm leading-relaxed max-w-xs ${
-                    isLight ? 'text-neutral-600' : 'text-neutral-400'
+                  <p className={`text-sm sm:text-base leading-relaxed max-w-xs min-h-[48px] ${
+                    isLight ? 'text-neutral-600' : 'text-neutral-300'
                   }`}>
                     {product.tagline}
                   </p>
 
-                  <div className="pt-2 text-xs font-mono">
-                    <span className="block font-semibold text-orange-500">
+                  <div className="pt-2 text-sm font-mono space-y-1">
+                    <span className="block font-bold text-base text-orange-600 dark:text-orange-400">
                       {currentVariant.specSummary}
                     </span>
-                    <span className={`text-[11px] ${
-                      isLight ? 'text-neutral-500' : 'text-neutral-500'
+                    <span className={`text-xs sm:text-sm block ${
+                      isLight ? 'text-neutral-600' : 'text-neutral-400'
                     }`}>
                       Batch MOQ: {product.batchCapacity}
                     </span>
@@ -309,17 +309,17 @@ export const AppleProductLineup: React.FC = () => {
                   <div className="pt-4 flex items-center justify-center gap-4 mt-auto">
                     <Link
                       to="/request-a-quote"
-                      className="px-5 py-2 rounded-full text-xs font-semibold tracking-wide text-white bg-blue-600 hover:bg-blue-500 shadow-md transition-all transform hover:scale-105"
+                      className="px-6 py-2.5 rounded-full text-sm font-semibold tracking-wide text-white bg-blue-600 hover:bg-blue-500 shadow-md transition-all transform hover:scale-105"
                     >
                       Learn more
                     </Link>
 
                     <Link
                       to="/request-a-quote"
-                      className="inline-flex items-center text-xs font-semibold text-blue-500 hover:text-blue-400 transition-colors group"
+                      className="inline-flex items-center text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline transition-colors group"
                     >
                       <span>Request RFQ</span>
-                      <ChevronRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+                      <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                     </Link>
                   </div>
                 </div>
