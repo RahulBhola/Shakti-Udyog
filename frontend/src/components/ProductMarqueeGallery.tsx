@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import {
   ChevronLeft,
   ChevronRight,
@@ -239,7 +240,6 @@ export const ProductMarqueeGallery: React.FC = () => {
   const isLight = theme === 'light';
 
   const [currentPage, setCurrentPage] = useState(0);
-  const [selectedProduct, setSelectedProduct] = useState<GalleryProductItem | null>(null);
 
   const totalPages = ALL_GALLERY_PRODUCTS.length;
   const currentProducts = ALL_GALLERY_PRODUCTS[currentPage] || ALL_GALLERY_PRODUCTS[0];
@@ -258,8 +258,14 @@ export const ProductMarqueeGallery: React.FC = () => {
     }`}>
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
         
-        {/* Section Header */}
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 mb-12 sm:mb-16">
+        {/* Section Header with Scroll Animation */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+          className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 mb-12 sm:mb-16"
+        >
           
           {/* Left Column: Eyebrow + 2-Line Bold Heading */}
           <div className="space-y-4 max-w-xl">
@@ -330,14 +336,18 @@ export const ProductMarqueeGallery: React.FC = () => {
             </div>
           </div>
 
-        </div>
+        </motion.div>
 
-        {/* 5x2 Product Cards Grid (Clean, Uniform Styling) */}
+        {/* 5x2 Product Cards Grid with Staggered Scroll Animation */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-5">
-          {currentProducts.map((item) => (
-            <div
+          {currentProducts.map((item, idx) => (
+            <motion.div
               key={item.id}
-              onClick={() => setSelectedProduct(item)}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.1 }}
+              transition={{ duration: 0.45, delay: (idx % 5) * 0.07, ease: 'easeOut' }}
+              whileHover={{ y: -5, transition: { duration: 0.2 } }}
               className={`group relative rounded-2xl p-4 sm:p-4.5 flex flex-col justify-between cursor-pointer border transition-all duration-300 ${
                 isLight
                   ? 'bg-white border-neutral-200/90 hover:border-blue-400 hover:shadow-xl shadow-[0_4px_16px_rgba(0,0,0,0.03)]'
@@ -397,12 +407,18 @@ export const ProductMarqueeGallery: React.FC = () => {
                   </div>
                 </div>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
 
         {/* Carousel Pagination Indicator & View Catalog Button */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-10 sm:mt-12 pt-6 border-t border-neutral-200/60 dark:border-white/5">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.15 }}
+          className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-10 sm:mt-12 pt-6 border-t border-neutral-200/60 dark:border-white/5"
+        >
           
           {/* Active Page Dots */}
           <div className="flex items-center gap-2">
@@ -444,7 +460,7 @@ export const ProductMarqueeGallery: React.FC = () => {
             </Link>
           </div>
 
-        </div>
+        </motion.div>
 
       </div>
     </section>

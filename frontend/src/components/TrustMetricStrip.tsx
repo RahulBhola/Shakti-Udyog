@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { Award, Layers, Scale, ShieldCheck } from 'lucide-react';
 import { useTheme } from '../auth/ThemeContext';
 
@@ -55,16 +56,27 @@ export const TrustMetricStrip: React.FC = () => {
     }`}>
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
         
-        {/* Floating Glassmorphic Authority Container */}
-        <div className={`rounded-3xl p-6 sm:p-8 lg:p-10 border transition-all duration-300 shadow-2xl ${
-          isLight
-            ? 'bg-white border-neutral-200/90 shadow-[0_10px_40px_rgba(0,0,0,0.04)] text-neutral-900'
-            : 'bg-[#080a0f] border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.9)] text-white'
-        }`}>
+        {/* Floating Glassmorphic Authority Container with Scroll Trigger Animation */}
+        <motion.div
+          initial={{ opacity: 0, y: 35 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          className={`rounded-3xl p-6 sm:p-8 lg:p-10 border transition-all duration-300 shadow-2xl ${
+            isLight
+              ? 'bg-white border-neutral-200/90 shadow-[0_10px_40px_rgba(0,0,0,0.04)] text-neutral-900'
+              : 'bg-[#080a0f] border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.9)] text-white'
+          }`}
+        >
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-            {metrics.map((m) => (
-              <div
+            {metrics.map((m, idx) => (
+              <motion.div
                 key={m.label}
+                initial={{ opacity: 0, y: 25 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: idx * 0.1, ease: 'easeOut' }}
+                whileHover={{ y: -4, transition: { duration: 0.2 } }}
                 className={`relative rounded-2xl p-6 sm:p-7 border transition-all duration-300 group flex flex-col justify-between ${
                   isLight
                     ? 'bg-neutral-50/80 border-neutral-200/80 hover:bg-white hover:border-blue-300 hover:shadow-xl'
@@ -110,10 +122,10 @@ export const TrustMetricStrip: React.FC = () => {
                   </div>
                 </div>
 
-              </div>
+              </motion.div>
             ))}
           </div>
-        </div>
+        </motion.div>
 
       </div>
     </section>

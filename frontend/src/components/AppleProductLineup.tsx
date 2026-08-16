@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, ArrowRight, ShieldCheck, LayoutGrid, Atom } from 'lucide-react';
 import { useTheme } from '../auth/ThemeContext';
 
@@ -152,14 +153,26 @@ export const AppleProductLineup: React.FC = () => {
     'automotive-shift-levers': 0,
   });
 
-  const [activeCardIndex, setActiveCardIndex] = useState(0);
-
   const handlePrev = () => {
-    setActiveCardIndex((prev) => (prev > 0 ? prev - 1 : LINEUP_PRODUCTS.length - 1));
+    setActiveVariantMap((prev) => {
+      const nextMap: Record<string, number> = {};
+      LINEUP_PRODUCTS.forEach((p) => {
+        const curr = prev[p.id] || 0;
+        nextMap[p.id] = (curr - 1 + p.variants.length) % p.variants.length;
+      });
+      return nextMap;
+    });
   };
 
   const handleNext = () => {
-    setActiveCardIndex((prev) => (prev < LINEUP_PRODUCTS.length - 1 ? prev + 1 : 0));
+    setActiveVariantMap((prev) => {
+      const nextMap: Record<string, number> = {};
+      LINEUP_PRODUCTS.forEach((p) => {
+        const curr = prev[p.id] || 0;
+        nextMap[p.id] = (curr + 1) % p.variants.length;
+      });
+      return nextMap;
+    });
   };
 
   return (
@@ -168,8 +181,14 @@ export const AppleProductLineup: React.FC = () => {
     }`}>
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
         
-        {/* Section Header */}
-        <div className="flex items-end justify-between gap-6 mb-12 sm:mb-16">
+        {/* Section Header with Scroll Animation */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+          className="flex items-end justify-between gap-6 mb-12 sm:mb-16"
+        >
           
           {/* Left Title */}
           <div className="space-y-2.5">
@@ -215,17 +234,22 @@ export const AppleProductLineup: React.FC = () => {
             </button>
           </div>
 
-        </div>
+        </motion.div>
 
-        {/* 4-Column Product Cards Grid */}
+        {/* 4-Column Product Cards Grid with Staggered Scroll Reveal */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-6">
-          {LINEUP_PRODUCTS.map((prod) => {
+          {LINEUP_PRODUCTS.map((prod, idx) => {
             const currentVarIdx = activeVariantMap[prod.id] || 0;
             const currentVar = prod.variants[currentVarIdx] || prod.variants[0];
 
             return (
-              <div
+              <motion.div
                 key={prod.id}
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.15 }}
+                transition={{ duration: 0.55, delay: idx * 0.1, ease: 'easeOut' }}
+                whileHover={{ y: -6, transition: { duration: 0.25 } }}
                 className={`group relative rounded-3xl p-5 sm:p-6 flex flex-col justify-between border transition-all duration-300 ${
                   isLight
                     ? 'bg-white border-neutral-200/90 hover:border-blue-400 hover:shadow-xl shadow-[0_4px_20px_rgba(0,0,0,0.03)]'
@@ -352,13 +376,19 @@ export const AppleProductLineup: React.FC = () => {
                   </Link>
                 </div>
 
-              </div>
+              </motion.div>
             );
           })}
         </div>
 
         {/* Centered Bottom Action Pill: View All Products */}
-        <div className="flex justify-center mt-12 sm:mt-14">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="flex justify-center mt-12 sm:mt-14"
+        >
           <Link
             to="/products"
             className={`inline-flex items-center gap-2.5 px-7 py-3 rounded-full text-xs sm:text-sm font-mono font-bold tracking-wider transition-all transform hover:scale-105 border shadow-md ${
@@ -371,7 +401,7 @@ export const AppleProductLineup: React.FC = () => {
             <span>View All Products</span>
             <ArrowRight className="w-4 h-4" />
           </Link>
-        </div>
+        </motion.div>
 
       </div>
     </section>

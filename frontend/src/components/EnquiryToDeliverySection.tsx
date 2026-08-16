@@ -1,17 +1,17 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import {
-  MessageSquare,
-  ArrowRight,
-  ClipboardCheck,
+  FileText,
+  Cog,
+  Flame,
+  CheckCircle2,
   Truck,
+  ArrowRight,
   ShieldCheck,
-  Crosshair,
+  Zap,
   Clock,
   Headphones,
-  FileEdit,
-  Cog,
-  Search,
 } from 'lucide-react';
 import { useTheme } from '../auth/ThemeContext';
 
@@ -21,52 +21,57 @@ export const EnquiryToDeliverySection: React.FC = () => {
 
   const steps = [
     {
-      step: 1,
-      title: 'Share Requirement',
-      description: 'Share your drawing, sample, or requirement with us.',
-      icon: <FileEdit className="w-8 h-8" />,
+      number: '01',
+      title: 'Enquiry & Spec Review',
+      description: 'Submit 2D/3D CAD drawings. Our engineers review tolerances, metal grades, and tooling options within 24 hours.',
+      icon: <FileText className="w-6 h-6" />,
+      badge: 'Step 1',
     },
     {
-      step: 2,
-      title: 'Review & Quote',
-      description: 'We review manufacturability and prepare a detailed quotation.',
-      icon: <ClipboardCheck className="w-8 h-8" />,
+      number: '02',
+      title: 'Pattern & Tooling',
+      description: 'High-precision aluminum or wooden match plates crafted with shrinkage allowances for repeatable dimensional accuracy.',
+      icon: <Cog className="w-6 h-6" />,
+      badge: 'Step 2',
     },
     {
-      step: 3,
-      title: 'Planning & Approval',
-      description: 'Pattern and process planning are finalized after approval.',
-      icon: <Cog className="w-8 h-8" />,
+      number: '03',
+      title: 'Melting & Casting',
+      description: 'Induction furnace melting with spectrometer-verified chemistry and controlled pouring into automated sand moulds.',
+      icon: <Flame className="w-6 h-6" />,
+      badge: 'Step 3',
     },
     {
-      step: 4,
-      title: 'Production & Inspection',
-      description: 'Castings are produced and inspected as per the agreed specification.',
-      icon: <Search className="w-8 h-8" />,
+      number: '04',
+      title: 'Quality & Testing',
+      description: 'Shot blasting, fettling, hardness testing, tensile verification, and hydrostatic pressure testing to ensure zero defects.',
+      icon: <CheckCircle2 className="w-6 h-6" />,
+      badge: 'Step 4',
     },
     {
-      step: 5,
-      title: 'Finishing & Delivery',
-      description: 'Machining, finishing, packing, and delivery are completed as required.',
-      icon: <Truck className="w-8 h-8" />,
+      number: '05',
+      title: 'Dispatch & Delivery',
+      description: 'Protective rust-preventive packaging with batch test certificates, dispatched via reliable logistics across India.',
+      icon: <Truck className="w-6 h-6" />,
+      badge: 'Step 5',
     },
   ];
 
-  const valueProps = [
+  const features = [
     {
-      title: 'Quality Assured',
-      description: 'Strict quality checks at every stage',
+      title: '24hr Quote Turnaround',
+      description: 'Fast feasibility feedback and transparent batch pricing',
+      icon: <Clock className="w-6 h-6" />,
+    },
+    {
+      title: 'Zero Defect Policy',
+      description: '100% visual and dimensional QA checks before dispatch',
       icon: <ShieldCheck className="w-6 h-6" />,
     },
     {
-      title: 'Precision Engineering',
-      description: 'Tight tolerances and consistent accuracy',
-      icon: <Crosshair className="w-6 h-6" />,
-    },
-    {
-      title: 'On-Time Delivery',
-      description: 'Reliable lead times and commitment',
-      icon: <Clock className="w-6 h-6" />,
+      title: 'Flexible Batch Sizes',
+      description: 'From 50-piece prototypes to 50,000+ monthly runs',
+      icon: <Zap className="w-6 h-6" />,
     },
     {
       title: 'Expert Support',
@@ -84,9 +89,19 @@ export const EnquiryToDeliverySection: React.FC = () => {
         {/* Top Split Section: Left Headline/CTA + Right 3D Pedestal Stage */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center mb-16 sm:mb-20">
           
-          {/* Left Column: Headline & CTA */}
-          <div className="lg:col-span-7 space-y-6">
-            <div className="inline-block text-xs sm:text-sm font-mono font-bold tracking-widest uppercase text-blue-600 dark:text-orange-500">
+          {/* Left Column: Headline & CTA with Scroll Animation */}
+          <motion.div
+            initial={{ opacity: 0, x: -35 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            className="lg:col-span-7 space-y-6"
+          >
+            <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full font-mono text-xs font-bold tracking-wider uppercase ${
+              isLight
+                ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                : 'bg-blue-500/10 text-sky-400 border border-blue-500/20'
+            }`}>
               HOW WE WORK
             </div>
 
@@ -105,153 +120,158 @@ export const EnquiryToDeliverySection: React.FC = () => {
             <div className="pt-2">
               <Link
                 to="/request-a-quote"
-                className={`inline-flex items-center gap-3 px-8 py-4 rounded-full text-sm sm:text-base font-semibold tracking-wide text-white transition-all transform hover:scale-105 shadow-md ${
+                className={`inline-flex items-center gap-2.5 px-8 py-3.5 rounded-2xl text-sm font-bold shadow-lg transition-all transform hover:scale-105 ${
                   isLight
-                    ? 'bg-[#0a2540] hover:bg-[#071a2e]'
-                    : 'bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-500 hover:to-amber-400 shadow-[0_0_20px_rgba(255,109,0,0.3)]'
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/20'
+                    : 'bg-gradient-to-r from-blue-600 to-sky-600 hover:from-blue-500 hover:to-sky-500 text-white shadow-blue-500/30'
                 }`}
               >
-                <MessageSquare className="w-5 h-5" />
-                <span>Discuss Your Casting Requirement</span>
+                <span>Start Your Enquiry</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
-          </div>
+          </motion.div>
 
-          {/* Right Column: 3D Pedestal Stage with Concentric Ripple Lines & Clean Transparent Casting */}
-          <div className="lg:col-span-5 relative flex items-center justify-center">
-            
-            {/* Concentric Wave Rings Background */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-50 dark:opacity-20">
-              <div className="w-[340px] h-[340px] sm:w-[440px] sm:h-[440px] rounded-full border border-blue-200 dark:border-white/10 animate-pulse" />
-              <div className="absolute w-[260px] h-[260px] sm:w-[340px] sm:h-[340px] rounded-full border border-blue-300/60 dark:border-white/10" />
-              <div className="absolute w-[180px] h-[180px] sm:w-[240px] sm:h-[240px] rounded-full border border-blue-400/40 dark:border-white/10" />
-            </div>
-
-            {/* 3D Round Pedestal Stage */}
-            <div className="relative w-[300px] h-[300px] sm:w-[380px] sm:h-[380px] flex items-center justify-center">
-              
-              {/* Bottom 3D Pedestal Disc */}
-              <div className={`absolute bottom-4 w-[280px] h-[110px] sm:w-[340px] sm:h-[130px] rounded-[100%] border shadow-2xl transition-all ${
-                isLight
-                  ? 'bg-gradient-to-b from-white via-blue-50/80 to-blue-100/90 border-blue-200/80 shadow-[0_25px_50px_rgba(10,37,64,0.14)]'
-                  : 'bg-gradient-to-b from-[#1c1e2a] via-[#12131c] to-[#0a0b10] border-white/10 shadow-[0_25px_50px_rgba(0,0,0,0.9)]'
-              }`} />
-
-              {/* Top Surface Pedestal Ring */}
-              <div className={`absolute bottom-10 w-[240px] h-[90px] sm:w-[290px] sm:h-[105px] rounded-[100%] border ${
-                isLight ? 'border-blue-100 bg-white/95' : 'border-white/5 bg-[#14151f]'
-              } shadow-inner flex items-center justify-center`} />
-
-              {/* Transparent Isolated Casting Floating on Pedestal */}
-              <div className="relative z-10 w-full h-full flex items-center justify-center pb-6">
+          {/* Right Column: 3D Pedestal Stage with Scroll Animation */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            whileInView={{ opacity: 1, scale: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+            className="lg:col-span-5 flex justify-center"
+          >
+            <div className={`relative w-full max-w-md rounded-3xl p-6 sm:p-8 border shadow-2xl overflow-hidden flex flex-col items-center justify-center transition-all ${
+              isLight
+                ? 'bg-white border-neutral-200/90 shadow-[0_20px_50px_rgba(0,0,0,0.06)]'
+                : 'bg-gradient-to-b from-[#0e1017] to-[#06070a] border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.8)]'
+            }`}>
+              <div className="relative w-full h-64 sm:h-72 flex items-center justify-center">
                 <img
-                  src="/images/enquiry-delivery-casting-transparent.png"
-                  alt="Precision Cast Iron Component"
-                  className={`max-h-[75%] max-w-[75%] object-contain transform hover:scale-105 transition-transform duration-500 ${
-                    isLight
-                      ? 'drop-shadow-[0_25px_25px_rgba(10,37,64,0.28)]'
-                      : 'drop-shadow-[0_25px_35px_rgba(0,0,0,0.95)]'
-                  }`}
+                  src="/images/Industrial Iron Casting.png"
+                  alt="Industrial Casting"
+                  loading="lazy"
+                  className="max-h-56 sm:max-h-64 w-auto object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.8)] transform hover:scale-105 transition-transform duration-500"
                 />
               </div>
 
-            </div>
-
-          </div>
-
-        </div>
-
-        {/* 5-Step Process Timeline Cards */}
-        <div className="relative mb-14 sm:mb-16">
-          
-          {/* Dotted / Dashed Connecting Track Line (Desktop) */}
-          <div className={`hidden lg:block absolute top-[18px] left-[10%] right-[10%] h-0.5 border-t-2 border-dashed z-0 ${
-            isLight ? 'border-blue-200' : 'border-neutral-700'
-          }`} />
-
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 sm:gap-5 relative z-10">
-            {steps.map((s) => (
-              <div key={s.step} className="flex flex-col items-center">
-                
-                {/* Step Number Circle */}
-                <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm text-white mb-4 shadow-md ring-4 ${
-                  isLight
-                    ? 'bg-blue-600 ring-[#f4f7fb]'
-                    : 'bg-orange-500 ring-[#050608]'
-                }`}>
-                  {s.step}
-                </div>
-
-                {/* Card Container */}
-                <div className={`w-full h-full rounded-2xl sm:rounded-3xl p-6 sm:p-7 text-center flex flex-col items-center justify-between border transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl ${
-                  isLight
-                    ? 'bg-white border-neutral-200/90 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:border-blue-400'
-                    : 'bg-[#0c0d14] border-white/[0.08] shadow-xl hover:border-orange-500/50 hover:bg-[#10111a]'
-                }`}>
-                  
-                  {/* Step Icon Badge */}
-                  <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-5 ${
-                    isLight
-                      ? 'bg-[#eff6ff] text-[#2563eb] border border-blue-100/90'
-                      : 'bg-white/5 text-orange-400 border border-white/10'
-                  }`}>
-                    {s.icon}
-                  </div>
-
-                  <div className="space-y-2.5">
-                    <h3 className={`text-lg sm:text-xl font-extrabold tracking-tight ${
-                      isLight ? 'text-neutral-900' : 'text-white'
-                    }`}>
-                      {s.title}
-                    </h3>
-                    <p className={`text-xs sm:text-sm leading-relaxed font-normal ${
-                      isLight ? 'text-neutral-600' : 'text-neutral-300'
-                    }`}>
-                      {s.description}
-                    </p>
-                  </div>
-
-                </div>
-
+              {/* Pedestal Spec Label */}
+              <div className={`mt-4 w-full py-2.5 px-4 rounded-xl border text-center font-mono text-xs font-semibold ${
+                isLight
+                  ? 'bg-neutral-50 text-neutral-800 border-neutral-200'
+                  : 'bg-white/5 text-neutral-300 border-white/10'
+              }`}>
+                Precision Machined SG 500/7 Component
               </div>
-            ))}
-          </div>
+            </div>
+          </motion.div>
 
         </div>
 
-        {/* 4-Column Value Proposition Bottom Strip */}
-        <div className={`rounded-3xl p-7 sm:p-9 border transition-all duration-300 shadow-xl ${
-          isLight
-            ? 'bg-white border-neutral-200/90 shadow-[0_4px_20px_rgba(0,0,0,0.03)]'
-            : 'bg-[#0a0b12] border-white/[0.08]'
-        }`}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
-            {valueProps.map((v) => (
-              <div key={v.title} className="flex items-start gap-4">
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border ${
-                  isLight
-                    ? 'bg-blue-50 text-blue-600 border-blue-200/80 shadow-sm'
-                    : 'bg-orange-500/10 text-orange-400 border border-orange-500/20'
-                }`}>
-                  {v.icon}
+        {/* 5-Step Process Timeline Cards with Staggered Scroll Animation */}
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6 mb-16 sm:mb-20">
+          {steps.map((step, idx) => (
+            <motion.div
+              key={step.number}
+              initial={{ opacity: 0, y: 35 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.15 }}
+              transition={{ duration: 0.5, delay: idx * 0.1, ease: 'easeOut' }}
+              whileHover={{ y: -6, transition: { duration: 0.2 } }}
+              className={`relative rounded-3xl p-6 border flex flex-col justify-between transition-all duration-300 group ${
+                isLight
+                  ? 'bg-white border-neutral-200/90 hover:border-blue-400 hover:shadow-xl shadow-[0_4px_20px_rgba(0,0,0,0.02)]'
+                  : 'bg-[#08090e] border-white/[0.08] hover:border-sky-500/40 hover:bg-[#0c0d14] hover:shadow-[0_0_25px_rgba(56,189,248,0.12)]'
+              }`}
+            >
+              <div>
+                {/* Step Top Bar: Icon + Number */}
+                <div className="flex items-center justify-between mb-6">
+                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 ${
+                    isLight
+                      ? 'bg-blue-50 text-blue-600 border border-blue-200'
+                      : 'bg-blue-500/10 text-sky-400 border border-blue-500/20'
+                  }`}>
+                    {step.icon}
+                  </div>
+
+                  <span className="font-mono text-2xl font-black text-neutral-400/60">
+                    {step.number}
+                  </span>
                 </div>
-                <div className="space-y-1.5">
-                  <h4 className={`text-base sm:text-lg font-extrabold tracking-tight ${
+
+                {/* Step Title & Description */}
+                <div className="space-y-2.5 mb-4">
+                  <h3 className={`text-lg sm:text-xl font-extrabold tracking-tight ${
                     isLight ? 'text-neutral-900' : 'text-white'
                   }`}>
-                    {v.title}
+                    {step.title}
+                  </h3>
+                  <p className={`text-xs sm:text-sm leading-relaxed ${
+                    isLight ? 'text-neutral-600' : 'text-neutral-400'
+                  }`}>
+                    {step.description}
+                  </p>
+                </div>
+              </div>
+
+              {/* Bottom Step Indicator Tag */}
+              <div className="pt-3 border-t border-neutral-100 dark:border-white/5">
+                <span className={`inline-block font-mono text-[10px] font-bold uppercase tracking-widest ${
+                  isLight ? 'text-blue-600' : 'text-sky-400'
+                }`}>
+                  {step.badge}
+                </span>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* 4-Column Value Proposition Bar with Scroll Animation */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.55, ease: 'easeOut' }}
+          className={`rounded-3xl p-6 sm:p-8 lg:p-10 border transition-all ${
+            isLight
+              ? 'bg-white border-neutral-200/90 shadow-[0_10px_30px_rgba(0,0,0,0.03)]'
+              : 'bg-[#08090e] border-white/10 shadow-[0_20px_40px_rgba(0,0,0,0.6)]'
+          }`}
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+            {features.map((feat, idx) => (
+              <motion.div
+                key={feat.title}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.45, delay: idx * 0.08 }}
+                className="flex items-start gap-4"
+              >
+                <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${
+                  isLight
+                    ? 'bg-blue-50 text-blue-600 border border-blue-200'
+                    : 'bg-blue-500/10 text-sky-400 border border-blue-500/20'
+                }`}>
+                  {feat.icon}
+                </div>
+
+                <div className="space-y-1">
+                  <h4 className={`text-base font-extrabold tracking-tight ${
+                    isLight ? 'text-neutral-900' : 'text-white'
+                  }`}>
+                    {feat.title}
                   </h4>
                   <p className={`text-xs sm:text-sm leading-relaxed ${
                     isLight ? 'text-neutral-600' : 'text-neutral-400'
                   }`}>
-                    {v.description}
+                    {feat.description}
                   </p>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
-        </div>
+        </motion.div>
 
       </div>
     </section>
