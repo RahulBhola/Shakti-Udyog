@@ -30,14 +30,14 @@ const LINEUP_PRODUCTS: AppleProductModel[] = [
     name: 'V-Belt Pulley Systems',
     tagline: 'Precision dynamically balanced for high-RPM vibration-free drives.',
     description: 'Deep V-groove geometry with high wear-resistance and zero belt slippage under continuous torque load.',
-    weightRange: '1.2 kg to 45.0 kg',
+    weightRange: '1.2 to 45.0 kg',
     batchCapacity: '50 to 5,000 pcs/mo',
     detailSlug: '/products/grey-iron-castings',
     variants: [
       {
         name: 'FG 220 Standard',
         colorHex: '#475569',
-        bgGradient: 'from-slate-900/90 via-slate-800/80 to-slate-950',
+        bgGradient: 'from-[#1a1c24] via-[#12131a] to-[#0a0a0f]',
         specSummary: '220 MPa Tensile · 180-220 HBW',
         tensileStrength: '220 N/mm²',
         hardness: '190 HBW',
@@ -46,7 +46,7 @@ const LINEUP_PRODUCTS: AppleProductModel[] = [
       {
         name: 'FG 260 Heavy Duty',
         colorHex: '#EA580C',
-        bgGradient: 'from-orange-950/90 via-amber-950/80 to-slate-950',
+        bgGradient: 'from-[#221612] via-[#160f0d] to-[#0a0a0f]',
         specSummary: '260 MPa Tensile · High Damping',
         tensileStrength: '260 N/mm²',
         hardness: '215 HBW',
@@ -55,7 +55,7 @@ const LINEUP_PRODUCTS: AppleProductModel[] = [
       {
         name: 'SG 500 High Torque',
         colorHex: '#0284C7',
-        bgGradient: 'from-sky-950/90 via-slate-900/80 to-slate-950',
+        bgGradient: 'from-[#101c28] via-[#0c131c] to-[#0a0a0f]',
         specSummary: '500 MPa Tensile · 7% Elongation',
         tensileStrength: '500 N/mm²',
         hardness: '230 HBW',
@@ -68,14 +68,14 @@ const LINEUP_PRODUCTS: AppleProductModel[] = [
     name: 'Rotary Pump Casings',
     tagline: 'Hydrostatically tested for 350+ bar fluid containment.',
     description: 'High-density grain structure preventing micro-porosity and hydraulic fluid seepage in extreme OEM pump systems.',
-    weightRange: '3.5 kg to 68.0 kg',
+    weightRange: '3.5 to 68.0 kg',
     batchCapacity: '25 to 2,500 pcs/mo',
     detailSlug: '/products/ductile-iron-castings',
     variants: [
       {
         name: 'FG 260 Hydraulic',
         colorHex: '#334155',
-        bgGradient: 'from-slate-900/90 via-neutral-800/80 to-slate-950',
+        bgGradient: 'from-[#181a22] via-[#101218] to-[#0a0a0f]',
         specSummary: 'Zero Leakage · Hydro Tested',
         tensileStrength: '260 N/mm²',
         hardness: '200 HBW',
@@ -84,7 +84,7 @@ const LINEUP_PRODUCTS: AppleProductModel[] = [
       {
         name: 'SG 400 Ductile Iron',
         colorHex: '#F59E0B',
-        bgGradient: 'from-amber-950/90 via-orange-900/80 to-neutral-950',
+        bgGradient: 'from-[#241c10] via-[#16120b] to-[#0a0a0f]',
         specSummary: '400 MPa Tensile · 15% Elongation',
         tensileStrength: '400 N/mm²',
         hardness: '160 HBW',
@@ -93,7 +93,7 @@ const LINEUP_PRODUCTS: AppleProductModel[] = [
       {
         name: 'SG 600 Severe Duty',
         colorHex: '#9333EA',
-        bgGradient: 'from-purple-950/90 via-slate-900/80 to-slate-950',
+        bgGradient: 'from-[#1e1226] via-[#140c1a] to-[#0a0a0f]',
         specSummary: '600 MPa Tensile · Anti-Corrosive',
         tensileStrength: '600 N/mm²',
         hardness: '250 HBW',
@@ -104,16 +104,16 @@ const LINEUP_PRODUCTS: AppleProductModel[] = [
   {
     id: 'sewing-brackets',
     name: 'Precision Brackets',
-    tagline: 'Micron-tolerance CNC machined for high-cycle industrial automation.',
+    tagline: 'Micron-tolerance CNC machined for high-cycle automation.',
     description: 'Superior vibration attenuation ensuring continuous 5000+ RPM sewing needle kinematics without fatigue failure.',
-    weightRange: '0.15 kg to 8.5 kg',
+    weightRange: '0.15 to 8.5 kg',
     batchCapacity: '100 to 10,000 pcs/mo',
     detailSlug: '/products/custom-castings',
     variants: [
       {
         name: 'FG 200 Fine Grain',
         colorHex: '#64748B',
-        bgGradient: 'from-slate-900/90 via-stone-800/80 to-slate-950',
+        bgGradient: 'from-[#1a1c24] via-[#111218] to-[#0a0a0f]',
         specSummary: 'Class A Finish · High Damping',
         tensileStrength: '200 N/mm²',
         hardness: '180 HBW',
@@ -122,8 +122,8 @@ const LINEUP_PRODUCTS: AppleProductModel[] = [
       {
         name: 'SG 500 Impact Ductile',
         colorHex: '#EA580C',
-        bgGradient: 'from-orange-950/90 via-stone-900/80 to-slate-950',
-        specSummary: '500 MPa Tensile · Fatigue Resistant',
+        bgGradient: 'from-[#221612] via-[#160f0d] to-[#0a0a0f]',
+        specSummary: '500 MPa Tensile · Fatigue Proof',
         tensileStrength: '500 N/mm²',
         hardness: '220 HBW',
         image: '/images/Sewing_machine_parts/Cast Iron Chal T1 Industrial Sewing Machine Part.png',
@@ -131,7 +131,7 @@ const LINEUP_PRODUCTS: AppleProductModel[] = [
       {
         name: 'CNC Ready Machined',
         colorHex: '#10B981',
-        bgGradient: 'from-emerald-950/90 via-slate-900/80 to-slate-950',
+        bgGradient: 'from-[#0e201a] via-[#0a1612] to-[#0a0a0f]',
         specSummary: '±0.015mm CMM Tolerance',
         tensileStrength: '550 N/mm²',
         hardness: '225 HBW',
@@ -144,14 +144,14 @@ const LINEUP_PRODUCTS: AppleProductModel[] = [
     name: 'Automotive Shift Levers',
     tagline: 'High-tensile nodular iron built for heavy transmission shock loads.',
     description: 'Engineered with optimized section thickness and smooth radii preventing stress concentrations under cyclic gear shifting.',
-    weightRange: '0.8 kg to 12.0 kg',
+    weightRange: '0.8 to 12.0 kg',
     batchCapacity: '50 to 3,000 pcs/mo',
     detailSlug: '/products/machining-finishing',
     variants: [
       {
         name: 'SG 600/3 High Tensile',
         colorHex: '#EA580C',
-        bgGradient: 'from-orange-950/90 via-neutral-900/80 to-slate-950',
+        bgGradient: 'from-[#221612] via-[#160f0d] to-[#0a0a0f]',
         specSummary: '600 MPa Tensile · Impact Tested',
         tensileStrength: '600 N/mm²',
         hardness: '240 HBW',
@@ -160,7 +160,7 @@ const LINEUP_PRODUCTS: AppleProductModel[] = [
       {
         name: 'SG 700 Ultra Hard',
         colorHex: '#0284C7',
-        bgGradient: 'from-sky-950/90 via-neutral-900/80 to-slate-950',
+        bgGradient: 'from-[#101c28] via-[#0c131c] to-[#0a0a0f]',
         specSummary: '700 MPa Tensile · Wear Resistant',
         tensileStrength: '700 N/mm²',
         hardness: '280 HBW',
@@ -169,7 +169,7 @@ const LINEUP_PRODUCTS: AppleProductModel[] = [
       {
         name: 'SG 450 Tough Ductile',
         colorHex: '#64748B',
-        bgGradient: 'from-slate-900/90 via-neutral-900/80 to-slate-950',
+        bgGradient: 'from-[#181a22] via-[#101218] to-[#0a0a0f]',
         specSummary: '450 MPa Tensile · 10% Elongation',
         tensileStrength: '450 N/mm²',
         hardness: '180 HBW',
@@ -197,23 +197,13 @@ export const AppleProductLineup: React.FC = () => {
     <section className={`relative py-16 sm:py-24 transition-colors duration-300 ${
       isLight ? 'bg-white' : 'bg-[#000000]'
     }`}>
-      {/* Header Container — Perfectly Centered */}
+      {/* Header Container — Extra Large Typography, Centered */}
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 mb-12 sm:mb-16">
-        <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-4">
-          <h2 className={`text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight ${
-            isLight ? 'text-neutral-900' : 'text-white'
-          }`}>
-            Explore the line-up.
-          </h2>
-
-          <Link
-            to="/products"
-            className="group inline-flex items-center gap-1.5 text-base sm:text-lg font-semibold text-orange-600 dark:text-orange-400 hover:text-orange-500 transition-colors"
-          >
-            <span>Compare all grades &amp; specs</span>
-            <ChevronRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
-          </Link>
-        </div>
+        <h2 className={`text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight ${
+          isLight ? 'text-neutral-900' : 'text-white'
+        }`}>
+          Explore the line-up.
+        </h2>
       </div>
 
       {/* Product Cards Grid */}
@@ -228,31 +218,31 @@ export const AppleProductLineup: React.FC = () => {
                 key={product.id}
                 className="flex flex-col justify-between"
               >
-                {/* Large Rounded Media Capsule Container with Rich Metallic Studio Backdrop */}
+                {/* Large Rounded Media Capsule Container with Smooth Edge-Faded Vignette */}
                 <div
-                  className={`relative w-full aspect-[4/5] rounded-[32px] overflow-hidden p-6 flex flex-col justify-between border transition-all duration-500 shadow-2xl ${
-                    isLight
-                      ? 'bg-gradient-to-b from-[#1c1e26] via-[#14151c] to-[#0a0b0f] border-neutral-800 shadow-[0_16px_40px_rgba(0,0,0,0.18)]'
-                      : `bg-gradient-to-b ${currentVariant.bgGradient} border-white/[0.08] shadow-[0_16px_40px_rgba(0,0,0,0.85)]`
-                  }`}
+                  className={`relative w-full aspect-[4/5] rounded-[32px] overflow-hidden p-6 flex flex-col justify-between border transition-all duration-500 shadow-2xl bg-gradient-to-b ${currentVariant.bgGradient} border-white/[0.08] shadow-[0_16px_40px_rgba(0,0,0,0.85)]`}
                 >
                   {/* Top Spec Chip */}
                   <div className="flex items-center justify-between z-10">
-                    <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-mono font-bold tracking-wider uppercase bg-white/10 text-orange-400 border border-orange-500/30 backdrop-blur-md shadow-sm">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold tracking-wider uppercase bg-white/10 text-orange-400 border border-orange-500/30 backdrop-blur-md shadow-sm">
                       <Sparkles className="w-3.5 h-3.5 text-orange-400" />
                       <span>{currentVariant.name}</span>
                     </span>
-                    <span className="text-xs sm:text-sm font-mono font-semibold text-neutral-300">
+                    <span className="text-xs font-mono font-semibold text-neutral-300 shrink-0">
                       {product.weightRange}
                     </span>
                   </div>
 
-                  {/* Centered Product Image */}
-                  <div className="relative my-auto w-full h-48 sm:h-56 flex items-center justify-center">
+                  {/* Centered Product Image with Radial Mask to Eliminate Square Edges */}
+                  <div className="relative my-auto w-full h-48 sm:h-56 flex items-center justify-center overflow-hidden">
                     <img
                       src={currentVariant.image}
                       alt={`${product.name} - ${currentVariant.name}`}
                       loading="lazy"
+                      style={{
+                        WebkitMaskImage: 'radial-gradient(ellipse 90% 90% at 50% 50%, black 60%, transparent 100%)',
+                        maskImage: 'radial-gradient(ellipse 90% 90% at 50% 50%, black 60%, transparent 100%)',
+                      }}
                       className="max-h-44 sm:max-h-52 max-w-[92%] object-contain transition-all duration-500 drop-shadow-[0_20px_35px_rgba(0,0,0,0.9)] hover:scale-105"
                     />
                   </div>
@@ -280,22 +270,22 @@ export const AppleProductLineup: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Typography & Actions (Apple Clean Style with Larger Font Size) */}
-                <div className="pt-6 text-center space-y-3.5 px-2 flex flex-col items-center flex-grow">
+                {/* Typography & Actions (Apple Clean Style with Standardized Fixed Heights for Perfect Alignment) */}
+                <div className="pt-6 text-center space-y-3 px-2 flex flex-col items-center flex-grow">
                   <h3 className={`text-2xl sm:text-3xl font-bold tracking-tight ${
                     isLight ? 'text-neutral-900' : 'text-white'
                   }`}>
                     {product.name}
                   </h3>
 
-                  <p className={`text-sm sm:text-base leading-relaxed max-w-xs min-h-[48px] ${
+                  <p className={`text-sm sm:text-base leading-relaxed max-w-xs min-h-[48px] flex items-center justify-center ${
                     isLight ? 'text-neutral-600' : 'text-neutral-300'
                   }`}>
                     {product.tagline}
                   </p>
 
-                  <div className="pt-2 text-sm font-mono space-y-1">
-                    <span className="block font-bold text-base text-orange-600 dark:text-orange-400">
+                  <div className="pt-1 text-sm font-mono space-y-1 min-h-[50px] flex flex-col justify-center">
+                    <span className="block font-bold text-sm sm:text-base text-orange-600 dark:text-orange-400">
                       {currentVariant.specSummary}
                     </span>
                     <span className={`text-xs sm:text-sm block ${
