@@ -1,5 +1,6 @@
 import { Seo, localBusinessJsonLd } from "../components/Seo";
 import { ScrollytellingCanvas } from "../components/ScrollytellingCanvas";
+import { TrustMetricStrip } from "../components/TrustMetricStrip";
 import { ProductMarqueeGallery } from "../components/ProductMarqueeGallery";
 import { AppleProductLineup } from "../components/AppleProductLineup";
 import { EnquiryToDeliverySection } from "../components/EnquiryToDeliverySection";
@@ -10,9 +11,7 @@ import {
   FeatureCard,
   Section,
   SectionHeading,
-  StatStrip,
 } from "../components/ui";
-import { highlights } from "../content/company";
 import { advantages, introduction } from "../content/home";
 import { seoPages } from "../content/seo";
 
@@ -29,13 +28,8 @@ export default function HomePage() {
       {/* 300-Frame Interactive 3D Molten-to-Casting Scrollytelling Showcase */}
       <ScrollytellingCanvas />
 
-      {/* Trust Highlights Strip */}
-      <Section labelledBy="trust-heading">
-        <h2 id="trust-heading" className="visually-hidden">
-          Company highlights
-        </h2>
-        <StatStrip stats={highlights} />
-      </Section>
+      {/* Modern Glassmorphic Trust & Authority Metric Strip */}
+      <TrustMetricStrip />
 
       {/* Apple-Style Product Lineup Showcase */}
       <AppleProductLineup />
