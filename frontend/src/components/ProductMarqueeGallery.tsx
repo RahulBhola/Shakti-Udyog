@@ -244,9 +244,9 @@ export const ProductMarqueeGallery: React.FC = () => {
 
   return (
     <section className={`relative py-16 sm:py-24 transition-colors duration-300 ${
-      isLight ? 'bg-[#f8f9fa]' : 'bg-[#060709]'
+      isLight ? 'bg-[#f4f7fb]' : 'bg-[#050608]'
     }`}>
-      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
         
         {/* Section Header (Matching Reference UI Exactly) */}
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 mb-12 sm:mb-16">
