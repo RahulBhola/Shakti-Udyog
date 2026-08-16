@@ -86,7 +86,7 @@ export const ScrollytellingCanvas: React.FC = () => {
     const images: HTMLImageElement[] = [];
     let loadedCount = 0;
 
-    const handleSingleLoad = (index: number, img: HTMLImageElement) => {
+    const handleSingleLoad = (index: number) => {
       if (isCancelled) return;
       loadedCount++;
       setImagesLoaded(loadedCount);
@@ -105,7 +105,7 @@ export const ScrollytellingCanvas: React.FC = () => {
       const frameNum = String(i).padStart(3, '0');
       img.src = `/sequence/frame_${frameNum}.jpg`;
 
-      img.onload = () => handleSingleLoad(i - 1, img);
+      img.onload = () => handleSingleLoad(i - 1);
       img.onerror = () => {
         if (!isCancelled) {
           loadedCount++;
