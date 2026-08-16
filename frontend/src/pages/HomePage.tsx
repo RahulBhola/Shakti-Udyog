@@ -7,12 +7,6 @@ import { EnquiryToDeliverySection } from "../components/EnquiryToDeliverySection
 import { IndustriesWeServeSection } from "../components/IndustriesWeServeSection";
 import { FaqSection } from "../components/FaqSection";
 import { ContactPreviewAndCtaSection } from "../components/ContactPreviewAndCtaSection";
-import {
-  FeatureCard,
-  Section,
-  SectionHeading,
-} from "../components/ui";
-import { advantages, introduction } from "../content/home";
 import { seoPages } from "../content/seo";
 
 export default function HomePage() {
@@ -39,26 +33,6 @@ export default function HomePage() {
 
       {/* Step-by-Step Production Process: From Enquiry to Delivery */}
       <EnquiryToDeliverySection />
-
-      {/* Who We Are Introduction */}
-      <Section tint labelledBy="intro-heading">
-        <SectionHeading id="intro-heading" eyebrow="Who we are" title={introduction.heading} />
-        <div className="prose">
-          {introduction.paragraphs.map((p) => (
-            <p key={p.slice(0, 24)}>{p}</p>
-          ))}
-        </div>
-      </Section>
-
-      {/* Why Shakti Udyog Features */}
-      <Section dark labelledBy="why-heading">
-        <SectionHeading id="why-heading" eyebrow="Why Shakti Udyog" title="Built on Reliability" />
-        <div className="grid grid--2">
-          {advantages.map((a) => (
-            <FeatureCard key={a.title} {...a} />
-          ))}
-        </div>
-      </Section>
 
       {/* Modern Industries We Serve Showcase */}
       <IndustriesWeServeSection />
