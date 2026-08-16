@@ -155,19 +155,11 @@ export const EnquiryToDeliverySection: React.FC = () => {
                 
                 {/* The User-Provided Casting Image */}
                 <img
-                  src={getThemedImage('/images/enquiry-delivery-casting.jpg', isLight)}
+                  src={getThemedImage('/images/enquiry-delivery-casting.png', isLight)}
                   alt="Precision Cast Iron Component"
-                  className={`max-h-[82%] max-w-[82%] object-contain transform hover:scale-105 transition-transform duration-500 ${
+                  className={`max-h-[84%] max-w-[84%] object-contain transform hover:scale-105 transition-transform duration-500 ${
                     isLight ? 'drop-shadow-[0_12px_24px_rgba(0,0,0,0.12)]' : 'drop-shadow-[0_20px_35px_rgba(0,0,0,0.85)]'
                   }`}
-                  style={
-                    isLight
-                      ? undefined
-                      : {
-                          WebkitMaskImage: 'radial-gradient(ellipse 90% 90% at 50% 50%, black 70%, transparent 100%)',
-                          maskImage: 'radial-gradient(ellipse 90% 90% at 50% 50%, black 70%, transparent 100%)',
-                        }
-                  }
                 />
               </div>
             </div>
