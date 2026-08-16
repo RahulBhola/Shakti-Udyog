@@ -13,10 +13,11 @@ obj/
 *.user
 .vs/
 
-# --- Node / Vite ---
+# --- Node / Vite / Next ---
 node_modules/
 dist/
 dist-ssr/
+.next/
 *.local
 
 # --- IDE / OS ---

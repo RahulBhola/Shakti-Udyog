@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Seo, localBusinessJsonLd } from "../components/Seo";
+import { ScrollytellingCanvas } from "../components/ScrollytellingCanvas";
 import {
   CtaBand,
   FaqAccordion,
@@ -14,7 +15,7 @@ import {
 } from "../components/ui";
 import { company, highlights } from "../content/company";
 import { faqs } from "../content/faqs";
-import { advantages, finalCta, hero, introduction, processSteps, services } from "../content/home";
+import { advantages, finalCta, introduction, processSteps, services } from "../content/home";
 import { industriesShort } from "../content/industries";
 import { seoPages } from "../content/seo";
 
@@ -28,20 +29,8 @@ export default function HomePage() {
         jsonLd={[localBusinessJsonLd()]}
       />
 
-      <section className="hero" aria-label="Introduction">
-        <div className="container">
-          <h1>{hero.heading}</h1>
-          <p>{hero.subheading}</p>
-          <div className="hero__actions">
-            <Link className="btn btn--primary" to={hero.primary.href}>
-              {hero.primary.label}
-            </Link>
-            <Link className="btn btn--ghost" to={hero.secondary.href}>
-              {hero.secondary.label}
-            </Link>
-          </div>
-        </div>
-      </section>
+      {/* 300-Frame Interactive 3D Molten-to-Casting Scrollytelling Showcase */}
+      <ScrollytellingCanvas />
 
       <Section labelledBy="trust-heading">
         <h2 id="trust-heading" className="visually-hidden">

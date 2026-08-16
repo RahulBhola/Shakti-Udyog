@@ -6,3 +6,18 @@
 @theme {
   --color-brand-blue: #2563EB;
 }
+
+.text-glow-white {
+  text-shadow: 0 0 35px rgba(255, 255, 255, 0.25);
+}
+
+.text-glow-orange {
+  text-shadow: 0 0 25px rgba(255, 109, 0, 0.5);
+}
+
+.glass-panel {
+  background: rgba(10, 10, 12, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
