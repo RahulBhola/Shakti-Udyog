@@ -3,6 +3,7 @@ import { Seo, localBusinessJsonLd } from "../components/Seo";
 import { ScrollytellingCanvas } from "../components/ScrollytellingCanvas";
 import { ProductMarqueeGallery } from "../components/ProductMarqueeGallery";
 import { AppleProductLineup } from "../components/AppleProductLineup";
+import { EnquiryToDeliverySection } from "../components/EnquiryToDeliverySection";
 import {
   CtaBand,
   FaqAccordion,
@@ -12,11 +13,10 @@ import {
   Section,
   SectionHeading,
   StatStrip,
-  Timeline,
 } from "../components/ui";
 import { company, highlights } from "../content/company";
 import { faqs } from "../content/faqs";
-import { advantages, finalCta, introduction, processSteps } from "../content/home";
+import { advantages, finalCta, introduction } from "../content/home";
 import { industriesShort } from "../content/industries";
 import { seoPages } from "../content/seo";
 
@@ -47,6 +47,9 @@ export default function HomePage() {
       {/* Infinite Dual-Row Scrolling Marquee Gallery */}
       <ProductMarqueeGallery />
 
+      {/* Step-by-Step Production Process: From Enquiry to Delivery */}
+      <EnquiryToDeliverySection />
+
       {/* Who We Are Introduction */}
       <Section tint labelledBy="intro-heading">
         <SectionHeading id="intro-heading" eyebrow="Who we are" title={introduction.heading} />
@@ -64,21 +67,6 @@ export default function HomePage() {
           {advantages.map((a) => (
             <FeatureCard key={a.title} {...a} />
           ))}
-        </div>
-      </Section>
-
-      {/* Step-by-Step Production Process */}
-      <Section labelledBy="process-heading">
-        <SectionHeading
-          id="process-heading"
-          eyebrow="How we work"
-          title="From Enquiry to Delivery"
-        />
-        <Timeline items={processSteps.map((step) => ({ title: step }))} />
-        <div className="mt-8 text-center sm:text-left">
-          <Link className="btn btn--primary" to="/request-a-quote">
-            Discuss Your Casting Requirement
-          </Link>
         </div>
       </Section>
 
