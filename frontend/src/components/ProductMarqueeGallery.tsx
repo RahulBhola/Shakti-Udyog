@@ -361,7 +361,7 @@ export const ProductMarqueeGallery: React.FC = () => {
                 </div>
 
                 {/* Center Product Image Container with Soft Vignette */}
-                <div className={`relative w-full h-36 sm:h-40 my-1.5 flex items-center justify-center overflow-hidden rounded-xl p-2 ${
+                <div className={`relative w-full h-44 sm:h-48 my-1.5 flex items-center justify-center overflow-hidden rounded-2xl p-2.5 ${
                   isLight
                     ? 'bg-gradient-to-b from-neutral-50/80 to-neutral-100/60'
                     : 'bg-gradient-to-b from-[#12131a] to-[#07080b]'
@@ -371,10 +371,10 @@ export const ProductMarqueeGallery: React.FC = () => {
                     alt={item.title}
                     loading="lazy"
                     style={{
-                      WebkitMaskImage: 'radial-gradient(ellipse 90% 90% at 50% 50%, black 70%, transparent 100%)',
-                      maskImage: 'radial-gradient(ellipse 90% 90% at 50% 50%, black 70%, transparent 100%)',
+                      WebkitMaskImage: 'radial-gradient(ellipse 92% 92% at 50% 50%, black 75%, transparent 100%)',
+                      maskImage: 'radial-gradient(ellipse 92% 92% at 50% 50%, black 75%, transparent 100%)',
                     }}
-                    className="max-h-32 sm:max-h-36 max-w-[90%] object-contain transition-transform duration-500 group-hover:scale-105 drop-shadow-[0_8px_16px_rgba(0,0,0,0.5)]"
+                    className="max-h-36 sm:max-h-40 max-w-[92%] w-auto h-auto object-contain transition-transform duration-500 group-hover:scale-110 drop-shadow-[0_12px_24px_rgba(0,0,0,0.6)]"
                   />
                 </div>
 

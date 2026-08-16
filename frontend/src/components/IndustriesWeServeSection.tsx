@@ -166,7 +166,7 @@ export const IndustriesWeServeSection: React.FC = () => {
               </div>
 
               {/* Product Visual Container with Dark Studio Vignette */}
-              <div className={`relative w-full h-32 sm:h-36 rounded-2xl flex items-center justify-center p-2 overflow-hidden ${
+              <div className={`relative w-full h-52 sm:h-60 rounded-2xl flex items-center justify-center p-3 overflow-hidden ${
                 isLight
                   ? 'bg-gradient-to-b from-neutral-50 to-neutral-100/70'
                   : 'bg-gradient-to-b from-[#12141d] to-[#08090e]'
@@ -176,10 +176,10 @@ export const IndustriesWeServeSection: React.FC = () => {
                   alt={ind.title}
                   loading="lazy"
                   style={{
-                    WebkitMaskImage: 'radial-gradient(ellipse 90% 90% at 50% 50%, black 70%, transparent 100%)',
-                    maskImage: 'radial-gradient(ellipse 90% 90% at 50% 50%, black 70%, transparent 100%)',
+                    WebkitMaskImage: 'radial-gradient(ellipse 92% 92% at 50% 50%, black 75%, transparent 100%)',
+                    maskImage: 'radial-gradient(ellipse 92% 92% at 50% 50%, black 75%, transparent 100%)',
                   }}
-                  className="max-h-24 sm:max-h-28 max-w-[85%] object-contain drop-shadow-[0_10px_20px_rgba(0,0,0,0.6)] transform group-hover:scale-105 transition-transform duration-500"
+                  className="max-h-44 sm:max-h-52 max-w-[92%] w-auto h-auto object-contain drop-shadow-[0_15px_30px_rgba(0,0,0,0.7)] transform group-hover:scale-110 transition-transform duration-500"
                 />
               </div>
 

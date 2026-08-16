@@ -259,7 +259,7 @@ export const AppleProductLineup: React.FC = () => {
                 </div>
 
                 {/* Central Product Image Container with Dark/Light Studio */}
-                <div className={`relative w-full h-48 sm:h-52 rounded-2xl flex items-center justify-center p-3 overflow-hidden transition-all ${
+                <div className={`relative w-full h-56 sm:h-64 rounded-2xl flex items-center justify-center p-3 overflow-hidden transition-all ${
                   isLight
                     ? 'bg-gradient-to-b from-neutral-50 to-neutral-100/60'
                     : 'bg-gradient-to-b from-[#10121a] to-[#06070b]'
@@ -269,10 +269,10 @@ export const AppleProductLineup: React.FC = () => {
                     alt={prod.name}
                     loading="lazy"
                     style={{
-                      WebkitMaskImage: 'radial-gradient(ellipse 90% 90% at 50% 50%, black 70%, transparent 100%)',
-                      maskImage: 'radial-gradient(ellipse 90% 90% at 50% 50%, black 70%, transparent 100%)',
+                      WebkitMaskImage: 'radial-gradient(ellipse 92% 92% at 50% 50%, black 75%, transparent 100%)',
+                      maskImage: 'radial-gradient(ellipse 92% 92% at 50% 50%, black 75%, transparent 100%)',
                     }}
-                    className="max-h-36 sm:max-h-40 max-w-[90%] object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.65)] transform group-hover:scale-105 transition-transform duration-500"
+                    className="max-h-48 sm:max-h-56 max-w-[92%] w-auto h-auto object-contain drop-shadow-[0_16px_32px_rgba(0,0,0,0.7)] transform group-hover:scale-110 transition-transform duration-500"
                   />
                 </div>
 
