@@ -4,19 +4,18 @@ import { ScrollytellingCanvas } from "../components/ScrollytellingCanvas";
 import { ProductMarqueeGallery } from "../components/ProductMarqueeGallery";
 import { AppleProductLineup } from "../components/AppleProductLineup";
 import { EnquiryToDeliverySection } from "../components/EnquiryToDeliverySection";
+import { ContactPreviewAndCtaSection } from "../components/ContactPreviewAndCtaSection";
 import {
-  CtaBand,
   FaqAccordion,
   FeatureCard,
-  ImagePlaceholder,
   IndustryCard,
   Section,
   SectionHeading,
   StatStrip,
 } from "../components/ui";
-import { company, highlights } from "../content/company";
+import { highlights } from "../content/company";
 import { faqs } from "../content/faqs";
-import { advantages, finalCta, introduction } from "../content/home";
+import { advantages, introduction } from "../content/home";
 import { industriesShort } from "../content/industries";
 import { seoPages } from "../content/seo";
 
@@ -93,45 +92,8 @@ export default function HomePage() {
         </p>
       </Section>
 
-      {/* Contact Preview */}
-      <Section tint labelledBy="contact-preview-heading">
-        <SectionHeading
-          id="contact-preview-heading"
-          eyebrow="Get in touch"
-          title="Talk to Our Team"
-          lead={`${company.contact.businessHours} · ${company.address.city}, ${company.address.state}`}
-        />
-        <div className="grid grid--2">
-          <div>
-            <p>
-              Phone: <a href={company.contact.phoneHref}>{company.contact.phone}</a>
-              <br />
-              WhatsApp: <a href={company.contact.whatsappHref}>{company.contact.whatsapp}</a>
-              <br />
-              Email: <a href={`mailto:${company.contact.email}`}>{company.contact.email}</a>
-            </p>
-            <div className="mt-4">
-              <Link className="btn btn--ghost" to="/contact">
-                Contact page
-              </Link>
-            </div>
-          </div>
-          <ImagePlaceholder label={`Map of ${company.address.line1}, ${company.address.city} (map embed to be added)`} />
-        </div>
-      </Section>
-
-      {/* Final RFQ CTA Band */}
-      <Section labelledBy="final-cta-heading">
-        <h2 id="final-cta-heading" className="visually-hidden">
-          Request a quote
-        </h2>
-        <CtaBand
-          heading={finalCta.heading}
-          text={finalCta.text}
-          buttonLabel={finalCta.button.label}
-          buttonHref={finalCta.button.href}
-        />
-      </Section>
+      {/* Talk to Our Team & Casting Requirement CTA Sections */}
+      <ContactPreviewAndCtaSection />
     </>
   );
 }
