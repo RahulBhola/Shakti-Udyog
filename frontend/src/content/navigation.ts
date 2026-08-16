@@ -1,7 +1,6 @@
 /** Navigation per requirements §2. */
 export const navItems = [
   { label: "Home", href: "/" },
-  { label: "About Us", href: "/about" },
   { label: "Products", href: "/products" },
   { label: "Capabilities", href: "/capabilities" },
   { label: "Quality", href: "/quality" },

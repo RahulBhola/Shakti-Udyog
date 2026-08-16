@@ -398,7 +398,7 @@ function Footer() {
             <p>Shakti Udyog supplies quality-focused iron casting solutions for industrial and OEM applications.</p>
             <p>{company.address.line1}<br />{company.address.city}, {company.address.state} {company.address.postalCode}, {company.address.country}</p>
           </div>
-          <nav aria-label="Quick links"><h3>Quick Links</h3><ul><li><Link to="/about">About Us</Link></li><li><Link to="/products">Products</Link></li><li><Link to="/capabilities">Capabilities</Link></li><li><Link to="/quality">Quality</Link></li><li><Link to="/industries">Industries</Link></li><li><Link to="/contact">Contact</Link></li><li><Link to="/request-a-quote">Request a Quote</Link></li></ul></nav>
+          <nav aria-label="Quick links"><h3>Quick Links</h3><ul><li><Link to="/products">Products</Link></li><li><Link to="/capabilities">Capabilities</Link></li><li><Link to="/quality">Quality</Link></li><li><Link to="/industries">Industries</Link></li><li><Link to="/contact">Contact</Link></li><li><Link to="/request-a-quote">Request a Quote</Link></li></ul></nav>
           <nav aria-label="Legal"><h3>Legal</h3><ul><li><Link to="/privacy-policy">Privacy Policy</Link></li><li><Link to="/terms-of-use">Terms of Use</Link></li><li><Link to="/cookie-policy">Cookie Policy</Link></li></ul></nav>
           <div><h3>Contact</h3><ul><li><a href={company.contact.phoneHref}>Phone: {company.contact.phone}</a></li><li><a href={company.contact.whatsappHref}>WhatsApp: {company.contact.whatsapp}</a></li><li><a href={`mailto:${company.contact.email}`}>Email: {company.contact.email}</a></li><li>Business hours: {company.contact.businessHours}</li></ul></div>
         </div>

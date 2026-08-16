@@ -60,7 +60,6 @@ export function BrandLogo({ isLight = false }: { isLight?: boolean }) {
 
 const navItems = [
   { label: 'Home', href: '/' },
-  { label: 'About Us', href: '/about' },
   { label: 'Products', href: '/products' },
   { label: 'Capabilities', href: '/capabilities' },
   { label: 'Quality', href: '/quality' },

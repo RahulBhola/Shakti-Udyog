@@ -19,7 +19,6 @@ import "./styles/site.css";
 
 // Route-level code splitting: each public page is its own chunk.
 const HomePage = lazy(() => import("./pages/HomePage"));
-const AboutPage = lazy(() => import("./pages/AboutPage"));
 const ProductsPage = lazy(() => import("./pages/ProductsPage"));
 const ProductDetailPage = lazy(() => import("./pages/ProductDetailPage"));
 const CapabilitiesPage = lazy(() => import("./pages/CapabilitiesPage"));
@@ -101,7 +100,6 @@ function App() {
             {/* Public website */}
             <Route element={<PublicLayout />}>
               <Route path="/" element={<HomePage />} />
-              <Route path="/about" element={<AboutPage />} />
               <Route path="/products" element={<ProductsPage />} />
               <Route path="/products/:slug" element={<ProductDetailPage />} />
               <Route path="/capabilities" element={<CapabilitiesPage />} />
