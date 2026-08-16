@@ -1,41 +1,102 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getProducts, type Product } from "../api/publicApi";
 import { Seo } from "../components/Seo";
-import { CtaBand, EmptyState, Loading, Section } from "../components/ui";
+import { CtaBand, EmptyState, Loading } from "../components/ui";
 import { seoPages } from "../content/seo";
 import { AppleProductLineup } from "../components/AppleProductLineup";
 import { ProductMarqueeGallery } from "../components/ProductMarqueeGallery";
+import { MetallurgicalBentoGrid } from "../components/MetallurgicalBentoGrid";
+import { useTheme } from "../auth/ThemeContext";
+import {
+  Layers,
+  ShieldCheck,
+  Cpu,
+  ArrowRight,
+  Sparkles,
+  Sliders,
+  CheckCircle2,
+  FileCheck,
+  Flame,
+  Search,
+} from "lucide-react";
 
 export default function ProductsPage() {
+  const { theme } = useTheme();
+  const isLight = theme === "light";
+
   const [products, setProducts] = useState<Product[] | null>(null);
   const [error, setError] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   useEffect(() => {
-    getProducts().then(setProducts).catch(() => setError(true));
+    getProducts()
+      .then(setProducts)
+      .catch(() => setError(true));
   }, []);
 
   const greyIron = products?.find((p) => p.slug === "grey-iron-castings");
   const ductileIron = products?.find((p) => p.slug === "ductile-iron-castings");
 
-  return (
-    <>
-      <Seo title={seoPages.products.title} description={seoPages.products.description} path="/products" />
+  const categories = [
+    { id: "all", label: "All Portfolio" },
+    { id: "grey-iron", label: "Grey Iron (FG)" },
+    { id: "ductile-iron", label: "Ductile Iron (SG)" },
+    { id: "transmission", label: "Pulleys & Drives" },
+    { id: "hydraulic", label: "Pumps & Valves" },
+    { id: "machined", label: "CNC Machined" },
+  ];
 
-      {/* Hero */}
-      <section className="hero hero--page">
-        <div className="container">
-          <div className="hero-badge">
-            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--c-ember)" }} />
-            Our Portfolio
+  return (
+    <div className={`min-h-screen transition-colors duration-300 ${
+      isLight ? "bg-[#f8f9fa] text-neutral-900" : "bg-[#050507] text-white"
+    }`}>
+      <Seo
+        title={seoPages.products.title}
+        description={seoPages.products.description}
+        path="/products"
+      />
+
+      {/* Hero Header */}
+      <section className={`relative pt-32 pb-16 sm:pt-40 sm:pb-24 border-b overflow-hidden transition-colors ${
+        isLight ? "bg-white border-neutral-200/80" : "bg-[#08090d] border-white/[0.08]"
+      }`}>
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-mono font-bold tracking-wider uppercase text-orange-500 bg-orange-500/10 border border-orange-500/20 mb-6 shadow-sm">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Foundry Portfolio & Engineering Specifications</span>
           </div>
-          <h1>
-            Precision <span className="text-gradient">Engineered Castings</span>
+
+          <h1 className={`text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight mb-6 ${
+            isLight ? "text-neutral-900" : "text-white"
+          }`}>
+            Precision Engineered <span className="text-orange-500">Castings</span>
           </h1>
-          <p>
-            Delivering high-integrity Grey Iron and Ductile Iron components for demanding
-            industrial OEM applications worldwide.
+
+          <p className={`text-base sm:text-xl max-w-3xl mx-auto leading-relaxed mb-8 ${
+            isLight ? "text-neutral-600" : "text-neutral-400"
+          }`}>
+            Delivering high-integrity Grey Iron (FG 150–FG 350) and Ductile Iron (SG 400–SG 700) components for heavy OEM machinery, automotive transmissions, and hydraulic fluid systems.
           </p>
+
+          <div className="flex flex-wrap items-center justify-center gap-4 text-xs sm:text-sm font-mono">
+            <span className={`px-4 py-2 rounded-full border ${
+              isLight ? "bg-neutral-100 border-neutral-200 text-neutral-700" : "bg-white/[0.04] border-white/10 text-neutral-300"
+            }`}>
+              ⚡ 1460°C Induction Melt Control
+            </span>
+            <span className={`px-4 py-2 rounded-full border ${
+              isLight ? "bg-neutral-100 border-neutral-200 text-neutral-700" : "bg-white/[0.04] border-white/10 text-neutral-300"
+            }`}>
+              🎯 ±0.015 mm Zeiss 3D CMM Precision
+            </span>
+            <span className={`px-4 py-2 rounded-full border ${
+              isLight ? "bg-neutral-100 border-neutral-200 text-neutral-700" : "bg-white/[0.04] border-white/10 text-neutral-300"
+            }`}>
+              🛡️ ISO 9001:2015 Certified
+            </span>
+          </div>
         </div>
       </section>
 
@@ -45,214 +106,300 @@ export default function ProductsPage() {
       {/* Infinite Scrolling Dual-Row Marquee Gallery */}
       <ProductMarqueeGallery />
 
-      <Section labelledBy="catalogue-heading">
-        {error && (
-          <EmptyState
-            title="Product catalogue is temporarily unavailable"
-            text="Please try again shortly, or contact us directly."
-          />
-        )}
-        {!products && !error && <Loading label="Loading products" />}
+      {/* High-Fidelity Detail Control Bento Grid */}
+      <MetallurgicalBentoGrid />
 
-        {products && (
-          <>
-            {/* Bento grid — Grey Iron + Ductile Iron */}
-            <div className="bento-grid bento-grid--wide" style={{ marginBottom: "var(--sp-7)" }}>
-              {/* Grey Iron */}
-              <div className="bento-card">
-                <div className="bento-card__bg">
-                  <img
-                    src="/assets/images/grey-iron-casting.jpg"
-                    alt="Grey iron casting component after shot blasting"
-                    loading="lazy"
-                  />
+      {/* Metallurgical Material Matrix (Grey Iron vs Ductile Iron) */}
+      <section className={`py-16 sm:py-24 border-t transition-colors ${
+        isLight ? "bg-white border-neutral-200/80" : "bg-[#07080c] border-white/[0.08]"
+      }`}>
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-14">
+            <h2 className={`text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-4 ${
+              isLight ? "text-neutral-900" : "text-white"
+            }`}>
+              Metallurgical Grade Specifications
+            </h2>
+            <p className={`text-sm sm:text-base ${
+              isLight ? "text-neutral-600" : "text-neutral-400"
+            }`}>
+              Compare mechanical properties, matrix structures, and standard applications to select the optimal iron alloy for your working loads.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            {/* Grey Iron Card */}
+            <div className={`rounded-[32px] p-6 sm:p-9 border transition-all duration-300 shadow-xl flex flex-col justify-between ${
+              isLight
+                ? "bg-[#fbfbfd] border-neutral-200/90 shadow-[0_10px_35px_rgba(0,0,0,0.04)]"
+                : "bg-[#0e0f14]/90 border-white/[0.08] shadow-[0_12px_40px_rgba(0,0,0,0.8)]"
+            }`}>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="px-3 py-1 rounded-full text-xs font-mono font-bold uppercase bg-orange-500/10 text-orange-500 border border-orange-500/20">
+                    Flake Graphite (Cast Iron)
+                  </span>
+                  <span className="text-xs font-mono text-neutral-400">IS 210 / EN-GJL</span>
                 </div>
-                <div className="bento-card__overlay" />
-                <div className="bento-card__content">
-                  <div className="bento-card__icon bento-card__icon--primary">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--c-ember)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="3" /><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
-                    </svg>
+
+                <h3 className={`text-2xl sm:text-3xl font-bold tracking-tight ${
+                  isLight ? "text-neutral-900" : "text-white"
+                }`}>
+                  Grey Iron Castings
+                </h3>
+
+                <p className={`text-xs sm:text-sm leading-relaxed ${
+                  isLight ? "text-neutral-600" : "text-neutral-400"
+                }`}>
+                  Renowned for exceptional damping capacity, high thermal conductivity, and effortless CNC machinability. The international benchmark for machine beds, vibration dampeners, and hydraulic casings.
+                </p>
+
+                {/* Specs Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2">
+                  <div className={`p-3 rounded-2xl border ${
+                    isLight ? "bg-white border-neutral-200 text-neutral-900" : "bg-white/[0.04] border-white/[0.06] text-white"
+                  }`}>
+                    <span className="text-[10px] font-mono text-neutral-400 block uppercase">Tensile Range</span>
+                    <span className="text-sm font-bold text-orange-500 font-mono">150–350 MPa</span>
                   </div>
-                  <h3>Grey Iron Castings</h3>
-                  <p>
-                    Renowned for excellent machinability, damping capacity, and thermal
-                    conductivity. Our Grey Iron castings are the backbone of heavy machinery.
-                  </p>
-                  {greyIron && (
-                    <>
-                      <div className="spec-grid">
-                        <div>
-                          <span style={{ fontSize: "var(--fs-xs)", fontWeight: 700, letterSpacing: "0.1em", color: "var(--c-ember)", textTransform: "uppercase", display: "block", marginBottom: "var(--sp-1)" }}>
-                            Grades
-                          </span>
-                          <span style={{ fontWeight: 600 }}>{greyIron.commonGrades || "FG 150 to FG 350"}</span>
-                        </div>
-                        <div>
-                          <span style={{ fontSize: "var(--fs-xs)", fontWeight: 700, letterSpacing: "0.1em", color: "var(--c-ember)", textTransform: "uppercase", display: "block", marginBottom: "var(--sp-1)" }}>
-                            Weight Range
-                          </span>
-                          <span style={{ fontWeight: 600 }}>{greyIron.castingWeightRange || "5 kg to 500 kg"}</span>
-                        </div>
-                      </div>
-                      <div className="chip-group">
-                        {greyIron.typicalApplications.slice(0, 6).map((app) => (
-                          <span key={app} className="chip">{app}</span>
-                        ))}
-                      </div>
-                      <div style={{ marginTop: "var(--sp-4)" }}>
-                        <Link className="btn btn--primary" to={`/products/${greyIron.slug}`}>
-                          Learn more
-                        </Link>
-                      </div>
-                    </>
-                  )}
+                  <div className={`p-3 rounded-2xl border ${
+                    isLight ? "bg-white border-neutral-200 text-neutral-900" : "bg-white/[0.04] border-white/[0.06] text-white"
+                  }`}>
+                    <span className="text-[10px] font-mono text-neutral-400 block uppercase">Hardness HBW</span>
+                    <span className="text-sm font-bold font-mono">160–260 HBW</span>
+                  </div>
+                  <div className={`p-3 rounded-2xl border ${
+                    isLight ? "bg-white border-neutral-200 text-neutral-900" : "bg-white/[0.04] border-white/[0.06] text-white"
+                  }`}>
+                    <span className="text-[10px] font-mono text-neutral-400 block uppercase">Unit Weight</span>
+                    <span className="text-sm font-bold font-mono">0.2 to 250 kg</span>
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <span className="text-xs font-semibold block mb-2 text-neutral-400">Typical Components:</span>
+                  <div className="flex flex-wrap gap-2">
+                    {["V-Belt Pulleys", "Pump Casings", "Valve Bodies", "Machine Bases", "Sizzler Plates"].map((app) => (
+                      <span key={app} className={`px-2.5 py-1 rounded-lg text-xs font-medium border ${
+                        isLight ? "bg-neutral-100 border-neutral-200 text-neutral-700" : "bg-white/[0.04] border-white/10 text-neutral-300"
+                      }`}>
+                        {app}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </div>
 
-              {/* Ductile Iron */}
-              <div className="bento-card">
-                <div className="bento-card__bg">
-                  <img
-                    src="/assets/images/ductile-iron-casting.jpg"
-                    alt="Ductile iron casting component"
-                    loading="lazy"
-                  />
-                </div>
-                <div className="bento-card__overlay" />
-                <div className="bento-card__content">
-                  <div className="bento-card__icon bento-card__icon--tertiary">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--c-lavender)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
-                    </svg>
-                  </div>
-                  <h3>Ductile (SG) Iron Castings</h3>
-                  <p>
-                    Exceptional tensile strength, impact resistance, and elongation. SG Iron
-                    bridges the gap between conventional cast iron and steel.
-                  </p>
-                  {ductileIron && (
-                    <>
-                      <div className="spec-grid">
-                        <div>
-                          <span style={{ fontSize: "var(--fs-xs)", fontWeight: 700, letterSpacing: "0.1em", color: "var(--c-ember)", textTransform: "uppercase", display: "block", marginBottom: "var(--sp-1)" }}>
-                            Grades
-                          </span>
-                          <span style={{ fontWeight: 600 }}>{ductileIron.commonGrades || "SG 400 to SG 700"}</span>
-                        </div>
-                        <div>
-                          <span style={{ fontSize: "var(--fs-xs)", fontWeight: 700, letterSpacing: "0.1em", color: "var(--c-ember)", textTransform: "uppercase", display: "block", marginBottom: "var(--sp-1)" }}>
-                            Weight Range
-                          </span>
-                          <span style={{ fontWeight: 600 }}>{ductileIron.castingWeightRange || "2 kg to 300 kg"}</span>
-                        </div>
-                      </div>
-                      <div className="chip-group">
-                        {ductileIron.typicalApplications.slice(0, 6).map((app) => (
-                          <span key={app} className="chip">{app}</span>
-                        ))}
-                      </div>
-                      <div style={{ marginTop: "var(--sp-4)" }}>
-                        <Link className="btn btn--primary" to={`/products/${ductileIron.slug}`}>
-                          Learn more
-                        </Link>
-                      </div>
-                    </>
-                  )}
-                </div>
+              <div className="pt-6 mt-6 border-t border-neutral-200 dark:border-white/5">
+                <Link
+                  to={greyIron ? `/products/${greyIron.slug}` : "/request-a-quote"}
+                  className="inline-flex items-center gap-2 text-sm font-bold text-orange-500 hover:text-orange-400"
+                >
+                  <span>Explore Grey Iron Technical Guide</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
               </div>
             </div>
 
-            {/* Value-added services */}
-            <section style={{ marginBottom: "var(--sp-7)" }}>
-              <h2 className="section-heading section-heading--center" style={{ marginBottom: "var(--sp-6)" }}>
-                <span className="section-heading__eyebrow">Beyond Casting</span>
-                Value-Added <span style={{ color: "var(--c-ember)" }}>Services</span>
+            {/* Ductile (SG) Iron Card */}
+            <div className={`rounded-[32px] p-6 sm:p-9 border transition-all duration-300 shadow-xl flex flex-col justify-between ${
+              isLight
+                ? "bg-[#fbfbfd] border-neutral-200/90 shadow-[0_10px_35px_rgba(0,0,0,0.04)]"
+                : "bg-[#0e0f14]/90 border-white/[0.08] shadow-[0_12px_40px_rgba(0,0,0,0.8)]"
+            }`}>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="px-3 py-1 rounded-full text-xs font-mono font-bold uppercase bg-blue-500/10 text-blue-500 border border-blue-500/20">
+                    Spheroidal Graphite (SG Iron)
+                  </span>
+                  <span className="text-xs font-mono text-neutral-400">IS 1865 / EN-GJS</span>
+                </div>
+
+                <h3 className={`text-2xl sm:text-3xl font-bold tracking-tight ${
+                  isLight ? "text-neutral-900" : "text-white"
+                }`}>
+                  Ductile (SG) Iron Castings
+                </h3>
+
+                <p className={`text-xs sm:text-sm leading-relaxed ${
+                  isLight ? "text-neutral-600" : "text-neutral-400"
+                }`}>
+                  High tensile strength, impact toughness, and up to 18% elongation. S.G. Iron bridges the gap between conventional cast iron and forged steel for high-stress dynamic components.
+                </p>
+
+                {/* Specs Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2">
+                  <div className={`p-3 rounded-2xl border ${
+                    isLight ? "bg-white border-neutral-200 text-neutral-900" : "bg-white/[0.04] border-white/[0.06] text-white"
+                  }`}>
+                    <span className="text-[10px] font-mono text-neutral-400 block uppercase">Tensile Range</span>
+                    <span className="text-sm font-bold text-blue-500 font-mono">400–700 MPa</span>
+                  </div>
+                  <div className={`p-3 rounded-2xl border ${
+                    isLight ? "bg-white border-neutral-200 text-neutral-900" : "bg-white/[0.04] border-white/[0.06] text-white"
+                  }`}>
+                    <span className="text-[10px] font-mono text-neutral-400 block uppercase">Elongation %</span>
+                    <span className="text-sm font-bold font-mono">5% to 18%</span>
+                  </div>
+                  <div className={`p-3 rounded-2xl border ${
+                    isLight ? "bg-white border-neutral-200 text-neutral-900" : "bg-white/[0.04] border-white/[0.06] text-white"
+                  }`}>
+                    <span className="text-[10px] font-mono text-neutral-400 block uppercase">Unit Weight</span>
+                    <span className="text-sm font-bold font-mono">0.1 to 180 kg</span>
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <span className="text-xs font-semibold block mb-2 text-neutral-400">Typical Components:</span>
+                  <div className="flex flex-wrap gap-2">
+                    {["Gear Shift Levers", "Tractor Parts", "Train Handles", "Sewing Brackets", "Heavy Flanges"].map((app) => (
+                      <span key={app} className={`px-2.5 py-1 rounded-lg text-xs font-medium border ${
+                        isLight ? "bg-neutral-100 border-neutral-200 text-neutral-700" : "bg-white/[0.04] border-white/10 text-neutral-300"
+                      }`}>
+                        {app}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-6 mt-6 border-t border-neutral-200 dark:border-white/5">
+                <Link
+                  to={ductileIron ? `/products/${ductileIron.slug}` : "/request-a-quote"}
+                  className="inline-flex items-center gap-2 text-sm font-bold text-blue-500 hover:text-blue-400"
+                >
+                  <span>Explore Ductile Iron Technical Guide</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* Value-Added Engineering Services */}
+      <section className={`py-16 sm:py-24 transition-colors ${
+        isLight ? "bg-[#f8f9fa]" : "bg-[#050507]"
+      }`}>
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-14">
+            <h2 className={`text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-4 ${
+              isLight ? "text-neutral-900" : "text-white"
+            }`}>
+              Full-Cycle Casting &amp; Machining Services
+            </h2>
+            <p className={`text-sm sm:text-base ${
+              isLight ? "text-neutral-600" : "text-neutral-400"
+            }`}>
+              From early 3D drawing review and pattern tooling to CNC machining and dispatch.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+            <div className={`p-6 sm:p-8 rounded-3xl border transition-all duration-300 shadow-md ${
+              isLight ? "bg-white border-neutral-200/90" : "bg-[#0c0d12] border-white/[0.08]"
+            }`}>
+              <div className="w-12 h-12 rounded-2xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center mb-5 text-orange-500">
+                <Sliders className="w-6 h-6" />
+              </div>
+              <h3 className={`text-xl font-bold mb-2 ${isLight ? "text-neutral-900" : "text-white"}`}>
+                Pattern &amp; Tooling Shop
+              </h3>
+              <p className={`text-xs sm:text-sm leading-relaxed ${isLight ? "text-neutral-600" : "text-neutral-400"}`}>
+                In-house wooden, aluminum matchplate, and shell core pattern making. Ensuring shrinkage allowances and zero draft errors.
+              </p>
+            </div>
+
+            <div className={`p-6 sm:p-8 rounded-3xl border transition-all duration-300 shadow-md ${
+              isLight ? "bg-white border-neutral-200/90" : "bg-[#0c0d12] border-white/[0.08]"
+            }`}>
+              <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mb-5 text-blue-500">
+                <Cpu className="w-6 h-6" />
+              </div>
+              <h3 className={`text-xl font-bold mb-2 ${isLight ? "text-neutral-900" : "text-white"}`}>
+                Precision CNC Machining
+              </h3>
+              <p className={`text-xs sm:text-sm leading-relaxed ${isLight ? "text-neutral-600" : "text-neutral-400"}`}>
+                Equipped with CNC turning centers, VMCs, tapping, and keyway slotting to deliver ready-to-assemble components to your assembly lines.
+              </p>
+            </div>
+
+            <div className={`p-6 sm:p-8 rounded-3xl border transition-all duration-300 shadow-md ${
+              isLight ? "bg-white border-neutral-200/90" : "bg-[#0c0d12] border-white/[0.08]"
+            }`}>
+              <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-5 text-emerald-500">
+                <ShieldCheck className="w-6 h-6" />
+              </div>
+              <h3 className={`text-xl font-bold mb-2 ${isLight ? "text-neutral-900" : "text-white"}`}>
+                Quality Metrology &amp; OES
+              </h3>
+              <p className={`text-xs sm:text-sm leading-relaxed ${isLight ? "text-neutral-600" : "text-neutral-400"}`}>
+                14-element Spark OES chemical analysis, Brinell hardness testing, Zeiss CMM 3D dimensional reports, and 100% batch traceability.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Custom OEM Solutions CTA Card */}
+      <section className={`py-16 sm:py-24 border-t transition-colors ${
+        isLight ? "bg-white border-neutral-200/80" : "bg-[#08090d] border-white/[0.08]"
+      }`}>
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className={`rounded-[32px] p-8 sm:p-12 border transition-all duration-300 shadow-2xl relative overflow-hidden ${
+            isLight
+              ? "bg-gradient-to-br from-orange-50 via-white to-amber-50/50 border-orange-500/30"
+              : "bg-gradient-to-br from-[#12131a] via-[#0e0f14] to-black border-orange-500/30"
+          }`}>
+            <div className="max-w-3xl space-y-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-bold tracking-wider uppercase text-orange-500 bg-orange-500/10 border border-orange-500/20">
+                <span>Custom OEM Tooling &amp; Casting</span>
+              </div>
+
+              <h2 className={`text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight ${
+                isLight ? "text-neutral-900" : "text-white"
+              }`}>
+                Have a Custom 2D/3D Drawing or Sample?
               </h2>
-              <div className="services-grid">
-                <div className="service-card">
-                  <div className="service-card__icon">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--c-ember)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
-                    </svg>
-                  </div>
-                  <h3>Pattern Development</h3>
-                  <p>
-                    In-house capabilities to develop precise wooden, aluminum, and metallic
-                    patterns. Ensuring dimensional accuracy from the very first mold.
-                  </p>
-                </div>
-                <div className="service-card">
-                  <div className="service-card__icon">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--c-lavender)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="4" y="4" width="16" height="16" rx="2" /><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3" />
-                    </svg>
-                  </div>
-                  <h3>CNC Machining</h3>
-                  <p>
-                    Equipped machine shop offering turning, milling, and drilling. We supply
-                    ready-to-assemble components, reducing your supply chain complexity.
-                  </p>
-                </div>
-                <div className="service-card">
-                  <div className="service-card__icon">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--c-ember)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
-                    </svg>
-                  </div>
-                  <h3>Quality &amp; Inspection</h3>
-                  <p>
-                    Comprehensive testing including spectrometer analysis, microscopic structure
-                    checking, and physical testing. Detailed reports accompany every batch.
-                  </p>
-                </div>
-              </div>
-            </section>
 
-            {/* Custom OEM CTA banner */}
-            <section
-              className="bento-card"
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "var(--sp-5)",
-                alignItems: "flex-start",
-              }}
-            >
-              <div className="bento-card__content" style={{ width: "100%" }}>
-                <div style={{ display: "flex", flexDirection: "column", gap: "var(--sp-4)", alignItems: "flex-start" }}>
-                  <h2 style={{ fontSize: "var(--fs-2xl)" }}>Custom OEM Solutions</h2>
-                  <p style={{ maxWidth: "36rem" }}>
-                    Looking for a specific component? We specialize in reverse engineering and
-                    custom casting based on your exact specifications.
-                  </p>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--sp-5)", marginBottom: "var(--sp-3)" }}>
-                    <span style={{ display: "flex", alignItems: "center", gap: "var(--sp-2)", fontSize: "var(--fs-sm)", color: "var(--c-ink-soft)" }}>
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--c-ember)" strokeWidth="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
-                      Upload 2D/3D Drawings
-                    </span>
-                    <span style={{ display: "flex", alignItems: "center", gap: "var(--sp-2)", fontSize: "var(--fs-sm)", color: "var(--c-ink-soft)" }}>
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--c-ember)" strokeWidth="1.8"><rect x="2" y="3" width="20" height="14" rx="2" ry="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" /></svg>
-                      Sample Duplication
-                    </span>
-                  </div>
-                  <Link className="btn btn--primary" to="/request-a-quote">Enquire Now</Link>
-                </div>
-              </div>
-            </section>
-          </>
-        )}
-      </Section>
+              <p className={`text-sm sm:text-base leading-relaxed ${
+                isLight ? "text-neutral-700" : "text-neutral-300"
+              }`}>
+                Send us your CAD model (STEP/IGES/PDF) or physical sample. Our metallurgical engineering team will perform DFM feasibility, pattern tooling layout, and provide a competitive quote within 24 hours.
+              </p>
 
-      <Section tint labelledBy="products-cta">
-        <h2 id="products-cta" className="visually-hidden">Request a quote</h2>
-        <CtaBand
-          heading="Need a specific grade or geometry?"
-          text="Send your drawing and specification — we'll assess the casting route and quote."
-          buttonLabel="Request a Quote"
-          buttonHref="/request-a-quote"
-        />
-      </Section>
-    </>
+              <div className="pt-4 flex flex-wrap items-center gap-4">
+                <Link
+                  to="/request-a-quote"
+                  className="px-8 py-3.5 rounded-full text-sm font-semibold tracking-wide text-white bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-500 hover:to-amber-400 shadow-[0_4px_20px_rgba(255,109,0,0.35)] transition-all transform hover:-translate-y-0.5"
+                >
+                  Request a Formal Quote →
+                </Link>
+                <Link
+                  to="/contact"
+                  className={`px-6 py-3.5 rounded-full text-sm font-semibold border transition-colors ${
+                    isLight
+                      ? "bg-white border-neutral-300 text-neutral-800 hover:bg-neutral-100"
+                      : "bg-white/5 border-white/15 text-white hover:bg-white/10"
+                  }`}
+                >
+                  Contact Technical Sales
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Final RFQ CTA Band */}
+      <CtaBand
+        heading="Need a specific grade or geometry?"
+        text="Send your drawing and specification — we'll assess the casting route and quote."
+        buttonLabel="Request a Quote"
+        buttonHref="/request-a-quote"
+      />
+    </div>
   );
 }
