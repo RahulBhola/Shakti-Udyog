@@ -2,7 +2,6 @@ import { useState, type FormEvent } from 'react';
 import { motion } from 'framer-motion';
 import { submitContactRequest } from '../api/publicApi';
 import { Seo, localBusinessJsonLd } from '../components/Seo';
-import { Breadcrumb } from '../components/ui';
 import { company } from '../content/company';
 import { seoPages } from '../content/seo';
 import { useTheme } from '../auth/ThemeContext';
@@ -125,8 +124,6 @@ export default function ContactPage() {
       {/* Main Content Area */}
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-12 sm:py-16 space-y-12 sm:space-y-16">
         
-        {/* Breadcrumb Navigation */}
-        <Breadcrumb items={[{ label: 'Home', href: '/' }, { label: 'Contact', href: '/contact' }]} />
 
         {/* ========================================================================= */}
         {/* TALK TO OUR TEAM & MAP SECTION */}

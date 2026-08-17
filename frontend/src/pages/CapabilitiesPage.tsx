@@ -12,7 +12,6 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { Seo } from '../components/Seo';
-import { Breadcrumb } from '../components/ui';
 import { seoPages } from '../content/seo';
 import { useTheme } from '../auth/ThemeContext';
 
@@ -128,8 +127,6 @@ export default function CapabilitiesPage() {
       {/* Main Content Area */}
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-12 sm:py-16 space-y-12 sm:space-y-16">
         
-        {/* Breadcrumb Navigation */}
-        <Breadcrumb items={[{ label: 'Home', href: '/' }, { label: 'Capabilities', href: '/capabilities' }]} />
 
         {/* ========================================================================= */}
         {/* THE PROCESS — MANUFACTURING CAPABILITY TIMELINE SECTION */}

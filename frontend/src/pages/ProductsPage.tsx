@@ -2,7 +2,6 @@ import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Seo } from '../components/Seo';
-import { Breadcrumb } from '../components/ui';
 import { seoPages } from '../content/seo';
 import { useTheme } from '../auth/ThemeContext';
 import { getThemedImage } from '../utils/themeImage';
@@ -428,8 +427,6 @@ export default function ProductsPage() {
       {/* Main Content Area */}
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-12 sm:py-16 space-y-12 sm:space-y-16">
         
-        {/* Breadcrumb Navigation */}
-        <Breadcrumb items={[{ label: 'Home', href: '/' }, { label: 'Products', href: '/products' }]} />
 
         {/* ========================================================================= */}
         {/* SEARCH & FILTER CONTROLS TOOLBAR */}

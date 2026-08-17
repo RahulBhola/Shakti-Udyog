@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Seo } from '../components/Seo';
-import { Breadcrumb } from '../components/ui';
 import { seoPages } from '../content/seo';
 import { useTheme } from '../auth/ThemeContext';
 import {
@@ -201,8 +200,6 @@ export default function ResourcesPage() {
       {/* Main Content Container */}
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-12 sm:py-16 space-y-16 sm:space-y-20">
         
-        {/* Breadcrumb Navigation */}
-        <Breadcrumb items={[{ label: 'Home', href: '/' }, { label: 'Resources', href: '/resources' }]} />
 
         {/* ========================================================================= */}
         {/* SECTION 1: HOW TO PREPARE A CASTING ENQUIRY (FULL 6-POINT BLUEPRINT) */}
