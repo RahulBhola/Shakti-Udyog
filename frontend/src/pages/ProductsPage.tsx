@@ -682,17 +682,18 @@ export default function ProductsPage() {
 
                   {/* Card Action Buttons */}
                   <div className="mt-5 pt-3 border-t border-neutral-100 dark:border-white/[0.06] flex items-center gap-2">
-                    <Link
-                      to={`/request-a-quote?part=${encodeURIComponent(product.title)}`}
-                      className={`flex-1 py-2.5 px-3 rounded-xl font-mono text-xs font-bold text-center transition-all inline-flex items-center justify-center gap-1.5 ${
+                    <button
+                      type="button"
+                      onClick={() => setIsEnquiryModalOpen(true)}
+                      className={`flex-1 py-2.5 px-3 rounded-xl font-mono text-xs font-bold text-center transition-all inline-flex items-center justify-center gap-1.5 cursor-pointer ${
                         isLight
                           ? 'bg-orange-500 hover:bg-orange-600 text-white shadow-md shadow-orange-500/20'
                           : 'bg-orange-500 hover:bg-orange-400 text-white shadow-[0_0_15px_rgba(249,115,22,0.3)]'
                       }`}
                     >
-                      <span>Request Quote</span>
+                      <span>Submit Enquiry</span>
                       <ArrowRight className="w-3.5 h-3.5" />
-                    </Link>
+                    </button>
 
                     <button
                       onClick={() => setActiveModalProduct(product)}
@@ -854,25 +855,26 @@ export default function ProductsPage() {
             </div>
 
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 shrink-0">
-              <Link
-                to="/request-a-quote"
-                className={`px-8 py-4 rounded-2xl font-extrabold text-sm sm:text-base text-center inline-flex items-center justify-center gap-2.5 transition-all transform hover:scale-105 ${
+              <button
+                type="button"
+                onClick={() => setIsEnquiryModalOpen(true)}
+                className={`px-8 py-4 rounded-2xl font-extrabold text-sm sm:text-base text-center inline-flex items-center justify-center gap-2.5 transition-all transform hover:scale-105 cursor-pointer ${
                   isLight
                     ? 'bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25'
                     : 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-white shadow-[0_0_30px_rgba(249,115,22,0.4)]'
                 }`}
               >
-                <span className="text-white font-extrabold">Submit RFQ &amp; CAD</span>
+                <span className="text-white font-extrabold">Submit Enquiry</span>
                 <ArrowRight className="w-4 h-4 text-white shrink-0" />
-              </Link>
+              </button>
 
               <button
                 type="button"
                 onClick={() => setIsEnquiryModalOpen(true)}
                 className={`px-7 py-4 rounded-2xl font-bold text-sm sm:text-base text-center transition-all cursor-pointer ${
                   isLight
-                    ? 'bg-neutral-50 hover:bg-neutral-100 border border-neutral-300 text-neutral-800 shadow-sm'
-                    : 'bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white shadow-sm'
+                    ? 'bg-neutral-50 hover:bg-neutral-100 border border-neutral-300 text-neutral-800 shadow-sm hover:border-neutral-400'
+                    : 'bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white shadow-sm hover:border-white/30'
                 }`}
               >
                 <span>Send a Query</span>
@@ -894,64 +896,53 @@ export default function ProductsPage() {
       {/* ========================================================================= */}
       <AnimatePresence>
         {activeModalProduct && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/70 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.2 }}
-              className={`relative w-full max-w-2xl rounded-3xl p-6 sm:p-8 border shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto ${
-                isLight ? 'bg-white border-neutral-200 text-neutral-900' : 'bg-[#0c0e15] border-white/15 text-white'
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className={`relative max-w-xl w-full rounded-3xl p-6 sm:p-8 shadow-2xl border ${
+                isLight ? 'bg-white border-neutral-200 text-neutral-900' : 'bg-[#0e111a] border-white/10 text-white'
               }`}
             >
-              {/* Close Button */}
               <button
                 onClick={() => setActiveModalProduct(null)}
-                className="absolute top-5 right-5 p-2 rounded-full hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
+                className="absolute top-5 right-5 p-2 rounded-full hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
 
-              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 mb-6">
-                <div className={`w-36 h-36 rounded-2xl p-3 flex items-center justify-center shrink-0 ${
-                  isLight ? 'bg-neutral-100' : 'bg-white/5'
-                }`}>
-                  <img
-                    src={getThemedImage(activeModalProduct.image, isLight)}
-                    alt={activeModalProduct.title}
-                    className="max-h-28 max-w-full object-contain"
-                  />
-                </div>
-
-                <div className="space-y-2 text-center sm:text-left">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-bold bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/30">
-                    {activeModalProduct.grade} • {activeModalProduct.standard}
-                  </div>
-                  <h3 className="text-xl sm:text-2xl font-bold tracking-tight">{activeModalProduct.title}</h3>
-                  <p className="text-xs text-neutral-500 dark:text-neutral-400">{activeModalProduct.application}</p>
-                </div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xs font-mono font-bold uppercase px-2.5 py-0.5 rounded-full bg-orange-500/10 text-orange-500 border border-orange-500/20">
+                  {activeModalProduct.category}
+                </span>
+                <span className="text-xs font-mono text-neutral-400">
+                  {activeModalProduct.materialType} • {activeModalProduct.grade}
+                </span>
               </div>
 
-              <div className="space-y-4 text-xs sm:text-sm font-mono divide-y divide-neutral-100 dark:divide-white/10">
+              <h2 className="text-2xl font-bold mb-4">{activeModalProduct.title}</h2>
+
+              <div className="relative aspect-[16/10] rounded-2xl overflow-hidden mb-6 bg-neutral-100 dark:bg-black/40 border border-neutral-200 dark:border-white/5">
+                <img
+                  src={getThemedImage(activeModalProduct.image, isLight)}
+                  alt={activeModalProduct.title}
+                  className="w-full h-full object-contain p-4"
+                />
+              </div>
+
+              <div className="space-y-2 text-sm divide-y divide-neutral-100 dark:divide-white/5 font-mono">
                 <div className="py-2.5 flex justify-between">
-                  <span className="text-neutral-500">Material Category:</span>
-                  <span className="font-semibold">{activeModalProduct.materialType}</span>
+                  <span className="text-neutral-500">Standard Spec:</span>
+                  <span className="font-semibold">{activeModalProduct.standard}</span>
                 </div>
                 <div className="py-2.5 flex justify-between">
-                  <span className="text-neutral-500">Weight:</span>
-                  <span className="font-semibold">{activeModalProduct.weight}</span>
-                </div>
-                <div className="py-2.5 flex justify-between">
-                  <span className="text-neutral-500">Machining Tolerance:</span>
-                  <span className="font-semibold">{activeModalProduct.tolerances}</span>
+                  <span className="text-neutral-500">Piece Weight Envelope:</span>
+                  <span className="font-semibold">{activeModalProduct.weightRange}</span>
                 </div>
                 <div className="py-2.5 flex justify-between">
                   <span className="text-neutral-500">Tensile Strength:</span>
                   <span className="font-semibold text-orange-500">{activeModalProduct.tensileStrength}</span>
-                </div>
-                <div className="py-2.5 flex justify-between">
-                  <span className="text-neutral-500">Hardness Range:</span>
-                  <span className="font-semibold">{activeModalProduct.hardness}</span>
                 </div>
                 <div className="py-2.5 flex justify-between">
                   <span className="text-neutral-500">Engineering Overview:</span>
@@ -960,16 +951,19 @@ export default function ProductsPage() {
               </div>
 
               <div className="mt-8 flex gap-3">
-                <Link
-                  to={`/request-a-quote?part=${encodeURIComponent(activeModalProduct.title)}`}
-                  className="flex-1 py-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-center text-sm font-mono transition-all"
-                  onClick={() => setActiveModalProduct(null)}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveModalProduct(null);
+                    setIsEnquiryModalOpen(true);
+                  }}
+                  className="flex-1 py-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-center text-sm font-mono transition-all cursor-pointer shadow-md shadow-orange-500/25"
                 >
-                  Request Quote for this Component
-                </Link>
+                  Submit Enquiry for this Component
+                </button>
                 <button
                   onClick={() => setActiveModalProduct(null)}
-                  className="px-5 py-3 rounded-xl border border-neutral-300 dark:border-white/10 font-bold text-sm"
+                  className="px-5 py-3 rounded-xl border border-neutral-300 dark:border-white/10 font-bold text-sm cursor-pointer"
                 >
                   Close
                 </button>

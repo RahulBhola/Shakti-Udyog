@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Seo } from '../components/Seo';
 import { seoPages } from '../content/seo';
 import { useTheme } from '../auth/ThemeContext';
+import { EnquiryModal } from '../components/EnquiryModal';
 import {
   FileText,
   Layers,
@@ -346,6 +347,7 @@ export default function ResourcesPage() {
 
   const [activeWorkflowTab, setActiveWorkflowTab] = useState<'stages' | 'roles' | 'lifecycles'>('stages');
   const [openId, setOpenId] = useState<string | null>('faq-1');
+  const [isEnquiryModalOpen, setIsEnquiryModalOpen] = useState(false);
 
   const toggleFaq = (id: string) => {
     setOpenId((prev) => (prev === id ? null : id));
@@ -662,28 +664,30 @@ export default function ResourcesPage() {
             </div>
 
             <div className="flex items-center gap-3 shrink-0">
-              <Link
-                to="/request-a-quote"
-                className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-extrabold text-xs sm:text-sm transition-all transform hover:scale-105 shadow-md ${
+              <button
+                type="button"
+                onClick={() => setIsEnquiryModalOpen(true)}
+                className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-extrabold text-xs sm:text-sm transition-all transform hover:scale-105 shadow-md cursor-pointer ${
                   isLight
                     ? 'bg-orange-500 hover:bg-orange-600 text-white shadow-orange-500/25'
                     : 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-[0_0_20px_rgba(249,115,22,0.4)]'
                 }`}
               >
-                <span>Request a Quote</span>
+                <span>Submit Enquiry</span>
                 <ArrowRight className="w-4 h-4" />
-              </Link>
+              </button>
 
-              <Link
-                to="/contact"
-                className={`inline-flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-xs sm:text-sm transition-all border ${
+              <button
+                type="button"
+                onClick={() => setIsEnquiryModalOpen(true)}
+                className={`inline-flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-xs sm:text-sm transition-all border cursor-pointer ${
                   isLight
                     ? 'bg-white hover:bg-neutral-100 border-neutral-300 text-neutral-800 shadow-sm'
                     : 'bg-white/10 hover:bg-white/20 border-white/20 text-white shadow-sm'
                 }`}
               >
-                <span>Contact Engineers</span>
-              </Link>
+                <span>Send a Query</span>
+              </button>
             </div>
           </div>
         </section>
@@ -759,17 +763,18 @@ export default function ResourcesPage() {
 
           {/* Quick RFQ CTA Button */}
           <div className="pt-2">
-            <Link
-              to="/request-a-quote"
-              className={`inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl font-bold text-xs sm:text-sm transition-all transform hover:scale-105 shadow-md ${
+            <button
+              type="button"
+              onClick={() => setIsEnquiryModalOpen(true)}
+              className={`inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl font-bold text-xs sm:text-sm transition-all transform hover:scale-105 shadow-md cursor-pointer ${
                 isLight
                   ? 'bg-orange-500 hover:bg-orange-600 text-white shadow-orange-500/20'
                   : 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-[0_0_20px_rgba(249,115,22,0.3)]'
               }`}
             >
-              <span>Submit Your 2D/3D CAD Drawing for Feasibility Check</span>
+              <span>Submit 2D/3D CAD Drawing for Feasibility Check</span>
               <ArrowRight className="w-4 h-4" />
-            </Link>
+            </button>
           </div>
         </section>
 
@@ -1155,22 +1160,29 @@ export default function ResourcesPage() {
                 Have a specific question about your alloy specification or pattern?
               </span>
 
-              <Link
-                to="/request-a-quote"
-                className={`inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-xs sm:text-sm font-mono font-bold tracking-wider transition-all border shadow-sm ${
+              <button
+                type="button"
+                onClick={() => setIsEnquiryModalOpen(true)}
+                className={`inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-xs sm:text-sm font-mono font-bold tracking-wider transition-all border shadow-sm cursor-pointer ${
                   isLight
                     ? 'bg-blue-600 border-blue-600 text-white hover:bg-blue-700 shadow-blue-500/20'
                     : 'bg-blue-950/60 border-blue-500/40 text-sky-300 hover:bg-blue-900/80 shadow-[0_0_20px_rgba(56,189,248,0.2)]'
                 }`}
               >
-                <span>Ask Our Metallurgist</span>
+                <span>Send a Query</span>
                 <ArrowRight className="w-4 h-4" />
-              </Link>
+              </button>
             </div>
           </motion.div>
         </section>
 
       </div>
+
+      {/* Direct Foundry Enquiry Popup Modal */}
+      <EnquiryModal
+        isOpen={isEnquiryModalOpen}
+        onClose={() => setIsEnquiryModalOpen(false)}
+      />
     </div>
   );
 }
