@@ -12,6 +12,7 @@ import {
   Target,
   Award,
   Wrench,
+  Sparkles,
 } from 'lucide-react';
 import { Seo } from '../components/Seo';
 import { Breadcrumb } from '../components/ui';
@@ -163,35 +164,41 @@ export default function IndustriesPage() {
       <div className={`min-h-screen transition-colors duration-300 ${
         isLight ? 'bg-[#f4f7fb] text-neutral-900' : 'bg-[#06070a] text-white'
       }`}>
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 pt-32 pb-20 sm:pt-40 space-y-12 sm:space-y-14">
-          
-          {/* Breadcrumb Navigation */}
-          <Breadcrumb items={[{ label: 'Home', href: '/' }, { label: 'Industries', href: '/industries' }]} />
-
-          {/* Page Hero Header (Exact Layout from Reference Image) */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            className="space-y-3 max-w-3xl"
-          >
-            <div className="text-xs sm:text-sm font-mono font-bold tracking-widest uppercase text-purple-400">
-              SECTORS
+        
+        {/* Hero Header — Perfectly Centered Matching Capabilities & Products */}
+        <section className={`relative pt-32 pb-16 sm:pt-40 sm:pb-24 border-b overflow-hidden transition-colors ${
+          isLight ? 'bg-white border-neutral-200/80' : 'bg-[#08090d] border-white/[0.08]'
+        }`}>
+          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 relative z-10 text-center flex flex-col items-center">
+            
+            {/* Centered Eyebrow Pill */}
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs sm:text-sm font-mono font-bold tracking-wider uppercase text-orange-600 dark:text-orange-400 bg-orange-500/10 border border-orange-500/30 mb-6 shadow-sm">
+              <Sparkles className="w-4 h-4 text-orange-500" />
+              <span>Industrial Sectors &amp; Custom OEM Applications</span>
             </div>
 
-            <h1 className={`text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.08] ${
+            {/* Centered Main Title */}
+            <h1 className={`text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight mb-6 max-w-4xl ${
               isLight ? 'text-neutral-900' : 'text-white'
             }`}>
-              Applications by <br />
-              <span>Industry</span>
+              Applications by <span className="text-orange-500">Industry</span>
             </h1>
 
-            <p className={`text-base sm:text-lg leading-relaxed ${
-              isLight ? 'text-neutral-600' : 'text-neutral-400'
+            {/* Centered Subtitle */}
+            <p className={`text-lg sm:text-2xl max-w-3xl mx-auto leading-relaxed ${
+              isLight ? 'text-neutral-600' : 'text-neutral-300'
             }`}>
               Our cast iron components power performance across diverse industries with strength, precision, and reliability.
             </p>
-          </motion.div>
+
+          </div>
+        </section>
+
+        {/* Main Content Area */}
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-12 sm:py-16 space-y-12 sm:space-y-14">
+          
+          {/* Breadcrumb Navigation */}
+          <Breadcrumb items={[{ label: 'Home', href: '/' }, { label: 'Industries', href: '/industries' }]} />
 
           {/* 6 Grid Sector Cards (2 Rows x 3 Cols) - Matching Exact Layout of Image 1 */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
