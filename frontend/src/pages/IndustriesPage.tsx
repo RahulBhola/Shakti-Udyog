@@ -12,6 +12,7 @@ import {
   Target,
   Award,
   Wrench,
+  Sparkles,
 } from 'lucide-react';
 import { Seo } from '../components/Seo';
 import { seoPages } from '../content/seo';
@@ -190,43 +191,45 @@ export default function IndustriesPage() {
           isLight ? 'bg-[#f4f7fb] text-neutral-900' : 'bg-[#050508] text-white'
         }`}
       >
-        {/* Main Content Area (Clean top padding with zero navbar overlap & no breadcrumbs) */}
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 pt-32 sm:pt-40 pb-20 sm:pb-28 space-y-12 sm:space-y-16">
-          
-          {/* ========================================================================= */}
-          {/* SECTION HEADER (TOP LEFT 35-40% WIDTH EXACTLY MATCHING DESIGN REFERENCE) */}
-          {/* ========================================================================= */}
-          <div className="max-w-2xl space-y-3">
-            {/* Eyebrow Label */}
-            <div className="text-xs font-mono font-bold tracking-widest uppercase text-purple-600 dark:text-purple-400">
-              SECTORS
+        {/* ========================================================================= */}
+        {/* CENTERED HERO HEADER MATCHING IMAGE 1 REFERENCE */}
+        {/* ========================================================================= */}
+        <section
+          className={`relative pt-32 pb-16 sm:pt-40 sm:pb-24 border-b overflow-hidden transition-colors ${
+            isLight ? 'bg-white border-neutral-200/80' : 'bg-[#08090d] border-white/[0.08]'
+          }`}
+        >
+          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 relative z-10 text-center flex flex-col items-center">
+            {/* Centered Eyebrow Pill */}
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs sm:text-sm font-mono font-bold tracking-wider uppercase text-orange-600 dark:text-orange-400 bg-orange-500/10 border border-orange-500/30 mb-6 shadow-sm">
+              <Sparkles className="w-4 h-4 text-orange-500" />
+              <span>Industrial Sectors &amp; Custom OEM Applications</span>
             </div>
 
-            {/* Large 2-Line Heading */}
+            {/* Centered Main Title with Orange Highlight */}
             <h1
-              className={`text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.05] ${
-                isLight ? 'text-neutral-950' : 'text-white'
+              className={`text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight mb-6 max-w-4xl ${
+                isLight ? 'text-neutral-900' : 'text-white'
               }`}
             >
-              Applications by
-              <br />
-              Industry
+              Applications by <span className="text-orange-500">Industry</span>
             </h1>
 
-            {/* Supporting Subtitle */}
+            {/* Centered Subtitle */}
             <p
-              className={`text-sm sm:text-base leading-relaxed max-w-xl pt-1 ${
-                isLight ? 'text-neutral-600' : 'text-neutral-400'
+              className={`text-lg sm:text-2xl max-w-3xl mx-auto leading-relaxed ${
+                isLight ? 'text-neutral-600' : 'text-neutral-300'
               }`}
             >
               Our cast iron components power performance across diverse industries with strength,
               precision, and reliability.
             </p>
           </div>
+        </section>
 
-          {/* ========================================================================= */}
+        {/* Main Content Area */}
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-12 sm:py-16 space-y-12 sm:space-y-16">
           {/* 6 ASYMMETRIC GRID SECTOR CARDS (2 ROWS X 3 COLS) */}
-          {/* ========================================================================= */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-7">
             {SECTOR_CARDS.map((sector, idx) => {
               const styles = COLOR_STYLES[sector.themeColor];
@@ -336,7 +339,6 @@ export default function IndustriesPage() {
             <div className="absolute top-1/2 left-1/3 -translate-y-1/2 w-96 h-96 rounded-full blur-3xl pointer-events-none bg-purple-600/10" />
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center relative z-10">
-              
               {/* Left Column: Info */}
               <div className="lg:col-span-4 space-y-4">
                 <div className="flex items-center gap-2.5">
@@ -421,10 +423,8 @@ export default function IndustriesPage() {
                   </div>
                 ))}
               </div>
-
             </div>
           </motion.div>
-
         </div>
       </div>
     </>
