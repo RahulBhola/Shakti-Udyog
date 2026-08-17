@@ -299,11 +299,11 @@ export const ContactPreviewAndCtaSection: React.FC = () => {
                 className={`px-8 py-4 rounded-2xl font-extrabold text-sm sm:text-base text-center inline-flex items-center justify-center gap-2.5 transition-all transform hover:scale-105 ${
                   isLight
                     ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/25'
-                    : 'bg-white hover:bg-neutral-100 text-neutral-950 shadow-xl'
+                    : 'bg-gradient-to-r from-blue-600 to-sky-600 hover:from-blue-500 hover:to-sky-500 text-white shadow-[0_0_30px_rgba(56,189,248,0.4)]'
                 }`}
               >
-                <span>Request Custom Quote</span>
-                <ArrowRight className={`w-4 h-4 shrink-0 ${isLight ? 'text-white' : 'text-blue-600'}`} />
+                <span className="text-white font-extrabold">Request Custom Quote</span>
+                <ArrowRight className="w-4 h-4 text-white shrink-0" />
               </Link>
 
               <Link
@@ -311,10 +311,10 @@ export const ContactPreviewAndCtaSection: React.FC = () => {
                 className={`px-7 py-4 rounded-2xl font-bold text-sm sm:text-base text-center transition-all ${
                   isLight
                     ? 'bg-neutral-50 hover:bg-neutral-100 border border-neutral-300 text-neutral-800 shadow-sm'
-                    : 'bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white'
+                    : 'bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white shadow-sm'
                 }`}
               >
-                Contact Engineers
+                <span className={isLight ? 'text-neutral-800' : 'text-white'}>Contact Engineers</span>
               </Link>
             </div>
           </div>
