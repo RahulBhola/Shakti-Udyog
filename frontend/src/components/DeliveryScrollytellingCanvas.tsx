@@ -6,7 +6,6 @@ import {
   Pause,
   RotateCcw,
   Sparkles,
-  CheckCircle2,
 } from 'lucide-react';
 import { useTheme } from '../auth/ThemeContext';
 import {
@@ -27,24 +26,23 @@ export const DeliveryScrollytellingCanvas: React.FC = () => {
   const [imagesLoaded, setImagesLoaded] = useState(0);
   const [isReady, setIsReady] = useState(false);
   const [activeMilestoneIndex, setActiveMilestoneIndex] = useState(0);
-  const [currentFrameNumber, setCurrentFrameNumber] = useState(1);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
   const animationFrameRef = useRef<number | null>(null);
 
-  // Framer Motion scroll hook on the 700vh container for elongated, silky scroll travel
+  // Framer Motion scroll hook on the 750vh container for smooth, elongated scroll travel
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ['start start', 'end end'],
   });
 
   const smoothProgress = useSpring(scrollYProgress, {
-    stiffness: 95,
-    damping: 24,
+    stiffness: 100,
+    damping: 26,
     restDelta: 0.0001,
   });
 
-  // Frame drawing routine with High-DPI support and aspect-ratio preservation
+  // Frame drawing routine with High-DPI support, aspect-ratio preservation, and clean rendering
   const drawFrame = useCallback((frameIndex: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -70,11 +68,11 @@ export const DeliveryScrollytellingCanvas: React.FC = () => {
     ctx.save();
     ctx.scale(dpr, dpr);
 
-    // Deep black canvas backdrop
-    ctx.fillStyle = '#050608';
+    // Clear with ultra-deep background #050505
+    ctx.fillStyle = '#050505';
     ctx.fillRect(0, 0, width, height);
 
-    // Full-bleed cinematic scaling
+    // Expansive full-width cinematic scaling
     const imgAspect = img.naturalWidth / img.naturalHeight;
     const canvasAspect = width / height;
 
@@ -95,16 +93,16 @@ export const DeliveryScrollytellingCanvas: React.FC = () => {
       drawY = 0;
     }
 
+    // High quality image smoothing
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
 
     ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
 
     ctx.restore();
-    setCurrentFrameNumber(safeIndex + 1);
   }, []);
 
-  // Preload all 300 truck video delivery frames
+  // Preload all 300 truck delivery frames
   useEffect(() => {
     let isCancelled = false;
     const images: HTMLImageElement[] = [];
@@ -115,10 +113,12 @@ export const DeliveryScrollytellingCanvas: React.FC = () => {
       loadedCount++;
       setImagesLoaded(loadedCount);
 
+      // Draw initial frame immediately once frame 1 is ready
       if (index === 0) {
         requestAnimationFrame(() => drawFrame(0));
       }
 
+      // Unlock preloader as soon as first 10 frames or all frames are ready
       if (loadedCount >= 10 || loadedCount >= TOTAL_DELIVERY_FRAMES) {
         setIsReady(true);
       }
@@ -158,9 +158,11 @@ export const DeliveryScrollytellingCanvas: React.FC = () => {
     const unsubscribe = smoothProgress.on('change', (latestProgress) => {
       const clamped = Math.max(0, Math.min(1, latestProgress));
 
+      // Map progress directly to frame index 0 - 299
       const frameIndex = clamped * (TOTAL_DELIVERY_FRAMES - 1);
       drawFrame(frameIndex);
 
+      // Determine active story milestone based on scroll progress
       const currentMilestoneIndex = DELIVERY_MILESTONES.findIndex(
         (m) => clamped >= m.startProgress && clamped <= m.endProgress
       );
@@ -255,17 +257,17 @@ export const DeliveryScrollytellingCanvas: React.FC = () => {
     <div
       id="delivery-story"
       ref={containerRef}
-      className={`relative w-full h-[700vh] transition-colors duration-300 ${
-        isLight ? 'bg-[#f4f7fb] px-3 sm:px-6' : 'bg-[#050608]'
-      } text-white`}
+      className={`relative w-full h-[750vh] transition-colors duration-300 ${
+        isLight ? 'bg-[#F8F9FA] px-3 sm:px-6 pt-24 sm:pt-28' : 'bg-[#050505]'
+      } text-[#F5F5F7]`}
       style={{ isolation: 'isolate' }}
     >
-      {/* Sticky Canvas Viewport (Rounded Floating 3D Card in Light Mode) */}
+      {/* Sticky Canvas Viewport (Rounded Floating Card in Light Mode, Full-Screen in Dark Mode) */}
       <div
         className={`sticky overflow-hidden flex items-center justify-center transition-all duration-300 ${
           isLight
-            ? 'top-20 sm:top-24 left-0 w-full h-[calc(100vh-6rem)] sm:h-[calc(100vh-7rem)] rounded-3xl bg-[#080a0f] shadow-[0_25px_60px_rgba(0,0,0,0.3)] border border-neutral-300'
-            : 'top-0 left-0 w-full h-screen bg-[#050608]'
+            ? 'top-24 sm:top-28 left-0 w-full h-[calc(100vh-7rem)] sm:h-[calc(100vh-8rem)] rounded-2xl sm:rounded-[32px] bg-[#050505] shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-neutral-200/40'
+            : 'top-0 left-0 w-full h-screen bg-[#050505]'
         }`}
       >
         {/* HTML5 Canvas */}
@@ -274,38 +276,38 @@ export const DeliveryScrollytellingCanvas: React.FC = () => {
           className="w-full h-full block object-contain pointer-events-none"
         />
 
-        {/* Preloader overlay */}
+        {/* Preloader overlay (shows until first batch is ready) */}
         {!isReady && (
-          <div className="absolute inset-0 z-40 bg-[#050608] flex flex-col items-center justify-center p-6 transition-opacity duration-700">
+          <div className="absolute inset-0 z-40 bg-[#050505] flex flex-col items-center justify-center p-6 transition-opacity duration-700">
             <div className="w-full max-w-md space-y-6 text-center">
               <div className="relative w-16 h-16 mx-auto">
                 <div className="absolute inset-0 rounded-full border-2 border-orange-500/20 animate-ping" />
                 <div className="relative w-16 h-16 rounded-full border-2 border-orange-500/30 border-t-orange-500 animate-spin flex items-center justify-center">
-                  <Truck className="w-7 h-7 text-orange-500" />
+                  <Truck className="w-6 h-6 text-orange-500" />
                 </div>
               </div>
 
               <div className="space-y-2">
                 <p className="text-xs font-mono tracking-widest text-orange-400 uppercase">
-                  INITIALIZING FLEET TELEMATICS
+                  INITIALIZING FLEET LOGISTICS SEQUENCER
                 </p>
-                <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-                  Loading 300 Cinematic Delivery Frames
+                <h3 className="text-xl font-bold text-white tracking-tight">
+                  Preloading 300 Ultra-HD Delivery Frames
                 </h3>
                 <p className="text-xs text-neutral-400">
-                  Full JIT logistics journey · Shakti Udyog Heavy Transport Fleet
+                  Precision JIT fleet transport · Shakti Udyog Heavy Transport Logistics
                 </p>
               </div>
 
-              {/* Progress Bar */}
+              {/* Progress bar */}
               <div className="space-y-2">
-                <div className="w-full h-2 bg-neutral-900 rounded-full overflow-hidden border border-white/10">
+                <div className="w-full h-1.5 bg-neutral-900 rounded-full overflow-hidden border border-white/10">
                   <div
                     className="h-full bg-gradient-to-r from-orange-600 via-amber-500 to-orange-400 transition-all duration-150 ease-out"
                     style={{ width: `${loadPercentage}%` }}
                   />
                 </div>
-                <div className="flex items-center justify-between text-[11px] font-mono text-neutral-400">
+                <div className="flex items-center justify-between text-[10px] font-mono text-neutral-400">
                   <span>FRAME {String(imagesLoaded).padStart(3, '0')} / 300</span>
                   <span className="text-orange-400 font-semibold">{loadPercentage}%</span>
                 </div>
@@ -314,79 +316,54 @@ export const DeliveryScrollytellingCanvas: React.FC = () => {
           </div>
         )}
 
-        {/* Top Header Badge (Sticky HUD) */}
-        <div className="absolute top-4 sm:top-6 left-4 sm:left-8 z-30 pointer-events-none">
-          <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-black/60 backdrop-blur-xl border border-white/15 shadow-lg">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
-            <span className="text-xs font-mono font-bold tracking-wider uppercase text-white">
-              FLEET TELEMATICS • LIVE DELIVERY ANIMATION
-            </span>
-          </div>
+        {/* Top Right Live HUD Indicator */}
+        <div className="absolute top-4 sm:top-6 right-4 sm:right-8 z-30 pointer-events-none hidden sm:flex items-center gap-3 px-4 py-1.5 rounded-full bg-black/60 backdrop-blur-xl border border-white/10 shadow-lg font-mono text-xs text-neutral-300">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+          <span className="text-orange-400 font-bold">FRAME {String(currentFrameRef.current + 1).padStart(3, '0')}</span>
+          <span className="text-neutral-600">/</span>
+          <span>300 (4K HD)</span>
         </div>
 
-        {/* Top Right Live Frame HUD */}
-        <div className="absolute top-4 sm:top-6 right-4 sm:right-8 z-30 pointer-events-none hidden sm:block">
-          <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-black/60 backdrop-blur-xl border border-white/15 shadow-lg font-mono text-xs text-neutral-300">
-            <span className="text-orange-400 font-bold">FRAME {String(currentFrameNumber).padStart(3, '0')}</span>
-            <span className="text-neutral-600">|</span>
-            <span>300 FRAMES (4K HD)</span>
-          </div>
-        </div>
-
-        {/* Interactive Bottom HUD & Story Narrative */}
-        <div className="absolute inset-x-0 bottom-0 z-30 pointer-events-none p-4 sm:p-8 lg:p-12 flex flex-col justify-end bg-gradient-to-t from-black/90 via-black/50 to-transparent">
-          <div className="w-full max-w-[1400px] mx-auto space-y-5">
+        {/* Main Narrative Overlays (Expansive Full-Width Typography matching Home Page) */}
+        <div className="absolute inset-0 z-20 pointer-events-none flex flex-col justify-end p-4 xs:p-6 sm:p-10 md:p-12 lg:p-16">
+          <div className="w-full max-w-[1720px] mx-auto space-y-6">
             
-            {/* Story Narrative Box */}
-            <div className="max-w-3xl space-y-3 pointer-events-auto">
+            {/* Cinematic Narrative Block */}
+            <div className="max-w-4xl lg:max-w-5xl space-y-3 sm:space-y-4 pointer-events-auto">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={activeMilestone.id}
-                  initial={{ opacity: 0, y: 15, filter: 'blur(4px)' }}
+                  initial={{ opacity: 0, y: 16, filter: 'blur(4px)' }}
                   animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                  exit={{ opacity: 0, y: -15, filter: 'blur(4px)' }}
-                  transition={{ duration: 0.35, ease: 'easeOut' }}
-                  className="space-y-2.5"
+                  exit={{ opacity: 0, y: -12, filter: 'blur(4px)' }}
+                  transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                  className="space-y-3 sm:space-y-3.5"
                 >
-                  {/* Stage Eyebrow */}
-                  <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-orange-500/20 border border-orange-500/40 text-orange-400 font-mono text-xs font-bold tracking-wider">
-                    <Sparkles className="w-3.5 h-3.5 text-orange-400" />
-                    <span>STAGE {activeMilestone.stageNumber} • {activeMilestone.badge}</span>
+                  {/* Phase 1-8 Embedded in Title Area */}
+                  <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-orange-500/15 border border-orange-500/40 text-orange-400 font-mono text-xs sm:text-sm font-bold tracking-wider uppercase shadow-[0_0_15px_rgba(255,109,0,0.15)]">
+                      <Truck className="w-3.5 h-3.5 text-orange-500" />
+                      <span>{activeMilestone.phaseNumber} : {activeMilestone.phaseTitle}</span>
+                    </div>
+
+                    <div className="inline-flex items-center px-3 py-1.5 rounded-lg bg-white/[0.05] border border-white/10 text-neutral-300 font-mono text-xs sm:text-sm tracking-wider uppercase backdrop-blur-md">
+                      <span>{activeMilestone.badge}</span>
+                    </div>
                   </div>
 
-                  {/* Title & Subtitle */}
-                  <div>
-                    <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-tight">
-                      {activeMilestone.title}
-                    </h2>
-                    <p className="text-xs sm:text-base font-medium text-orange-300/90 font-mono mt-0.5">
-                      {activeMilestone.subtitle}
-                    </p>
-                  </div>
+                  <h2 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight !text-white leading-[1.06] text-glow-white drop-shadow-[0_2px_16px_rgba(0,0,0,0.95)]">
+                    {activeMilestone.headline}
+                  </h2>
 
-                  {/* Description */}
-                  <p className="text-xs sm:text-sm text-neutral-300 leading-relaxed max-w-2xl">
-                    {activeMilestone.description}
+                  <p className="text-sm sm:text-base md:text-lg lg:text-xl !text-neutral-200 max-w-4xl font-normal leading-relaxed drop-shadow-[0_1px_10px_rgba(0,0,0,0.95)]">
+                    {activeMilestone.supportingText}
                   </p>
-
-                  {/* Badges / Quality Tags */}
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    {activeMilestone.tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white/10 backdrop-blur-md border border-white/15 text-[11px] font-mono font-medium text-white shadow-sm"
-                      >
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                        <span>{tag}</span>
-                      </span>
-                    ))}
-                  </div>
                 </motion.div>
               </AnimatePresence>
             </div>
 
             {/* Interactive Timeline Stepper & Player Control Bar */}
-            <div className="pointer-events-auto pt-2 border-t border-white/15 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+            <div className="pointer-events-auto pt-3 border-t border-white/10 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
               
               {/* Playback Controls & Frame Tracker */}
               <div className="flex items-center gap-3 shrink-0">
@@ -412,7 +389,7 @@ export const DeliveryScrollytellingCanvas: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => jumpToMilestone(0)}
-                  className="p-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-neutral-300 hover:text-white transition-colors cursor-pointer"
+                  className="p-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-neutral-300 hover:text-white transition-colors cursor-pointer"
                   title="Reset to Stage 1"
                 >
                   <RotateCcw className="w-4 h-4" />
@@ -421,7 +398,7 @@ export const DeliveryScrollytellingCanvas: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setPlaybackSpeed((s) => (s === 1 ? 1.5 : s === 1.5 ? 2 : 1))}
-                  className="px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 font-mono text-xs text-neutral-300 hover:text-white transition-colors cursor-pointer"
+                  className="px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 font-mono text-xs text-neutral-300 hover:text-white transition-colors cursor-pointer"
                   title="Playback Speed"
                 >
                   {playbackSpeed}x SPEED
@@ -443,7 +420,7 @@ export const DeliveryScrollytellingCanvas: React.FC = () => {
                           : 'bg-black/40 hover:bg-white/10 border border-white/10 text-neutral-400 hover:text-white'
                       }`}
                     >
-                      <span>{idx + 1}. {m.badge.split(' ')[0]}</span>
+                      <span>{idx + 1}. {m.phaseTitle}</span>
                     </button>
                   );
                 })}

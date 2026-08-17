@@ -243,38 +243,16 @@ export default function CapabilitiesPage() {
 
         </section>
 
-        {/* ========================================================================= */}
-        {/* SECTION 2: CINEMATIC PHOTOREALISTIC JIT DELIVERY ANIMATION */}
-        {/* ========================================================================= */}
-        <section className="space-y-6">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.55 }}
-            className="space-y-3"
-          >
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-mono font-bold tracking-wider uppercase text-orange-600 dark:text-orange-400 bg-orange-500/10 border border-orange-500/30">
-              <Truck className="w-3.5 h-3.5 text-orange-500" />
-              <span>JIT SUPPLY CHAIN &amp; DIRECT FLEET LOGISTICS</span>
-            </div>
+      </div>
 
-            <h2 className={`text-4xl sm:text-6xl font-extrabold tracking-tight leading-[1.08] ${
-              isLight ? 'text-neutral-900' : 'text-white'
-            }`}>
-              From Foundry Floor to <span className="text-orange-500">Your Receiving Dock</span>
-            </h2>
+      {/* ========================================================================= */}
+      {/* 300-FRAME CINEMATIC 3D JIT FLEET DELIVERY SCROLLYTELLING SHOWCASE */}
+      {/* ========================================================================= */}
+      <DeliveryScrollytellingCanvas />
 
-            <p className={`text-base sm:text-lg max-w-3xl leading-relaxed ${
-              isLight ? 'text-neutral-600' : 'text-neutral-300'
-            }`}>
-              Scroll or press Play to experience the photorealistic delivery journey of our precision-packed cast-iron components transported securely via the dedicated Shakti Udyog heavy haul fleet.
-            </p>
-          </motion.div>
-
-          <DeliveryScrollytellingCanvas />
-        </section>
-
+      {/* Bottom Conversion CTA Banner Container */}
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-12 sm:py-16">
+        
         {/* Bottom Conversion CTA Banner */}
         <motion.div
           initial={{ opacity: 0, y: 35 }}
