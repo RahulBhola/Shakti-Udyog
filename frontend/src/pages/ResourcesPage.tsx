@@ -23,6 +23,17 @@ import {
   CheckSquare,
   Compass,
   Cpu,
+  UserCheck,
+  Users,
+  Boxes,
+  Truck,
+  FileCheck,
+  Clock,
+  CircleDot,
+  FileSpreadsheet,
+  Zap,
+  Activity,
+  Workflow,
 } from 'lucide-react';
 
 export interface ExtendedFaqItem {
@@ -79,6 +90,191 @@ const RESOURCES_FAQS: ExtendedFaqItem[] = [
     question: 'What are typical lead times for development and production?',
     answer:
       'Sample pattern development and pilot batch inspection typically take 2 to 3 weeks. Regular batch production runs are dispatched within 7 to 14 days after sample approval, supported by rolling buffer stock for scheduled repeat OEM orders.',
+  },
+];
+
+const APPLICATION_STAGES = [
+  {
+    stage: '01',
+    title: 'RFQ & Drawing Submission',
+    subtitle: 'Client Portal or Direct Web Form',
+    timeframe: 'Instant Acknowledgment',
+    role: 'Visitor / Customer',
+    icon: <FileText className="w-5 h-5 text-orange-500" />,
+    badgeColor: 'orange',
+    desc: 'Submit your 2D PDF or 3D CAD drawing (STEP, IGES, DWG) along with casting grade (IS 210 / IS 1865), piece weight, batch quantity, and machining requirements.',
+    keyPoints: [
+      'Encrypted CAD upload up to 50 MB',
+      'Automated confirmation email & reference ID',
+      'No upfront account required to submit initial RFQ',
+    ],
+  },
+  {
+    stage: '02',
+    title: 'DFM & Feasibility Review',
+    subtitle: 'Foundry Engineering Department',
+    timeframe: 'Within 24 Hours',
+    role: 'Foundry Engineer',
+    icon: <Compass className="w-5 h-5 text-blue-500" />,
+    badgeColor: 'blue',
+    desc: 'Our metallurgical and pattern engineers analyze parting lines, draft angles (1.5°–3.0°), shrinkage allowances, core box feasibility, and induction melt metallurgy.',
+    keyPoints: [
+      'Design for Manufacturability (DFM) feedback',
+      'Optimal alloy selection & gating simulation',
+      'Tooling complexity evaluation (Wood / Aluminium match-plate)',
+    ],
+  },
+  {
+    stage: '03',
+    title: 'Commercial Quotation & Approval',
+    subtitle: 'Transparent Itemized Pricing',
+    timeframe: '1 – 2 Business Days',
+    role: 'Sales & Customer',
+    icon: <FileSpreadsheet className="w-5 h-5 text-emerald-500" />,
+    badgeColor: 'emerald',
+    desc: 'A formal itemized quotation is generated in the portal detailing pattern tooling development, unit casting price, finish CNC machining, and dispatch schedule.',
+    keyPoints: [
+      'Downloadable PDF quotation in Customer Portal',
+      'Interactive accept, decline, or negotiate actions',
+      'Locked batch pricing valid for 30 days',
+    ],
+  },
+  {
+    stage: '04',
+    title: 'Order Confirmation & Advance',
+    subtitle: 'Sales Order & Production Booking',
+    timeframe: 'Day 1 of Production',
+    role: 'Admin & Customer',
+    icon: <ShieldCheck className="w-5 h-5 text-purple-500" />,
+    badgeColor: 'purple',
+    desc: 'Once quotation is approved, an official Sales Order is issued. Customer uploads payment proof for the agreed advance (typically 30% for tooling / pilot run), unlocking the manufacturing queue.',
+    keyPoints: [
+      'Instant payment proof submission & invoice generation',
+      'Admin financial reconciliation & production job creation',
+      'Official delivery commitment date registered',
+    ],
+  },
+  {
+    stage: '05',
+    title: 'Pattern Design & 25-Stage Kanban',
+    subtitle: 'Automated Foundry & Machine Shop',
+    timeframe: '7 – 14 Days (Serial Supply)',
+    role: 'Foundry Floor Operations',
+    icon: <Flame className="w-5 h-5 text-amber-500" />,
+    badgeColor: 'amber',
+    desc: 'The casting moves through our 25-stage Jira-inspired Production Kanban: CNC pattern fabrication, high-density green sand moulding, 1450°C induction melting, pouring, shakeout, fettling, and CNC machining.',
+    keyPoints: [
+      'In-house CNC match plate & core box machining',
+      'Optical spectrometer chemistry verification per heat',
+      'Real-time status updates across all production milestones',
+    ],
+  },
+  {
+    stage: '06',
+    title: '3.1 Certification, Dispatch & Tracking',
+    subtitle: 'Live Tracking & Document Vault',
+    timeframe: 'Same-Day Dispatch on QA Pass',
+    role: 'Quality & Logistics Team',
+    icon: <Truck className="w-5 h-5 text-teal-500" />,
+    badgeColor: 'teal',
+    desc: 'Components undergo 3D CMM dimensional verification, Brinell hardness (HBW), and hydrostatic testing. Packed in anti-rust VCI film on wooden pallets with live transporter tracking in your portal.',
+    keyPoints: [
+      'EN 10204 Type 3.1 Mill Test Certificate attached',
+      'Amazon-style live 8-stage shipment tracking',
+      'Instant download of Invoices, Packing Lists & Test Reports',
+    ],
+  },
+];
+
+const USER_ROLES = [
+  {
+    role: 'Visitor / Prospective Buyer',
+    audience: 'Engineers, Procurement Managers, OEM Designers',
+    tag: 'Public Access',
+    icon: <Users className="w-6 h-6 text-orange-500" />,
+    color: 'orange',
+    capabilities: [
+      'Explore 50+ casting grades and typical OEM components',
+      'Access interactive DFM guides, alloy comparisons & FAQs',
+      'Submit RFQs and CAD files directly without mandatory account signup',
+      'Use quick "Send a Query" popup for instant metallurgical feedback',
+    ],
+  },
+  {
+    role: 'Customer Portal Account',
+    audience: 'Verified B2B Buyers & Active OEM Clients',
+    tag: 'Authenticated Portal',
+    icon: <UserCheck className="w-6 h-6 text-blue-500" />,
+    color: 'blue',
+    capabilities: [
+      'View comprehensive Quotation history, accept/decline terms, and download PDFs',
+      'Track live Amazon-style order milestones from pattern making to delivery',
+      'Securely download official Tax Invoices, Delivery Challans, and 3.1 Test Certificates',
+      'Submit advance payment proofs and raise linked technical support tickets',
+    ],
+  },
+  {
+    role: 'Foundry Staff Engineer',
+    audience: 'Metallurgists, Pattern Engineers, Production Supervisors',
+    tag: 'Internal Staff',
+    icon: <Wrench className="w-6 h-6 text-emerald-500" />,
+    color: 'emerald',
+    capabilities: [
+      'Review incoming customer drawings, evaluate DFM, and specify gating geometry',
+      'Manage the 25-stage drag-and-drop Production Kanban manufacturing board',
+      'Record spectrometer chemistries, hardness (HBW), and CMM quality results',
+      'Maintain product catalog drafts and technical specification sheets',
+    ],
+  },
+  {
+    role: 'Platform Administrator',
+    audience: 'Foundry Executives, Operations Heads, Finance Managers',
+    tag: 'Full Governance',
+    icon: <ShieldCheck className="w-6 h-6 text-purple-500" />,
+    color: 'purple',
+    capabilities: [
+      'Approve new customer accounts and configure fine-grained role permissions',
+      'Review and authorize commercial quotations and financial payment reconciliations',
+      'Oversee real-time production analytics, capacity utilization, and dispatch reports',
+      'Audit immutable system logs for complete security and compliance traceability',
+    ],
+  },
+];
+
+const STATUS_LIFECYCLES = [
+  {
+    title: '1. RFQ & Enquiry Lifecycle',
+    subtitle: 'From initial customer inquiry to formal quotation',
+    steps: [
+      { name: 'Submitted', desc: 'Customer submits RFQ with CAD drawing' },
+      { name: 'Under Review', desc: 'Engineer performs metallurgical DFM check' },
+      { name: 'Approved', desc: 'Technical feasibility verified and approved' },
+      { name: 'Quoted', desc: 'Commercial quotation issued in portal' },
+      { name: 'Accepted', desc: 'Customer approves price and terms' },
+    ],
+  },
+  {
+    title: '2. Quotation Flow',
+    subtitle: 'Commercial negotiations and approval routing',
+    steps: [
+      { name: 'Draft', desc: 'Costing calculated by sales engineering' },
+      { name: 'Pending Approval', desc: 'Admin reviews tooling & margins' },
+      { name: 'Issued', desc: 'Sent to customer with 30-day validity' },
+      { name: 'Viewed / Negotiating', desc: 'Customer reviews or requests adjustments' },
+      { name: 'Converted to Order', desc: 'Order created upon acceptance' },
+    ],
+  },
+  {
+    title: '3. Order & Shipment Milestones',
+    subtitle: 'Customer-visible Amazon-style timeline',
+    steps: [
+      { name: 'Advance Paid', desc: '30% advance verified by finance' },
+      { name: 'Pattern / Tooling', desc: 'CNC match plate & core boxes fabricated' },
+      { name: 'In Production', desc: 'Moulding, induction melt & pouring' },
+      { name: 'Quality Inspection', desc: 'Spectro, HBW hardness, CMM inspection' },
+      { name: 'Packed & Dispatched', desc: 'Palletized with transporter tracking ID' },
+      { name: 'Delivered', desc: 'Proof of Delivery & 3.1 certs finalized' },
+    ],
   },
 ];
 
@@ -148,6 +344,7 @@ export default function ResourcesPage() {
   const { theme } = useTheme();
   const isLight = theme === 'light';
 
+  const [activeWorkflowTab, setActiveWorkflowTab] = useState<'stages' | 'roles' | 'lifecycles'>('stages');
   const [openId, setOpenId] = useState<string | null>('faq-1');
 
   const toggleFaq = (id: string) => {
@@ -200,6 +397,296 @@ export default function ResourcesPage() {
       {/* Main Content Container */}
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-12 sm:py-16 space-y-16 sm:space-y-20">
         
+        {/* ========================================================================= */}
+        {/* SECTION 0: HOW THE APPLICATION & ORDERING PROCESS WORKS (END-TO-END GUIDE) */}
+        {/* ========================================================================= */}
+        <section className="space-y-8">
+          <div className="space-y-3">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-bold tracking-wider uppercase text-orange-600 dark:text-orange-400 bg-orange-500/10 border border-orange-500/30">
+              <Workflow className="w-3.5 h-3.5 text-orange-500" />
+              <span>PLATFORM WORKFLOW &amp; BUYER GUIDE</span>
+            </div>
+
+            <h2 className={`text-3xl sm:text-5xl font-extrabold tracking-tight ${
+              isLight ? 'text-neutral-900' : 'text-white'
+            }`}>
+              How the Shakti Udyog Platform Works
+            </h2>
+
+            <p className={`text-sm sm:text-base max-w-3xl leading-relaxed ${
+              isLight ? 'text-neutral-600' : 'text-neutral-300'
+            }`}>
+              A transparent look at our end-to-end digital casting workflow — from CAD file upload and 24-hour metallurgical DFM review to the 25-stage Kanban foundry floor, quality inspection, and live shipment milestone tracking.
+            </p>
+          </div>
+
+          {/* Interactive Navigation Tabs */}
+          <div className="flex flex-wrap items-center gap-2 p-1.5 rounded-2xl bg-neutral-100 dark:bg-white/5 border border-neutral-200 dark:border-white/10 w-fit">
+            <button
+              type="button"
+              onClick={() => setActiveWorkflowTab('stages')}
+              className={`px-4 sm:px-5 py-2.5 rounded-xl font-mono text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                activeWorkflowTab === 'stages'
+                  ? 'bg-orange-500 text-white shadow-md shadow-orange-500/25'
+                  : isLight
+                    ? 'text-neutral-700 hover:text-neutral-900 hover:bg-white/80'
+                    : 'text-neutral-400 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              1. 6-Stage Order Lifecycle
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveWorkflowTab('roles')}
+              className={`px-4 sm:px-5 py-2.5 rounded-xl font-mono text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                activeWorkflowTab === 'roles'
+                  ? 'bg-orange-500 text-white shadow-md shadow-orange-500/25'
+                  : isLight
+                    ? 'text-neutral-700 hover:text-neutral-900 hover:bg-white/80'
+                    : 'text-neutral-400 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              2. User Roles &amp; Portals
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveWorkflowTab('lifecycles')}
+              className={`px-4 sm:px-5 py-2.5 rounded-xl font-mono text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                activeWorkflowTab === 'lifecycles'
+                  ? 'bg-orange-500 text-white shadow-md shadow-orange-500/25'
+                  : isLight
+                    ? 'text-neutral-700 hover:text-neutral-900 hover:bg-white/80'
+                    : 'text-neutral-400 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              3. Status &amp; Milestone Cheat Sheet
+            </button>
+          </div>
+
+          {/* TAB 1: 6-STAGE ORDER LIFECYCLE */}
+          {activeWorkflowTab === 'stages' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {APPLICATION_STAGES.map((st, idx) => (
+                <motion.div
+                  key={st.stage}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: idx * 0.05 }}
+                  className={`rounded-3xl p-6 sm:p-7 border flex flex-col justify-between transition-all duration-300 ${
+                    isLight
+                      ? 'bg-white border-neutral-200/90 hover:border-orange-300 hover:shadow-xl shadow-[0_4px_20px_rgba(0,0,0,0.03)]'
+                      : 'bg-[#090b10] border-white/[0.08] hover:border-orange-500/30 hover:bg-[#0c0e15] hover:shadow-[0_0_25px_rgba(249,115,22,0.12)]'
+                  }`}
+                >
+                  <div className="space-y-4">
+                    {/* Card Header: Stage Number + Icon + Turnaround Badge */}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-lg bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20">
+                          STAGE {st.stage}
+                        </span>
+                        <span className="text-[11px] font-mono font-medium px-2 py-0.5 rounded-md bg-neutral-100 dark:bg-white/5 text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-white/10">
+                          {st.role}
+                        </span>
+                      </div>
+                      <div className="p-2 rounded-xl bg-orange-500/10 border border-orange-500/20 shrink-0">
+                        {st.icon}
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className={`text-lg sm:text-xl font-bold tracking-tight ${
+                        isLight ? 'text-neutral-900' : 'text-white'
+                      }`}>
+                        {st.title}
+                      </h3>
+                      <div className="text-xs font-mono text-orange-600 dark:text-orange-400 font-semibold mt-0.5">
+                        {st.subtitle}
+                      </div>
+                    </div>
+
+                    <p className={`text-xs sm:text-sm leading-relaxed ${
+                      isLight ? 'text-neutral-600' : 'text-neutral-300'
+                    }`}>
+                      {st.desc}
+                    </p>
+
+                    {/* Key Deliverables Bullet Points */}
+                    <div className="space-y-2 pt-2 border-t border-neutral-100 dark:border-white/[0.06]">
+                      {st.keyPoints.map((pt, pIdx) => (
+                        <div key={pIdx} className="flex items-start gap-2 text-xs">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                          <span className={isLight ? 'text-neutral-700' : 'text-neutral-300'}>{pt}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Footer Turnaround Pill */}
+                  <div className="mt-5 pt-3 border-t border-neutral-100 dark:border-white/[0.06] flex items-center justify-between text-[11px] font-mono">
+                    <span className="text-neutral-500">Timeline:</span>
+                    <span className="font-bold text-orange-600 dark:text-orange-400 flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {st.timeframe}
+                    </span>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
+
+          {/* TAB 2: USER ROLES & PORTALS */}
+          {activeWorkflowTab === 'roles' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {USER_ROLES.map((role, idx) => (
+                <motion.div
+                  key={role.role}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: idx * 0.05 }}
+                  className={`rounded-3xl p-7 border flex flex-col justify-between transition-all duration-300 ${
+                    isLight
+                      ? 'bg-white border-neutral-200/90 shadow-[0_4px_20px_rgba(0,0,0,0.03)]'
+                      : 'bg-[#090b10] border-white/[0.08] shadow-[0_4px_30px_rgba(0,0,0,0.7)]'
+                  }`}
+                >
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2.5 rounded-2xl bg-orange-500/10 border border-orange-500/20">
+                          {role.icon}
+                        </div>
+                        <div>
+                          <h3 className={`text-xl font-bold tracking-tight ${
+                            isLight ? 'text-neutral-900' : 'text-white'
+                          }`}>
+                            {role.role}
+                          </h3>
+                          <span className="text-xs font-mono text-neutral-500">
+                            {role.audience}
+                          </span>
+                        </div>
+                      </div>
+                      <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-sky-400 border border-blue-500/20">
+                        {role.tag}
+                      </span>
+                    </div>
+
+                    <div className="space-y-2.5 pt-3 border-t border-neutral-100 dark:border-white/[0.06]">
+                      <div className="text-xs font-mono font-bold uppercase text-neutral-500">Core Capabilities:</div>
+                      {role.capabilities.map((cap, cIdx) => (
+                        <div key={cIdx} className="flex items-start gap-2 text-xs sm:text-sm">
+                          <CheckSquare className="w-4 h-4 text-orange-500 shrink-0 mt-0.5" />
+                          <span className={isLight ? 'text-neutral-700' : 'text-neutral-300'}>{cap}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="mt-6 pt-4 border-t border-neutral-100 dark:border-white/[0.06] flex items-center justify-between text-xs font-mono">
+                    <span className="text-neutral-500">Security &amp; RBAC:</span>
+                    <span className="font-bold text-emerald-600 dark:text-emerald-400">Strict Role Isolation</span>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
+
+          {/* TAB 3: STATUS & MILESTONE CHEAT SHEET */}
+          {activeWorkflowTab === 'lifecycles' && (
+            <div className="space-y-6">
+              {STATUS_LIFECYCLES.map((flow, idx) => (
+                <motion.div
+                  key={flow.title}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: idx * 0.05 }}
+                  className={`rounded-3xl p-6 sm:p-8 border ${
+                    isLight
+                      ? 'bg-white border-neutral-200/90 shadow-[0_4px_20px_rgba(0,0,0,0.03)]'
+                      : 'bg-[#090b10] border-white/[0.08] shadow-[0_4px_30px_rgba(0,0,0,0.7)]'
+                  }`}
+                >
+                  <div className="mb-5">
+                    <h3 className={`text-xl font-bold tracking-tight ${
+                      isLight ? 'text-neutral-900' : 'text-white'
+                    }`}>
+                      {flow.title}
+                    </h3>
+                    <p className="text-xs font-mono text-neutral-500 mt-1">
+                      {flow.subtitle}
+                    </p>
+                  </div>
+
+                  {/* Flow Badges Pipeline */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                    {flow.steps.map((st, sIdx) => (
+                      <div
+                        key={sIdx}
+                        className={`p-4 rounded-2xl border transition-all ${
+                          isLight
+                            ? 'bg-neutral-50 border-neutral-200 text-neutral-800'
+                            : 'bg-white/5 border-white/10 text-white'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <span className="w-5 h-5 rounded-full bg-orange-500 text-white text-[10px] font-mono font-bold flex items-center justify-center shrink-0">
+                            {sIdx + 1}
+                          </span>
+                          <span className="font-bold text-xs sm:text-sm">{st.name}</span>
+                        </div>
+                        <p className="text-[11px] text-neutral-500 dark:text-neutral-400 leading-relaxed">
+                          {st.desc}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
+
+          {/* Quick Action Banner */}
+          <div className={`rounded-2xl p-6 border flex flex-col sm:flex-row items-center justify-between gap-4 ${
+            isLight
+              ? 'bg-orange-50/70 border-orange-200 text-neutral-800'
+              : 'bg-orange-950/20 border-orange-500/30 text-white'
+          }`}>
+            <div className="space-y-1 text-center sm:text-left">
+              <div className="font-bold text-sm sm:text-base">Ready to start your casting development?</div>
+              <div className="text-xs text-neutral-600 dark:text-neutral-400">
+                Upload your CAD files to receive a comprehensive metallurgical review and quotation within 24 hours.
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 shrink-0">
+              <Link
+                to="/request-a-quote"
+                className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-extrabold text-xs sm:text-sm transition-all transform hover:scale-105 shadow-md ${
+                  isLight
+                    ? 'bg-orange-500 hover:bg-orange-600 text-white shadow-orange-500/25'
+                    : 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-[0_0_20px_rgba(249,115,22,0.4)]'
+                }`}
+              >
+                <span>Request a Quote</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+
+              <Link
+                to="/contact"
+                className={`inline-flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-xs sm:text-sm transition-all border ${
+                  isLight
+                    ? 'bg-white hover:bg-neutral-100 border-neutral-300 text-neutral-800 shadow-sm'
+                    : 'bg-white/10 hover:bg-white/20 border-white/20 text-white shadow-sm'
+                }`}
+              >
+                <span>Contact Engineers</span>
+              </Link>
+            </div>
+          </div>
+        </section>
 
         {/* ========================================================================= */}
         {/* SECTION 1: HOW TO PREPARE A CASTING ENQUIRY (FULL 6-POINT BLUEPRINT) */}
