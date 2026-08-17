@@ -6,13 +6,7 @@ import {
   Pause,
   RotateCcw,
   Sparkles,
-  ShieldCheck,
-  ChevronRight,
-  Package,
-  Layers,
-  MapPin,
   CheckCircle2,
-  Gauge,
 } from 'lucide-react';
 import { useTheme } from '../auth/ThemeContext';
 import {
@@ -28,6 +22,7 @@ export const DeliveryScrollytellingCanvas: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imagesRef = useRef<HTMLImageElement[]>([]);
+  const currentFrameRef = useRef<number>(0);
 
   const [imagesLoaded, setImagesLoaded] = useState(0);
   const [isReady, setIsReady] = useState(false);
@@ -57,6 +52,7 @@ export const DeliveryScrollytellingCanvas: React.FC = () => {
     if (!ctx) return;
 
     const safeIndex = Math.max(0, Math.min(TOTAL_DELIVERY_FRAMES - 1, Math.floor(frameIndex)));
+    currentFrameRef.current = safeIndex;
     const img = imagesRef.current[safeIndex];
     if (!img || !img.complete || img.naturalWidth === 0) return;
 
@@ -185,7 +181,6 @@ export const DeliveryScrollytellingCanvas: React.FC = () => {
       return;
     }
 
-    let currentFrame = currentFrameNumber - 1;
     let lastTimestamp = performance.now();
     const targetFps = 30 * playbackSpeed;
     const intervalMs = 1000 / targetFps;
@@ -194,11 +189,11 @@ export const DeliveryScrollytellingCanvas: React.FC = () => {
       const elapsed = timestamp - lastTimestamp;
       if (elapsed >= intervalMs) {
         lastTimestamp = timestamp - (elapsed % intervalMs);
-        currentFrame = (currentFrame + 1) % TOTAL_DELIVERY_FRAMES;
+        const nextFrame = (currentFrameRef.current + 1) % TOTAL_DELIVERY_FRAMES;
 
-        drawFrame(currentFrame);
+        drawFrame(nextFrame);
 
-        const progress = currentFrame / (TOTAL_DELIVERY_FRAMES - 1);
+        const progress = nextFrame / (TOTAL_DELIVERY_FRAMES - 1);
         const currentMilestoneIndex = DELIVERY_MILESTONES.findIndex(
           (m) => progress >= m.startProgress && progress <= m.endProgress
         );
@@ -217,7 +212,7 @@ export const DeliveryScrollytellingCanvas: React.FC = () => {
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [isPlaying, playbackSpeed, drawFrame, currentFrameNumber]);
+  }, [isPlaying, playbackSpeed, drawFrame]);
 
   // Jump to specific milestone
   const jumpToMilestone = (index: number) => {
@@ -245,12 +240,12 @@ export const DeliveryScrollytellingCanvas: React.FC = () => {
   // Handle window resizing
   useEffect(() => {
     const handleResize = () => {
-      drawFrame(currentFrameNumber - 1);
+      drawFrame(currentFrameRef.current);
     };
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [drawFrame, currentFrameNumber]);
+  }, [drawFrame]);
 
   const activeMilestone: DeliveryMilestone =
     DELIVERY_MILESTONES[activeMilestoneIndex] || DELIVERY_MILESTONES[0];

@@ -185,7 +185,7 @@ export default function CapabilitiesPage() {
                   </div>
 
                   {/* Connector Dot */}
-                  {idx < MANUFACTURING_PHASES.length - 1 && (
+                  {idx < PROCESS_PHASES.length - 1 && (
                     <div className="hidden sm:block absolute left-1/2 -translate-x-1/2 top-[76px] w-2 h-2 rounded-full bg-blue-500/50" />
                   )}
                 </div>
