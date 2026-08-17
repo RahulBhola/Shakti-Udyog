@@ -17,7 +17,6 @@ import {
 import { Seo } from '../components/Seo';
 import { seoPages } from '../content/seo';
 import { useTheme } from '../auth/ThemeContext';
-import { getThemedImage } from '../utils/themeImage';
 
 interface IndustrySector {
   id: string;
@@ -25,7 +24,8 @@ interface IndustrySector {
   title: string;
   exampleComponents: string;
   icon: React.ReactNode;
-  image: string;
+  darkImage: string;
+  lightImage: string;
   themeColor: 'purple' | 'emerald' | 'blue' | 'amber' | 'teal' | 'pink';
   svgPath: string;
 }
@@ -37,10 +37,11 @@ const SECTOR_CARDS: IndustrySector[] = [
     title: 'Automotive & Commercial Vehicles',
     exampleComponents: 'Housings, brackets, carriers, hubs, manifolds',
     icon: <Car className="w-5 h-5" />,
-    image: '/images/Gear Lever Parts/Cast Iron Car Gear Lever Part.png',
+    darkImage: '/images/industries/automotive_dark.png',
+    lightImage: '/images/industries/automotive_light.png',
     themeColor: 'purple',
     // Diagonal slanted right edge (Top extends further right, slants inward toward bottom-right)
-    svgPath: 'M 24,0 L 375,0 Q 395,0 390,20 L 350,222 Q 345,240 325,240 L 24,240 Q 0,240 0,216 L 0,24 Q 0,0 24,0 Z',
+    svgPath: 'M 24,0 L 570,0 Q 595,0 590,20 L 530,220 Q 525,240 500,240 L 24,240 Q 0,240 0,216 L 0,24 Q 0,0 24,0 Z',
   },
   {
     id: 'agriculture',
@@ -48,10 +49,11 @@ const SECTOR_CARDS: IndustrySector[] = [
     title: 'Agriculture',
     exampleComponents: 'Gearbox parts, pump bodies, housings, counterweights',
     icon: <Tractor className="w-5 h-5" />,
-    image: '/images/cast_iron_casting/Cast Iron Tractor Part Casting.png',
+    darkImage: '/images/industries/agriculture_dark.png',
+    lightImage: '/images/industries/agriculture_light.png',
     themeColor: 'emerald',
     // Chevron / Greater-Than (>) pointed right edge
-    svgPath: 'M 24,0 L 350,0 Q 365,0 375,12 L 396,110 Q 400,120 396,130 L 375,228 Q 365,240 350,240 L 24,240 Q 0,240 0,216 L 0,24 Q 0,0 24,0 Z',
+    svgPath: 'M 24,0 L 535,0 Q 550,0 562,12 L 594,110 Q 598,120 594,130 L 562,228 Q 550,240 535,240 L 24,240 Q 0,240 0,216 L 0,24 Q 0,0 24,0 Z',
   },
   {
     id: 'pumps-valves',
@@ -59,10 +61,11 @@ const SECTOR_CARDS: IndustrySector[] = [
     title: 'Pumps & Valves',
     exampleComponents: 'Bodies, covers, impellers, flanges, valve components',
     icon: <Droplets className="w-5 h-5" />,
-    image: '/images/cast_iron_casting/Cast Iron Rotary Barrel Pump Casting.png',
+    darkImage: '/images/industries/pumps_dark.png',
+    lightImage: '/images/industries/pumps_light.png',
     themeColor: 'blue',
     // Signature Semicircle / Quarter-Circle Arch Dome at top right
-    svgPath: 'M 24,0 L 250,0 C 340,0 400,60 400,150 L 400,216 Q 400,240 376,240 L 24,240 Q 0,240 0,216 L 0,24 Q 0,0 24,0 Z',
+    svgPath: 'M 24,0 L 420,0 C 520,0 596,50 596,150 L 596,216 Q 596,240 572,240 L 24,240 Q 0,240 0,216 L 0,24 Q 0,0 24,0 Z',
   },
   {
     id: 'machine-tools',
@@ -70,10 +73,11 @@ const SECTOR_CARDS: IndustrySector[] = [
     title: 'Machine Tools',
     exampleComponents: 'Beds, bases, tables, bearing housings, guards',
     icon: <Cog className="w-5 h-5" />,
-    image: '/images/Sewing_machine_parts/Cast Iron TA 1 Bracket Industrial Sewing Machine Part.png',
+    darkImage: '/images/industries/machinetools_dark.png',
+    lightImage: '/images/industries/machinetools_light.png',
     themeColor: 'amber',
     // Diagonal angled cut right edge
-    svgPath: 'M 24,0 L 375,0 Q 395,0 390,20 L 350,222 Q 345,240 325,240 L 24,240 Q 0,240 0,216 L 0,24 Q 0,0 24,0 Z',
+    svgPath: 'M 24,0 L 570,0 Q 595,0 590,20 L 530,220 Q 525,240 500,240 L 24,240 Q 0,240 0,216 L 0,24 Q 0,0 24,0 Z',
   },
   {
     id: 'construction',
@@ -81,10 +85,11 @@ const SECTOR_CARDS: IndustrySector[] = [
     title: 'Construction Equipment',
     exampleComponents: 'Housings, brackets, wear components, support parts',
     icon: <Building2 className="w-5 h-5" />,
-    image: '/images/Hillside Washer/Cast Iron Hillside Washer.png',
+    darkImage: '/images/industries/construction_dark.png',
+    lightImage: '/images/industries/construction_light.png',
     themeColor: 'teal',
     // Chevron / Greater-Than (>) pointed right edge
-    svgPath: 'M 24,0 L 350,0 Q 365,0 375,12 L 396,110 Q 400,120 396,130 L 375,228 Q 365,240 350,240 L 24,240 Q 0,240 0,216 L 0,24 Q 0,0 24,0 Z',
+    svgPath: 'M 24,0 L 535,0 Q 550,0 562,12 L 594,110 Q 598,120 594,130 L 562,228 Q 550,240 535,240 L 24,240 Q 0,240 0,216 L 0,24 Q 0,0 24,0 Z',
   },
   {
     id: 'energy-infrastructure',
@@ -92,10 +97,11 @@ const SECTOR_CARDS: IndustrySector[] = [
     title: 'Energy & Infrastructure',
     exampleComponents: 'Enclosures, fittings, structural components, equipment bases',
     icon: <Zap className="w-5 h-5" />,
-    image: '/images/Collar Plug/Cast Iron Collar Plug.png',
+    darkImage: '/images/industries/energy_dark.png',
+    lightImage: '/images/industries/energy_dark.png',
     themeColor: 'pink',
     // Diagonal angled cut right edge
-    svgPath: 'M 24,0 L 375,0 Q 395,0 390,20 L 350,222 Q 345,240 325,240 L 24,240 Q 0,240 0,216 L 0,24 Q 0,0 24,0 Z',
+    svgPath: 'M 24,0 L 570,0 Q 595,0 590,20 L 530,220 Q 525,240 500,240 L 24,240 Q 0,240 0,216 L 0,24 Q 0,0 24,0 Z',
   },
 ];
 
@@ -106,7 +112,7 @@ const COLOR_STYLES = {
     divider: 'bg-gradient-to-r from-purple-500 to-transparent',
     strokeDark: 'rgba(168, 85, 247, 0.45)',
     strokeLight: 'rgba(168, 85, 247, 0.4)',
-    bgDarkStart: '#0d0c18',
+    bgDarkStart: '#0e0d1a',
     bgDarkEnd: '#080710',
     bgLightStart: '#ffffff',
     bgLightEnd: '#faf8ff',
@@ -119,7 +125,7 @@ const COLOR_STYLES = {
     divider: 'bg-gradient-to-r from-emerald-500 to-transparent',
     strokeDark: 'rgba(16, 185, 129, 0.45)',
     strokeLight: 'rgba(16, 185, 129, 0.4)',
-    bgDarkStart: '#08120e',
+    bgDarkStart: '#091510',
     bgDarkEnd: '#050c09',
     bgLightStart: '#ffffff',
     bgLightEnd: '#f4fbf7',
@@ -132,7 +138,7 @@ const COLOR_STYLES = {
     divider: 'bg-gradient-to-r from-blue-500 to-transparent',
     strokeDark: 'rgba(59, 130, 246, 0.45)',
     strokeLight: 'rgba(59, 130, 246, 0.4)',
-    bgDarkStart: '#080f1e',
+    bgDarkStart: '#081224',
     bgDarkEnd: '#050a14',
     bgLightStart: '#ffffff',
     bgLightEnd: '#f4f8ff',
@@ -145,7 +151,7 @@ const COLOR_STYLES = {
     divider: 'bg-gradient-to-r from-amber-500 to-transparent',
     strokeDark: 'rgba(245, 158, 11, 0.45)',
     strokeLight: 'rgba(245, 158, 11, 0.4)',
-    bgDarkStart: '#140f08',
+    bgDarkStart: '#161109',
     bgDarkEnd: '#0d0a05',
     bgLightStart: '#ffffff',
     bgLightEnd: '#fffbf4',
@@ -158,7 +164,7 @@ const COLOR_STYLES = {
     divider: 'bg-gradient-to-r from-teal-500 to-transparent',
     strokeDark: 'rgba(20, 184, 166, 0.45)',
     strokeLight: 'rgba(20, 184, 166, 0.4)',
-    bgDarkStart: '#061314',
+    bgDarkStart: '#071618',
     bgDarkEnd: '#040d0e',
     bgLightStart: '#ffffff',
     bgLightEnd: '#f2fbfb',
@@ -171,7 +177,7 @@ const COLOR_STYLES = {
     divider: 'bg-gradient-to-r from-pink-500 to-transparent',
     strokeDark: 'rgba(236, 72, 153, 0.45)',
     strokeLight: 'rgba(236, 72, 153, 0.4)',
-    bgDarkStart: '#140711',
+    bgDarkStart: '#160813',
     bgDarkEnd: '#0d040b',
     bgLightStart: '#ffffff',
     bgLightEnd: '#fdf5fa',
@@ -228,7 +234,7 @@ export default function IndustriesPage() {
             isLight ? 'bg-white border-neutral-200/80' : 'bg-[#08090d] border-white/[0.08]'
           }`}
         >
-          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 relative z-10 text-center flex flex-col items-center">
+          <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 relative z-10 text-center flex flex-col items-center">
             {/* Centered Eyebrow Pill */}
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs sm:text-sm font-mono font-bold tracking-wider uppercase text-orange-600 dark:text-orange-400 bg-orange-500/10 border border-orange-500/30 mb-6 shadow-sm">
               <Sparkles className="w-4 h-4 text-orange-500" />
@@ -256,16 +262,16 @@ export default function IndustriesPage() {
           </div>
         </section>
 
-        {/* Main Content Area */}
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-12 sm:py-16 space-y-12 sm:space-y-16">
+        {/* Main Content Area: Spacious 2-Column Grid on Desktop */}
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-12 sm:py-16 space-y-10 sm:space-y-14">
           
           {/* ========================================================================= */}
-          {/* 6 ASYMMETRIC SECTOR CARDS WITH EXACT GEOMETRIC SVG OUTLINES */}
+          {/* 6 WIDE ASYMMETRIC SECTOR CARDS WITH EXACT GEOMETRIC SVG OUTLINES */}
           {/* ========================================================================= */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-7 items-stretch">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-7 sm:gap-9 items-stretch">
             {SECTOR_CARDS.map((sector, idx) => {
               const styles = COLOR_STYLES[sector.themeColor];
-              const themedImg = getThemedImage(sector.image, isLight);
+              const displayImg = isLight ? sector.lightImage : sector.darkImage;
 
               return (
                 <motion.div
@@ -275,12 +281,12 @@ export default function IndustriesPage() {
                   viewport={{ once: true, amount: 0.15 }}
                   transition={{ duration: 0.5, delay: idx * 0.08, ease: 'easeOut' }}
                   whileHover={{ y: -4, transition: { duration: 0.25 } }}
-                  className="group relative p-6 sm:p-7 flex flex-row items-center justify-between gap-3 sm:gap-4 transition-all duration-300 min-h-[230px] sm:min-h-[250px]"
+                  className="group relative p-7 sm:p-9 flex flex-row items-center justify-between gap-6 sm:gap-8 transition-all duration-300 min-h-[250px] sm:min-h-[270px]"
                 >
                   {/* SVG Custom Silhouette Background and Glowing Border */}
                   <svg
-                    className="absolute inset-0 w-full h-full pointer-events-none transition-all duration-300 filter drop-shadow-lg"
-                    viewBox="0 0 400 240"
+                    className="absolute inset-0 w-full h-full pointer-events-none transition-all duration-300 filter drop-shadow-xl"
+                    viewBox="0 0 600 240"
                     preserveAspectRatio="none"
                   >
                     <defs>
@@ -300,15 +306,15 @@ export default function IndustriesPage() {
 
                   {/* Subtle Inner Ambient Glow */}
                   <div
-                    className={`absolute -right-8 -top-8 w-44 h-44 rounded-full blur-3xl pointer-events-none bg-gradient-to-br ${styles.radialGlow} to-transparent`}
+                    className={`absolute -right-8 -top-8 w-56 h-56 rounded-full blur-3xl pointer-events-none bg-gradient-to-br ${styles.radialGlow} to-transparent`}
                   />
 
                   {/* Left Column: Badge, Icon, Title, Divider, Example Components */}
-                  <div className="flex-1 min-w-0 pr-1 sm:pr-2 space-y-2.5 z-10 flex flex-col justify-between h-full">
+                  <div className="flex-1 min-w-0 pr-2 sm:pr-4 space-y-3 z-10 flex flex-col justify-between h-full">
                     {/* Top: Badge + Icon */}
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2.5">
                       <div
-                        className={`px-2.5 py-0.5 rounded-lg font-mono text-xs font-bold border ${styles.badge} ${styles.pillGlow}`}
+                        className={`px-3 py-0.5 rounded-lg font-mono text-xs font-bold border ${styles.badge} ${styles.pillGlow}`}
                       >
                         {sector.badge}
                       </div>
@@ -320,9 +326,9 @@ export default function IndustriesPage() {
                       </div>
                     </div>
 
-                    {/* Sector Title */}
+                    {/* Sector Title with Generous Width & Zero Hyphenation */}
                     <h2
-                      className={`text-base sm:text-lg font-bold tracking-tight leading-snug break-words ${
+                      className={`text-xl sm:text-2xl font-bold tracking-tight leading-snug whitespace-normal ${
                         isLight ? 'text-neutral-900' : 'text-white'
                       }`}
                     >
@@ -330,19 +336,19 @@ export default function IndustriesPage() {
                     </h2>
 
                     {/* Thin Glowing Divider */}
-                    <div className={`h-[1.5px] w-10 rounded-full ${styles.divider}`} />
+                    <div className={`h-[1.5px] w-12 rounded-full ${styles.divider}`} />
 
                     {/* Example components */}
-                    <div className="space-y-0.5 pt-0.5">
+                    <div className="space-y-1 pt-0.5">
                       <div
-                        className={`text-[10.5px] sm:text-[11px] font-mono font-medium ${
+                        className={`text-xs font-mono font-medium ${
                           isLight ? 'text-neutral-500' : 'text-neutral-400'
                         }`}
                       >
                         Example components:
                       </div>
                       <p
-                        className={`text-xs leading-relaxed line-clamp-3 font-semibold ${
+                        className={`text-xs sm:text-sm leading-relaxed font-semibold ${
                           isLight ? 'text-neutral-800' : 'text-neutral-200'
                         }`}
                       >
@@ -351,15 +357,13 @@ export default function IndustriesPage() {
                     </div>
                   </div>
 
-                  {/* Right Column: 3D Cast Iron Product Visualization (Positioned inside the unique custom corner) */}
-                  <div className="w-28 h-28 sm:w-32 sm:h-32 shrink-0 flex items-center justify-center relative z-10 select-none pointer-events-none pr-1">
+                  {/* Right Column: 100% Transparent Cutout 3D Product (Floating with No Box Background) */}
+                  <div className="w-36 h-36 sm:w-44 sm:h-44 shrink-0 flex items-center justify-center relative z-10 select-none pointer-events-none">
                     <img
-                      src={themedImg}
+                      src={displayImg}
                       alt={`${sector.title} casting component`}
                       loading="lazy"
-                      className={`max-w-full max-h-full object-contain filter drop-shadow-[0_8px_16px_rgba(0,0,0,0.35)] transition-transform duration-300 ease-out group-hover:scale-108 group-hover:rotate-2 ${
-                        isLight ? 'mix-blend-multiply' : ''
-                      }`}
+                      className="max-w-full max-h-full object-contain filter drop-shadow-[0_12px_24px_rgba(0,0,0,0.45)] transition-transform duration-300 ease-out group-hover:scale-110 group-hover:rotate-2"
                     />
                   </div>
                 </motion.div>
@@ -433,15 +437,10 @@ export default function IndustriesPage() {
                   <div className="absolute inset-8 rounded-full border border-purple-500/10" />
 
                   <img
-                    src={getThemedImage(
-                      '/images/Pulley Wheel/6 Inch Cast Iron Pulley Wheel.png',
-                      isLight
-                    )}
+                    src={isLight ? '/images/industries/general_light.png' : '/images/industries/general_dark.png'}
                     alt="General Engineering 3D Casting"
                     loading="lazy"
-                    className={`w-full h-full object-contain filter drop-shadow-[0_15px_30px_rgba(0,0,0,0.6)] transform group-hover:scale-108 group-hover:rotate-6 transition-transform duration-500 ${
-                      isLight ? 'mix-blend-multiply' : ''
-                    }`}
+                    className="w-full h-full object-contain filter drop-shadow-[0_15px_30px_rgba(0,0,0,0.6)] transform group-hover:scale-108 group-hover:rotate-6 transition-transform duration-500"
                   />
                 </div>
               </div>
