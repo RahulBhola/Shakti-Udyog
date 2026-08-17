@@ -28,7 +28,6 @@ interface IndustrySector {
   image: string;
   themeColor: 'purple' | 'emerald' | 'blue' | 'amber' | 'teal' | 'pink';
   shapeClass: string;
-  imageTransform?: string;
 }
 
 const SECTOR_CARDS: IndustrySector[] = [
@@ -41,7 +40,6 @@ const SECTOR_CARDS: IndustrySector[] = [
     image: '/images/Gear Lever Parts/Cast Iron Car Gear Lever Part.png',
     themeColor: 'purple',
     shapeClass: 'rounded-3xl',
-    imageTransform: 'scale-110 group-hover:scale-120 group-hover:rotate-2',
   },
   {
     id: 'agriculture',
@@ -52,7 +50,6 @@ const SECTOR_CARDS: IndustrySector[] = [
     image: '/images/cast_iron_casting/Cast Iron Tractor Part Casting.png',
     themeColor: 'emerald',
     shapeClass: 'rounded-3xl rounded-tr-[52px] rounded-bl-[16px] rounded-br-[40px]',
-    imageTransform: 'scale-105 group-hover:scale-115 group-hover:-rotate-2',
   },
   {
     id: 'pumps-valves',
@@ -63,7 +60,6 @@ const SECTOR_CARDS: IndustrySector[] = [
     image: '/images/cast_iron_casting/Cast Iron Rotary Barrel Pump Casting.png',
     themeColor: 'blue',
     shapeClass: 'rounded-3xl rounded-tr-[90px] sm:rounded-tr-[135px]',
-    imageTransform: 'scale-115 group-hover:scale-125 group-hover:rotate-3',
   },
   {
     id: 'machine-tools',
@@ -74,7 +70,6 @@ const SECTOR_CARDS: IndustrySector[] = [
     image: '/images/Sewing_machine_parts/Cast Iron TA 1 Bracket Industrial Sewing Machine Part.png',
     themeColor: 'amber',
     shapeClass: 'rounded-3xl rounded-tl-[44px] rounded-br-[20px]',
-    imageTransform: 'scale-110 group-hover:scale-120 group-hover:-rotate-3',
   },
   {
     id: 'construction',
@@ -85,7 +80,6 @@ const SECTOR_CARDS: IndustrySector[] = [
     image: '/images/Hillside Washer/Cast Iron Hillside Washer.png',
     themeColor: 'teal',
     shapeClass: 'rounded-3xl rounded-tl-[48px] rounded-br-[48px] rounded-tr-[16px] rounded-bl-[16px]',
-    imageTransform: 'scale-110 group-hover:scale-120 group-hover:rotate-2',
   },
   {
     id: 'energy-infrastructure',
@@ -96,7 +90,6 @@ const SECTOR_CARDS: IndustrySector[] = [
     image: '/images/Collar Plug/Cast Iron Collar Plug.png',
     themeColor: 'pink',
     shapeClass: 'rounded-3xl rounded-tr-[44px] rounded-bl-[44px]',
-    imageTransform: 'scale-110 group-hover:scale-120 group-hover:-rotate-2',
   },
 ];
 
@@ -229,8 +222,11 @@ export default function IndustriesPage() {
 
         {/* Main Content Area */}
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-12 sm:py-16 space-y-12 sm:space-y-16">
-          {/* 6 ASYMMETRIC GRID SECTOR CARDS (2 ROWS X 3 COLS) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-7">
+          
+          {/* ========================================================================= */}
+          {/* 6 ASYMMETRIC GRID SECTOR CARDS (2 ROWS X 3 COLS) — ZERO OVERLAP */}
+          {/* ========================================================================= */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-7 items-stretch">
             {SECTOR_CARDS.map((sector, idx) => {
               const styles = COLOR_STYLES[sector.themeColor];
               const themedImg = getThemedImage(sector.image, isLight);
@@ -243,7 +239,7 @@ export default function IndustriesPage() {
                   viewport={{ once: true, amount: 0.15 }}
                   transition={{ duration: 0.5, delay: idx * 0.08, ease: 'easeOut' }}
                   whileHover={{ y: -4, transition: { duration: 0.25 } }}
-                  className={`group relative p-6 sm:p-7 flex flex-row items-center justify-between gap-4 border transition-all duration-300 overflow-hidden ${sector.shapeClass} ${styles.card} ${
+                  className={`group relative p-6 sm:p-7 flex flex-row items-center justify-between gap-3 sm:gap-4 border transition-all duration-300 min-h-[220px] sm:min-h-[240px] ${sector.shapeClass} ${styles.card} ${
                     isLight
                       ? 'bg-white shadow-[0_4px_24px_rgba(0,0,0,0.04)]'
                       : 'bg-[#080a10] backdrop-blur-md'
@@ -255,9 +251,9 @@ export default function IndustriesPage() {
                   />
 
                   {/* Left Column: Badge, Icon, Title, Divider, Example Components */}
-                  <div className="w-[52%] sm:w-[54%] space-y-3 z-10 flex flex-col justify-between h-full">
+                  <div className="flex-1 min-w-0 pr-1 sm:pr-2 space-y-2.5 z-10 flex flex-col justify-between h-full">
                     {/* Top: Badge + Icon */}
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-2">
                       <div
                         className={`px-2.5 py-0.5 rounded-lg font-mono text-xs font-bold border ${styles.badge} ${styles.pillGlow}`}
                       >
@@ -271,9 +267,9 @@ export default function IndustriesPage() {
                       </div>
                     </div>
 
-                    {/* Sector Title */}
+                    {/* Sector Title with clean wrapping & no text truncation */}
                     <h2
-                      className={`text-lg sm:text-xl font-bold tracking-tight leading-snug ${
+                      className={`text-base sm:text-lg font-bold tracking-tight leading-snug break-words ${
                         isLight ? 'text-neutral-900' : 'text-white'
                       }`}
                     >
@@ -281,19 +277,19 @@ export default function IndustriesPage() {
                     </h2>
 
                     {/* Thin Glowing Divider */}
-                    <div className={`h-[1.5px] w-12 rounded-full ${styles.divider}`} />
+                    <div className={`h-[1.5px] w-10 rounded-full ${styles.divider}`} />
 
                     {/* Example components */}
                     <div className="space-y-0.5 pt-0.5">
                       <div
-                        className={`text-[11px] font-mono font-medium ${
+                        className={`text-[10.5px] sm:text-[11px] font-mono font-medium ${
                           isLight ? 'text-neutral-500' : 'text-neutral-400'
                         }`}
                       >
                         Example components:
                       </div>
                       <p
-                        className={`text-xs sm:text-[13px] font-semibold leading-relaxed ${
+                        className={`text-xs leading-relaxed line-clamp-3 font-semibold ${
                           isLight ? 'text-neutral-800' : 'text-neutral-200'
                         }`}
                       >
@@ -302,18 +298,16 @@ export default function IndustriesPage() {
                     </div>
                   </div>
 
-                  {/* Right Column: 3D Cast Iron Product Visualization */}
-                  <div className="w-[46%] sm:w-[44%] flex items-center justify-center relative z-10">
-                    <div className="relative w-full aspect-square flex items-center justify-center">
-                      <img
-                        src={themedImg}
-                        alt={`${sector.title} casting component`}
-                        loading="lazy"
-                        className={`w-full h-full object-contain filter drop-shadow-[0_12px_24px_rgba(0,0,0,0.45)] transition-all duration-500 ease-out ${
-                          sector.imageTransform ?? 'group-hover:scale-110'
-                        }`}
-                      />
-                    </div>
+                  {/* Right Column: 3D Cast Iron Product Visualization (Fixed Bounds, No Bleed/Overlap) */}
+                  <div className="w-28 h-28 sm:w-32 sm:h-32 shrink-0 flex items-center justify-center relative z-10 select-none pointer-events-none">
+                    <img
+                      src={themedImg}
+                      alt={`${sector.title} casting component`}
+                      loading="lazy"
+                      className={`max-w-full max-h-full object-contain filter drop-shadow-[0_8px_16px_rgba(0,0,0,0.35)] transition-transform duration-300 ease-out group-hover:scale-108 group-hover:rotate-2 ${
+                        isLight ? 'mix-blend-multiply' : ''
+                      }`}
+                    />
                   </div>
                 </motion.div>
               );
@@ -392,7 +386,9 @@ export default function IndustriesPage() {
                     )}
                     alt="General Engineering 3D Casting"
                     loading="lazy"
-                    className="w-full h-full object-contain filter drop-shadow-[0_15px_30px_rgba(0,0,0,0.6)] transform group-hover:scale-110 group-hover:rotate-6 transition-transform duration-500"
+                    className={`w-full h-full object-contain filter drop-shadow-[0_15px_30px_rgba(0,0,0,0.6)] transform group-hover:scale-108 group-hover:rotate-6 transition-transform duration-500 ${
+                      isLight ? 'mix-blend-multiply' : ''
+                    }`}
                   />
                 </div>
               </div>
