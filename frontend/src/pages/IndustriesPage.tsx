@@ -28,6 +28,7 @@ interface IndustrySector {
   icon: React.ReactNode;
   image: string;
   themeColor: 'purple' | 'emerald' | 'blue' | 'amber' | 'teal' | 'pink';
+  shapeClass: string;
 }
 
 const SECTOR_CARDS: IndustrySector[] = [
@@ -39,6 +40,7 @@ const SECTOR_CARDS: IndustrySector[] = [
     icon: <Car className="w-5 h-5" />,
     image: '/images/Gear Lever Parts/Cast Iron Car Gear Lever Part.png',
     themeColor: 'purple',
+    shapeClass: 'rounded-3xl',
   },
   {
     id: 'agriculture',
@@ -48,6 +50,7 @@ const SECTOR_CARDS: IndustrySector[] = [
     icon: <Tractor className="w-5 h-5" />,
     image: '/images/cast_iron_casting/Cast Iron Tractor Part Casting.png',
     themeColor: 'emerald',
+    shapeClass: 'rounded-3xl rounded-tr-[52px] rounded-bl-[16px] rounded-br-[40px]',
   },
   {
     id: 'pumps-valves',
@@ -57,6 +60,7 @@ const SECTOR_CARDS: IndustrySector[] = [
     icon: <Droplet className="w-5 h-5" />,
     image: '/images/cast_iron_casting/Cast Iron Rotary Barrel Pump Casting.png',
     themeColor: 'blue',
+    shapeClass: 'rounded-3xl rounded-tr-[90px] sm:rounded-tr-[125px]',
   },
   {
     id: 'machine-tools',
@@ -66,6 +70,7 @@ const SECTOR_CARDS: IndustrySector[] = [
     icon: <Cog className="w-5 h-5" />,
     image: '/images/Sewing_machine_parts/Cast Iron TA 1 Bracket Industrial Sewing Machine Part.png',
     themeColor: 'amber',
+    shapeClass: 'rounded-3xl rounded-tl-[36px] rounded-br-[16px]',
   },
   {
     id: 'construction',
@@ -75,6 +80,7 @@ const SECTOR_CARDS: IndustrySector[] = [
     icon: <Building className="w-5 h-5" />,
     image: '/images/Hillside Washer/Cast Iron Hillside Washer.png',
     themeColor: 'teal',
+    shapeClass: 'rounded-3xl rounded-tl-[48px] rounded-br-[48px] rounded-tr-[16px] rounded-bl-[16px]',
   },
   {
     id: 'energy-infrastructure',
@@ -84,6 +90,7 @@ const SECTOR_CARDS: IndustrySector[] = [
     icon: <Zap className="w-5 h-5" />,
     image: '/images/Collar Plug/Cast Iron Collar Plug.png',
     themeColor: 'pink',
+    shapeClass: 'rounded-3xl rounded-tr-[36px] rounded-bl-[36px]',
   },
 ];
 
@@ -200,7 +207,7 @@ export default function IndustriesPage() {
           {/* Breadcrumb Navigation */}
           <Breadcrumb items={[{ label: 'Home', href: '/' }, { label: 'Industries', href: '/industries' }]} />
 
-          {/* 6 Grid Sector Cards (2 Rows x 3 Cols) - Matching Exact Layout of Image 1 */}
+          {/* 6 Grid Sector Cards (2 Rows x 3 Cols) - With Asymmetric Custom Edge Geometries */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {SECTOR_CARDS.map((sector, idx) => {
               const styles = COLOR_STYLES[sector.themeColor];
@@ -214,7 +221,7 @@ export default function IndustriesPage() {
                   viewport={{ once: true, amount: 0.15 }}
                   transition={{ duration: 0.5, delay: idx * 0.08, ease: 'easeOut' }}
                   whileHover={{ y: -4, transition: { duration: 0.25 } }}
-                  className={`group relative rounded-3xl p-6 sm:p-7 flex flex-row items-center justify-between gap-4 border transition-all duration-300 overflow-hidden ${styles.card} ${
+                  className={`group relative p-6 sm:p-7 flex flex-row items-center justify-between gap-4 border transition-all duration-300 overflow-hidden ${sector.shapeClass} ${styles.card} ${
                     isLight
                       ? 'bg-white shadow-[0_4px_24px_rgba(0,0,0,0.04)]'
                       : 'bg-[#080a0f] backdrop-blur-md'
@@ -287,7 +294,7 @@ export default function IndustriesPage() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.15 }}
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            className={`rounded-3xl p-6 sm:p-8 lg:p-10 border transition-all duration-300 border-purple-500/30 hover:border-purple-500/50 shadow-[0_0_30px_rgba(168,85,247,0.12)] ${
+            className={`rounded-[36px] p-6 sm:p-8 lg:p-10 border transition-all duration-300 border-purple-500/30 hover:border-purple-500/50 shadow-[0_0_30px_rgba(168,85,247,0.12)] ${
               isLight
                 ? 'bg-white shadow-[0_4px_24px_rgba(0,0,0,0.04)]'
                 : 'bg-[#080a0f] backdrop-blur-md'
