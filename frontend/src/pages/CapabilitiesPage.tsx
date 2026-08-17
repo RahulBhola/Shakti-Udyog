@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -14,6 +14,7 @@ import {
 import { Seo } from '../components/Seo';
 import { seoPages } from '../content/seo';
 import { useTheme } from '../auth/ThemeContext';
+import { EnquiryModal } from '../components/EnquiryModal';
 
 export interface ProcessPhase {
   phaseNumber: string;
@@ -85,6 +86,7 @@ const MANUFACTURING_PHASES: ProcessPhase[] = [
 export default function CapabilitiesPage() {
   const { theme } = useTheme();
   const isLight = theme === 'light';
+  const [isEnquiryOpen, setIsEnquiryOpen] = useState(false);
 
   return (
     <div className={`min-h-screen w-full transition-colors duration-300 ${
@@ -286,21 +288,28 @@ export default function CapabilitiesPage() {
                 <ArrowRight className="w-4 h-4 text-white shrink-0" />
               </Link>
 
-              <Link
-                to="/contact"
-                className={`px-7 py-4 rounded-2xl font-bold text-sm sm:text-base text-center transition-all ${
+              <button
+                type="button"
+                onClick={() => setIsEnquiryOpen(true)}
+                className={`px-7 py-4 rounded-2xl font-bold text-sm sm:text-base text-center transition-all cursor-pointer ${
                   isLight
                     ? 'bg-neutral-50 hover:bg-neutral-100 border border-neutral-300 text-neutral-800 shadow-sm'
                     : 'bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white shadow-sm'
                 }`}
               >
-                <span>Talk to Our Team</span>
-              </Link>
+                <span>Send a Query</span>
+              </button>
             </div>
           </div>
         </motion.div>
 
       </div>
+
+      {/* Direct Foundry Enquiry Popup Modal */}
+      <EnquiryModal
+        isOpen={isEnquiryOpen}
+        onClose={() => setIsEnquiryOpen(false)}
+      />
     </div>
   );
 }

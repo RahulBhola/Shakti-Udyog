@@ -5,6 +5,7 @@ import { Seo } from '../components/Seo';
 import { seoPages } from '../content/seo';
 import { useTheme } from '../auth/ThemeContext';
 import { getThemedImage } from '../utils/themeImage';
+import { EnquiryModal } from '../components/EnquiryModal';
 import {
   Search,
   SlidersHorizontal,
@@ -354,6 +355,7 @@ const MATERIALS = ['All Materials', 'Grey Iron', 'Ductile Iron'];
 export default function ProductsPage() {
   const { theme } = useTheme();
   const isLight = theme === 'light';
+  const [isEnquiryModalOpen, setIsEnquiryModalOpen] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
@@ -864,21 +866,28 @@ export default function ProductsPage() {
                 <ArrowRight className="w-4 h-4 text-white shrink-0" />
               </Link>
 
-              <Link
-                to="/contact"
-                className={`px-7 py-4 rounded-2xl font-bold text-sm sm:text-base text-center transition-all ${
+              <button
+                type="button"
+                onClick={() => setIsEnquiryModalOpen(true)}
+                className={`px-7 py-4 rounded-2xl font-bold text-sm sm:text-base text-center transition-all cursor-pointer ${
                   isLight
                     ? 'bg-neutral-50 hover:bg-neutral-100 border border-neutral-300 text-neutral-800 shadow-sm'
                     : 'bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white shadow-sm'
                 }`}
               >
-                <span>Talk to a Metallurgist</span>
-              </Link>
+                <span>Send a Query</span>
+              </button>
             </div>
           </div>
         </motion.div>
 
       </div>
+
+      {/* Direct Foundry Enquiry Popup Modal */}
+      <EnquiryModal
+        isOpen={isEnquiryModalOpen}
+        onClose={() => setIsEnquiryModalOpen(false)}
+      />
 
       {/* ========================================================================= */}
       {/* TECHNICAL SPECIFICATION MODAL DRAWER */}

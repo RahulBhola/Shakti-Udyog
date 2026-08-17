@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -12,10 +12,12 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { useTheme } from '../auth/ThemeContext';
+import { EnquiryModal } from './EnquiryModal';
 
 export const ContactPreviewAndCtaSection: React.FC = () => {
   const { theme } = useTheme();
   const isLight = theme === 'light';
+  const [isEnquiryOpen, setIsEnquiryOpen] = useState(false);
 
   return (
     <section className={`pt-6 sm:pt-8 pb-4 sm:pb-6 transition-colors duration-300 ${
@@ -306,16 +308,17 @@ export const ContactPreviewAndCtaSection: React.FC = () => {
                 <ArrowRight className="w-4 h-4 text-white shrink-0" />
               </Link>
 
-              <Link
-                to="/contact"
-                className={`px-7 py-4 rounded-2xl font-bold text-sm sm:text-base text-center transition-all ${
+              <button
+                type="button"
+                onClick={() => setIsEnquiryOpen(true)}
+                className={`px-7 py-4 rounded-2xl font-bold text-sm sm:text-base text-center transition-all cursor-pointer ${
                   isLight
-                    ? 'bg-neutral-50 hover:bg-neutral-100 border border-neutral-300 text-neutral-800 shadow-sm'
-                    : 'bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white shadow-sm'
+                    ? 'bg-neutral-50 hover:bg-neutral-100 border border-neutral-300 text-neutral-800 shadow-sm hover:border-neutral-400'
+                    : 'bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white shadow-sm hover:border-white/30'
                 }`}
               >
-                <span className={isLight ? 'text-neutral-800' : 'text-white'}>Contact Engineers</span>
-              </Link>
+                <span className={isLight ? 'text-neutral-800' : 'text-white'}>Send a Query</span>
+              </button>
             </div>
           </div>
 
@@ -345,6 +348,12 @@ export const ContactPreviewAndCtaSection: React.FC = () => {
         </motion.div>
 
       </div>
+
+      {/* Direct Foundry Enquiry Popup Modal */}
+      <EnquiryModal
+        isOpen={isEnquiryOpen}
+        onClose={() => setIsEnquiryOpen(false)}
+      />
     </section>
   );
 };
