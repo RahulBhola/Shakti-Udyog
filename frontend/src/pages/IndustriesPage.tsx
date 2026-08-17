@@ -164,9 +164,9 @@ export default function IndustriesPage() {
       />
 
       <div className={`min-h-screen transition-colors duration-300 ${
-        isLight ? 'bg-[#f4f7fb]' : 'bg-[#050608]'
+        isLight ? 'bg-[#f8f9fa]' : 'bg-[#050608]'
       }`}>
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 pt-6 pb-20 space-y-12 sm:space-y-14">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 pt-32 pb-20 sm:pt-40 space-y-12 sm:space-y-14">
           
           {/* Breadcrumb Navigation */}
           <Breadcrumb items={[{ label: 'Home', href: '/' }, { label: 'Industries', href: '/industries' }]} />
