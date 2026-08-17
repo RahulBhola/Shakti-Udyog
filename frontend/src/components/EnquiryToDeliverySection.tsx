@@ -115,7 +115,7 @@ export const EnquiryToDeliverySection: React.FC = () => {
                 to="/request-a-quote"
                 className={`inline-flex items-center gap-3 px-8 py-3.5 rounded-full text-sm sm:text-base font-semibold tracking-wide text-white transition-all transform hover:scale-105 shadow-md ${
                   isLight
-                    ? 'bg-[#0a2540] hover:bg-[#071a2e]'
+                    ? 'bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/25'
                     : 'bg-gradient-to-r from-blue-600 to-sky-600 hover:from-blue-500 hover:to-sky-500 shadow-[0_0_20px_rgba(59,130,246,0.3)]'
                 }`}
               >

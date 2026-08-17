@@ -28,9 +28,8 @@ h1 { font-size: var(--fs-3xl); letter-spacing: -0.02em; }
 h2 { font-size: var(--fs-2xl); }
 h3 { font-size: var(--fs-xl); }
 h4 { font-size: var(--fs-lg); }
-p { margin: 0 0 var(--sp-4); }
-a { color: var(--c-ember); text-decoration: none; }
-a:hover { text-decoration: underline; }
+a { color: inherit; text-decoration: none; }
+a:hover { text-decoration: none; }
 img { max-width: 100%; display: block; }
 ul, ol { padding-left: 1.25rem; }
 
