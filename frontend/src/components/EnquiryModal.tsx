@@ -96,7 +96,7 @@ export const EnquiryModal: React.FC<EnquiryModalProps> = ({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+        <div className="fixed inset-0 z-[999] flex items-center justify-center p-3 sm:p-6 overflow-y-auto no-scrollbar">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -113,7 +113,7 @@ export const EnquiryModal: React.FC<EnquiryModalProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.94, y: 20 }}
             transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-            className={`relative w-full max-w-2xl my-8 rounded-[28px] sm:rounded-[36px] p-6 sm:p-10 border shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7)] z-10 max-h-[90vh] overflow-y-auto ${
+            className={`relative w-full max-w-2xl my-auto rounded-[28px] sm:rounded-[36px] p-6 sm:p-8 border shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7)] z-10 max-h-[92vh] overflow-y-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${
               isLight
                 ? 'bg-white border-neutral-200/90 text-neutral-900'
                 : 'bg-[#0b0e17] border-white/15 text-white'
@@ -124,7 +124,7 @@ export const EnquiryModal: React.FC<EnquiryModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className={`absolute top-5 right-5 sm:top-7 sm:right-7 p-2.5 rounded-full border transition-all ${
+              className={`absolute top-5 right-5 sm:top-7 sm:right-7 p-2.5 rounded-full border transition-all cursor-pointer ${
                 isLight
                   ? 'bg-neutral-100 hover:bg-neutral-200 border-neutral-200 text-neutral-700'
                   : 'bg-white/10 hover:bg-white/20 border-white/15 text-neutral-300 hover:text-white'
@@ -135,7 +135,7 @@ export const EnquiryModal: React.FC<EnquiryModalProps> = ({
             </button>
 
             {/* Header Section */}
-            <div className="mb-6 sm:mb-8 space-y-2.5 pr-10">
+            <div className="mb-5 sm:mb-6 space-y-2 pr-10">
               <div
                 className={`inline-flex items-center gap-2 px-3 py-1 rounded-full font-mono text-xs font-bold tracking-wider uppercase ${
                   isLight
@@ -148,7 +148,7 @@ export const EnquiryModal: React.FC<EnquiryModalProps> = ({
               </div>
 
               <h2
-                className={`text-2xl sm:text-4xl font-extrabold tracking-tight ${
+                className={`text-2xl sm:text-3xl font-extrabold tracking-tight ${
                   isLight ? 'text-neutral-900' : 'text-white'
                 }`}
               >
@@ -187,10 +187,10 @@ export const EnquiryModal: React.FC<EnquiryModalProps> = ({
                 </button>
               </motion.div>
             ) : (
-              <form onSubmit={handleSubmit} noValidate className="space-y-5">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+              <form onSubmit={handleSubmit} noValidate className="space-y-3.5 sm:space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
                   {/* Full Name */}
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
                       Full Name *
                     </label>
@@ -199,7 +199,7 @@ export const EnquiryModal: React.FC<EnquiryModalProps> = ({
                       autoComplete="name"
                       placeholder="e.g. Rahul Sharma"
                       required
-                      className={`w-full px-4 py-3 rounded-xl text-sm font-medium border transition-all focus:outline-none focus:ring-2 focus:ring-orange-500/50 ${
+                      className={`w-full px-3.5 py-2.5 rounded-xl text-sm font-medium border transition-all focus:outline-none focus:ring-2 focus:ring-orange-500/50 ${
                         isLight
                           ? 'bg-neutral-50 border-neutral-200 text-neutral-900 placeholder:text-neutral-400 focus:bg-white'
                           : 'bg-white/5 border-white/10 text-white placeholder:text-neutral-500 focus:bg-white/10'
@@ -211,7 +211,7 @@ export const EnquiryModal: React.FC<EnquiryModalProps> = ({
                   </div>
 
                   {/* Company Name */}
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
                       Company / Organization *
                     </label>
@@ -220,7 +220,7 @@ export const EnquiryModal: React.FC<EnquiryModalProps> = ({
                       autoComplete="organization"
                       placeholder="e.g. Apex Industrial Machinery"
                       required
-                      className={`w-full px-4 py-3 rounded-xl text-sm font-medium border transition-all focus:outline-none focus:ring-2 focus:ring-orange-500/50 ${
+                      className={`w-full px-3.5 py-2.5 rounded-xl text-sm font-medium border transition-all focus:outline-none focus:ring-2 focus:ring-orange-500/50 ${
                         isLight
                           ? 'bg-neutral-50 border-neutral-200 text-neutral-900 placeholder:text-neutral-400 focus:bg-white'
                           : 'bg-white/5 border-white/10 text-white placeholder:text-neutral-500 focus:bg-white/10'
@@ -232,7 +232,7 @@ export const EnquiryModal: React.FC<EnquiryModalProps> = ({
                   </div>
 
                   {/* Work Email */}
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
                       Work Email *
                     </label>
@@ -242,7 +242,7 @@ export const EnquiryModal: React.FC<EnquiryModalProps> = ({
                       autoComplete="email"
                       placeholder="e.g. rahul@company.com"
                       required
-                      className={`w-full px-4 py-3 rounded-xl text-sm font-medium border transition-all focus:outline-none focus:ring-2 focus:ring-orange-500/50 ${
+                      className={`w-full px-3.5 py-2.5 rounded-xl text-sm font-medium border transition-all focus:outline-none focus:ring-2 focus:ring-orange-500/50 ${
                         isLight
                           ? 'bg-neutral-50 border-neutral-200 text-neutral-900 placeholder:text-neutral-400 focus:bg-white'
                           : 'bg-white/5 border-white/10 text-white placeholder:text-neutral-500 focus:bg-white/10'
@@ -254,7 +254,7 @@ export const EnquiryModal: React.FC<EnquiryModalProps> = ({
                   </div>
 
                   {/* Phone / WhatsApp */}
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
                       Phone / WhatsApp Number *
                     </label>
@@ -264,7 +264,7 @@ export const EnquiryModal: React.FC<EnquiryModalProps> = ({
                       autoComplete="tel"
                       placeholder="e.g. +91 98765 43210"
                       required
-                      className={`w-full px-4 py-3 rounded-xl text-sm font-medium border transition-all focus:outline-none focus:ring-2 focus:ring-orange-500/50 ${
+                      className={`w-full px-3.5 py-2.5 rounded-xl text-sm font-medium border transition-all focus:outline-none focus:ring-2 focus:ring-orange-500/50 ${
                         isLight
                           ? 'bg-neutral-50 border-neutral-200 text-neutral-900 placeholder:text-neutral-400 focus:bg-white'
                           : 'bg-white/5 border-white/10 text-white placeholder:text-neutral-500 focus:bg-white/10'
@@ -277,7 +277,7 @@ export const EnquiryModal: React.FC<EnquiryModalProps> = ({
                 </div>
 
                 {/* City & State */}
-                <div className="space-y-1.5">
+                <div className="space-y-1">
                   <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
                     City &amp; State / Location
                   </label>
@@ -285,7 +285,7 @@ export const EnquiryModal: React.FC<EnquiryModalProps> = ({
                     name="city"
                     autoComplete="address-level2"
                     placeholder="e.g. Ludhiana, Punjab or Pune, Maharashtra"
-                    className={`w-full px-4 py-3 rounded-xl text-sm font-medium border transition-all focus:outline-none focus:ring-2 focus:ring-orange-500/50 ${
+                    className={`w-full px-3.5 py-2.5 rounded-xl text-sm font-medium border transition-all focus:outline-none focus:ring-2 focus:ring-orange-500/50 ${
                       isLight
                         ? 'bg-neutral-50 border-neutral-200 text-neutral-900 placeholder:text-neutral-400 focus:bg-white'
                         : 'bg-white/5 border-white/10 text-white placeholder:text-neutral-500 focus:bg-white/10'
@@ -294,17 +294,17 @@ export const EnquiryModal: React.FC<EnquiryModalProps> = ({
                 </div>
 
                 {/* Message / Casting Requirement */}
-                <div className="space-y-1.5">
+                <div className="space-y-1">
                   <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
                     Describe Your Casting Requirement / Application *
                   </label>
                   <textarea
                     name="message"
-                    rows={3}
+                    rows={2}
                     defaultValue={defaultRequirement}
                     placeholder="Please specify material grade (Grey Iron / Ductile Iron), expected part weight, monthly volume, or any custom machining needs..."
                     required
-                    className={`w-full px-4 py-3 rounded-xl text-sm font-medium border transition-all focus:outline-none focus:ring-2 focus:ring-orange-500/50 ${
+                    className={`w-full px-3.5 py-2.5 rounded-xl text-sm font-medium border transition-all focus:outline-none focus:ring-2 focus:ring-orange-500/50 ${
                       isLight
                         ? 'bg-neutral-50 border-neutral-200 text-neutral-900 placeholder:text-neutral-400 focus:bg-white'
                         : 'bg-white/5 border-white/10 text-white placeholder:text-neutral-500 focus:bg-white/10'
@@ -321,7 +321,7 @@ export const EnquiryModal: React.FC<EnquiryModalProps> = ({
                 </div>
 
                 {/* Consent Checkbox */}
-                <div className="space-y-1 pt-1">
+                <div className="space-y-0.5 pt-0.5">
                   <label className="flex items-start gap-2.5 cursor-pointer text-xs text-neutral-600 dark:text-neutral-300">
                     <input
                       type="checkbox"
@@ -329,7 +329,7 @@ export const EnquiryModal: React.FC<EnquiryModalProps> = ({
                       defaultChecked
                       className="mt-0.5 w-4 h-4 rounded border-neutral-300 text-orange-500 focus:ring-orange-500 shrink-0"
                     />
-                    <span className="leading-snug">
+                    <span className="leading-snug text-[11px] sm:text-xs">
                       I agree that Shakti Udyog may contact me regarding this enquiry and provide technical quotations. *
                     </span>
                   </label>
