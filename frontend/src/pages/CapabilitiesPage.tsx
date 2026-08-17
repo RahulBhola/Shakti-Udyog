@@ -117,31 +117,11 @@ export default function CapabilitiesPage() {
           </h1>
 
           {/* Centered Subtitle */}
-          <p className={`text-lg sm:text-2xl max-w-3xl mx-auto leading-relaxed mb-10 ${
+          <p className={`text-lg sm:text-2xl max-w-3xl mx-auto leading-relaxed ${
             isLight ? 'text-neutral-600' : 'text-neutral-300'
           }`}>
             Precision engineering driven by decades of metallurgical expertise. Our end-to-end capabilities ensure absolute control over quality, dimensional accuracy, and material integrity at every stage.
           </p>
-
-          {/* Centered 3 Stat Badges */}
-          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 text-sm sm:text-base font-mono">
-            <span className={`px-4 py-2 rounded-full border shadow-sm ${
-              isLight ? 'bg-neutral-100/90 border-neutral-300 text-neutral-800' : 'bg-white/[0.04] border-white/10 text-neutral-300'
-            }`}>
-              ⚡ 1460°C Induction Melt Control
-            </span>
-            <span className={`px-4 py-2 rounded-full border shadow-sm ${
-              isLight ? 'bg-neutral-100/90 border-neutral-300 text-neutral-800' : 'bg-white/[0.04] border-white/10 text-neutral-300'
-            }`}>
-              🎯 &lt;0.05 mm Precision Machining
-            </span>
-            <span className={`px-4 py-2 rounded-full border shadow-sm ${
-              isLight ? 'bg-neutral-100/90 border-neutral-300 text-neutral-800' : 'bg-white/[0.04] border-white/10 text-neutral-300'
-            }`}>
-              🛡️ 299+ Tonnes/Month Certified Capacity
-            </span>
-          </div>
-
         </div>
       </section>
 
