@@ -1,35 +1,66 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { EnquiryModal } from '../components/EnquiryModal';
+import { RequestQuoteModal } from '../components/RequestQuoteModal';
 
 interface EnquiryModalContextType {
   openEnquiryModal: (defaultRequirement?: string) => void;
   closeEnquiryModal: () => void;
-  isOpen: boolean;
+  isEnquiryOpen: boolean;
+  openQuoteModal: (defaultPartName?: string) => void;
+  closeQuoteModal: () => void;
+  isQuoteOpen: boolean;
 }
 
 const EnquiryModalContext = createContext<EnquiryModalContextType | undefined>(undefined);
 
 export function EnquiryModalProvider({ children }: { children: ReactNode }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [requirement, setRequirement] = useState<string | undefined>(undefined);
+  const [isEnquiryOpen, setIsEnquiryOpen] = useState(false);
+  const [enquiryRequirement, setEnquiryRequirement] = useState<string | undefined>(undefined);
+
+  const [isQuoteOpen, setIsQuoteOpen] = useState(false);
+  const [quotePartName, setQuotePartName] = useState<string | undefined>(undefined);
 
   const openEnquiryModal = (req?: string) => {
-    setRequirement(req);
-    setIsOpen(true);
+    setEnquiryRequirement(req);
+    setIsEnquiryOpen(true);
   };
 
   const closeEnquiryModal = () => {
-    setIsOpen(false);
-    setRequirement(undefined);
+    setIsEnquiryOpen(false);
+    setEnquiryRequirement(undefined);
+  };
+
+  const openQuoteModal = (partName?: string) => {
+    setQuotePartName(partName);
+    setIsQuoteOpen(true);
+  };
+
+  const closeQuoteModal = () => {
+    setIsQuoteOpen(false);
+    setQuotePartName(undefined);
   };
 
   return (
-    <EnquiryModalContext.Provider value={{ openEnquiryModal, closeEnquiryModal, isOpen }}>
+    <EnquiryModalContext.Provider
+      value={{
+        openEnquiryModal,
+        closeEnquiryModal,
+        isEnquiryOpen,
+        openQuoteModal,
+        closeQuoteModal,
+        isQuoteOpen,
+      }}
+    >
       {children}
       <EnquiryModal
-        isOpen={isOpen}
+        isOpen={isEnquiryOpen}
         onClose={closeEnquiryModal}
-        defaultRequirement={requirement}
+        defaultRequirement={enquiryRequirement}
+      />
+      <RequestQuoteModal
+        isOpen={isQuoteOpen}
+        onClose={closeQuoteModal}
+        defaultPartName={quotePartName}
       />
     </EnquiryModalContext.Provider>
   );

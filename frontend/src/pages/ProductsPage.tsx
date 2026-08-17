@@ -4,8 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Seo } from '../components/Seo';
 import { seoPages } from '../content/seo';
 import { useTheme } from '../auth/ThemeContext';
+import { useEnquiryModal } from '../context/EnquiryModalContext';
 import { getThemedImage } from '../utils/themeImage';
-import { EnquiryModal } from '../components/EnquiryModal';
 import {
   Search,
   SlidersHorizontal,
@@ -354,8 +354,8 @@ const MATERIALS = ['All Materials', 'Grey Iron', 'Ductile Iron'];
 
 export default function ProductsPage() {
   const { theme } = useTheme();
+  const { openQuoteModal, openEnquiryModal } = useEnquiryModal();
   const isLight = theme === 'light';
-  const [isEnquiryModalOpen, setIsEnquiryModalOpen] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
@@ -857,20 +857,20 @@ export default function ProductsPage() {
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 shrink-0">
               <button
                 type="button"
-                onClick={() => setIsEnquiryModalOpen(true)}
+                onClick={() => openQuoteModal()}
                 className={`px-8 py-4 rounded-2xl font-extrabold text-sm sm:text-base text-center inline-flex items-center justify-center gap-2.5 transition-all transform hover:scale-105 cursor-pointer ${
                   isLight
                     ? 'bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25'
                     : 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-white shadow-[0_0_30px_rgba(249,115,22,0.4)]'
                 }`}
               >
-                <span className="text-white font-extrabold">Submit Enquiry</span>
+                <span className="text-white font-extrabold">Submit RFQ &amp; CAD</span>
                 <ArrowRight className="w-4 h-4 text-white shrink-0" />
               </button>
 
               <button
                 type="button"
-                onClick={() => setIsEnquiryModalOpen(true)}
+                onClick={() => openEnquiryModal()}
                 className={`px-7 py-4 rounded-2xl font-bold text-sm sm:text-base text-center transition-all cursor-pointer ${
                   isLight
                     ? 'bg-neutral-50 hover:bg-neutral-100 border border-neutral-300 text-neutral-800 shadow-sm hover:border-neutral-400'
@@ -884,12 +884,6 @@ export default function ProductsPage() {
         </motion.div>
 
       </div>
-
-      {/* Direct Foundry Enquiry Popup Modal */}
-      <EnquiryModal
-        isOpen={isEnquiryModalOpen}
-        onClose={() => setIsEnquiryModalOpen(false)}
-      />
 
       {/* ========================================================================= */}
       {/* TECHNICAL SPECIFICATION MODAL DRAWER */}
@@ -954,12 +948,13 @@ export default function ProductsPage() {
                 <button
                   type="button"
                   onClick={() => {
+                    const title = activeModalProduct.title;
                     setActiveModalProduct(null);
-                    setIsEnquiryModalOpen(true);
+                    openQuoteModal(title);
                   }}
                   className="flex-1 py-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-center text-sm font-mono transition-all cursor-pointer shadow-md shadow-orange-500/25"
                 >
-                  Submit Enquiry for this Component
+                  Request a Quote for this Component
                 </button>
                 <button
                   onClick={() => setActiveModalProduct(null)}

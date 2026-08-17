@@ -15,7 +15,7 @@ import { useEnquiryModal } from '../context/EnquiryModalContext';
 
 export const SiteFooter: React.FC = () => {
   const { theme } = useTheme();
-  const { openEnquiryModal } = useEnquiryModal();
+  const { openQuoteModal } = useEnquiryModal();
   const isLight = theme === 'light';
   const year = new Date().getFullYear();
 
@@ -24,7 +24,7 @@ export const SiteFooter: React.FC = () => {
     { label: 'Capabilities', path: '/capabilities' },
     { label: 'Industries', path: '/industries' },
     { label: 'Contact', path: '/contact' },
-    { label: 'Request a Quote', action: () => openEnquiryModal() },
+    { label: 'Request a Quote', action: () => openQuoteModal() },
   ];
 
   const legalLinks = [

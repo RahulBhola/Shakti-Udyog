@@ -7,7 +7,7 @@ import { useEnquiryModal } from "../context/EnquiryModalContext";
 
 export default function ProductDetailPage() {
   const { slug = "" } = useParams();
-  const { openEnquiryModal } = useEnquiryModal();
+  const { openQuoteModal } = useEnquiryModal();
   const [product, setProduct] = useState<Product | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "missing">("loading");
 
@@ -103,8 +103,8 @@ export default function ProductDetailPage() {
         <CtaBand
           heading={`Get a quote for ${product.title.toLowerCase()}`}
           text="Share your drawing, grade, quantity, and delivery requirement."
-          buttonLabel="Submit Enquiry"
-          onClick={() => openEnquiryModal(`Enquiry for ${product.title}`)}
+          buttonLabel="Request a Quote"
+          onClick={() => openQuoteModal(product.title)}
         />
       </Section>
     </>

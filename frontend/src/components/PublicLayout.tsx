@@ -81,7 +81,7 @@ function Header() {
   const toggleRef = useRef<HTMLButtonElement>(null);
   const { theme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
-  const { openEnquiryModal } = useEnquiryModal();
+  const { openQuoteModal } = useEnquiryModal();
 
   const isLight = theme === "light";
 
@@ -158,22 +158,22 @@ function Header() {
               to={item.href}
               end={item.href === "/"}
               className={({ isActive }) =>
-                `relative text-sm font-medium transition-colors py-1 ${
+                `text-xs font-semibold tracking-wide transition-all duration-200 relative py-1 ${
                   isActive
                     ? isLight
-                      ? "text-orange-500 font-semibold"
-                      : "text-white font-semibold"
+                      ? "text-neutral-900 font-bold"
+                      : "text-white font-bold"
                     : isLight
-                      ? "text-neutral-600 hover:text-neutral-950"
-                      : "text-neutral-400 hover:text-neutral-100"
+                      ? "text-neutral-600 hover:text-neutral-900"
+                      : "text-neutral-300 hover:text-white"
                 }`
               }
             >
               {({ isActive }) => (
                 <>
-                  <span>{item.label}</span>
+                  {item.label}
                   {isActive && (
-                    <span className="absolute -bottom-2 left-0 right-0 h-[2px] bg-orange-500 rounded-full shadow-[0_0_8px_rgba(255,109,0,0.8)]" />
+                    <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-orange-500 rounded-full shadow-[0_0_8px_rgba(255,109,0,0.8)]" />
                   )}
                 </>
               )}
@@ -183,10 +183,10 @@ function Header() {
 
         {/* Right Actions Cluster */}
         <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
-          {/* Primary CTA: Request a Quote (Opens Enquiry Modal) */}
+          {/* Primary CTA: Request a Quote (Opens Quote Modal) */}
           <button
             type="button"
-            onClick={() => openEnquiryModal()}
+            onClick={() => openQuoteModal()}
             className={`group hidden sm:inline-flex items-center gap-2 px-5 py-2 rounded-full text-xs font-semibold tracking-wide transition-all duration-300 cursor-pointer ${
               isLight
                 ? "text-orange-600 bg-orange-500/5 border border-orange-500 hover:bg-orange-500 hover:text-white shadow-[0_0_12px_rgba(255,109,0,0.15)] hover:shadow-[0_0_20px_rgba(255,109,0,0.4)]"
@@ -330,7 +330,7 @@ function Header() {
                 type="button"
                 onClick={() => {
                   setOpen(false);
-                  openEnquiryModal();
+                  openQuoteModal();
                 }}
                 className="flex items-center justify-center gap-2 w-full py-2.5 rounded-full text-xs font-semibold tracking-wide text-white bg-orange-500 hover:bg-orange-600 transition-all shadow-[0_0_15px_rgba(255,109,0,0.2)] cursor-pointer"
               >

@@ -12,10 +12,12 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { useTheme } from '../auth/ThemeContext';
+import { useEnquiryModal } from '../context/EnquiryModalContext';
 import { EnquiryModal } from './EnquiryModal';
 
 export const ContactPreviewAndCtaSection: React.FC = () => {
   const { theme } = useTheme();
+  const { openQuoteModal } = useEnquiryModal();
   const isLight = theme === 'light';
   const [isEnquiryOpen, setIsEnquiryOpen] = useState(false);
 
@@ -298,7 +300,7 @@ export const ContactPreviewAndCtaSection: React.FC = () => {
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 shrink-0">
               <button
                 type="button"
-                onClick={() => setIsEnquiryOpen(true)}
+                onClick={() => openQuoteModal()}
                 className={`px-8 py-4 rounded-2xl font-extrabold text-sm sm:text-base text-center inline-flex items-center justify-center gap-2.5 transition-all transform hover:scale-105 cursor-pointer ${
                   isLight
                     ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/25'

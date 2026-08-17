@@ -14,6 +14,7 @@ import {
 import { Seo } from '../components/Seo';
 import { seoPages } from '../content/seo';
 import { useTheme } from '../auth/ThemeContext';
+import { useEnquiryModal } from '../context/EnquiryModalContext';
 import { EnquiryModal } from '../components/EnquiryModal';
 
 export interface ProcessPhase {
@@ -24,58 +25,58 @@ export interface ProcessPhase {
   icon: React.ReactNode;
 }
 
-const MANUFACTURING_PHASES: ProcessPhase[] = [
+const PROCESS_PHASES: ProcessPhase[] = [
   {
-    phaseNumber: 'PHASE 01',
-    title: 'Enquiry & Drawing Review',
+    phaseNumber: '01',
+    title: 'Drawing & Methoding',
     description:
-      'We examine application needs, material grade, geometry, tolerances, and volume before proposing a production route.',
-    image: '/images/capabilities/phase-1-drawing-review.png',
+      'We study part drawings to determine parting lines, draft angles, shrinkage allowances, and gating systems.',
+    image: '/images/capabilities/phase-1-drawing.png',
     icon: <FileText className="w-5 h-5 sm:w-6 sm:h-6" />,
   },
   {
-    phaseNumber: 'PHASE 02',
-    title: 'Pattern Development',
+    phaseNumber: '02',
+    title: 'Pattern & Core Box Preparation',
     description:
-      'Patterns and core boxes are developed or managed to support repeatable production and complex dimensional requirements.',
-    image: '/images/capabilities/phase-2-pattern-development.png',
+      'Matchplate patterns and core boxes are prepared in wood, metal, or resin depending on volume requirements.',
+    image: '/images/capabilities/phase-2-pattern.png',
     icon: <Box className="w-5 h-5 sm:w-6 sm:h-6" />,
   },
   {
-    phaseNumber: 'PHASE 03',
-    title: 'Moulding & Core Making',
+    phaseNumber: '03',
+    title: 'Mould & Core Making',
     description:
-      'The moulding process is optimized across part geometry, material, quantity, and surface-finish expectations.',
-    image: '/images/capabilities/phase-3-moulding-core.png',
+      'Green sand and chemically bonded sand systems provide uniform compaction and good permeability for sound castings.',
+    image: '/images/capabilities/phase-3-moulding.png',
     icon: <Layers className="w-5 h-5 sm:w-6 sm:h-6" />,
   },
   {
-    phaseNumber: 'PHASE 04',
-    title: 'Melting & Pouring',
+    phaseNumber: '04',
+    title: 'Melting & Inoculation',
     description:
-      'Metal chemistry and pouring practices are controlled according to the applicable production plan and material specification.',
-    image: '/images/capabilities/phase-4-melting-pouring.png',
+      'Induction melting with calibrated alloy additions and inoculation ensures the target microstructure and grade.',
+    image: '/images/capabilities/phase-4-melting.png',
     icon: <Flame className="w-5 h-5 sm:w-6 sm:h-6" />,
   },
   {
-    phaseNumber: 'PHASE 05',
-    title: 'Fettling & Surface Preparation',
+    phaseNumber: '05',
+    title: 'Pouring & Controlled Cooling',
     description:
-      'Castings are cleaned, gates and risers are removed, and surface preparation is done for inspection or the next operation.',
-    image: '/images/capabilities/phase-5-fettling-surface.png',
+      'Temperature-controlled pouring and adequate in-mould cooling prevent thermal shock, cracks, and distortion.',
+    image: '/images/capabilities/phase-5-pouring.png',
     icon: <Sparkles className="w-5 h-5 sm:w-6 sm:h-6" />,
   },
   {
-    phaseNumber: 'PHASE 06',
-    title: 'Machining & Finishing',
+    phaseNumber: '06',
+    title: 'Knockout, Fettling & Shot Blasting',
     description:
-      'Where agreed, castings are machined and finished to supply components ready for assembly.',
-    image: '/images/capabilities/phase-6-machining-finishing.png',
+      'Castings are shaken out, risers and runners removed, followed by shot blasting for clean surface preparation.',
+    image: '/images/capabilities/phase-6-fettling.png',
     icon: <Cog className="w-5 h-5 sm:w-6 sm:h-6" />,
   },
   {
-    phaseNumber: 'PHASE 07',
-    title: 'Inspection & Documentation',
+    phaseNumber: '07',
+    title: 'Inspection, Quality & Documentation',
     description:
       'Visual, dimensional, and non-destructive checks are performed as specified for the order.',
     image: '/images/capabilities/phase-7-inspection-doc.png',
@@ -85,6 +86,7 @@ const MANUFACTURING_PHASES: ProcessPhase[] = [
 
 export default function CapabilitiesPage() {
   const { theme } = useTheme();
+  const { openQuoteModal } = useEnquiryModal();
   const isLight = theme === 'light';
   const [isEnquiryOpen, setIsEnquiryOpen] = useState(false);
 
@@ -278,14 +280,14 @@ export default function CapabilitiesPage() {
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 shrink-0">
               <button
                 type="button"
-                onClick={() => setIsEnquiryOpen(true)}
+                onClick={() => openQuoteModal()}
                 className={`px-8 py-4 rounded-2xl font-extrabold text-sm sm:text-base text-center inline-flex items-center justify-center gap-2.5 transition-all transform hover:scale-105 cursor-pointer ${
                   isLight
                     ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/25'
                     : 'bg-gradient-to-r from-blue-600 to-sky-600 hover:from-blue-500 hover:to-sky-500 text-white shadow-[0_0_30px_rgba(56,189,248,0.4)]'
                 }`}
               >
-                <span className="text-white font-extrabold">Submit Enquiry</span>
+                <span className="text-white font-extrabold">Request a Quote</span>
                 <ArrowRight className="w-4 h-4 text-white shrink-0" />
               </button>
 

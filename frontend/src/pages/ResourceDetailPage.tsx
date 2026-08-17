@@ -7,7 +7,7 @@ import { useEnquiryModal } from "../context/EnquiryModalContext";
 
 export default function ResourceDetailPage() {
   const { slug = "" } = useParams();
-  const { openEnquiryModal } = useEnquiryModal();
+  const { openQuoteModal } = useEnquiryModal();
   const [resource, setResource] = useState<Resource | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "missing">("loading");
 
@@ -69,9 +69,9 @@ export default function ResourceDetailPage() {
         <h2 id="res-cta" className="visually-hidden">Request a quote</h2>
         <CtaBand
           heading="Ready to request a quote?"
-          text="Use our Enquiry form to share your drawing and requirement."
-          buttonLabel="Submit Enquiry"
-          onClick={() => openEnquiryModal(`Enquiry regarding: ${resource.title}`)}
+          text="Share your drawing, grade, quantity, and delivery requirement for a 24h quotation."
+          buttonLabel="Request a Quote"
+          onClick={() => openQuoteModal(resource.title)}
         />
       </Section>
     </>

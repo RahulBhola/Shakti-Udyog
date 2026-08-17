@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Seo } from '../components/Seo';
 import { seoPages } from '../content/seo';
 import { useTheme } from '../auth/ThemeContext';
-import { EnquiryModal } from '../components/EnquiryModal';
+import { useEnquiryModal } from '../context/EnquiryModalContext';
 import {
   FileText,
   Layers,
@@ -343,11 +343,11 @@ const DFM_CHECKLIST_PILLARS = [
 
 export default function ResourcesPage() {
   const { theme } = useTheme();
+  const { openQuoteModal, openEnquiryModal } = useEnquiryModal();
   const isLight = theme === 'light';
 
   const [activeWorkflowTab, setActiveWorkflowTab] = useState<'stages' | 'roles' | 'lifecycles'>('stages');
   const [openId, setOpenId] = useState<string | null>('faq-1');
-  const [isEnquiryModalOpen, setIsEnquiryModalOpen] = useState(false);
 
   const toggleFaq = (id: string) => {
     setOpenId((prev) => (prev === id ? null : id));
@@ -765,7 +765,7 @@ export default function ResourcesPage() {
           <div className="pt-2">
             <button
               type="button"
-              onClick={() => setIsEnquiryModalOpen(true)}
+              onClick={() => openQuoteModal()}
               className={`inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl font-bold text-xs sm:text-sm transition-all transform hover:scale-105 shadow-md cursor-pointer ${
                 isLight
                   ? 'bg-orange-500 hover:bg-orange-600 text-white shadow-orange-500/20'
@@ -1162,7 +1162,7 @@ export default function ResourcesPage() {
 
               <button
                 type="button"
-                onClick={() => setIsEnquiryModalOpen(true)}
+                onClick={() => openEnquiryModal()}
                 className={`inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-xs sm:text-sm font-mono font-bold tracking-wider transition-all border shadow-sm cursor-pointer ${
                   isLight
                     ? 'bg-blue-600 border-blue-600 text-white hover:bg-blue-700 shadow-blue-500/20'
@@ -1177,12 +1177,6 @@ export default function ResourcesPage() {
         </section>
 
       </div>
-
-      {/* Direct Foundry Enquiry Popup Modal */}
-      <EnquiryModal
-        isOpen={isEnquiryModalOpen}
-        onClose={() => setIsEnquiryModalOpen(false)}
-      />
     </div>
   );
 }

@@ -145,7 +145,7 @@ const LINEUP_PRODUCTS: LineupCardModel[] = [
 
 export const AppleProductLineup: React.FC = () => {
   const { theme } = useTheme();
-  const { openEnquiryModal } = useEnquiryModal();
+  const { openQuoteModal } = useEnquiryModal();
   const isLight = theme === 'light';
 
   // Track active variant index for each product card
@@ -374,14 +374,14 @@ export const AppleProductLineup: React.FC = () => {
 
                   <button
                     type="button"
-                    onClick={() => openEnquiryModal(`Enquiry for ${prod.name} (${currentVar.name})`)}
+                    onClick={() => openQuoteModal(`${prod.name} (${currentVar.name})`)}
                     className={`py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-center border inline-flex items-center justify-center gap-1 transition-colors cursor-pointer ${
                       isLight
                         ? 'border-neutral-300 text-neutral-800 hover:bg-neutral-100'
                         : 'border-white/15 text-neutral-300 hover:bg-white/5 hover:text-white'
                     }`}
                   >
-                    <span>Submit Enquiry</span>
+                    <span>Request a Quote</span>
                     <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
                   </button>
                 </div>

@@ -20,7 +20,7 @@ import { getThemedImage } from '../utils/themeImage';
 
 export const EnquiryToDeliverySection: React.FC = () => {
   const { theme } = useTheme();
-  const { openEnquiryModal } = useEnquiryModal();
+  const { openQuoteModal } = useEnquiryModal();
   const isLight = theme === 'light';
 
   const steps = [
@@ -115,7 +115,7 @@ export const EnquiryToDeliverySection: React.FC = () => {
             <div className="pt-2">
               <button
                 type="button"
-                onClick={() => openEnquiryModal()}
+                onClick={() => openQuoteModal()}
                 className={`inline-flex items-center gap-3 px-8 py-3.5 rounded-full text-sm sm:text-base font-semibold tracking-wide text-white transition-all transform hover:scale-105 shadow-md cursor-pointer ${
                   isLight
                     ? 'bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/25'

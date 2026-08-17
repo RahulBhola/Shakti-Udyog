@@ -33,10 +33,10 @@ const LegalPage = lazy(() => import("./pages/LegalPage"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 
 function RequestQuoteRedirect() {
-  const { openEnquiryModal } = useEnquiryModal();
+  const { openQuoteModal } = useEnquiryModal();
   useEffect(() => {
-    openEnquiryModal();
-  }, [openEnquiryModal]);
+    openQuoteModal();
+  }, [openQuoteModal]);
   return <Navigate to="/" replace />;
 }
 
