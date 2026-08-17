@@ -249,7 +249,7 @@ export const ContactPreviewAndCtaSection: React.FC = () => {
           </div>
         </motion.div>
 
-        {/* 2. Have a Casting Requirement? Banner (New Design) */}
+        {/* 2. Have a Casting Requirement? Banner */}
         <motion.div
           initial={{ opacity: 0, y: 35 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -257,26 +257,26 @@ export const ContactPreviewAndCtaSection: React.FC = () => {
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           className={`relative rounded-3xl p-8 sm:p-12 lg:p-14 overflow-hidden border shadow-2xl transition-all ${
             isLight
-              ? 'bg-gradient-to-r from-blue-700 via-blue-800 to-indigo-900 border-blue-600 text-white shadow-blue-500/20'
+              ? 'bg-gradient-to-br from-[#1d4ed8] via-[#1e40af] to-[#172554] border-blue-400/40 text-white shadow-[0_25px_60px_rgba(29,78,216,0.25)]'
               : 'bg-gradient-to-r from-[#0c1222] via-[#090e1a] to-[#060810] border-blue-500/30 text-white shadow-[0_0_50px_rgba(59,130,246,0.15)]'
           }`}
         >
           {/* Ambient Glowing Highlights */}
-          <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-sky-500/20 blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-24 -left-24 w-96 h-96 rounded-full bg-blue-600/20 blur-3xl pointer-events-none" />
+          <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-sky-400/25 blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -left-24 w-96 h-96 rounded-full bg-blue-500/25 blur-3xl pointer-events-none" />
 
           <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-8">
-            <div className="space-y-3 max-w-2xl">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-sky-300 text-xs font-mono font-bold tracking-wider uppercase">
-                <Sparkles className="w-3.5 h-3.5" />
+            <div className="space-y-3.5 max-w-2xl">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/15 backdrop-blur-md border border-white/30 text-white text-xs font-mono font-bold tracking-wider uppercase shadow-sm">
+                <Sparkles className="w-3.5 h-3.5 text-sky-300 shrink-0" />
                 <span>RAPID RFQ RESPONSE WITHIN 24 HOURS</span>
               </div>
 
-              <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.08]">
+              <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.08] text-white drop-shadow-sm">
                 Have a Casting Requirement?
               </h2>
 
-              <p className="text-sm sm:text-base text-neutral-200 leading-relaxed max-w-xl">
+              <p className="text-sm sm:text-base text-blue-100/90 leading-relaxed max-w-xl font-normal">
                 Upload your CAD drawings or component specifications. Receive a comprehensive metallurgical review, tooling plan, and custom batch quote.
               </p>
             </div>
@@ -284,15 +284,15 @@ export const ContactPreviewAndCtaSection: React.FC = () => {
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 shrink-0">
               <Link
                 to="/request-a-quote"
-                className="px-8 py-4 rounded-2xl bg-white hover:bg-neutral-100 text-neutral-950 font-extrabold text-sm sm:text-base text-center inline-flex items-center justify-center gap-2 shadow-xl hover:shadow-2xl transition-all transform hover:scale-105"
+                className="px-8 py-4 rounded-2xl bg-white hover:bg-neutral-100 text-neutral-900 font-extrabold text-sm sm:text-base text-center inline-flex items-center justify-center gap-2.5 shadow-xl hover:shadow-2xl transition-all transform hover:scale-105"
               >
                 <span>Request Custom Quote</span>
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-4 h-4 text-blue-600 shrink-0" />
               </Link>
 
               <Link
                 to="/contact"
-                className="px-7 py-4 rounded-2xl bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white font-bold text-sm sm:text-base text-center transition-colors"
+                className="px-7 py-4 rounded-2xl bg-white/15 hover:bg-white/25 backdrop-blur-md border border-white/30 text-white font-bold text-sm sm:text-base text-center transition-all shadow-sm"
               >
                 Contact Engineers
               </Link>
@@ -300,21 +300,21 @@ export const ContactPreviewAndCtaSection: React.FC = () => {
           </div>
 
           {/* Bottom Trust Guarantee Chips */}
-          <div className="relative z-10 grid grid-cols-2 sm:grid-cols-4 gap-4 mt-8 pt-6 border-t border-white/10 text-xs font-mono text-neutral-300">
-            <div className="flex items-center gap-1.5">
-              <ShieldCheck className="w-4 h-4 text-sky-400 shrink-0" />
+          <div className="relative z-10 grid grid-cols-2 sm:grid-cols-4 gap-4 mt-8 pt-6 border-t border-white/15 text-xs font-mono text-blue-100/90 font-medium">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-sky-300 shrink-0" />
               <span>IS 210 &amp; IS 1865 Compliant</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <ShieldCheck className="w-4 h-4 text-sky-400 shrink-0" />
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-sky-300 shrink-0" />
               <span>3.1 Mill Test Certification</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <ShieldCheck className="w-4 h-4 text-sky-400 shrink-0" />
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-sky-300 shrink-0" />
               <span>In-House Pattern Facility</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <ShieldCheck className="w-4 h-4 text-sky-400 shrink-0" />
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-sky-300 shrink-0" />
               <span>Pan-India Logistics</span>
             </div>
           </div>
