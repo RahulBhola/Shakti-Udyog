@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.JsonWebTokens;
+using ShaktiUdyog.Domain.Entities;
 using ShaktiUdyog.Infrastructure.Data;
 
 namespace ShaktiUdyog.Api.Services;
@@ -7,11 +8,9 @@ namespace ShaktiUdyog.Api.Services;
 public record CustomerContext(Guid UserId, IReadOnlyList<Guid> CompanyIds);
 
 /// <summary>
-/// Resolves the authenticated user's identity and APPROVED company links from
-/// the database — never from anything the browser sends (requirements §19
-/// customer_isolation). Every customer-portal query must filter by
-/// CompanyIds. Null when the user has no approved company yet
-/// (least-privilege default for new accounts).
+/// Resolves the authenticated customer's identity and linked company from
+/// the database. Auto-provisions/links the company if not yet linked so customers
+/// have immediate, friction-free portal access without admin approval.
 /// </summary>
 public interface ICustomerContextService
 {
@@ -33,9 +32,55 @@ public class CustomerContextService(
         }
 
         var companyIds = await db.UserCompanies
-            .Where(uc => uc.UserId == userId && uc.IsApproved && uc.Company.IsActive)
+            .Where(uc => uc.UserId == userId && uc.Company.IsActive)
             .Select(uc => uc.CompanyId)
             .ToListAsync(ct);
+
+        if (companyIds.Count == 0)
+        {
+            var user = await db.Users.FirstOrDefaultAsync(u => u.Id == userId, ct);
+            if (user != null)
+            {
+                var compName = !string.IsNullOrWhiteSpace(user.CompanyName)
+                    ? user.CompanyName.Trim()
+                    : (!string.IsNullOrWhiteSpace(user.FullName) ? user.FullName.Trim() : (user.Email ?? "Customer Account"));
+
+                var comp = await db.Companies.FirstOrDefaultAsync(c => c.Name == compName, ct);
+                if (comp == null)
+                {
+                    comp = new Company
+                    {
+                        Name = compName,
+                        CompanyEmail = user.Email,
+                        CompanyPhone = user.PhoneNumber,
+                        VerificationStatus = "Approved",
+                        IsActive = true,
+                        CreatedAtUtc = DateTimeOffset.UtcNow,
+                    };
+                    db.Companies.Add(comp);
+                    await db.SaveChangesAsync(ct);
+                }
+
+                var uc = await db.UserCompanies.FirstOrDefaultAsync(x => x.UserId == userId && x.CompanyId == comp.Id, ct);
+                if (uc == null)
+                {
+                    uc = new UserCompany
+                    {
+                        UserId = userId,
+                        CompanyId = comp.Id,
+                        IsApproved = true,
+                        ApprovedAtUtc = DateTimeOffset.UtcNow,
+                    };
+                    db.UserCompanies.Add(uc);
+                }
+                else
+                {
+                    uc.IsApproved = true;
+                }
+                await db.SaveChangesAsync(ct);
+                companyIds = [comp.Id];
+            }
+        }
 
         return companyIds.Count == 0 ? null : new CustomerContext(userId, companyIds);
     }

@@ -2,20 +2,57 @@ import { useEffect, useState, type FormEvent, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../auth/AuthContext";
 import { AuthLayout } from "./AuthLayout";
+import { Mail, Lock, ArrowRight, Eye, EyeOff, AlertCircle } from "lucide-react";
+
+/** Official Full-Color Google G Logo */
+function GoogleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24">
+      <path
+        fill="#4285F4"
+        d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.98 0 12s.45 3.82 1.25 5.42l4.03-3.15z"
+      />
+      <path
+        fill="#EA4335"
+        d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
+      />
+    </svg>
+  );
+}
+
+/** Official Apple Logo */
+function AppleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
+    </svg>
+  );
+}
 
 export function LoginPage() {
   const { user, login, loginWithProvider } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Already logged in — redirect away from login page (useEffect, not during render).
+  // Already logged in — redirect to respective portal
   useEffect(() => {
     if (!user) return;
     const role = user.roles[0];
-    const target = role === "Admin" || role === "Engineer" ? "/admin/dashboard"
-      : "/customer/dashboard";
+    const target =
+      role === "Admin" || role === "Engineer"
+        ? "/admin/dashboard"
+        : "/customer/dashboard";
     navigate(target, { replace: true });
   }, [user, navigate]);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -33,60 +70,52 @@ export function LoginPage() {
         const from = (location.state as { from?: string } | null)?.from ?? "/";
         navigate(from, { replace: true });
       } else {
-        // Mirrors the API's uniform message — no account-existence hints.
-        setError("Invalid credentials.");
+        setError("Invalid email or password. Please verify your credentials.");
       }
     } catch {
-      setError("Unable to reach the server. Please try again.");
+      setError("Unable to reach the server. Please check your connection.");
     } finally {
       setSubmitting(false);
     }
   }
 
-  // Ripple effect on button
-  function handleRipple(e: React.MouseEvent<HTMLButtonElement>) {
-    const btn = e.currentTarget;
-    const rect = btn.getBoundingClientRect();
-    btn.style.setProperty("--x", `${((e.clientX - rect.left) / rect.width) * 100}%`);
-    btn.style.setProperty("--y", `${((e.clientY - rect.top) / rect.height) * 100}%`);
-  }
-
   return (
     <AuthLayout>
-      <h2 className="auth-form-heading">Welcome back!</h2>
-      <p className="auth-form-subtitle">Log in to access your account.</p>
-
-      <form onSubmit={handleSubmit} className="auth-form">
-        {/* Email */}
-        <div className="auth-field">
-          <label htmlFor="login-email">Email</label>
-          <div className="auth-input-wrapper">
-            <span className="auth-input-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+      <form onSubmit={handleSubmit} className="auth-form-container">
+        {/* Email Field */}
+        <div className="auth-input-group">
+          <label htmlFor="login-email" className="auth-input-label">
+            Email Address
+          </label>
+          <div className="auth-control-wrap">
+            <span className="auth-control-icon">
+              <Mail size={17} />
             </span>
             <input
               id="login-email"
-              className="auth-input"
+              className="auth-text-input"
               type="email"
               autoComplete="username"
               required
-              placeholder="Enter your email address"
+              placeholder="name@company.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
           </div>
         </div>
 
-        {/* Password */}
-        <div className="auth-field">
-          <label htmlFor="login-password">Password</label>
-          <div className="auth-input-wrapper">
-            <span className="auth-input-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        {/* Password Field */}
+        <div className="auth-input-group">
+          <label htmlFor="login-password" className="auth-input-label">
+            Password
+          </label>
+          <div className="auth-control-wrap">
+            <span className="auth-control-icon">
+              <Lock size={17} />
             </span>
             <input
               id="login-password"
-              className="auth-input"
+              className="auth-text-input auth-text-input--has-toggle"
               type={showPw ? "text" : "password"}
               autoComplete="current-password"
               required
@@ -96,68 +125,83 @@ export function LoginPage() {
             />
             <button
               type="button"
-              className="auth-pw-toggle"
-              onClick={() => setShowPw(v => !v)}
+              className="auth-eye-toggle"
+              onClick={() => setShowPw((v) => !v)}
               aria-label={showPw ? "Hide password" : "Show password"}
+              title={showPw ? "Hide password" : "Show password"}
             >
-              {showPw ? (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.53 13.53 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
-              ) : (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-              )}
+              {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
         </div>
 
-        {/* Forgot password + Remember me */}
-        <div className="auth-forgot-row">
-          <label className="auth-remember">
+        {/* Remember me & Forgot Password */}
+        <div className="auth-meta-row">
+          <label className="auth-checkbox-label">
             <input type="checkbox" defaultChecked />
-            Remember me
+            <span>Remember me</span>
           </label>
-          <Link to="/forgot-password" className="auth-forgot-link">
+          <Link to="/forgot-password" className="auth-link-forgot">
             Forgot password?
           </Link>
         </div>
 
-        {/* Error */}
-        {error && <p role="alert" className="auth-error-msg">{error}</p>}
+        {/* Error Alert */}
+        {error && (
+          <div role="alert" className="auth-alert-error">
+            <AlertCircle size={17} style={{ flexShrink: 0 }} />
+            <span>{error}</span>
+          </div>
+        )}
 
-        {/* Submit */}
+        {/* Submit Button */}
         <button
           ref={submitRef}
           type="submit"
-          className="auth-submit"
+          className="auth-btn-primary"
           disabled={submitting}
-          onMouseMove={handleRipple}
         >
           {submitting ? (
-            <span className="auth-spinner" />
+            <span>Signing in…</span>
           ) : (
             <>
-              Log In
-              <svg className="auth-submit-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+              <span>Sign In to Dashboard</span>
+              <ArrowRight size={17} />
             </>
           )}
         </button>
       </form>
 
       {/* Divider */}
-      <div className="auth-divider">
-        <span>OR</span>
+      <div className="auth-sep-row">
+        <span>or continue with</span>
       </div>
 
-      {/* Social */}
-      <div className="auth-social">
-        <button type="button" className="auth-social-btn" onClick={() => loginWithProvider("apple")}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>
-          Continue with Apple
+      {/* Social Login Grid (Google & Apple) */}
+      <div className="auth-social-grid">
+        <button
+          type="button"
+          className="auth-btn-social"
+          onClick={() => loginWithProvider("google")}
+          title="Sign in with Google"
+        >
+          <GoogleIcon />
+          <span>Google</span>
+        </button>
+        <button
+          type="button"
+          className="auth-btn-social"
+          onClick={() => loginWithProvider("apple")}
+          title="Sign in with Apple"
+        >
+          <AppleIcon />
+          <span>Apple</span>
         </button>
       </div>
 
-      {/* Footer */}
-      <p className="auth-footer-text">
-        Don't have an account? <Link to="/signup">Sign Up</Link>
+      {/* Footer Navigation */}
+      <p className="auth-bottom-prompt">
+        Don't have an account? <Link to="/signup">Create one now</Link>
       </p>
     </AuthLayout>
   );

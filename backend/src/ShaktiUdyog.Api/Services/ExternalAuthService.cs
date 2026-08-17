@@ -1,10 +1,12 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using ShaktiUdyog.Api.Contracts.Auth;
 using ShaktiUdyog.Domain.Constants;
 using ShaktiUdyog.Domain.Entities;
 using ShaktiUdyog.Infrastructure.Auditing;
 using ShaktiUdyog.Infrastructure.Auth;
+using ShaktiUdyog.Infrastructure.Data;
 
 namespace ShaktiUdyog.Api.Services;
 
@@ -17,7 +19,8 @@ public class ExternalAuthService(
     UserManager<ApplicationUser> userManager,
     ITokenService tokenService,
     IAuditWriter audit,
-    ILogger<ExternalAuthService> logger) : IExternalAuthService
+    ILogger<ExternalAuthService> logger,
+    AppDbContext db) : IExternalAuthService
 {
     public async Task<AuthResponse?> HandleExternalLoginAsync(string provider, ClaimsPrincipal externalUser, string? ipAddress, string? userAgent)
     {
@@ -57,6 +60,33 @@ public class ExternalAuthService(
                 if (!createResult.Succeeded) return null;
                 await userManager.AddLoginAsync(user, new UserLoginInfo(provider, providerKey, provider));
                 await userManager.AddToRoleAsync(user, Roles.Customer);
+
+                // Auto-provision company for new OAuth customer
+                var compName = !string.IsNullOrWhiteSpace(fullName) ? fullName.Trim() : email.Trim();
+                var company = await db.Companies.FirstOrDefaultAsync(c => c.Name == compName);
+                if (company is null)
+                {
+                    company = new Company
+                    {
+                        Name = compName,
+                        CompanyEmail = email.Trim(),
+                        VerificationStatus = "Approved",
+                        IsActive = true,
+                        CreatedAtUtc = DateTimeOffset.UtcNow,
+                    };
+                    db.Companies.Add(company);
+                    await db.SaveChangesAsync();
+                }
+
+                db.UserCompanies.Add(new UserCompany
+                {
+                    UserId = user.Id,
+                    CompanyId = company.Id,
+                    IsApproved = true,
+                    ApprovedAtUtc = DateTimeOffset.UtcNow,
+                });
+                await db.SaveChangesAsync();
+
                 await audit.WriteAsync("auth.external.registered", user.Id, "User", user.Id.ToString(), ipAddress, userAgent);
             }
         }

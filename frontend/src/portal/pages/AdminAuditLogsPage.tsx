@@ -359,8 +359,8 @@ export default function AdminAuditLogsPage() {
                 <col style={{ width: "16%" }} />
                 <col style={{ width: "11%" }} />
                 <col style={{ width: "24%" }} />
-                <col style={{ width: "12%" }} />
-                <col style={{ width: 70 }} />
+                <col style={{ width: "11%" }} />
+                <col style={{ width: "6%" }} />
               </colgroup>
               <thead>
                 <tr>

@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using ShaktiUdyog.Api.Contracts.Auth;
 using ShaktiUdyog.Domain.Constants;
 using ShaktiUdyog.Domain.Entities;
 using ShaktiUdyog.Infrastructure.Auditing;
 using ShaktiUdyog.Infrastructure.Auth;
+using ShaktiUdyog.Infrastructure.Data;
 
 namespace ShaktiUdyog.Api.Services;
 
@@ -29,7 +31,8 @@ public class AuthService(
     IPasswordResetService passwordResetService,
     IEmailSender emailSender,
     IAuditWriter audit,
-    ILogger<AuthService> logger) : IAuthService
+    ILogger<AuthService> logger,
+    AppDbContext db) : IAuthService
 {
     public async Task<AuthResponse?> LoginAsync(LoginRequest request, string? ipAddress, string? userAgent)
     {
@@ -190,6 +193,36 @@ public class AuthService(
 
         // Assign default Customer role
         await userManager.AddToRoleAsync(user, Roles.Customer);
+
+        // Auto-provision and link approved company immediately (no admin approval needed)
+        var compName = !string.IsNullOrWhiteSpace(request.CompanyName)
+            ? request.CompanyName.Trim()
+            : (!string.IsNullOrWhiteSpace(request.FullName) ? request.FullName.Trim() : request.Email.Trim());
+
+        var company = await db.Companies.FirstOrDefaultAsync(c => c.Name == compName);
+        if (company is null)
+        {
+            company = new Company
+            {
+                Name = compName,
+                CompanyEmail = request.Email.Trim(),
+                CompanyPhone = request.Phone?.Trim(),
+                VerificationStatus = "Approved",
+                IsActive = true,
+                CreatedAtUtc = DateTimeOffset.UtcNow,
+            };
+            db.Companies.Add(company);
+            await db.SaveChangesAsync();
+        }
+
+        db.UserCompanies.Add(new UserCompany
+        {
+            UserId = user.Id,
+            CompanyId = company.Id,
+            IsApproved = true,
+            ApprovedAtUtc = DateTimeOffset.UtcNow,
+        });
+        await db.SaveChangesAsync();
 
         // Generate tokens for immediate login
         var access = await tokenService.CreateAccessTokenAsync(user);

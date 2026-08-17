@@ -91,7 +91,196 @@ public class AdminController(IAdminService adminService, IOrderAdminService orde
         return Ok(new { message = user.IsActive ? "User activated." : "User deactivated." });
     }
 
-    // ---- Settings -------------------------------------------------------------
+    [HttpDelete("users/{id:guid}")]
+    public async Task<IActionResult> DeleteUser(Guid id)
+    {
+        if (id == UserId)
+        {
+            return BadRequest(new { message = "You cannot delete your own active administrator account." });
+        }
+
+        var user = await userManager.FindByIdAsync(id.ToString());
+        if (user is null) return NotFound(new { message = "User not found." });
+
+        // Check if user is an Admin, and ensure they are not the last Admin
+        var roles = await userManager.GetRolesAsync(user);
+        if (roles.Contains(Roles.Admin))
+        {
+            var allAdmins = await userManager.GetUsersInRoleAsync(Roles.Admin);
+            if (allAdmins.Count <= 1)
+            {
+                return BadRequest(new { message = "Cannot delete the only remaining Administrator account in the system." });
+            }
+        }
+
+        try
+        {
+            // 1. Remove refresh tokens and password reset tokens
+            var tokens = await db.RefreshTokens.Where(t => t.UserId == id).ToListAsync();
+            if (tokens.Count > 0) db.RefreshTokens.RemoveRange(tokens);
+
+            var resetTokens = await db.PasswordResetTokens.Where(t => t.UserId == id).ToListAsync();
+            if (resetTokens.Count > 0) db.PasswordResetTokens.RemoveRange(resetTokens);
+
+            // 2. Remove company associations & track candidate orphan companies
+            var userCompanies = await db.UserCompanies.Where(uc => uc.UserId == id).ToListAsync();
+            var companyIdsToCheck = userCompanies.Select(uc => uc.CompanyId).ToList();
+
+            if (!string.IsNullOrWhiteSpace(user.CompanyName))
+            {
+                var comp = await db.Companies.FirstOrDefaultAsync(c => c.Name == user.CompanyName);
+                if (comp != null && !companyIdsToCheck.Contains(comp.Id))
+                {
+                    companyIdsToCheck.Add(comp.Id);
+                }
+            }
+
+            if (userCompanies.Count > 0) db.UserCompanies.RemoveRange(userCompanies);
+
+            // 3. Remove user board preferences
+            var boardPrefs = await db.UserBoardPreferences.Where(p => p.UserId == id).ToListAsync();
+            if (boardPrefs.Count > 0) db.UserBoardPreferences.RemoveRange(boardPrefs);
+
+            // 4. Remove user roles
+            var userRoles = await db.UserRoles.Where(ur => ur.UserId == id).ToListAsync();
+            if (userRoles.Count > 0) db.UserRoles.RemoveRange(userRoles);
+
+            await db.SaveChangesAsync();
+
+            // 5. Delete the user
+            var result = await userManager.DeleteAsync(user);
+            if (!result.Succeeded)
+            {
+                db.Users.Remove(user);
+                await db.SaveChangesAsync();
+            }
+
+            // 6. Clean up any orphan companies that have no other registered users and no linked business documents
+            foreach (var compId in companyIdsToCheck)
+            {
+                var hasOtherUsers = await db.UserCompanies.AnyAsync(uc => uc.CompanyId == compId);
+                var hasOrders = await db.Orders.AnyAsync(o => o.CompanyId == compId);
+                var hasInvoices = await db.Invoices.AnyAsync(i => i.CompanyId == compId);
+                var hasEnquiries = await db.Enquiries.AnyAsync(e => e.CompanyId == compId);
+
+                if (!hasOtherUsers && !hasOrders && !hasInvoices && !hasEnquiries)
+                {
+                    var comp = await db.Companies.FindAsync(compId);
+                    if (comp != null)
+                    {
+                        var contacts = await db.ContactPersons.Where(cp => cp.CompanyId == compId).ToListAsync();
+                        if (contacts.Count > 0) db.ContactPersons.RemoveRange(contacts);
+
+                        var addrs = await db.CompanyAddresses.Where(ca => ca.CompanyId == compId).ToListAsync();
+                        if (addrs.Count > 0) db.CompanyAddresses.RemoveRange(addrs);
+
+                        var docs = await db.CompanyDocuments.Where(cd => cd.CompanyId == compId).ToListAsync();
+                        if (docs.Count > 0) db.CompanyDocuments.RemoveRange(docs);
+
+                        db.Companies.Remove(comp);
+                    }
+                }
+            }
+            await db.SaveChangesAsync();
+
+            return Ok(new { message = $"User {user.Email} has been permanently deleted." });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, new { message = $"Failed to delete user: {ex.Message}" });
+        }
+    }
+
+    // ---- Profile -------------------------------------------------------------
+
+    [HttpGet("profile")]
+    public async Task<IActionResult> GetProfile()
+    {
+        var user = await userManager.FindByIdAsync(UserId.ToString());
+        if (user is null) return NotFound();
+
+        var roles = await userManager.GetRolesAsync(user);
+        return Ok(new
+        {
+            user.Id,
+            user.Email,
+            user.FullName,
+            user.PhoneNumber,
+            user.IsActive,
+            user.CreatedAtUtc,
+            user.LastLoginAtUtc,
+            user.CompanyName,
+            Roles = roles,
+        });
+    }
+
+    [HttpPatch("profile")]
+    public async Task<IActionResult> UpdateProfile([FromBody] UpdateAdminProfileRequest request)
+    {
+        var user = await userManager.FindByIdAsync(UserId.ToString());
+        if (user is null) return NotFound();
+
+        if (request.FullName != null) user.FullName = string.IsNullOrWhiteSpace(request.FullName) ? null : request.FullName.Trim();
+        if (request.PhoneNumber != null) user.PhoneNumber = string.IsNullOrWhiteSpace(request.PhoneNumber) ? null : request.PhoneNumber.Trim();
+
+        var result = await userManager.UpdateAsync(user);
+        return result.Succeeded
+            ? Ok(new { message = "Profile updated successfully." })
+            : BadRequest(new { message = string.Join(", ", result.Errors.Select(e => e.Description)) });
+    }
+
+    [HttpPost("profile/change-password")]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangeAdminPasswordRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.CurrentPassword) || string.IsNullOrWhiteSpace(request.NewPassword))
+        {
+            return BadRequest(new { message = "Current password and new password are required." });
+        }
+
+        var user = await userManager.FindByIdAsync(UserId.ToString());
+        if (user is null) return NotFound();
+
+        var result = await userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
+        return result.Succeeded
+            ? Ok(new { message = "Password changed successfully." })
+            : BadRequest(new { message = string.Join(", ", result.Errors.Select(e => e.Description)) });
+    }
+
+    // ---- Engineers -----------------------------------------------------------
+
+    [HttpGet("engineers")]
+    public async Task<IActionResult> GetEngineers()
+    {
+        var engineerRole = await db.Roles.FirstOrDefaultAsync(r => r.Name == Roles.Engineer);
+        if (engineerRole is null) return Ok(Array.Empty<object>());
+
+        var engineerUserIds = await db.UserRoles
+            .Where(ur => ur.RoleId == engineerRole.Id)
+            .Select(ur => ur.UserId)
+            .ToListAsync();
+
+        var engineers = await userManager.Users
+            .Where(u => engineerUserIds.Contains(u.Id))
+            .OrderByDescending(u => u.CreatedAtUtc)
+            .Select(u => new
+            {
+                u.Id,
+                u.Email,
+                u.FullName,
+                u.PhoneNumber,
+                u.IsActive,
+                u.CreatedAtUtc,
+                u.LastLoginAtUtc,
+                Role = Roles.Engineer,
+            })
+            .ToListAsync();
+
+        return Ok(engineers);
+    }
+
+
+
+    // ---- Settings ------------------------------------------------------------
 
     [HttpGet("settings")]
     public async Task<IActionResult> GetSettings()
@@ -133,6 +322,51 @@ public class AdminController(IAdminService adminService, IOrderAdminService orde
 
     [HttpGet("companies")]
     public async Task<IActionResult> GetCompanies() => Ok(await db.Companies.OrderByDescending(c => c.CreatedAtUtc).ToListAsync());
+
+    [HttpDelete("companies/{id:guid}")]
+    public async Task<IActionResult> DeleteCompany(Guid id)
+    {
+        var company = await db.Companies.FindAsync(id);
+        if (company is null) return NotFound(new { message = "Company not found." });
+
+        try
+        {
+            // Check for active orders/invoices/enquiries
+            var hasOrders = await db.Orders.AnyAsync(o => o.CompanyId == id);
+            var hasInvoices = await db.Invoices.AnyAsync(i => i.CompanyId == id);
+            var hasEnquiries = await db.Enquiries.AnyAsync(e => e.CompanyId == id);
+
+            if (hasOrders || hasInvoices || hasEnquiries)
+            {
+                company.IsActive = false;
+                company.VerificationStatus = "Inactive";
+                await db.SaveChangesAsync();
+                return Ok(new { message = $"Company {company.Name} has linked operational records and has been deactivated." });
+            }
+
+            // Remove associated links
+            var userComps = await db.UserCompanies.Where(uc => uc.CompanyId == id).ToListAsync();
+            if (userComps.Count > 0) db.UserCompanies.RemoveRange(userComps);
+
+            var contacts = await db.ContactPersons.Where(cp => cp.CompanyId == id).ToListAsync();
+            if (contacts.Count > 0) db.ContactPersons.RemoveRange(contacts);
+
+            var addrs = await db.CompanyAddresses.Where(ca => ca.CompanyId == id).ToListAsync();
+            if (addrs.Count > 0) db.CompanyAddresses.RemoveRange(addrs);
+
+            var docs = await db.CompanyDocuments.Where(cd => cd.CompanyId == id).ToListAsync();
+            if (docs.Count > 0) db.CompanyDocuments.RemoveRange(docs);
+
+            db.Companies.Remove(company);
+            await db.SaveChangesAsync();
+
+            return Ok(new { message = $"Company {company.Name} has been deleted successfully." });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, new { message = $"Failed to delete company: {ex.Message}" });
+        }
+    }
 
     // ---- Pending Approvals (users needing company access) --------------------
 
@@ -429,3 +663,7 @@ public record OverrideStatusRequest(string NewStatus, string? Note);
 public record ApproveUserRequest(string CompanyName, string? City = null, string? State = null, string? GstNumber = null);
 
 public record AssignOrderRequest(Guid? AssignedToUserId);
+
+public record UpdateAdminProfileRequest(string? FullName, string? PhoneNumber);
+
+public record ChangeAdminPasswordRequest(string CurrentPassword, string NewPassword);

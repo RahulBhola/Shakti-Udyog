@@ -367,15 +367,15 @@ export default function EngineerEnquiryListPage() {
           <div className="inv-scroll">
             <table className="inv-table">
               <colgroup>
-                <col style={{ width: 40 }} />
-                <col style={{ width: 52 }} />
-                <col style={{ width: "14%" }} />
-                <col style={{ width: "22%" }} />
-                <col style={{ width: "8%" }} />
-                <col style={{ width: "10%" }} />
-                <col style={{ width: "10%" }} />
+                <col style={{ width: "4%" }} />
+                <col style={{ width: "5%" }} />
+                <col style={{ width: "13%" }} />
+                <col style={{ width: "21%" }} />
+                <col style={{ width: "9%" }} />
+                <col style={{ width: "11%" }} />
                 <col style={{ width: "12%" }} />
-                <col style={{ width: 90 }} />
+                <col style={{ width: "19%" }} />
+                <col style={{ width: "6%" }} />
               </colgroup>
               <thead>
                 <tr>

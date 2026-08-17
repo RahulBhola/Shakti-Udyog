@@ -532,12 +532,12 @@ export default function AdminEngineersPage() {
           <div className="inv-scroll">
             <table className="inv-table">
               <colgroup>
-                <col style={{ width: "25%" }} />
-                <col style={{ width: "25%" }} />
+                <col style={{ width: "26%" }} />
+                <col style={{ width: "26%" }} />
                 <col style={{ width: "15%" }} />
                 <col style={{ width: "15%" }} />
                 <col style={{ width: "12%" }} />
-                <col style={{ width: 80 }} />
+                <col style={{ width: "6%" }} />
               </colgroup>
               <thead>
                 <tr>

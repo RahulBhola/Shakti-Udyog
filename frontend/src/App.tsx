@@ -81,6 +81,7 @@ const AdminCompaniesPage = lazy(() => import("./portal/pages/AdminCompaniesPage"
 const AdminAuditLogsPage = lazy(() => import("./portal/pages/AdminAuditLogsPage"));
 const AdminReportsPage = lazy(() => import("./portal/pages/AdminReportsPage"));
 const AdminSettingsPage = lazy(() => import("./portal/pages/AdminSettingsPage"));
+const AdminProfilePage = lazy(() => import("./portal/pages/AdminProfilePage"));
 const AdminInvoiceManagePage = lazy(() => import("./portal/pages/AdminInvoiceManagePage"));
 const AdminDealPage = lazy(() => import("./portal/pages/AdminDealPage"));
 const AdminProductPage = lazy(() => import("./portal/pages/AdminProductPage"));
@@ -198,6 +199,7 @@ function App() {
               <Route path="products" element={<AdminProductPage />} />
               <Route path="products/:id" element={<AdminProductDetailPage />} />
               <Route path="categories" element={<AdminCategoryPage />} />
+              <Route path="profile" element={<AdminProfilePage />} />
               <Route path="settings" element={<AdminSettingsPage />} />
               <Route path="audit-logs" element={<AdminAuditLogsPage />} />
               {/* Reporting */}

@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode, type CSSProperties } from "react";
 import { Link } from "react-router-dom";
-import { apiGet, apiPatch } from "../../api/client";
+import { apiGet, apiPatch, apiDelete } from "../../api/client";
 import { EmptyState, Loading } from "../../components/ui";
 import { useAuth } from "../../auth/AuthContext";
 import { formatDate } from "../shared";
 import {
   RefreshCw, ChevronLeft, ChevronRight, X, Eye, MoreVertical,
-  Mail, Phone, KeyRound, Building2, Ban, CheckCircle2, Filter, X as CloseIcon,
+  Mail, Phone, Copy, Ban, CheckCircle2, Filter, X as CloseIcon,
   User as UserIcon, Users, UserCheck, UserX, Crown, TrendingUp, UserPlus,
+  Trash2, AlertTriangle,
 } from "lucide-react";
 import "./erpListView.css";
 
@@ -70,8 +71,8 @@ function lastLoginLabel(iso: string | null | undefined): string | null {
   const startOfDay = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
   const diffDays = Math.round((startOfDay(now) - startOfDay(d)) / 86400000);
   const time = d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
-  if (diffDays === 0) return `Today ${time}`;
-  if (diffDays === 1) return `Yesterday ${time}`;
+  if (diffDays === 0) return `Today, ${time}`;
+  if (diffDays === 1) return `Yesterday, ${time}`;
   return formatDate(iso);
 }
 
@@ -98,7 +99,7 @@ function hasActive(f: Filters): boolean {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Small pieces                                                       */
+/*  Components                                                         */
 /* ------------------------------------------------------------------ */
 
 function RoleBadge({ role }: { role: string }) {
@@ -112,20 +113,164 @@ function StatusBadge({ active }: { active: boolean }) {
     : <span className="inv-badge inv-badge--red"><span className="inv-dot" /> Inactive</span>;
 }
 
-function Modal({ user, onClose }: { user: AdminUser; onClose: () => void }) {
+function DeleteConfirmModal({
+  user,
+  onClose,
+  onConfirm,
+  loading,
+}: {
+  user: AdminUser;
+  onClose: () => void;
+  onConfirm: () => void;
+  loading: boolean;
+}) {
+  const [typed, setTyped] = useState("");
+  const isMatch = typed.trim().toLowerCase() === "delete";
+
+  return (
+    <div className="inv-modal-backdrop" onClick={onClose}>
+      <div
+        className="inv-modal"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Confirm deletion"
+        style={{ maxWidth: 460 }}
+      >
+        <div className="inv-modal__head" style={{ borderBottomColor: "rgba(239, 68, 68, 0.2)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 32,
+                height: 32,
+                borderRadius: 8,
+                background: "rgba(239, 68, 68, 0.12)",
+                color: "var(--color-danger)",
+              }}
+            >
+              <AlertTriangle size={18} />
+            </span>
+            <span className="inv-modal__title" style={{ color: "var(--color-danger)" }}>
+              Delete User Account
+            </span>
+          </div>
+          <button className="inv-icon-btn" onClick={onClose} aria-label="Close">
+            <CloseIcon size={16} />
+          </button>
+        </div>
+
+        <div className="inv-modal__body" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <p style={{ fontSize: 13.5, color: "var(--text-secondary)", margin: 0, lineHeight: 1.5 }}>
+            Are you sure you want to permanently delete the account for{" "}
+            <strong style={{ color: "var(--text-primary)" }}>{user.fullName || user.email}</strong>?
+          </p>
+
+          <div
+            style={{
+              padding: "12px 14px",
+              borderRadius: 10,
+              background: "rgba(239, 68, 68, 0.08)",
+              border: "1px solid rgba(239, 68, 68, 0.2)",
+              fontSize: 12.5,
+              color: "var(--color-danger)",
+              lineHeight: 1.45,
+            }}
+          >
+            <strong>Warning:</strong> This action is irreversible. All sessions and role assignments will be revoked immediately.
+          </div>
+
+          <div className="inv-field">
+            <label className="inv-field__label" style={{ fontSize: 13 }}>
+              To confirm, type <span style={{ color: "var(--color-danger)", fontWeight: 700 }}>delete</span> below:
+            </label>
+            <input
+              type="text"
+              className="inv-input"
+              value={typed}
+              onChange={(e) => setTyped(e.target.value)}
+              placeholder="Type 'delete' to confirm"
+              autoFocus
+              style={{
+                borderColor: isMatch ? "var(--color-danger)" : undefined,
+                boxShadow: isMatch ? "0 0 0 3px rgba(239, 68, 68, 0.2)" : undefined,
+              }}
+            />
+          </div>
+        </div>
+
+        <div className="inv-modal__foot" style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
+          <button type="button" className="inv-btn" onClick={onClose} disabled={loading}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="inv-btn"
+            disabled={!isMatch || loading}
+            onClick={onConfirm}
+            style={{
+              background: isMatch ? "var(--color-danger)" : "var(--bg-surface)",
+              color: isMatch ? "#ffffff" : "var(--text-muted)",
+              border: isMatch ? "none" : "1px solid var(--border-default)",
+              cursor: isMatch && !loading ? "pointer" : "not-allowed",
+              transition: "all 0.2s ease",
+            }}
+          >
+            <Trash2 size={14} />
+            <span>{loading ? "Deleting User…" : "Permanently Delete User"}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Modal({
+  user,
+  isSelfUser,
+  onClose,
+  onDeleteUser,
+}: {
+  user: AdminUser;
+  isSelfUser: boolean;
+  onClose: () => void;
+  onDeleteUser?: (u: AdminUser) => void;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  const copyEmail = () => {
+    navigator.clipboard.writeText(user.email);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
     <div className="inv-modal-backdrop" onClick={onClose}>
       <div className="inv-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="User details">
         <div className="inv-modal__head">
-          <span className="inv-modal__title">User Details</span>
+          <span className="inv-modal__title">User Profile</span>
           <button className="inv-icon-btn" onClick={onClose} aria-label="Close"><CloseIcon size={16} /></button>
         </div>
         <div className="inv-modal__body">
-          <div className="inv-customer" style={{ paddingBottom: 4 }}>
-            <span className="inv-avatar" style={{ width: 52, height: 52, fontSize: 18 }}>{initials(user.fullName)}</span>
-            <div>
-              <div className="inv-customer__name" style={{ fontSize: 16 }}>{user.fullName ?? "—"}</div>
-              <div className="inv-customer__contact">{user.email}</div>
+          <div className="inv-customer" style={{ paddingBottom: 10 }}>
+            <span className="inv-avatar" style={{ width: 56, height: 56, fontSize: 20 }}>{initials(user.fullName)}</span>
+            <div style={{ minWidth: 0 }}>
+              <div className="inv-customer__name" style={{ fontSize: 17 }}>{user.fullName || "Unnamed User"}</div>
+              <div className="inv-customer__contact" style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
+                <span>{user.email}</span>
+                <button
+                  type="button"
+                  onClick={copyEmail}
+                  className="inv-icon-btn"
+                  style={{ width: 22, height: 22, padding: 2 }}
+                  title="Copy email address"
+                >
+                  <Copy size={12} />
+                </button>
+                {copied && <span style={{ fontSize: 11, color: "var(--color-success)" }}>Copied!</span>}
+              </div>
             </div>
           </div>
           <div className="inv-modal__row">
@@ -133,28 +278,47 @@ function Modal({ user, onClose }: { user: AdminUser; onClose: () => void }) {
             <span className="inv-modal__row-value"><RoleBadge role={user.role} /></span>
           </div>
           <div className="inv-modal__row">
-            <span className="inv-modal__row-label">Status</span>
+            <span className="inv-modal__row-label">Account Status</span>
             <span className="inv-modal__row-value"><StatusBadge active={user.isActive} /></span>
           </div>
           <div className="inv-modal__row">
-            <span className="inv-modal__row-label">Company</span>
-            <span className="inv-modal__row-value">{user.companyName ?? "—"}</span>
+            <span className="inv-modal__row-label">Organization</span>
+            <span className="inv-modal__row-value">{user.companyName || "Internal Staff"}</span>
           </div>
           <div className="inv-modal__row">
             <span className="inv-modal__row-label">Phone</span>
-            <span className="inv-modal__row-value">{user.phoneNumber ?? "—"}</span>
+            <span className="inv-modal__row-value">{user.phoneNumber || "Not provided"}</span>
           </div>
           <div className="inv-modal__row">
-            <span className="inv-modal__row-label">Joined On</span>
+            <span className="inv-modal__row-label">Registration Date</span>
             <span className="inv-modal__row-value">{formatDate(user.createdAtUtc)}</span>
           </div>
           <div className="inv-modal__row">
-            <span className="inv-modal__row-label">Last Login</span>
-            <span className="inv-modal__row-value">{lastLoginLabel(user.lastLoginAtUtc) ?? "Never"}</span>
+            <span className="inv-modal__row-label">Last Active</span>
+            <span className="inv-modal__row-value">{lastLoginLabel(user.lastLoginAtUtc) ?? "Never logged in"}</span>
           </div>
         </div>
-        <div className="inv-modal__foot">
-          <button className="inv-btn" onClick={onClose}>Close</button>
+        <div className="inv-modal__foot" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ display: "flex", gap: 8 }}>
+            <a
+              href={`mailto:${user.email}`}
+              className="inv-btn"
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, textDecoration: "none" }}
+            >
+              <Mail size={14} /> Send Email
+            </a>
+            {!isSelfUser && onDeleteUser && (
+              <button
+                type="button"
+                className="inv-btn"
+                onClick={() => onDeleteUser(user)}
+                style={{ color: "var(--color-danger)", borderColor: "rgba(239, 68, 68, 0.3)" }}
+              >
+                <Trash2 size={14} /> Delete
+              </button>
+            )}
+          </div>
+          <button className="inv-btn inv-btn--primary" onClick={onClose}>Close</button>
         </div>
       </div>
     </div>
@@ -175,6 +339,8 @@ export default function AdminUsersPage() {
   const [pageSize, setPageSize] = useState(20);
   const [viewing, setViewing] = useState<AdminUser | null>(null);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [deletingUser, setDeletingUser] = useState<AdminUser | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const load = useCallback(() => {
     apiGet<AdminUser[]>("/api/v1/admin/users").then(setUsers).catch((e: Error) => setError(e.message));
@@ -229,14 +395,30 @@ export default function AdminUsersPage() {
     }
   }
 
+  async function handleDeleteConfirm() {
+    if (!deletingUser) return;
+    setDeleteLoading(true);
+    try {
+      await apiDelete(`/api/v1/admin/users/${deletingUser.id}`);
+      setDeletingUser(null);
+      if (viewing?.id === deletingUser.id) setViewing(null);
+      load();
+    } catch (e) {
+      window.alert(e instanceof Error ? e.message : "Failed to delete user account.");
+    } finally {
+      setDeleteLoading(false);
+    }
+  }
+
   const isSelf = (u: AdminUser) => currentUser != null && String(u.id) === String(currentUser.id);
 
   const setFilter = (key: keyof Filters, value: string) => setDraft((d) => ({ ...d, [key]: value }));
 
   const reset = () => { setDraft(EMPTY_FILTERS); setApplied(EMPTY_FILTERS); setPage(1); };
 
-  const renderRow = (u: AdminUser) => {
+  const renderRow = (u: AdminUser, idx: number, total: number) => {
     const self = isSelf(u);
+    const isBottomRow = idx >= total - 2 && total > 2;
     return (
       <tr key={u.id} onClick={() => setViewing(u)} className={self ? "inv-row--self" : undefined}>
         <td>
@@ -244,8 +426,8 @@ export default function AdminUsersPage() {
             <span className="inv-avatar">{initials(u.fullName)}</span>
             <div>
               <div className="inv-customer__name" style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <span className="truncate">{u.fullName ?? "—"}</span>
-                {self && <span className="inv-badge inv-badge--blue">You</span>}
+                <span className="truncate">{u.fullName ?? "Unnamed User"}</span>
+                {self && <span className="inv-badge inv-badge--blue" style={{ fontSize: 10, padding: "2px 6px" }}>You</span>}
               </div>
               <div className="inv-customer__contact">{u.email}</div>
             </div>
@@ -253,17 +435,25 @@ export default function AdminUsersPage() {
         </td>
         <td><RoleBadge role={u.role} /></td>
         <td>
-          <div className="inv-customer__name" style={{ fontSize: 13 }}>{u.companyName ?? "—"}</div>
-          <div className="inv-sub">{u.role === "Customer" ? "Customer" : "Staff"}</div>
+          <div className="inv-customer__name" style={{ fontSize: 13, fontWeight: 600 }}>
+            {u.companyName ? u.companyName : <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>Internal Staff</span>}
+          </div>
+          <div className="inv-sub">{u.role === "Customer" ? "Client Account" : "Staff Member"}</div>
         </td>
         <td>
-          <div className="inv-amount">
-            <span className="inv-amount__paid" style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
-              <Phone size={12} /> {u.phoneNumber ?? "—"}
-            </span>
-            <span className="inv-amount__balance" style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
-              <Mail size={12} /> {u.email}
-            </span>
+          <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12.5, color: "var(--text-primary)" }}>
+              <Mail size={13} style={{ color: "var(--color-primary)", flexShrink: 0 }} />
+              <span className="truncate">{u.email}</span>
+            </div>
+            {u.phoneNumber ? (
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--text-muted)" }}>
+                <Phone size={12} style={{ opacity: 0.8, flexShrink: 0 }} />
+                <span>{u.phoneNumber}</span>
+              </div>
+            ) : (
+              <div style={{ fontSize: 11.5, color: "var(--text-muted)", opacity: 0.6 }}>No phone added</div>
+            )}
           </div>
         </td>
         <td>
@@ -271,41 +461,81 @@ export default function AdminUsersPage() {
         </td>
         <td><StatusBadge active={u.isActive} /></td>
         <td>
-          <div className="inv-date" style={{ fontWeight: 500 }}>{lastLoginLabel(u.lastLoginAtUtc) ?? "Never"}</div>
+          <div className="inv-date" style={{ fontWeight: 500 }}>
+            {lastLoginLabel(u.lastLoginAtUtc) ?? <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>Never</span>}
+          </div>
         </td>
         <td>
           <div className="inv-actions" onClick={(e) => e.stopPropagation()}>
-            <button className="inv-icon-btn" title="View Profile" aria-label="View profile" onClick={() => setViewing(u)}>
+            <button
+              className="inv-icon-btn"
+              title="View Profile Details"
+              aria-label="View user profile"
+              onClick={() => setViewing(u)}
+            >
               <Eye size={16} />
             </button>
             <div className="inv-menu-wrap" onMouseDown={(e) => e.stopPropagation()}>
-              <button className="inv-icon-btn" title="More" aria-label="More actions"
+              <button
+                className="inv-icon-btn"
+                title="More Options"
+                aria-label="More options"
                 aria-expanded={openMenu === u.id}
-                onClick={() => setOpenMenu((m) => (m === u.id ? null : u.id))}>
+                onClick={() => setOpenMenu((m) => (m === u.id ? null : u.id))}
+              >
                 <MoreVertical size={16} />
               </button>
               {openMenu === u.id && (
-                <div className="inv-menu">
-                  <button className="inv-menu__item" onClick={() => { setOpenMenu(null); setViewing(u); }}>
-                    <Eye size={15} /> View Details
+                <div className={`inv-menu ${isBottomRow ? "inv-menu--up" : ""}`}>
+                  <button
+                    className="inv-menu__item"
+                    onClick={() => { setOpenMenu(null); setViewing(u); }}
+                  >
+                    <Eye size={15} /> View Full Profile
                   </button>
-                  <button className="inv-menu__item" disabled title="Company detail page not available">
-                    <Building2 size={15} /> View Company
-                  </button>
-                  <button className="inv-menu__item" disabled title="Reset password endpoint not available">
-                    <KeyRound size={15} /> Reset Password
-                  </button>
-                  <button className="inv-menu__item" disabled title="Role assignment endpoint not available">
-                    <Crown size={15} /> Assign Role
+                  <a
+                    className="inv-menu__item"
+                    href={`mailto:${u.email}`}
+                    onClick={() => setOpenMenu(null)}
+                  >
+                    <Mail size={15} /> Send Direct Email
+                  </a>
+                  <button
+                    className="inv-menu__item"
+                    onClick={() => {
+                      setOpenMenu(null);
+                      navigator.clipboard.writeText(u.email);
+                    }}
+                  >
+                    <Copy size={15} /> Copy Email Address
                   </button>
                   <div className="inv-menu__divider" />
                   {u.isActive ? (
-                    <button className="inv-menu__item inv-menu__item--danger" onClick={() => { void toggleActive(u); }}>
+                    <button
+                      className="inv-menu__item"
+                      style={{ color: "var(--color-danger)" }}
+                      onClick={() => { void toggleActive(u); }}
+                    >
                       <Ban size={15} /> Deactivate Account
                     </button>
                   ) : (
-                    <button className="inv-menu__item" onClick={() => { void toggleActive(u); }}>
+                    <button
+                      className="inv-menu__item"
+                      style={{ color: "var(--color-success)" }}
+                      onClick={() => { void toggleActive(u); }}
+                    >
                       <CheckCircle2 size={15} /> Activate Account
+                    </button>
+                  )}
+                  {!self && (
+                    <button
+                      className="inv-menu__item inv-menu__item--danger"
+                      onClick={() => {
+                        setOpenMenu(null);
+                        setDeletingUser(u);
+                      }}
+                    >
+                      <Trash2 size={15} /> Delete Account
                     </button>
                   )}
                 </div>
@@ -326,7 +556,7 @@ export default function AdminUsersPage() {
             <span className="inv-avatar">{initials(u.fullName)}</span>
             <div>
               <div className="inv-customer__name" style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                {u.fullName ?? "—"} {self && <span className="inv-badge inv-badge--blue">You</span>}
+                {u.fullName ?? "Unnamed User"} {self && <span className="inv-badge inv-badge--blue">You</span>}
               </div>
               <div className="inv-sub">{u.email}</div>
             </div>
@@ -340,7 +570,7 @@ export default function AdminUsersPage() {
           </div>
           <div className="inv-card__cell">
             <span className="inv-card__label">Company</span>
-            <span className="inv-card__value">{u.companyName ?? "—"}</span>
+            <span className="inv-card__value">{u.companyName || "Internal Staff"}</span>
           </div>
           <div className="inv-card__cell">
             <span className="inv-card__label">Joined</span>
@@ -458,14 +688,14 @@ export default function AdminUsersPage() {
           <div className="inv-scroll">
             <table className="inv-table">
               <colgroup>
-                <col style={{ width: "20%" }} />
+                <col style={{ width: "22%" }} />
                 <col style={{ width: "10%" }} />
                 <col style={{ width: "13%" }} />
-                <col style={{ width: "16%" }} />
-                <col style={{ width: "12%" }} />
+                <col style={{ width: "18%" }} />
+                <col style={{ width: "11%" }} />
                 <col style={{ width: "9%" }} />
-                <col style={{ width: "14%" }} />
-                <col style={{ width: 90 }} />
+                <col style={{ width: "11%" }} />
+                <col style={{ width: "6%" }} />
               </colgroup>
               <thead>
                 <tr>
@@ -480,7 +710,7 @@ export default function AdminUsersPage() {
                 </tr>
               </thead>
               <tbody>
-                {paged.map((u) => renderRow(u))}
+                {paged.map((u, idx) => renderRow(u, idx, paged.length))}
               </tbody>
             </table>
           </div>
@@ -536,7 +766,27 @@ export default function AdminUsersPage() {
       </div>
 
       {/* View Details modal */}
-      {viewing && <Modal user={viewing} onClose={() => setViewing(null)} />}
+      {viewing && (
+        <Modal
+          user={viewing}
+          isSelfUser={isSelf(viewing)}
+          onClose={() => setViewing(null)}
+          onDeleteUser={(u) => {
+            setViewing(null);
+            setDeletingUser(u);
+          }}
+        />
+      )}
+
+      {/* GitHub-style Type 'delete' Confirmation Modal */}
+      {deletingUser && (
+        <DeleteConfirmModal
+          user={deletingUser}
+          onClose={() => setDeletingUser(null)}
+          onConfirm={() => { void handleDeleteConfirm(); }}
+          loading={deleteLoading}
+        />
+      )}
     </div>
   );
 }
