@@ -10,15 +10,6 @@ import {
   Cog,
   CheckSquare,
   ArrowRight,
-  ShieldCheck,
-  Factory,
-  Sliders,
-  Scale,
-  Gauge,
-  Maximize2,
-  Calendar,
-  Wrench,
-  Sparkle,
 } from 'lucide-react';
 import { Seo } from '../components/Seo';
 import { Breadcrumb } from '../components/ui';
@@ -92,17 +83,6 @@ const MANUFACTURING_PHASES: ProcessPhase[] = [
   },
 ];
 
-const TECHNICAL_PARAMETERS = [
-  { parameter: 'Casting Process', value: 'High-Density Green Sand & CO2 Sand Moulding', icon: <Factory className="w-4 h-4 text-orange-500" /> },
-  { parameter: 'Material Grades', value: 'Grey Iron (FG 150 – FG 350) & Ductile SG Iron (SG 400 – SG 700)', icon: <Layers className="w-4 h-4 text-orange-500" /> },
-  { parameter: 'Part Weight Range', value: '0.1 kg to 150.0 kg per single piece casting', icon: <Scale className="w-4 h-4 text-orange-500" /> },
-  { parameter: 'Max Dimensions', value: 'Up to 1,200 mm × 1,000 mm × 800 mm flask volume', icon: <Maximize2 className="w-4 h-4 text-orange-500" /> },
-  { parameter: 'Monthly Foundry Capacity', value: '299+ Metric Tonnes per month certified capacity', icon: <Gauge className="w-4 h-4 text-orange-500" /> },
-  { parameter: 'Machining Capabilities', value: 'In-House CNC Milling, VMC, Turning, and Drill Tapping', icon: <Wrench className="w-4 h-4 text-orange-500" /> },
-  { parameter: 'Surface Finishes', value: 'Shot Blasted (SA 2.5), Red Oxide Primer, Anti-Rust Oil Coating', icon: <Sparkle className="w-4 h-4 text-orange-500" /> },
-  { parameter: 'Batch Lot Sizes', value: '50 to 50,000+ pieces/month repeatable runs', icon: <Calendar className="w-4 h-4 text-orange-500" /> },
-];
-
 export default function CapabilitiesPage() {
   const { theme } = useTheme();
   const isLight = theme === 'light';
@@ -166,143 +146,15 @@ export default function CapabilitiesPage() {
       </section>
 
       {/* Main Content Area */}
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-16 sm:py-20 space-y-16 sm:space-y-20">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-12 sm:py-16 space-y-12 sm:space-y-16">
         
         {/* Breadcrumb Navigation */}
         <Breadcrumb items={[{ label: 'Home', href: '/' }, { label: 'Capabilities', href: '/capabilities' }]} />
 
-        {/* Technical Specs Bento Grid Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8">
-          
-          {/* Left: Technical Parameters Table */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.55 }}
-            className={`lg:col-span-7 rounded-3xl p-6 sm:p-8 border flex flex-col justify-between transition-all ${
-              isLight
-                ? 'bg-white border-neutral-200/90 shadow-[0_4px_24px_rgba(0,0,0,0.03)]'
-                : 'bg-[#090b10] border-white/[0.08] shadow-[0_4px_30px_rgba(0,0,0,0.7)]'
-            }`}
-          >
-            <div className="space-y-4 mb-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
-                    isLight ? 'bg-orange-50 text-orange-600 border border-orange-200' : 'bg-orange-500/10 text-orange-400 border border-orange-500/20'
-                  }`}>
-                    <Sliders className="w-4 h-4" />
-                  </div>
-                  <h3 className={`text-xl font-bold tracking-tight ${isLight ? 'text-neutral-900' : 'text-white'}`}>
-                    Technical Parameters
-                  </h3>
-                </div>
-
-                <span className={`text-xs font-mono px-2.5 py-1 rounded-full font-semibold ${
-                  isLight ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                }`}>
-                  ISO 9001:2015
-                </span>
-              </div>
-
-              <p className={`text-xs sm:text-sm ${isLight ? 'text-neutral-500' : 'text-neutral-400'}`}>
-                Operational capability envelope for serial grey iron and ductile iron casting production.
-              </p>
-            </div>
-
-            {/* Table Rows */}
-            <div className="divide-y divide-neutral-100 dark:divide-white/[0.06] text-xs sm:text-sm font-mono">
-              {TECHNICAL_PARAMETERS.map((row) => (
-                <div key={row.parameter} className="py-3 sm:py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-4">
-                  <div className="flex items-center gap-2 text-neutral-500 dark:text-neutral-400 shrink-0 font-medium">
-                    {row.icon}
-                    <span>{row.parameter}</span>
-                  </div>
-                  <div className={`font-semibold sm:text-right ${isLight ? 'text-neutral-900' : 'text-neutral-200'}`}>
-                    {row.value}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-
-          {/* Right: Metallurgical Precision Feature Card */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.55, delay: 0.1 }}
-            className={`lg:col-span-5 rounded-3xl p-6 sm:p-8 border flex flex-col justify-between relative overflow-hidden transition-all ${
-              isLight
-                ? 'bg-gradient-to-br from-orange-50/40 via-white to-orange-50/20 border-neutral-200/90 shadow-[0_4px_24px_rgba(0,0,0,0.03)]'
-                : 'bg-gradient-to-br from-[#120d08] via-[#090c14] to-[#06080e] border-white/[0.08] shadow-[0_4px_30px_rgba(0,0,0,0.7)]'
-            }`}
-          >
-            <div className="space-y-4">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-bold tracking-wider uppercase bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20">
-                <ShieldCheck className="w-3.5 h-3.5" />
-                <span>METALLURGICAL ASSURANCE</span>
-              </div>
-
-              <h3 className={`text-2xl sm:text-3xl font-extrabold tracking-tight leading-snug ${
-                isLight ? 'text-neutral-900' : 'text-white'
-              }`}>
-                Metallurgical Precision at Every Step
-              </h3>
-
-              <p className={`text-sm leading-relaxed ${isLight ? 'text-neutral-600' : 'text-neutral-400'}`}>
-                Advanced spectrometry and thermal analysis ensure absolute chemical composition control before pouring, guaranteeing mechanical strength, microstructural uniformity, and defect-free machinability.
-              </p>
-            </div>
-
-            {/* Stat Metric Badges */}
-            <div className="grid grid-cols-2 gap-4 mt-6 pt-6 border-t border-neutral-200/80 dark:border-white/[0.08]">
-              <div className={`p-4 rounded-2xl border ${
-                isLight ? 'bg-white border-neutral-200 shadow-sm' : 'bg-white/5 border-white/10'
-              }`}>
-                <div className="text-2xl sm:text-3xl font-black font-mono text-orange-600 dark:text-orange-400">
-                  99.4%
-                </div>
-                <div className="text-xs font-mono text-neutral-500 dark:text-neutral-400 mt-1">
-                  First-Time Yield
-                </div>
-              </div>
-
-              <div className={`p-4 rounded-2xl border ${
-                isLight ? 'bg-white border-neutral-200 shadow-sm' : 'bg-white/5 border-white/10'
-              }`}>
-                <div className="text-2xl sm:text-3xl font-black font-mono text-orange-600 dark:text-orange-400">
-                  &lt;0.05mm
-                </div>
-                <div className="text-xs font-mono text-neutral-500 dark:text-neutral-400 mt-1">
-                  Machining Tolerance
-                </div>
-              </div>
-            </div>
-
-            {/* Quick RFQ action */}
-            <div className="mt-6">
-              <Link
-                to="/request-a-quote"
-                className={`w-full py-3.5 px-5 rounded-2xl font-bold text-xs sm:text-sm inline-flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02] ${
-                  isLight
-                    ? 'bg-orange-500 hover:bg-orange-600 text-white shadow-md shadow-orange-500/20'
-                    : 'bg-orange-500 hover:bg-orange-400 text-white shadow-[0_0_20px_rgba(249,115,22,0.3)]'
-                }`}
-              >
-                <span>Submit CAD for Manufacturability Check</span>
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-          </motion.div>
-
-        </div>
-
         {/* ========================================================================= */}
         {/* THE PROCESS — MANUFACTURING CAPABILITY TIMELINE SECTION */}
         {/* ========================================================================= */}
-        <section className="pt-8 sm:pt-12">
+        <section>
           
           {/* Section Heading */}
           <motion.div
@@ -310,7 +162,7 @@ export default function CapabilitiesPage() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.3 }}
             transition={{ duration: 0.55 }}
-            className="space-y-3 mb-12 sm:mb-16"
+            className="space-y-3 mb-10 sm:mb-14"
           >
             <div className="text-xs sm:text-sm font-mono font-bold tracking-widest uppercase text-blue-600 dark:text-sky-400">
               THE PROCESS
