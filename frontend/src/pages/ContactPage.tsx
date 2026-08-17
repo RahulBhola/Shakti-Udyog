@@ -17,7 +17,6 @@ import {
   Send,
   CheckCircle2,
   AlertCircle,
-  Building,
   ExternalLink,
 } from 'lucide-react';
 
@@ -79,8 +78,8 @@ export default function ContactPage() {
 
   return (
     <div
-      className={`min-h-screen w-full transition-colors duration-300 ${
-        isLight ? 'bg-[#f8f9fa] text-neutral-900' : 'bg-[#050507] text-white'
+      className={`min-h-screen transition-colors duration-300 ${
+        isLight ? 'bg-[#f4f7fb] text-neutral-900' : 'bg-[#06070a] text-white'
       }`}
     >
       <Seo
@@ -90,52 +89,54 @@ export default function ContactPage() {
         jsonLd={[localBusinessJsonLd()]}
       />
 
-      {/* Hero Header — Perfectly Centered */}
+      {/* Hero Header — Perfectly Centered Matching Applications by Industry */}
       <section
         className={`relative pt-32 pb-16 sm:pt-40 sm:pb-24 border-b overflow-hidden transition-colors ${
           isLight ? 'bg-white border-neutral-200/80' : 'bg-[#08090d] border-white/[0.08]'
         }`}
       >
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 relative z-10 text-center flex flex-col items-center">
+          {/* Eyebrow Pill */}
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs sm:text-sm font-mono font-bold tracking-wider uppercase text-orange-600 dark:text-orange-400 bg-orange-500/10 border border-orange-500/30 mb-6 shadow-sm">
             <Sparkles className="w-4 h-4 text-orange-500" />
-            <span>Direct Foundry Engineering Support</span>
+            <span>Direct Foundry Contact &amp; Metallurgical Enquiries</span>
           </div>
 
+          {/* Centered Main Title */}
           <h1
             className={`text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight mb-6 max-w-4xl ${
               isLight ? 'text-neutral-900' : 'text-white'
             }`}
           >
-            Let&apos;s Discuss Your <span className="text-orange-500">Casting Project</span>
+            Let&apos;s Discuss Your <span className="text-orange-500">Casting Requirement</span>
           </h1>
 
+          {/* Centered Subtitle */}
           <p
             className={`text-lg sm:text-2xl max-w-3xl mx-auto leading-relaxed ${
               isLight ? 'text-neutral-600' : 'text-neutral-300'
             }`}
           >
-            Connect directly with our metallurgical and production planning team in Ludhiana. We
-            review drawings, recommend optimal alloy grades, and provide rapid quotes.
+            Tell us about your component, application, material, and volume. We will connect you with the appropriate team member.
           </p>
         </div>
       </section>
 
       {/* Main Content Area */}
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-12 sm:py-16 space-y-16 sm:space-y-20">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-12 sm:py-16 space-y-12 sm:space-y-16">
         
         {/* Breadcrumb Navigation */}
         <Breadcrumb items={[{ label: 'Home', href: '/' }, { label: 'Contact', href: '/contact' }]} />
 
         {/* ========================================================================= */}
-        {/* TALK TO OUR TEAM & MAP SECTION (EXACT LAYOUT FROM USER REFERENCE) */}
+        {/* TALK TO OUR TEAM & MAP SECTION */}
         {/* ========================================================================= */}
         <motion.div
-          initial={{ opacity: 0, y: 35 }}
+          initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.15 }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className={`rounded-3xl p-8 sm:p-12 lg:p-14 border transition-all duration-300 shadow-2xl ${
+          transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+          className={`rounded-[32px] p-8 sm:p-12 lg:p-14 border transition-all duration-300 shadow-2xl ${
             isLight
               ? 'bg-white border-neutral-200/90 shadow-[0_10px_40px_rgba(0,0,0,0.04)] text-neutral-900'
               : 'bg-[#080a0f] border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.9)] text-white'
@@ -170,7 +171,7 @@ export default function ContactPage() {
                     isLight ? 'text-neutral-600' : 'text-neutral-400'
                   }`}
                 >
-                  We&apos;re here to help! Reach out to us for enquiries, quotes, or any technical assistance you need.
+                  We&apos;re here to help! Reach out to us for enquiries, quotes, or any assistance you need.
                 </p>
               </div>
 
@@ -375,7 +376,7 @@ export default function ContactPage() {
         {/* ========================================================================= */}
         <section id="enquiry-form-section">
           <div
-            className={`rounded-3xl p-8 sm:p-12 lg:p-14 border transition-all duration-300 ${
+            className={`rounded-[32px] p-8 sm:p-12 lg:p-14 border transition-all duration-300 ${
               isLight
                 ? 'bg-white border-neutral-200/90 shadow-[0_4px_24px_rgba(0,0,0,0.03)] text-neutral-900'
                 : 'bg-[#080a0f] border-white/10 shadow-[0_10px_35px_rgba(0,0,0,0.7)] text-white'
