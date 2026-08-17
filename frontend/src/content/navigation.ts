@@ -3,7 +3,6 @@ export const navItems = [
   { label: "Home", href: "/" },
   { label: "Products", href: "/products" },
   { label: "Capabilities", href: "/capabilities" },
-  { label: "Quality", href: "/quality" },
   { label: "Industries", href: "/industries" },
   { label: "Resources", href: "/resources" },
   { label: "Contact", href: "/contact" },

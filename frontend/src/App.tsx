@@ -22,7 +22,6 @@ const HomePage = lazy(() => import("./pages/HomePage"));
 const ProductsPage = lazy(() => import("./pages/ProductsPage"));
 const ProductDetailPage = lazy(() => import("./pages/ProductDetailPage"));
 const CapabilitiesPage = lazy(() => import("./pages/CapabilitiesPage"));
-const QualityPage = lazy(() => import("./pages/QualityPage"));
 const IndustriesPage = lazy(() => import("./pages/IndustriesPage"));
 const ResourcesPage = lazy(() => import("./pages/ResourcesPage"));
 const ResourceDetailPage = lazy(() => import("./pages/ResourceDetailPage"));
@@ -103,7 +102,6 @@ function App() {
               <Route path="/products" element={<ProductsPage />} />
               <Route path="/products/:slug" element={<ProductDetailPage />} />
               <Route path="/capabilities" element={<CapabilitiesPage />} />
-              <Route path="/quality" element={<QualityPage />} />
               <Route path="/industries" element={<IndustriesPage />} />
               <Route path="/resources" element={<ResourcesPage />} />
               <Route path="/resources/:slug" element={<ResourceDetailPage />} />

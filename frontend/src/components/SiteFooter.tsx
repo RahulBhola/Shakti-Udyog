@@ -20,7 +20,6 @@ export const SiteFooter: React.FC = () => {
   const quickLinks = [
     { label: 'Products', path: '/products' },
     { label: 'Capabilities', path: '/capabilities' },
-    { label: 'Quality', path: '/quality' },
     { label: 'Industries', path: '/industries' },
     { label: 'Contact', path: '/contact' },
     { label: 'Request a Quote', path: '/request-a-quote' },
