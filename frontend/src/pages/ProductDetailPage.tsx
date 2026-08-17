@@ -3,9 +3,11 @@ import { Link, useParams } from "react-router-dom";
 import { getProduct, type Product } from "../api/publicApi";
 import { Seo } from "../components/Seo";
 import { Breadcrumb, CtaBand, EmptyState, ImagePlaceholder, Loading, Section, SectionHeading } from "../components/ui";
+import { useEnquiryModal } from "../context/EnquiryModalContext";
 
 export default function ProductDetailPage() {
   const { slug = "" } = useParams();
+  const { openEnquiryModal } = useEnquiryModal();
   const [product, setProduct] = useState<Product | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "missing">("loading");
 
@@ -101,8 +103,8 @@ export default function ProductDetailPage() {
         <CtaBand
           heading={`Get a quote for ${product.title.toLowerCase()}`}
           text="Share your drawing, grade, quantity, and delivery requirement."
-          buttonLabel="Request a Quote"
-          buttonHref="/request-a-quote"
+          buttonLabel="Submit Enquiry"
+          onClick={() => openEnquiryModal(`Enquiry for ${product.title}`)}
         />
       </Section>
     </>

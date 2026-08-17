@@ -11,9 +11,11 @@ import {
   FileText,
 } from 'lucide-react';
 import { useTheme } from '../auth/ThemeContext';
+import { useEnquiryModal } from '../context/EnquiryModalContext';
 
 export const SiteFooter: React.FC = () => {
   const { theme } = useTheme();
+  const { openEnquiryModal } = useEnquiryModal();
   const isLight = theme === 'light';
   const year = new Date().getFullYear();
 
@@ -22,7 +24,7 @@ export const SiteFooter: React.FC = () => {
     { label: 'Capabilities', path: '/capabilities' },
     { label: 'Industries', path: '/industries' },
     { label: 'Contact', path: '/contact' },
-    { label: 'Request a Quote', path: '/request-a-quote' },
+    { label: 'Request a Quote', action: () => openEnquiryModal() },
   ];
 
   const legalLinks = [
@@ -120,17 +122,32 @@ export const SiteFooter: React.FC = () => {
               <ul className="space-y-3.5">
                 {quickLinks.map((item) => (
                   <li key={item.label}>
-                    <Link
-                      to={item.path}
-                      className={`flex items-center justify-between text-sm transition-colors py-1 group ${
-                        isLight
-                          ? 'text-neutral-600 hover:text-orange-500'
-                          : 'text-neutral-400 hover:text-orange-400'
-                      }`}
-                    >
-                      <span>{item.label}</span>
-                      <ChevronRight className="w-4 h-4 text-orange-500 group-hover:translate-x-1 transition-transform" />
-                    </Link>
+                    {'path' in item ? (
+                      <Link
+                        to={item.path}
+                        className={`flex items-center justify-between text-sm transition-colors py-1 group ${
+                          isLight
+                            ? 'text-neutral-600 hover:text-orange-500'
+                            : 'text-neutral-400 hover:text-orange-400'
+                        }`}
+                      >
+                        <span>{item.label}</span>
+                        <ChevronRight className="w-4 h-4 text-orange-500 group-hover:translate-x-1 transition-transform" />
+                      </Link>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={item.action}
+                        className={`w-full flex items-center justify-between text-sm transition-colors py-1 group cursor-pointer text-left ${
+                          isLight
+                            ? 'text-neutral-600 hover:text-orange-500'
+                            : 'text-neutral-400 hover:text-orange-400'
+                        }`}
+                      >
+                        <span>{item.label}</span>
+                        <ChevronRight className="w-4 h-4 text-orange-500 group-hover:translate-x-1 transition-transform" />
+                      </button>
+                    )}
                   </li>
                 ))}
               </ul>

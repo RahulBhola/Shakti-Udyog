@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, ArrowRight, ShieldCheck, LayoutGrid, Atom } from 'lucide-react';
 import { useTheme } from '../auth/ThemeContext';
+import { useEnquiryModal } from '../context/EnquiryModalContext';
 import { getThemedImage } from '../utils/themeImage';
 
 export interface ProductGradeVariant {
@@ -144,6 +145,7 @@ const LINEUP_PRODUCTS: LineupCardModel[] = [
 
 export const AppleProductLineup: React.FC = () => {
   const { theme } = useTheme();
+  const { openEnquiryModal } = useEnquiryModal();
   const isLight = theme === 'light';
 
   // Track active variant index for each product card
@@ -370,17 +372,18 @@ export const AppleProductLineup: React.FC = () => {
                     <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
 
-                  <Link
-                    to="/request-a-quote"
-                    className={`py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-center border inline-flex items-center justify-center gap-1 transition-colors ${
+                  <button
+                    type="button"
+                    onClick={() => openEnquiryModal(`Enquiry for ${prod.name} (${currentVar.name})`)}
+                    className={`py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-center border inline-flex items-center justify-center gap-1 transition-colors cursor-pointer ${
                       isLight
                         ? 'border-neutral-300 text-neutral-800 hover:bg-neutral-100'
                         : 'border-white/15 text-neutral-300 hover:bg-white/5 hover:text-white'
                     }`}
                   >
-                    <span>Request RFQ</span>
+                    <span>Submit Enquiry</span>
                     <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
-                  </Link>
+                  </button>
                 </div>
 
               </motion.div>

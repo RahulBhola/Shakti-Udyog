@@ -153,11 +153,13 @@ export function CtaBand({
   text,
   buttonLabel,
   buttonHref,
+  onClick,
 }: {
   heading: string;
   text?: string;
   buttonLabel: string;
-  buttonHref: string;
+  buttonHref?: string;
+  onClick?: () => void;
 }) {
   return (
     <div className="cta-band">
@@ -165,9 +167,15 @@ export function CtaBand({
         <h2>{heading}</h2>
         {text && <p>{text}</p>}
       </div>
-      <Link className="btn btn--primary" to={buttonHref}>
-        {buttonLabel}
-      </Link>
+      {onClick ? (
+        <button type="button" className="btn btn--primary" onClick={onClick}>
+          {buttonLabel}
+        </button>
+      ) : (
+        <Link className="btn btn--primary" to={buttonHref || "/"}>
+          {buttonLabel}
+        </Link>
+      )}
     </div>
   );
 }

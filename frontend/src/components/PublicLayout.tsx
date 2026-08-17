@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { useTheme } from "../auth/ThemeContext";
+import { useEnquiryModal } from "../context/EnquiryModalContext";
 import { company } from "../content/company";
 import { cta, navItems } from "../content/navigation";
 import { Sun, Moon, Menu, X, ArrowRight, User } from "lucide-react";
@@ -80,6 +81,7 @@ function Header() {
   const toggleRef = useRef<HTMLButtonElement>(null);
   const { theme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
+  const { openEnquiryModal } = useEnquiryModal();
 
   const isLight = theme === "light";
 
@@ -181,10 +183,11 @@ function Header() {
 
         {/* Right Actions Cluster */}
         <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
-          {/* Primary CTA: Request a Quote */}
-          <Link
-            to={cta.primary.href}
-            className={`group hidden sm:inline-flex items-center gap-2 px-5 py-2 rounded-full text-xs font-semibold tracking-wide transition-all duration-300 ${
+          {/* Primary CTA: Request a Quote (Opens Enquiry Modal) */}
+          <button
+            type="button"
+            onClick={() => openEnquiryModal()}
+            className={`group hidden sm:inline-flex items-center gap-2 px-5 py-2 rounded-full text-xs font-semibold tracking-wide transition-all duration-300 cursor-pointer ${
               isLight
                 ? "text-orange-600 bg-orange-500/5 border border-orange-500 hover:bg-orange-500 hover:text-white shadow-[0_0_12px_rgba(255,109,0,0.15)] hover:shadow-[0_0_20px_rgba(255,109,0,0.4)]"
                 : "text-white bg-orange-500/15 border border-orange-500/70 hover:bg-orange-500 hover:border-orange-500 shadow-[0_0_15px_rgba(255,109,0,0.2)] hover:shadow-[0_0_25px_rgba(255,109,0,0.5)]"
@@ -196,7 +199,7 @@ function Header() {
                 isLight ? "text-orange-500 group-hover:text-white" : "text-orange-400 group-hover:text-white"
               }`}
             />
-          </Link>
+          </button>
 
           {/* Auth Actions: Login & Sign Up or User portal */}
           {user ? (
@@ -241,31 +244,31 @@ function Header() {
                     : "text-neutral-300 bg-neutral-900/80 hover:bg-neutral-800 border border-neutral-800 hover:border-neutral-700 hover:text-white"
                 }`}
               >
-                Sign Up
+                <span>Sign Up</span>
               </Link>
             </div>
           )}
 
-          {/* Compact Theme Toggle */}
+          {/* Theme Toggle */}
           <button
             type="button"
             onClick={toggleTheme}
+            className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${
+              isLight
+                ? "bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border border-neutral-200 shadow-sm"
+                : "bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white border border-white/10"
+            }`}
             aria-label={`Switch to ${isLight ? "dark" : "light"} mode`}
             title={`Switch to ${isLight ? "dark" : "light"} mode`}
-            className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors shadow-sm ${
-              isLight
-                ? "bg-neutral-100 border border-neutral-200 hover:bg-neutral-200 text-neutral-700 hover:text-neutral-950"
-                : "bg-neutral-900/80 border border-neutral-800 hover:border-neutral-700 text-orange-400/80 hover:text-orange-400"
-            }`}
           >
             {isLight ? (
               <Moon className="w-4 h-4 text-neutral-700" />
             ) : (
-              <Sun className="w-4 h-4 text-amber-400" />
+              <Sun className="w-4 h-4 text-neutral-300" />
             )}
           </button>
 
-          {/* Mobile Menu Trigger Button */}
+          {/* Mobile Menu Toggle Button */}
           <button
             ref={toggleRef}
             type="button"
@@ -323,13 +326,17 @@ function Header() {
             ))}
 
             <div className="pt-3 mt-2 border-t border-neutral-200/60 dark:border-white/[0.06] space-y-2">
-              <Link
-                to={cta.primary.href}
-                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-full text-xs font-semibold tracking-wide text-white bg-orange-500 hover:bg-orange-600 transition-all shadow-[0_0_15px_rgba(255,109,0,0.2)]"
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  openEnquiryModal();
+                }}
+                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-full text-xs font-semibold tracking-wide text-white bg-orange-500 hover:bg-orange-600 transition-all shadow-[0_0_15px_rgba(255,109,0,0.2)] cursor-pointer"
               >
                 <span>{cta.primary.label}</span>
                 <ArrowRight className="w-3.5 h-3.5 text-white" />
-              </Link>
+              </button>
 
               {user ? (
                 <div className="space-y-1.5 pt-1">

@@ -3,9 +3,11 @@ import { Link, useParams } from "react-router-dom";
 import { getResource, type Resource } from "../api/publicApi";
 import { Seo } from "../components/Seo";
 import { Breadcrumb, CtaBand, EmptyState, Loading, Section } from "../components/ui";
+import { useEnquiryModal } from "../context/EnquiryModalContext";
 
 export default function ResourceDetailPage() {
   const { slug = "" } = useParams();
+  const { openEnquiryModal } = useEnquiryModal();
   const [resource, setResource] = useState<Resource | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "missing">("loading");
 
@@ -68,8 +70,8 @@ export default function ResourceDetailPage() {
         <CtaBand
           heading="Ready to request a quote?"
           text="Use our Enquiry form to share your drawing and requirement."
-          buttonLabel="Request a Quote"
-          buttonHref="/request-a-quote"
+          buttonLabel="Submit Enquiry"
+          onClick={() => openEnquiryModal(`Enquiry regarding: ${resource.title}`)}
         />
       </Section>
     </>

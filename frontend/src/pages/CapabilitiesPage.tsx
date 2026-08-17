@@ -276,17 +276,18 @@ export default function CapabilitiesPage() {
             </div>
 
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 shrink-0">
-              <Link
-                to="/request-a-quote"
-                className={`px-8 py-4 rounded-2xl font-extrabold text-sm sm:text-base text-center inline-flex items-center justify-center gap-2.5 transition-all transform hover:scale-105 ${
+              <button
+                type="button"
+                onClick={() => setIsEnquiryOpen(true)}
+                className={`px-8 py-4 rounded-2xl font-extrabold text-sm sm:text-base text-center inline-flex items-center justify-center gap-2.5 transition-all transform hover:scale-105 cursor-pointer ${
                   isLight
                     ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/25'
                     : 'bg-gradient-to-r from-blue-600 to-sky-600 hover:from-blue-500 hover:to-sky-500 text-white shadow-[0_0_30px_rgba(56,189,248,0.4)]'
                 }`}
               >
-                <span className="text-white font-extrabold">Request a Quote</span>
+                <span className="text-white font-extrabold">Submit Enquiry</span>
                 <ArrowRight className="w-4 h-4 text-white shrink-0" />
-              </Link>
+              </button>
 
               <button
                 type="button"

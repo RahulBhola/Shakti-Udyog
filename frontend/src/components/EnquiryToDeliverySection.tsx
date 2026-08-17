@@ -15,10 +15,12 @@ import {
   Search,
 } from 'lucide-react';
 import { useTheme } from '../auth/ThemeContext';
+import { useEnquiryModal } from '../context/EnquiryModalContext';
 import { getThemedImage } from '../utils/themeImage';
 
 export const EnquiryToDeliverySection: React.FC = () => {
   const { theme } = useTheme();
+  const { openEnquiryModal } = useEnquiryModal();
   const isLight = theme === 'light';
 
   const steps = [
@@ -111,9 +113,10 @@ export const EnquiryToDeliverySection: React.FC = () => {
             </p>
 
             <div className="pt-2">
-              <Link
-                to="/request-a-quote"
-                className={`inline-flex items-center gap-3 px-8 py-3.5 rounded-full text-sm sm:text-base font-semibold tracking-wide text-white transition-all transform hover:scale-105 shadow-md ${
+              <button
+                type="button"
+                onClick={() => openEnquiryModal()}
+                className={`inline-flex items-center gap-3 px-8 py-3.5 rounded-full text-sm sm:text-base font-semibold tracking-wide text-white transition-all transform hover:scale-105 shadow-md cursor-pointer ${
                   isLight
                     ? 'bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/25'
                     : 'bg-gradient-to-r from-blue-600 to-sky-600 hover:from-blue-500 hover:to-sky-500 shadow-[0_0_20px_rgba(59,130,246,0.3)]'
@@ -122,7 +125,7 @@ export const EnquiryToDeliverySection: React.FC = () => {
                 <MessageSquare className="w-5 h-5" />
                 <span>Discuss Your Casting Requirement</span>
                 <ArrowRight className="w-4 h-4" />
-              </Link>
+              </button>
             </div>
           </motion.div>
 

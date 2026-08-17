@@ -17,6 +17,9 @@ import { AccessDeniedPage, UnauthorizedPage } from "./features/auth/ErrorPages";
 import "./styles/tailwind.css";
 import "./styles/site.css";
 
+import { useEffect } from "react";
+import { EnquiryModalProvider, useEnquiryModal } from "./context/EnquiryModalContext";
+
 // Route-level code splitting: each public page is its own chunk.
 const HomePage = lazy(() => import("./pages/HomePage"));
 const ProductsPage = lazy(() => import("./pages/ProductsPage"));
@@ -26,9 +29,16 @@ const IndustriesPage = lazy(() => import("./pages/IndustriesPage"));
 const ResourcesPage = lazy(() => import("./pages/ResourcesPage"));
 const ResourceDetailPage = lazy(() => import("./pages/ResourceDetailPage"));
 const ContactPage = lazy(() => import("./pages/ContactPage"));
-const RequestQuotePage = lazy(() => import("./pages/RequestQuotePage"));
 const LegalPage = lazy(() => import("./pages/LegalPage"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
+
+function RequestQuoteRedirect() {
+  const { openEnquiryModal } = useEnquiryModal();
+  useEffect(() => {
+    openEnquiryModal();
+  }, [openEnquiryModal]);
+  return <Navigate to="/" replace />;
+}
 
 // Customer portal chunks
 const DashboardPage = lazy(() => import("./portal/pages/DashboardPage"));
@@ -94,6 +104,7 @@ function App() {
     <BrowserRouter>
       <ThemeProvider>
       <AuthProvider>
+        <EnquiryModalProvider>
         <Suspense fallback={<Loading label="Loading page" />}>
           <Routes>
             {/* Public website */}
@@ -106,7 +117,7 @@ function App() {
               <Route path="/resources" element={<ResourcesPage />} />
               <Route path="/resources/:slug" element={<ResourceDetailPage />} />
               <Route path="/contact" element={<ContactPage />} />
-              <Route path="/request-a-quote" element={<RequestQuotePage />} />
+              <Route path="/request-a-quote" element={<RequestQuoteRedirect />} />
               <Route path="/privacy-policy" element={<LegalPage slug="privacy-policy" title="Privacy Policy" />} />
               <Route path="/terms-of-use" element={<LegalPage slug="terms-of-use" title="Terms of Use" />} />
               <Route path="/cookie-policy" element={<LegalPage slug="cookie-policy" title="Cookie Policy" />} />
@@ -194,6 +205,7 @@ function App() {
             </Route>
           </Routes>
         </Suspense>
+        </EnquiryModalProvider>
       </AuthProvider>
     </ThemeProvider></BrowserRouter>
   );
