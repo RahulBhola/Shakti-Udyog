@@ -164,7 +164,7 @@ export default function CapabilitiesPage() {
             {/* Left Continuous Vertical Rail Line */}
             <div className="hidden sm:block absolute left-[31px] sm:left-[35px] top-6 bottom-6 w-0.5 bg-gradient-to-b from-blue-500 via-blue-400/30 to-blue-500/10 pointer-events-none" />
 
-            {MANUFACTURING_PHASES.map((phase, idx) => (
+            {PROCESS_PHASES.map((phase, idx) => (
               <motion.div
                 key={phase.phaseNumber}
                 initial={{ opacity: 0, y: 35 }}
