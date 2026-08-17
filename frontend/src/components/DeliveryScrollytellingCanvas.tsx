@@ -1,12 +1,6 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { motion, useScroll, useSpring, AnimatePresence } from 'framer-motion';
-import {
-  Truck,
-  Play,
-  Pause,
-  RotateCcw,
-  Sparkles,
-} from 'lucide-react';
+import { Truck } from 'lucide-react';
 import { useTheme } from '../auth/ThemeContext';
 import {
   DELIVERY_MILESTONES,
@@ -26,9 +20,6 @@ export const DeliveryScrollytellingCanvas: React.FC = () => {
   const [imagesLoaded, setImagesLoaded] = useState(0);
   const [isReady, setIsReady] = useState(false);
   const [activeMilestoneIndex, setActiveMilestoneIndex] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
-  const animationFrameRef = useRef<number | null>(null);
 
   // Framer Motion scroll hook on the 750vh container for smooth, elongated scroll travel
   const { scrollYProgress } = useScroll({
@@ -151,10 +142,8 @@ export const DeliveryScrollytellingCanvas: React.FC = () => {
     };
   }, [drawFrame]);
 
-  // Subscribe to smooth scroll progress updates (when not in autoplay mode)
+  // Subscribe to smooth scroll progress updates
   useEffect(() => {
-    if (isPlaying) return;
-
     const unsubscribe = smoothProgress.on('change', (latestProgress) => {
       const clamped = Math.max(0, Math.min(1, latestProgress));
 
@@ -172,72 +161,7 @@ export const DeliveryScrollytellingCanvas: React.FC = () => {
     });
 
     return () => unsubscribe();
-  }, [smoothProgress, drawFrame, isPlaying]);
-
-  // Autoplay animation loop
-  useEffect(() => {
-    if (!isPlaying) {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-      return;
-    }
-
-    let lastTimestamp = performance.now();
-    const targetFps = 30 * playbackSpeed;
-    const intervalMs = 1000 / targetFps;
-
-    const step = (timestamp: number) => {
-      const elapsed = timestamp - lastTimestamp;
-      if (elapsed >= intervalMs) {
-        lastTimestamp = timestamp - (elapsed % intervalMs);
-        const nextFrame = (currentFrameRef.current + 1) % TOTAL_DELIVERY_FRAMES;
-
-        drawFrame(nextFrame);
-
-        const progress = nextFrame / (TOTAL_DELIVERY_FRAMES - 1);
-        const currentMilestoneIndex = DELIVERY_MILESTONES.findIndex(
-          (m) => progress >= m.startProgress && progress <= m.endProgress
-        );
-        if (currentMilestoneIndex !== -1) {
-          setActiveMilestoneIndex(currentMilestoneIndex);
-        }
-      }
-
-      animationFrameRef.current = requestAnimationFrame(step);
-    };
-
-    animationFrameRef.current = requestAnimationFrame(step);
-
-    return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-    };
-  }, [isPlaying, playbackSpeed, drawFrame]);
-
-  // Jump to specific milestone
-  const jumpToMilestone = (index: number) => {
-    setIsPlaying(false);
-    const targetMilestone = DELIVERY_MILESTONES[index];
-    if (!targetMilestone) return;
-
-    const targetFrame = targetMilestone.startFrame - 1;
-    drawFrame(targetFrame);
-    setActiveMilestoneIndex(index);
-
-    if (containerRef.current) {
-      const containerTop = containerRef.current.offsetTop;
-      const containerHeight = containerRef.current.offsetHeight - window.innerHeight;
-      const targetScrollY = containerTop + containerHeight * targetMilestone.startProgress;
-      window.scrollTo({ top: targetScrollY, behavior: 'smooth' });
-    }
-  };
-
-  // Toggle playback
-  const togglePlayPause = () => {
-    setIsPlaying((prev) => !prev);
-  };
+  }, [smoothProgress, drawFrame]);
 
   // Handle window resizing
   useEffect(() => {
@@ -316,17 +240,9 @@ export const DeliveryScrollytellingCanvas: React.FC = () => {
           </div>
         )}
 
-        {/* Top Right Live HUD Indicator */}
-        <div className="absolute top-4 sm:top-6 right-4 sm:right-8 z-30 pointer-events-none hidden sm:flex items-center gap-3 px-4 py-1.5 rounded-full bg-black/60 backdrop-blur-xl border border-white/10 shadow-lg font-mono text-xs text-neutral-300">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
-          <span className="text-orange-400 font-bold">FRAME {String(currentFrameRef.current + 1).padStart(3, '0')}</span>
-          <span className="text-neutral-600">/</span>
-          <span>300 (4K HD)</span>
-        </div>
-
         {/* Main Narrative Overlays (Expansive Full-Width Typography matching Home Page) */}
         <div className="absolute inset-0 z-20 pointer-events-none flex flex-col justify-end p-4 xs:p-6 sm:p-10 md:p-12 lg:p-16">
-          <div className="w-full max-w-[1720px] mx-auto space-y-6">
+          <div className="w-full max-w-[1720px] mx-auto">
             
             {/* Cinematic Narrative Block */}
             <div className="max-w-4xl lg:max-w-5xl space-y-3 sm:space-y-4 pointer-events-auto">
@@ -360,72 +276,6 @@ export const DeliveryScrollytellingCanvas: React.FC = () => {
                   </p>
                 </motion.div>
               </AnimatePresence>
-            </div>
-
-            {/* Interactive Timeline Stepper & Player Control Bar */}
-            <div className="pointer-events-auto pt-3 border-t border-white/10 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
-              
-              {/* Playback Controls & Frame Tracker */}
-              <div className="flex items-center gap-3 shrink-0">
-                <button
-                  type="button"
-                  onClick={togglePlayPause}
-                  className="px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-mono text-xs font-bold inline-flex items-center gap-2 transition-all shadow-md shadow-orange-500/30 cursor-pointer"
-                  title={isPlaying ? 'Pause Animation' : 'Play Cinematic Sequence'}
-                >
-                  {isPlaying ? (
-                    <>
-                      <Pause className="w-4 h-4" />
-                      <span>PAUSE</span>
-                    </>
-                  ) : (
-                    <>
-                      <Play className="w-4 h-4 fill-white" />
-                      <span>PLAY</span>
-                    </>
-                  )}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => jumpToMilestone(0)}
-                  className="p-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-neutral-300 hover:text-white transition-colors cursor-pointer"
-                  title="Reset to Stage 1"
-                >
-                  <RotateCcw className="w-4 h-4" />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setPlaybackSpeed((s) => (s === 1 ? 1.5 : s === 1.5 ? 2 : 1))}
-                  className="px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 font-mono text-xs text-neutral-300 hover:text-white transition-colors cursor-pointer"
-                  title="Playback Speed"
-                >
-                  {playbackSpeed}x SPEED
-                </button>
-              </div>
-
-              {/* 8-Stage Milestone Seek Buttons */}
-              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
-                {DELIVERY_MILESTONES.map((m, idx) => {
-                  const isActive = activeMilestoneIndex === idx;
-                  return (
-                    <button
-                      key={m.id}
-                      type="button"
-                      onClick={() => jumpToMilestone(idx)}
-                      className={`px-3 py-1.5 rounded-xl font-mono text-[11px] font-bold tracking-wide transition-all shrink-0 cursor-pointer ${
-                        isActive
-                          ? 'bg-orange-500 text-white shadow-md shadow-orange-500/30 scale-105'
-                          : 'bg-black/40 hover:bg-white/10 border border-white/10 text-neutral-400 hover:text-white'
-                      }`}
-                    >
-                      <span>{idx + 1}. {m.phaseTitle}</span>
-                    </button>
-                  );
-                })}
-              </div>
-
             </div>
 
           </div>

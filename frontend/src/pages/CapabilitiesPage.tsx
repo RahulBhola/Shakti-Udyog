@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   FileText,
@@ -10,7 +9,6 @@ import {
   Cog,
   CheckSquare,
   ArrowRight,
-  Truck,
 } from 'lucide-react';
 import { Seo } from '../components/Seo';
 import { seoPages } from '../content/seo';
@@ -33,7 +31,7 @@ const PROCESS_PHASES: ProcessPhase[] = [
     title: 'Drawing & Methoding',
     description:
       'We study part drawings to determine parting lines, draft angles, shrinkage allowances, and gating systems.',
-    image: '/images/capabilities/phase-1-drawing.png',
+    image: '/images/capabilities/phase-1-drawing-review.png',
     icon: <FileText className="w-5 h-5 sm:w-6 sm:h-6" />,
   },
   {
@@ -41,7 +39,7 @@ const PROCESS_PHASES: ProcessPhase[] = [
     title: 'Pattern & Core Box Preparation',
     description:
       'Matchplate patterns and core boxes are prepared in wood, metal, or resin depending on volume requirements.',
-    image: '/images/capabilities/phase-2-pattern.png',
+    image: '/images/capabilities/phase-2-pattern-development.png',
     icon: <Box className="w-5 h-5 sm:w-6 sm:h-6" />,
   },
   {
@@ -49,7 +47,7 @@ const PROCESS_PHASES: ProcessPhase[] = [
     title: 'Mould & Core Making',
     description:
       'Green sand and chemically bonded sand systems provide uniform compaction and good permeability for sound castings.',
-    image: '/images/capabilities/phase-3-moulding.png',
+    image: '/images/capabilities/phase-3-moulding-core.png',
     icon: <Layers className="w-5 h-5 sm:w-6 sm:h-6" />,
   },
   {
@@ -57,7 +55,7 @@ const PROCESS_PHASES: ProcessPhase[] = [
     title: 'Melting & Inoculation',
     description:
       'Induction melting with calibrated alloy additions and inoculation ensures the target microstructure and grade.',
-    image: '/images/capabilities/phase-4-melting.png',
+    image: '/images/capabilities/phase-4-melting-pouring.png',
     icon: <Flame className="w-5 h-5 sm:w-6 sm:h-6" />,
   },
   {
@@ -65,7 +63,7 @@ const PROCESS_PHASES: ProcessPhase[] = [
     title: 'Pouring & Controlled Cooling',
     description:
       'Temperature-controlled pouring and adequate in-mould cooling prevent thermal shock, cracks, and distortion.',
-    image: '/images/capabilities/phase-5-pouring.png',
+    image: '/images/capabilities/phase-5-fettling-surface.png',
     icon: <Sparkles className="w-5 h-5 sm:w-6 sm:h-6" />,
   },
   {
@@ -73,7 +71,7 @@ const PROCESS_PHASES: ProcessPhase[] = [
     title: 'Knockout, Fettling & Shot Blasting',
     description:
       'Castings are shaken out, risers and runners removed, followed by shot blasting for clean surface preparation.',
-    image: '/images/capabilities/phase-6-fettling.png',
+    image: '/images/capabilities/phase-6-machining-finishing.png',
     icon: <Cog className="w-5 h-5 sm:w-6 sm:h-6" />,
   },
   {
@@ -102,7 +100,7 @@ export default function CapabilitiesPage() {
         path="/capabilities"
       />
 
-      {/* Hero Header — Perfectly Centered Matching Products Page */}
+      {/* Hero Header — Centered */}
       <section className={`relative pt-32 pb-16 sm:pt-40 sm:pb-24 border-b overflow-hidden transition-colors ${
         isLight ? 'bg-white border-neutral-200/80' : 'bg-[#08090d] border-white/[0.08]'
       }`}>
@@ -130,13 +128,16 @@ export default function CapabilitiesPage() {
         </div>
       </section>
 
-      {/* Main Content Area */}
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-12 sm:py-16 space-y-12 sm:space-y-16">
-        
+      {/* ========================================================================= */}
+      {/* 1. 300-FRAME CINEMATIC 3D JIT FLEET DELIVERY SCROLLYTELLING ANIMATION */}
+      {/* ========================================================================= */}
+      <DeliveryScrollytellingCanvas />
 
-        {/* ========================================================================= */}
-        {/* THE PROCESS — MANUFACTURING CAPABILITY TIMELINE SECTION */}
-        {/* ========================================================================= */}
+      {/* ========================================================================= */}
+      {/* 2. THE PROCESS — MANUFACTURING CAPABILITY TIMELINE (BELOW ANIMATION) */}
+      {/* ========================================================================= */}
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-16 sm:py-24 space-y-16">
+        
         <section>
           
           {/* Section Heading */}
@@ -243,17 +244,9 @@ export default function CapabilitiesPage() {
 
         </section>
 
-      </div>
-
-      {/* ========================================================================= */}
-      {/* 300-FRAME CINEMATIC 3D JIT FLEET DELIVERY SCROLLYTELLING SHOWCASE */}
-      {/* ========================================================================= */}
-      <DeliveryScrollytellingCanvas />
-
-      {/* Bottom Conversion CTA Banner Container */}
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-12 sm:py-16">
-        
-        {/* Bottom Conversion CTA Banner */}
+        {/* ========================================================================= */}
+        {/* 3. BOTTOM CONVERSION CTA BANNER */}
+        {/* ========================================================================= */}
         <motion.div
           initial={{ opacity: 0, y: 35 }}
           whileInView={{ opacity: 1, y: 0 }}
