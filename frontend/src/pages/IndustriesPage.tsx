@@ -26,7 +26,7 @@ interface IndustrySector {
   icon: React.ReactNode;
   darkImage: string;
   lightImage: string;
-  themeColor: 'purple' | 'emerald' | 'blue' | 'amber' | 'teal' | 'pink';
+  themeColor: 'purple' | 'emerald' | 'blue' | 'amber' | 'teal' | 'pink' | 'orange';
   svgPath: string;
 }
 
@@ -98,10 +98,22 @@ const SECTOR_CARDS: IndustrySector[] = [
     exampleComponents: 'Enclosures, fittings, structural components, equipment bases',
     icon: <Zap className="w-5 h-5" />,
     darkImage: '/images/industries/energy_dark.png',
-    lightImage: '/images/industries/energy_dark.png',
+    lightImage: '/images/industries/energy_light.png',
     themeColor: 'pink',
     // Diagonal angled cut right edge
     svgPath: 'M 24,0 L 570,0 Q 595,0 590,20 L 530,220 Q 525,240 500,240 L 24,240 Q 0,240 0,216 L 0,24 Q 0,0 24,0 Z',
+  },
+  {
+    id: 'general-engineering',
+    badge: '07',
+    title: 'General Engineering',
+    exampleComponents: 'Custom OEM parts based on drawings and specifications',
+    icon: <Wrench className="w-5 h-5" />,
+    darkImage: '/images/industries/general_dark.png',
+    lightImage: '/images/industries/general_light.png',
+    themeColor: 'orange',
+    // Signature Semicircle / Quarter-Circle Arch Dome at top right
+    svgPath: 'M 24,0 L 420,0 C 520,0 596,50 596,150 L 596,216 Q 596,240 572,240 L 24,240 Q 0,240 0,216 L 0,24 Q 0,0 24,0 Z',
   },
 ];
 
@@ -183,6 +195,19 @@ const COLOR_STYLES = {
     bgLightEnd: '#fdf5fa',
     radialGlow: 'from-pink-500/15',
     pillGlow: 'shadow-[0_0_15px_rgba(236,72,153,0.3)]',
+  },
+  orange: {
+    badge: 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/30',
+    icon: 'text-orange-600 dark:text-orange-400',
+    divider: 'bg-gradient-to-r from-orange-500 to-transparent',
+    strokeDark: 'rgba(249, 115, 22, 0.45)',
+    strokeLight: 'rgba(249, 115, 22, 0.4)',
+    bgDarkStart: '#160e08',
+    bgDarkEnd: '#0d0804',
+    bgLightStart: '#ffffff',
+    bgLightEnd: '#fff8f2',
+    radialGlow: 'from-orange-500/15',
+    pillGlow: 'shadow-[0_0_15px_rgba(249,115,22,0.3)]',
   },
 };
 
