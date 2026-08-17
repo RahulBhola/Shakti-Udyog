@@ -1,22 +1,29 @@
-import { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getResources, type Resource } from '../api/publicApi';
 import { Seo } from '../components/Seo';
 import { Breadcrumb } from '../components/ui';
 import { seoPages } from '../content/seo';
 import { useTheme } from '../auth/ThemeContext';
 import {
+  FileText,
+  Layers,
+  ShieldCheck,
+  CheckCircle2,
   HelpCircle,
   Plus,
   Minus,
-  BookOpen,
   ArrowRight,
   Sparkles,
-  FileText,
-  ShieldCheck,
+  Sliders,
+  Scale,
+  Gauge,
+  Maximize2,
+  Wrench,
+  Flame,
+  CheckSquare,
+  Compass,
   Cpu,
-  Layers,
 } from 'lucide-react';
 
 export interface ExtendedFaqItem {
@@ -76,19 +83,73 @@ const RESOURCES_FAQS: ExtendedFaqItem[] = [
   },
 ];
 
+const ENQUIRY_CHECKLIST = [
+  {
+    step: '01',
+    title: 'Part Geometry & CAD Files',
+    desc: '2D PDF with critical tolerances or 3D CAD files (STEP, IGES, SolidWorks) or a physical sample for scanning.',
+    icon: <Compass className="w-5 h-5 text-orange-500" />,
+  },
+  {
+    step: '02',
+    title: 'Material Grade & Specification',
+    desc: 'Exact alloy grade (e.g., Grey Iron FG 260, SG 500/7) and national standard (IS 210, IS 1865, ASTM, DIN).',
+    icon: <Layers className="w-5 h-5 text-orange-500" />,
+  },
+  {
+    step: '03',
+    title: 'Casting Weight & Dimensions',
+    desc: 'Approximate piece weight (0.1 kg to 150 kg) and bounding envelope dimensions (length, width, height).',
+    icon: <Scale className="w-5 h-5 text-orange-500" />,
+  },
+  {
+    step: '04',
+    title: 'Order & Annual Quantities',
+    desc: 'Initial pilot batch lot size (e.g., 50 pcs) and recurring monthly or annual production volume forecasts.',
+    icon: <Gauge className="w-5 h-5 text-orange-500" />,
+  },
+  {
+    step: '05',
+    title: 'Machining & Finishing Scope',
+    desc: 'Specify raw as-cast, shot-blasted (SA 2.5), primer coated, or fully CNC finish-machined with tight bore tolerances.',
+    icon: <Wrench className="w-5 h-5 text-orange-500" />,
+  },
+  {
+    step: '06',
+    title: 'Inspection & Certification Needs',
+    desc: 'Requirement for EN 10204 3.1 chemical/mechanical test reports, CMM reports, Brinell hardness, or pressure testing.',
+    icon: <ShieldCheck className="w-5 h-5 text-orange-500" />,
+  },
+];
+
+const DFM_CHECKLIST_PILLARS = [
+  {
+    title: 'Draft Angles & Parting Lines',
+    desc: 'Maintain 1.5° to 3.0° draft on vertical walls for clean pattern extraction without mold wall tear.',
+    badge: 'Draft Angle: 1.5°–3.0°',
+  },
+  {
+    title: 'Machining Stock Allowances (RMA)',
+    desc: 'Allocate +2.5 mm to +4.0 mm extra stock on critical milled faces and bearing bores for clean defect-free machining.',
+    badge: 'Stock: +2.5 to 4.0 mm',
+  },
+  {
+    title: 'Fillet Radii & Section Transitions',
+    desc: 'Use minimum internal fillet radius R3–R5 mm at all wall junctions to prevent hot-spot stress concentration cracks.',
+    badge: 'Min Fillet: R3–R5 mm',
+  },
+  {
+    title: 'Dimensional Standards & Datums',
+    desc: 'Casting tolerance grade conforming to ISO 8062 / IS 11115 (DCTG 8–10) with primary CMM datum features identified.',
+    badge: 'Tolerance: ISO 8062 DCTG',
+  },
+];
+
 export default function ResourcesPage() {
   const { theme } = useTheme();
   const isLight = theme === 'light';
 
-  const [resources, setResources] = useState<Resource[] | null>(null);
-  const [error, setError] = useState(false);
   const [openId, setOpenId] = useState<string | null>('faq-1');
-
-  useEffect(() => {
-    getResources()
-      .then(setResources)
-      .catch(() => setError(true));
-  }, []);
 
   const toggleFaq = (id: string) => {
     setOpenId((prev) => (prev === id ? null : id));
@@ -106,7 +167,7 @@ export default function ResourcesPage() {
         path="/resources"
       />
 
-      {/* Hero Header — Perfectly Centered Matching All Pages */}
+      {/* Hero Header — Perfectly Centered */}
       <section
         className={`relative pt-32 pb-16 sm:pt-40 sm:pb-24 border-b overflow-hidden transition-colors ${
           isLight ? 'bg-white border-neutral-200/80' : 'bg-[#08090d] border-white/[0.08]'
@@ -115,7 +176,7 @@ export default function ResourcesPage() {
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 relative z-10 text-center flex flex-col items-center">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs sm:text-sm font-mono font-bold tracking-wider uppercase text-orange-600 dark:text-orange-400 bg-orange-500/10 border border-orange-500/30 mb-6 shadow-sm">
             <Sparkles className="w-4 h-4 text-orange-500" />
-            <span>Technical Documentation &amp; Knowledge Base</span>
+            <span>Foundry Engineering Knowledge Base &amp; Technical Reference</span>
           </div>
 
           <h1
@@ -123,7 +184,7 @@ export default function ResourcesPage() {
               isLight ? 'text-neutral-900' : 'text-white'
             }`}
           >
-            Engineering <span className="text-orange-500">Resources &amp; FAQs</span>
+            Engineering <span className="text-orange-500">Resources &amp; Guides</span>
           </h1>
 
           <p
@@ -131,91 +192,317 @@ export default function ResourcesPage() {
               isLight ? 'text-neutral-600' : 'text-neutral-300'
             }`}
           >
-            Practical metallurgical guides, foundry specifications, and answers to help you specify,
-            engineer, and procure cast iron components with confidence.
+            Practical metallurgical guides, enquiry blueprints, DFM checklists, and comprehensive
+            foundry answers to help you specify, engineer, and procure castings with confidence.
           </p>
         </div>
       </section>
 
-      {/* Main Content Area */}
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-12 sm:py-16 space-y-14 sm:space-y-18">
+      {/* Main Content Container */}
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-12 sm:py-16 space-y-16 sm:space-y-20">
+        
         {/* Breadcrumb Navigation */}
         <Breadcrumb items={[{ label: 'Home', href: '/' }, { label: 'Resources', href: '/resources' }]} />
 
         {/* ========================================================================= */}
-        {/* RECOMMENDED TECHNICAL GUIDES & READING */}
+        {/* SECTION 1: HOW TO PREPARE A CASTING ENQUIRY (FULL 6-POINT BLUEPRINT) */}
         {/* ========================================================================= */}
-        {resources && resources.length > 0 && (
-          <section className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-              <div className="space-y-2">
-                <div className="text-xs font-mono font-bold tracking-widest uppercase text-blue-600 dark:text-sky-400">
-                  METALLURGICAL GUIDES
-                </div>
-                <h2
-                  className={`text-2xl sm:text-4xl font-extrabold tracking-tight ${
+        <section className="space-y-8">
+          <div className="space-y-3">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-bold tracking-wider uppercase text-orange-600 dark:text-orange-400 bg-orange-500/10 border border-orange-500/30">
+              <FileText className="w-3.5 h-3.5 text-orange-500" />
+              <span>RFQ PREPARATION BLUEPRINT</span>
+            </div>
+
+            <h2 className={`text-3xl sm:text-5xl font-extrabold tracking-tight ${
+              isLight ? 'text-neutral-900' : 'text-white'
+            }`}>
+              How to Prepare a Casting Enquiry
+            </h2>
+
+            <p className={`text-sm sm:text-base max-w-2xl leading-relaxed ${
+              isLight ? 'text-neutral-600' : 'text-neutral-300'
+            }`}>
+              Include these 6 critical engineering parameters in your RFQ for accurate feasibility review, optimized pattern tooling quotes, and fixed unit pricing within 24 hours.
+            </p>
+          </div>
+
+          {/* 6-Card Interactive Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {ENQUIRY_CHECKLIST.map((item, idx) => (
+              <motion.div
+                key={item.step}
+                initial={{ opacity: 0, y: 25 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.45, delay: idx * 0.06 }}
+                className={`rounded-3xl p-6 sm:p-7 border flex flex-col justify-between transition-all duration-300 ${
+                  isLight
+                    ? 'bg-white border-neutral-200/90 hover:border-orange-300 hover:shadow-xl shadow-[0_4px_20px_rgba(0,0,0,0.03)]'
+                    : 'bg-[#090b10] border-white/[0.08] hover:border-orange-500/30 hover:bg-[#0c0e15] hover:shadow-[0_0_25px_rgba(249,115,22,0.12)]'
+                }`}
+              >
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-lg bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20">
+                      STEP {item.step}
+                    </span>
+                    <div className="p-2 rounded-xl bg-orange-500/10 border border-orange-500/20">
+                      {item.icon}
+                    </div>
+                  </div>
+
+                  <h3 className={`text-lg sm:text-xl font-bold tracking-tight ${
                     isLight ? 'text-neutral-900' : 'text-white'
-                  }`}
-                >
-                  Recommended Engineering Reading
-                </h2>
+                  }`}>
+                    {item.title}
+                  </h3>
+
+                  <p className={`text-xs sm:text-sm leading-relaxed ${
+                    isLight ? 'text-neutral-600' : 'text-neutral-400'
+                  }`}>
+                    {item.desc}
+                  </p>
+                </div>
+
+                <div className="mt-4 pt-3 border-t border-neutral-100 dark:border-white/[0.06] flex items-center gap-1.5 text-xs font-mono font-semibold text-emerald-600 dark:text-emerald-400">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>Essential for 24h Quotation</span>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Quick RFQ CTA Button */}
+          <div className="pt-2">
+            <Link
+              to="/request-a-quote"
+              className={`inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl font-bold text-xs sm:text-sm transition-all transform hover:scale-105 shadow-md ${
+                isLight
+                  ? 'bg-orange-500 hover:bg-orange-600 text-white shadow-orange-500/20'
+                  : 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-[0_0_20px_rgba(249,115,22,0.3)]'
+              }`}
+            >
+              <span>Submit Your 2D/3D CAD Drawing for Feasibility Check</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </section>
+
+        {/* ========================================================================= */}
+        {/* SECTION 2: GREY IRON VS DUCTILE IRON (FULL COMPARATIVE MATRIX) */}
+        {/* ========================================================================= */}
+        <section className="space-y-8">
+          <div className="space-y-3">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-bold tracking-wider uppercase text-blue-600 dark:text-sky-400 bg-blue-500/10 border border-blue-500/30">
+              <Layers className="w-3.5 h-3.5 text-blue-500" />
+              <span>METALLURGICAL ALLOY MATRIX</span>
+            </div>
+
+            <h2 className={`text-3xl sm:text-5xl font-extrabold tracking-tight ${
+              isLight ? 'text-neutral-900' : 'text-white'
+            }`}>
+              Grey Iron vs. Ductile Iron Selection Guide
+            </h2>
+
+            <p className={`text-sm sm:text-base max-w-2xl leading-relaxed ${
+              isLight ? 'text-neutral-600' : 'text-neutral-300'
+            }`}>
+              A direct comparison of microstructure, mechanical properties, vibration damping, and typical industry applications to select the optimal casting grade.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            {/* Grey Iron Card (Full Data) */}
+            <div className={`rounded-3xl p-7 sm:p-9 border transition-all ${
+              isLight
+                ? 'bg-white border-neutral-200/90 shadow-[0_4px_24px_rgba(0,0,0,0.03)]'
+                : 'bg-[#090b10] border-white/[0.08] shadow-[0_4px_30px_rgba(0,0,0,0.7)]'
+            }`}>
+              <div className="space-y-5">
+                <div className="flex items-center justify-between">
+                  <span className="px-3 py-1 rounded-full text-xs font-mono font-bold uppercase bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/30">
+                    Flake Graphite Iron (IS 210)
+                  </span>
+                  <span className="text-xs font-mono text-neutral-500">FG 150 to FG 350</span>
+                </div>
+
+                <h3 className={`text-2xl sm:text-3xl font-bold tracking-tight ${
+                  isLight ? 'text-neutral-900' : 'text-white'
+                }`}>
+                  Grey Cast Iron
+                </h3>
+
+                <p className={`text-xs sm:text-sm leading-relaxed ${
+                  isLight ? 'text-neutral-600' : 'text-neutral-400'
+                }`}>
+                  Characterized by carbon dispersed as interconnected graphite flakes. Provides unmatched harmonic vibration damping, high compressive strength, and high thermal conductivity.
+                </p>
+
+                {/* Technical Specs Table */}
+                <div className="space-y-2.5 pt-2 border-t border-neutral-100 dark:border-white/[0.06] text-xs font-mono">
+                  <div className="flex justify-between py-1.5 border-b border-neutral-100 dark:border-white/[0.04]">
+                    <span className="text-neutral-500">Tensile Strength:</span>
+                    <span className="font-bold text-orange-500">150 – 350 MPa</span>
+                  </div>
+                  <div className="flex justify-between py-1.5 border-b border-neutral-100 dark:border-white/[0.04]">
+                    <span className="text-neutral-500">Brinell Hardness:</span>
+                    <span className="font-bold">160 – 260 HBW</span>
+                  </div>
+                  <div className="flex justify-between py-1.5 border-b border-neutral-100 dark:border-white/[0.04]">
+                    <span className="text-neutral-500">Elongation:</span>
+                    <span className="font-bold">&lt; 1% (Rigid / Non-Ductile)</span>
+                  </div>
+                  <div className="flex justify-between py-1.5 border-b border-neutral-100 dark:border-white/[0.04]">
+                    <span className="text-neutral-500">Vibration Damping:</span>
+                    <span className="font-bold text-emerald-500">Superior (Absorbs kinetic harmonics)</span>
+                  </div>
+                  <div className="flex justify-between py-1.5">
+                    <span className="text-neutral-500">Machinability:</span>
+                    <span className="font-bold text-emerald-500">Excellent (Discontinuous chips)</span>
+                  </div>
+                </div>
+
+                {/* Common Applications */}
+                <div className="p-4 rounded-2xl bg-neutral-50 dark:bg-white/5 border border-neutral-200 dark:border-white/5 space-y-1">
+                  <div className="text-[11px] font-mono font-bold uppercase text-neutral-500">Primary Applications:</div>
+                  <p className="text-xs text-neutral-700 dark:text-neutral-300">
+                    Machine tool beds, gearboxes, compressor housings, hydraulic barrel pumps, brake discs, V-belt pulleys.
+                  </p>
+                </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {resources.map((r, idx) => (
-                <motion.div
-                  key={r.slug}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: idx * 0.08 }}
-                >
-                  <Link
-                    to={`/resources/${r.slug}`}
-                    className={`group h-full rounded-3xl p-6 sm:p-7 flex flex-col justify-between border transition-all duration-300 ${
-                      isLight
-                        ? 'bg-white border-neutral-200/90 hover:border-blue-400 hover:shadow-xl shadow-[0_4px_20px_rgba(0,0,0,0.03)]'
-                        : 'bg-[#090b10] border-white/[0.08] hover:border-sky-500/40 hover:bg-[#0c0f17] hover:shadow-[0_0_25px_rgba(56,189,248,0.12)]'
-                    }`}
-                  >
-                    <div className="space-y-3">
-                      <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-blue-500/10 text-blue-600 dark:text-sky-400 border border-blue-500/20 group-hover:scale-110 transition-transform">
-                        <BookOpen className="w-5 h-5" />
-                      </div>
+            {/* Ductile Iron Card (Full Data) */}
+            <div className={`rounded-3xl p-7 sm:p-9 border transition-all ${
+              isLight
+                ? 'bg-white border-neutral-200/90 shadow-[0_4px_24px_rgba(0,0,0,0.03)]'
+                : 'bg-[#090b10] border-white/[0.08] shadow-[0_4px_30px_rgba(0,0,0,0.7)]'
+            }`}>
+              <div className="space-y-5">
+                <div className="flex items-center justify-between">
+                  <span className="px-3 py-1 rounded-full text-xs font-mono font-bold uppercase bg-blue-500/10 text-blue-600 dark:text-sky-400 border border-blue-500/30">
+                    Nodular S.G. Iron (IS 1865)
+                  </span>
+                  <span className="text-xs font-mono text-neutral-500">SG 400/15 to SG 700/2</span>
+                </div>
 
-                      <h3
-                        className={`text-lg sm:text-xl font-bold tracking-tight transition-colors ${
-                          isLight
-                            ? 'text-neutral-900 group-hover:text-blue-600'
-                            : 'text-white group-hover:text-sky-400'
-                        }`}
-                      >
-                        {r.title}
-                      </h3>
+                <h3 className={`text-2xl sm:text-3xl font-bold tracking-tight ${
+                  isLight ? 'text-neutral-900' : 'text-white'
+                }`}>
+                  Ductile (SG) Iron
+                </h3>
 
-                      <p
-                        className={`text-xs sm:text-sm leading-relaxed ${
-                          isLight ? 'text-neutral-600' : 'text-neutral-400'
-                        }`}
-                      >
-                        {r.summary}
-                      </p>
-                    </div>
+                <p className={`text-xs sm:text-sm leading-relaxed ${
+                  isLight ? 'text-neutral-600' : 'text-neutral-400'
+                }`}>
+                  Magnesium inoculation transforms graphite into spherical nodules, eliminating sharp stress concentration points. Delivers high tensile strength, impact toughness, and elongation similar to cast steel.
+                </p>
 
-                    <div className="pt-4 mt-4 border-t border-neutral-100 dark:border-white/[0.06] flex items-center gap-1 text-xs font-mono font-bold text-blue-600 dark:text-sky-400">
-                      <span>Read Technical Guide</span>
-                      <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-                    </div>
-                  </Link>
-                </motion.div>
-              ))}
+                {/* Technical Specs Table */}
+                <div className="space-y-2.5 pt-2 border-t border-neutral-100 dark:border-white/[0.06] text-xs font-mono">
+                  <div className="flex justify-between py-1.5 border-b border-neutral-100 dark:border-white/[0.04]">
+                    <span className="text-neutral-500">Tensile Strength:</span>
+                    <span className="font-bold text-sky-500">400 – 700+ MPa</span>
+                  </div>
+                  <div className="flex justify-between py-1.5 border-b border-neutral-100 dark:border-white/[0.04]">
+                    <span className="text-neutral-500">Brinell Hardness:</span>
+                    <span className="font-bold">170 – 300 HBW</span>
+                  </div>
+                  <div className="flex justify-between py-1.5 border-b border-neutral-100 dark:border-white/[0.04]">
+                    <span className="text-neutral-500">Elongation:</span>
+                    <span className="font-bold text-sky-500">2% – 18% (High Ductility)</span>
+                  </div>
+                  <div className="flex justify-between py-1.5 border-b border-neutral-100 dark:border-white/[0.04]">
+                    <span className="text-neutral-500">Impact Resistance:</span>
+                    <span className="font-bold text-emerald-500">High Shock &amp; Fracture Toughness</span>
+                  </div>
+                  <div className="flex justify-between py-1.5">
+                    <span className="text-neutral-500">Strength-to-Weight:</span>
+                    <span className="font-bold text-emerald-500">Superior (Comparable to forged steel)</span>
+                  </div>
+                </div>
+
+                {/* Common Applications */}
+                <div className="p-4 rounded-2xl bg-neutral-50 dark:bg-white/5 border border-neutral-200 dark:border-white/5 space-y-1">
+                  <div className="text-[11px] font-mono font-bold uppercase text-neutral-500">Primary Applications:</div>
+                  <p className="text-xs text-neutral-700 dark:text-neutral-300">
+                    Automotive shift levers, tractor axle supports, railway safety handles, high-pressure valves, heavy machinery pivot arms.
+                  </p>
+                </div>
+              </div>
             </div>
-          </section>
-        )}
+
+          </div>
+        </section>
 
         {/* ========================================================================= */}
-        {/* THE FAQ SECTION (EXACT BEAUTIFUL UI MATCHING HOME PAGE) */}
+        {/* SECTION 3: CASTING DRAWING & DFM CHECKLIST (FULL ENGINEERING DATA) */}
+        {/* ========================================================================= */}
+        <section className="space-y-8">
+          <div className="space-y-3">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-bold tracking-wider uppercase text-purple-600 dark:text-purple-400 bg-purple-500/10 border border-purple-500/30">
+              <ShieldCheck className="w-3.5 h-3.5 text-purple-500" />
+              <span>DFM &amp; TOLERANCE STANDARDS</span>
+            </div>
+
+            <h2 className={`text-3xl sm:text-5xl font-extrabold tracking-tight ${
+              isLight ? 'text-neutral-900' : 'text-white'
+            }`}>
+              Casting Drawing &amp; DFM Checklist
+            </h2>
+
+            <p className={`text-sm sm:text-base max-w-2xl leading-relaxed ${
+              isLight ? 'text-neutral-600' : 'text-neutral-300'
+            }`}>
+              Key drawing rules, draft angles, machining stock allowances, and inspection callouts required for defect-free production.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {DFM_CHECKLIST_PILLARS.map((pillar, idx) => (
+              <motion.div
+                key={pillar.title}
+                initial={{ opacity: 0, y: 25 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.45, delay: idx * 0.07 }}
+                className={`rounded-3xl p-6 border flex flex-col justify-between transition-all ${
+                  isLight
+                    ? 'bg-white border-neutral-200/90 shadow-[0_4px_20px_rgba(0,0,0,0.03)]'
+                    : 'bg-[#090b10] border-white/[0.08] shadow-[0_4px_30px_rgba(0,0,0,0.7)]'
+                }`}
+              >
+                <div className="space-y-3">
+                  <span className="text-[11px] font-mono font-bold px-2.5 py-1 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 inline-block">
+                    {pillar.badge}
+                  </span>
+
+                  <h3 className={`text-base sm:text-lg font-bold tracking-tight ${
+                    isLight ? 'text-neutral-900' : 'text-white'
+                  }`}>
+                    {pillar.title}
+                  </h3>
+
+                  <p className={`text-xs leading-relaxed ${
+                    isLight ? 'text-neutral-600' : 'text-neutral-400'
+                  }`}>
+                    {pillar.desc}
+                  </p>
+                </div>
+
+                <div className="mt-4 pt-3 border-t border-neutral-100 dark:border-white/[0.06] flex items-center gap-1.5 text-[11px] font-mono text-neutral-400">
+                  <CheckSquare className="w-3.5 h-3.5 text-purple-500" />
+                  <span>ISO 8062 Compliant</span>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+
+        {/* ========================================================================= */}
+        {/* SECTION 4: THE FAQ SECTION (EXACT BEAUTIFUL UI WITH MOLTEN LADLE) */}
         {/* ========================================================================= */}
         <section id="res-faq">
           <motion.div
@@ -398,6 +685,7 @@ export default function ResourcesPage() {
             </div>
           </motion.div>
         </section>
+
       </div>
     </div>
   );
