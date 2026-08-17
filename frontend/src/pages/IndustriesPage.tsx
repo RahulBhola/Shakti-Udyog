@@ -27,7 +27,7 @@ interface IndustrySector {
   icon: React.ReactNode;
   image: string;
   themeColor: 'purple' | 'emerald' | 'blue' | 'amber' | 'teal' | 'pink';
-  shapeClass: string;
+  svgPath: string;
 }
 
 const SECTOR_CARDS: IndustrySector[] = [
@@ -39,7 +39,8 @@ const SECTOR_CARDS: IndustrySector[] = [
     icon: <Car className="w-5 h-5" />,
     image: '/images/Gear Lever Parts/Cast Iron Car Gear Lever Part.png',
     themeColor: 'purple',
-    shapeClass: 'rounded-3xl',
+    // Diagonal slanted right edge (Top extends further right, slants inward toward bottom-right)
+    svgPath: 'M 24,0 L 375,0 Q 395,0 390,20 L 350,222 Q 345,240 325,240 L 24,240 Q 0,240 0,216 L 0,24 Q 0,0 24,0 Z',
   },
   {
     id: 'agriculture',
@@ -49,7 +50,8 @@ const SECTOR_CARDS: IndustrySector[] = [
     icon: <Tractor className="w-5 h-5" />,
     image: '/images/cast_iron_casting/Cast Iron Tractor Part Casting.png',
     themeColor: 'emerald',
-    shapeClass: 'rounded-3xl rounded-tr-[52px] rounded-bl-[16px] rounded-br-[40px]',
+    // Chevron / Greater-Than (>) pointed right edge
+    svgPath: 'M 24,0 L 350,0 Q 365,0 375,12 L 396,110 Q 400,120 396,130 L 375,228 Q 365,240 350,240 L 24,240 Q 0,240 0,216 L 0,24 Q 0,0 24,0 Z',
   },
   {
     id: 'pumps-valves',
@@ -59,7 +61,8 @@ const SECTOR_CARDS: IndustrySector[] = [
     icon: <Droplets className="w-5 h-5" />,
     image: '/images/cast_iron_casting/Cast Iron Rotary Barrel Pump Casting.png',
     themeColor: 'blue',
-    shapeClass: 'rounded-3xl rounded-tr-[90px] sm:rounded-tr-[135px]',
+    // Signature Semicircle / Quarter-Circle Arch Dome at top right
+    svgPath: 'M 24,0 L 250,0 C 340,0 400,60 400,150 L 400,216 Q 400,240 376,240 L 24,240 Q 0,240 0,216 L 0,24 Q 0,0 24,0 Z',
   },
   {
     id: 'machine-tools',
@@ -69,7 +72,8 @@ const SECTOR_CARDS: IndustrySector[] = [
     icon: <Cog className="w-5 h-5" />,
     image: '/images/Sewing_machine_parts/Cast Iron TA 1 Bracket Industrial Sewing Machine Part.png',
     themeColor: 'amber',
-    shapeClass: 'rounded-3xl rounded-tl-[44px] rounded-br-[20px]',
+    // Diagonal angled cut right edge
+    svgPath: 'M 24,0 L 375,0 Q 395,0 390,20 L 350,222 Q 345,240 325,240 L 24,240 Q 0,240 0,216 L 0,24 Q 0,0 24,0 Z',
   },
   {
     id: 'construction',
@@ -79,7 +83,8 @@ const SECTOR_CARDS: IndustrySector[] = [
     icon: <Building2 className="w-5 h-5" />,
     image: '/images/Hillside Washer/Cast Iron Hillside Washer.png',
     themeColor: 'teal',
-    shapeClass: 'rounded-3xl rounded-tl-[48px] rounded-br-[48px] rounded-tr-[16px] rounded-bl-[16px]',
+    // Chevron / Greater-Than (>) pointed right edge
+    svgPath: 'M 24,0 L 350,0 Q 365,0 375,12 L 396,110 Q 400,120 396,130 L 375,228 Q 365,240 350,240 L 24,240 Q 0,240 0,216 L 0,24 Q 0,0 24,0 Z',
   },
   {
     id: 'energy-infrastructure',
@@ -89,7 +94,8 @@ const SECTOR_CARDS: IndustrySector[] = [
     icon: <Zap className="w-5 h-5" />,
     image: '/images/Collar Plug/Cast Iron Collar Plug.png',
     themeColor: 'pink',
-    shapeClass: 'rounded-3xl rounded-tr-[44px] rounded-bl-[44px]',
+    // Diagonal angled cut right edge
+    svgPath: 'M 24,0 L 375,0 Q 395,0 390,20 L 350,222 Q 345,240 325,240 L 24,240 Q 0,240 0,216 L 0,24 Q 0,0 24,0 Z',
   },
 ];
 
@@ -98,7 +104,12 @@ const COLOR_STYLES = {
     badge: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/30',
     icon: 'text-purple-600 dark:text-purple-400',
     divider: 'bg-gradient-to-r from-purple-500 to-transparent',
-    card: 'border-purple-500/30 hover:border-purple-500/70 hover:shadow-[0_0_35px_rgba(168,85,247,0.22)]',
+    strokeDark: 'rgba(168, 85, 247, 0.45)',
+    strokeLight: 'rgba(168, 85, 247, 0.4)',
+    bgDarkStart: '#0d0c18',
+    bgDarkEnd: '#080710',
+    bgLightStart: '#ffffff',
+    bgLightEnd: '#faf8ff',
     radialGlow: 'from-purple-500/15',
     pillGlow: 'shadow-[0_0_15px_rgba(168,85,247,0.3)]',
   },
@@ -106,7 +117,12 @@ const COLOR_STYLES = {
     badge: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30',
     icon: 'text-emerald-600 dark:text-emerald-400',
     divider: 'bg-gradient-to-r from-emerald-500 to-transparent',
-    card: 'border-emerald-500/30 hover:border-emerald-500/70 hover:shadow-[0_0_35px_rgba(16,185,129,0.22)]',
+    strokeDark: 'rgba(16, 185, 129, 0.45)',
+    strokeLight: 'rgba(16, 185, 129, 0.4)',
+    bgDarkStart: '#08120e',
+    bgDarkEnd: '#050c09',
+    bgLightStart: '#ffffff',
+    bgLightEnd: '#f4fbf7',
     radialGlow: 'from-emerald-500/15',
     pillGlow: 'shadow-[0_0_15px_rgba(16,185,129,0.3)]',
   },
@@ -114,7 +130,12 @@ const COLOR_STYLES = {
     badge: 'bg-blue-500/10 text-blue-600 dark:text-sky-400 border-blue-500/30',
     icon: 'text-blue-600 dark:text-sky-400',
     divider: 'bg-gradient-to-r from-blue-500 to-transparent',
-    card: 'border-blue-500/30 hover:border-blue-500/70 hover:shadow-[0_0_35px_rgba(59,130,246,0.22)]',
+    strokeDark: 'rgba(59, 130, 246, 0.45)',
+    strokeLight: 'rgba(59, 130, 246, 0.4)',
+    bgDarkStart: '#080f1e',
+    bgDarkEnd: '#050a14',
+    bgLightStart: '#ffffff',
+    bgLightEnd: '#f4f8ff',
     radialGlow: 'from-blue-500/15',
     pillGlow: 'shadow-[0_0_15px_rgba(59,130,246,0.3)]',
   },
@@ -122,7 +143,12 @@ const COLOR_STYLES = {
     badge: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30',
     icon: 'text-amber-600 dark:text-amber-400',
     divider: 'bg-gradient-to-r from-amber-500 to-transparent',
-    card: 'border-amber-500/30 hover:border-amber-500/70 hover:shadow-[0_0_35px_rgba(245,158,11,0.22)]',
+    strokeDark: 'rgba(245, 158, 11, 0.45)',
+    strokeLight: 'rgba(245, 158, 11, 0.4)',
+    bgDarkStart: '#140f08',
+    bgDarkEnd: '#0d0a05',
+    bgLightStart: '#ffffff',
+    bgLightEnd: '#fffbf4',
     radialGlow: 'from-amber-500/15',
     pillGlow: 'shadow-[0_0_15px_rgba(245,158,11,0.3)]',
   },
@@ -130,7 +156,12 @@ const COLOR_STYLES = {
     badge: 'bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/30',
     icon: 'text-teal-600 dark:text-teal-400',
     divider: 'bg-gradient-to-r from-teal-500 to-transparent',
-    card: 'border-teal-500/30 hover:border-teal-500/70 hover:shadow-[0_0_35px_rgba(20,184,166,0.22)]',
+    strokeDark: 'rgba(20, 184, 166, 0.45)',
+    strokeLight: 'rgba(20, 184, 166, 0.4)',
+    bgDarkStart: '#061314',
+    bgDarkEnd: '#040d0e',
+    bgLightStart: '#ffffff',
+    bgLightEnd: '#f2fbfb',
     radialGlow: 'from-teal-500/15',
     pillGlow: 'shadow-[0_0_15px_rgba(20,184,166,0.3)]',
   },
@@ -138,7 +169,12 @@ const COLOR_STYLES = {
     badge: 'bg-pink-500/10 text-pink-600 dark:text-pink-400 border-pink-500/30',
     icon: 'text-pink-600 dark:text-pink-400',
     divider: 'bg-gradient-to-r from-pink-500 to-transparent',
-    card: 'border-pink-500/30 hover:border-pink-500/70 hover:shadow-[0_0_35px_rgba(236,72,153,0.22)]',
+    strokeDark: 'rgba(236, 72, 153, 0.45)',
+    strokeLight: 'rgba(236, 72, 153, 0.4)',
+    bgDarkStart: '#140711',
+    bgDarkEnd: '#0d040b',
+    bgLightStart: '#ffffff',
+    bgLightEnd: '#fdf5fa',
     radialGlow: 'from-pink-500/15',
     pillGlow: 'shadow-[0_0_15px_rgba(236,72,153,0.3)]',
   },
@@ -185,7 +221,7 @@ export default function IndustriesPage() {
         }`}
       >
         {/* ========================================================================= */}
-        {/* CENTERED HERO HEADER MATCHING IMAGE 1 REFERENCE */}
+        {/* CENTERED HERO HEADER MATCHING USER REFERENCE */}
         {/* ========================================================================= */}
         <section
           className={`relative pt-32 pb-16 sm:pt-40 sm:pb-24 border-b overflow-hidden transition-colors ${
@@ -224,7 +260,7 @@ export default function IndustriesPage() {
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-12 sm:py-16 space-y-12 sm:space-y-16">
           
           {/* ========================================================================= */}
-          {/* 6 ASYMMETRIC GRID SECTOR CARDS (2 ROWS X 3 COLS) — ZERO OVERLAP */}
+          {/* 6 ASYMMETRIC SECTOR CARDS WITH EXACT GEOMETRIC SVG OUTLINES */}
           {/* ========================================================================= */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-7 items-stretch">
             {SECTOR_CARDS.map((sector, idx) => {
@@ -239,15 +275,32 @@ export default function IndustriesPage() {
                   viewport={{ once: true, amount: 0.15 }}
                   transition={{ duration: 0.5, delay: idx * 0.08, ease: 'easeOut' }}
                   whileHover={{ y: -4, transition: { duration: 0.25 } }}
-                  className={`group relative p-6 sm:p-7 flex flex-row items-center justify-between gap-3 sm:gap-4 border transition-all duration-300 min-h-[220px] sm:min-h-[240px] ${sector.shapeClass} ${styles.card} ${
-                    isLight
-                      ? 'bg-white shadow-[0_4px_24px_rgba(0,0,0,0.04)]'
-                      : 'bg-[#080a10] backdrop-blur-md'
-                  }`}
+                  className="group relative p-6 sm:p-7 flex flex-row items-center justify-between gap-3 sm:gap-4 transition-all duration-300 min-h-[230px] sm:min-h-[250px]"
                 >
+                  {/* SVG Custom Silhouette Background and Glowing Border */}
+                  <svg
+                    className="absolute inset-0 w-full h-full pointer-events-none transition-all duration-300 filter drop-shadow-lg"
+                    viewBox="0 0 400 240"
+                    preserveAspectRatio="none"
+                  >
+                    <defs>
+                      <linearGradient id={`grad-${sector.id}-${isLight ? 'l' : 'd'}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor={isLight ? styles.bgLightStart : styles.bgDarkStart} />
+                        <stop offset="100%" stopColor={isLight ? styles.bgLightEnd : styles.bgDarkEnd} />
+                      </linearGradient>
+                    </defs>
+                    <path
+                      d={sector.svgPath}
+                      fill={`url(#grad-${sector.id}-${isLight ? 'l' : 'd'})`}
+                      stroke={isLight ? styles.strokeLight : styles.strokeDark}
+                      strokeWidth="1.5"
+                      className="transition-all duration-300 group-hover:stroke-width-2"
+                    />
+                  </svg>
+
                   {/* Subtle Inner Ambient Glow */}
                   <div
-                    className={`absolute -right-10 -top-10 w-48 h-48 rounded-full blur-3xl pointer-events-none bg-gradient-to-br ${styles.radialGlow} to-transparent`}
+                    className={`absolute -right-8 -top-8 w-44 h-44 rounded-full blur-3xl pointer-events-none bg-gradient-to-br ${styles.radialGlow} to-transparent`}
                   />
 
                   {/* Left Column: Badge, Icon, Title, Divider, Example Components */}
@@ -267,7 +320,7 @@ export default function IndustriesPage() {
                       </div>
                     </div>
 
-                    {/* Sector Title with clean wrapping & no text truncation */}
+                    {/* Sector Title */}
                     <h2
                       className={`text-base sm:text-lg font-bold tracking-tight leading-snug break-words ${
                         isLight ? 'text-neutral-900' : 'text-white'
@@ -298,8 +351,8 @@ export default function IndustriesPage() {
                     </div>
                   </div>
 
-                  {/* Right Column: 3D Cast Iron Product Visualization (Fixed Bounds, No Bleed/Overlap) */}
-                  <div className="w-28 h-28 sm:w-32 sm:h-32 shrink-0 flex items-center justify-center relative z-10 select-none pointer-events-none">
+                  {/* Right Column: 3D Cast Iron Product Visualization (Positioned inside the unique custom corner) */}
+                  <div className="w-28 h-28 sm:w-32 sm:h-32 shrink-0 flex items-center justify-center relative z-10 select-none pointer-events-none pr-1">
                     <img
                       src={themedImg}
                       alt={`${sector.title} casting component`}
