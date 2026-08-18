@@ -1,9 +1,14 @@
 # Shakti Udyog Platform
 
-Secure iron-casting business platform for Shakti Udyog: public website plus Admin, Engineer, and Customer portals.
+Secure enterprise iron-casting business platform for Shakti Udyog: public marketing website plus Admin, Engineer, and Customer portals.
 
-- Functional source of truth: [`docs/shakti-udyog-requirements.md`](docs/shakti-udyog-requirements.md)
-- Project rules: [`CLAUDE.md`](CLAUDE.md)
+### Core Documentation Index (`docs/`)
+- 📄 **Product Requirements (PRD):** [`docs/01-product-requirements-document.md`](docs/01-product-requirements-document.md)
+- 🏗️ **Technical Architecture (TAD):** [`docs/02-technical-architecture-document.md`](docs/02-technical-architecture-document.md)
+- 🔒 **Security & Access Control (SAD):** [`docs/03-security-and-access-document.md`](docs/03-security-and-access-document.md)
+- 🎨 **Frontend Specification (FSD):** [`docs/04-frontend-specification-document.md`](docs/04-frontend-specification-document.md)
+- 📋 **Feature Ticket List (FTL):** [`docs/05-feature-ticket-list.md`](docs/05-feature-ticket-list.md)
+- 🛠️ **Project Guidelines:** [`CLAUDE.md`](CLAUDE.md)
 
 ## Repository layout
 
@@ -11,20 +16,19 @@ Secure iron-casting business platform for Shakti Udyog: public website plus Admi
 backend/
   ShaktiUdyog.sln
   src/
-    ShaktiUdyog.Domain/          # Entities, role/permission/policy constants (no dependencies)
-    ShaktiUdyog.Infrastructure/  # EF Core DbContext, migrations, seeding, token/auth services
-    ShaktiUdyog.Api/             # ASP.NET Core Web API, auth endpoints, Swagger, health checks
+    ShaktiUdyog.Domain/          # 60 POCO Entities, role/permission/policy constants (no dependencies)
+    ShaktiUdyog.Infrastructure/  # EF Core DbContext (35 migrations), seeding, token/auth & audit services
+    ShaktiUdyog.Api/             # ASP.NET Core 9 Web API, 17 controllers, 27 services, SignalR Hubs
   tests/
     ShaktiUdyog.Api.Tests/       # xUnit integration + unit tests
-  .env.example                   # Environment variable examples (no secrets)
 frontend/
   src/
-    api/         # Typed API client with JWT attachment + refresh retry
+    api/         # Typed API client with JWT attachment + silent refresh retry
     auth/        # Token storage, auth service, AuthContext, ProtectedRoute, roles
-    features/    # Page components grouped by area (public, auth, shared, ...)
-    config.ts    # Runtime config from Vite env vars
-  .env.example   # Frontend env examples (VITE_* only — ships to browser)
-docs/            # Requirements
+    portal/      # Customer & Admin/Engineer portal views and erpListView.css
+    realtime/    # SignalR WebSocket client manager
+    styles/      # "Glacier" glassmorphism theme and design tokens
+docs/            # Core PRD, Architecture, Security, Frontend, and Ticket documents
 ```
 
 ## Prerequisites
@@ -146,6 +150,12 @@ npm run build
 - ✅ Milestone 4 — customer portal: Enquiries, quotations, orders, tracking, documents, invoices, payments.
 - ✅ Milestone 5 — Engineer and Admin portals: dedicated Engineer Dashboard, real-time SignalR hub (`/hubs/portal`), role-filtered navigation, and dynamic 5-stage manufacturing Kanban board (`EngineerBoardPage.tsx`).
 - ✅ Milestone 6 — Full reports module (QuestPDF PDF generation, CSV/Excel exports), Advanced Shipment Management (Vehicle #, Phone, Edit, Delete), and UI dark theme token adaptivity.
+- ✅ Milestone 7 — Customer Portal Enhancements: Profile management, verification document uploads, customer address book, and contact person directories.
+- ✅ Milestone 8 — Engineer Portal Operations: Workload distribution, assignment-filtered order queues, quotation draft lifecycle.
+- ✅ Milestone 9 — Admin Portal & Executive Dashboard: Deal overview (`/admin/deals/:orderId`), company account governance, audit logs, and engineer staff management.
+- ✅ Milestone 10 — Documents & File Management: Streamed private downloads, category tagging, versioning metadata, and file hash verification.
+- ✅ Milestone 11 — Invoice & Payment Management: Invoice lifecycles, credit/debit notes, advance payment verifications, and external webhook ingestion.
+- ✅ Milestone 12 — Operations Tracking & Workflow Synchronization: 25-stage manufacturing Kanban board, SignalR push notifications, stage transition rules.
 
 Orders carry an **assigned engineer** (`Order.AssignedToUserId` + `OrderAssignments` history). Admins assign/reassign/unassign an order to an engineer (`PATCH /api/v1/admin/orders/{id}/assign`); engineers see and manage **only their assigned orders** (milestones, shipments, documents), with invalid access returning 403. Real-time updates are pushed via SignalR (`PortalHub.cs`).
 
