@@ -8,9 +8,6 @@ import {
   CheckCircle2,
   AlertCircle,
   Loader2,
-  FileCheck,
-  ShieldCheck,
-  Layers,
   Sparkles,
   Trash2,
 } from 'lucide-react';
@@ -176,7 +173,7 @@ export const RequestQuoteModal: React.FC<RequestQuoteModalProps> = ({
                 }`}
               >
                 <Sparkles className="w-3.5 h-3.5 text-orange-500" />
-                <span>DIRECT FOUNDRY RFQ &amp; QUOTATION</span>
+                <span>DIRECT FOUNDRY ENQUIRY &amp; QUOTATION</span>
               </div>
 
               <h2
@@ -211,7 +208,7 @@ export const RequestQuoteModal: React.FC<RequestQuoteModalProps> = ({
                   </p>
                   {status.reference && (
                     <div className="inline-block mt-2 px-4 py-1.5 rounded-lg bg-white/60 dark:bg-black/40 border border-emerald-500/20 font-mono text-xs font-bold text-emerald-800 dark:text-emerald-300">
-                      RFQ Reference: {status.reference}
+                      Enquiry Reference: {status.reference}
                     </div>
                   )}
                 </div>
@@ -542,7 +539,7 @@ export const RequestQuoteModal: React.FC<RequestQuoteModalProps> = ({
                     {status.kind === 'submitting' ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Submitting RFQ…</span>
+                        <span>Submitting Enquiry…</span>
                       </>
                     ) : (
                       <>

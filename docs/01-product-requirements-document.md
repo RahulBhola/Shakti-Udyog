@@ -49,7 +49,7 @@
 To establish a modern, transparent, and enterprise-grade digital casting platform that bridges prospective industrial buyers, approved B2B corporate customers, foundry operations engineers, and executive management.
 
 ### 2.2 Core Product Objectives
-* **Streamline Customer Procurement:** Reduce quotation turnaround time from days to hours through structured RFQ ingestion, automated drawing storage, and real-time approval tracking.
+* **Streamline Customer Procurement:** Reduce quotation turnaround time from days to hours through structured Enquiry ingestion, automated drawing storage, and real-time approval tracking.
 * **Eliminate Order Black Boxes:** Deliver an Amazon-grade order tracking experience adapted for industrial manufacturing—from pattern design through metal pouring, shakeout, fettling, inspection, and dispatch.
 * **Empower Foundry Floor Execution:** Provide real-time Kanban visualization of active orders and jobs across 25 granular manufacturing stages with forward-only state progression.
 * **Institutionalize Compliance & Auditability:** Enforce server-side multi-tenant data isolation, immutable audit logging for all business transactions, and end-to-end commercial transparency (invoices, advances, credit notes).
@@ -67,7 +67,7 @@ graph TD
     User --> E[Foundry / Operations Engineer]
     User --> A[System Administrator / Executive]
     
-    V --> P1[Public Marketing Website & RFQ Modal]
+    V --> P1[Public Marketing Website & Enquiry Modal]
     C --> P2[Customer Portal /customer/*]
     E --> P3[Engineer Portal /admin/*]
     A --> P4[Admin Portal /admin/*]
@@ -75,12 +75,12 @@ graph TD
 
 ### 3.1 Visitor / Prospective Buyer
 * **Context:** Unauthenticated industrial purchasing managers, engineers seeking quotes.
-* **Key Tasks:** Browse verified casting capabilities, inspect alloy grades, submit contact enquiries, submit RFQs with CAD/PDF drawings.
-* **Experience Requirements:** High-impact visual storytelling, low-friction RFQ submission, honeypot spam protection.
+* **Key Tasks:** Browse verified casting capabilities, inspect alloy grades, submit contact enquiries, submit Enquiries with CAD/PDF drawings.
+* **Experience Requirements:** High-impact visual storytelling, low-friction Enquiry submission, honeypot spam protection.
 
 ### 3.2 Registered Customer (B2B Client)
 * **Context:** Authenticated purchasing and supply chain personnel representing verified customer companies.
-* **Key Tasks:** Submit detailed multi-item RFQs, review and accept/negotiate quotations, track confirmed order timelines, submit advance payment receipts, stream official documents (MTCs, invoices, dispatch challans), raise order-linked support requests.
+* **Key Tasks:** Submit detailed multi-item Enquiries, review and accept/negotiate quotations, track confirmed order timelines, submit advance payment receipts, stream official documents (MTCs, invoices, dispatch challans), raise order-linked support requests.
 * **Experience Requirements:** Multi-company context, zero exposure to internal shop-floor cost notes, transparent status notifications.
 
 ### 3.3 Operations / Foundry Engineer
@@ -97,14 +97,14 @@ graph TD
 
 ## 4. End-to-End Functional Requirements
 
-### 4.1 Module 1: Public Marketing & RFQ Submissions
+### 4.1 Module 1: Public Marketing & Enquiry Submissions
 * **FR-1.1 Navigation & Static Content:** Deliver responsive public pages for Home, About Us, Products, Capabilities, Quality & Lab Standards, Industries, Technical Resources, Contact Us, and Legal Policies.
 * **FR-1.2 Dynamic Catalog & Alloy Directory:** Publicly queryable product hierarchy with slug-based routing, alloy specifications, physical properties, and typical engineering applications.
 * **FR-1.3 Public Enquiry Form:** Submits contact requests with honeypot validation (`website` anti-bot trap) returning immediate confirmation.
-* **FR-1.4 Public RFQ Submission:** Allows multi-file drawing uploads (`.pdf`, `.dwg`, `.dxf`, `.step`, `.stp`, `.zip`), part geometry details, target volumes, and delivery location without mandatory pre-registration.
+* **FR-1.4 Public Enquiry Submission:** Allows multi-file drawing uploads (`.pdf`, `.dwg`, `.dxf`, `.step`, `.stp`, `.zip`), part geometry details, target volumes, and delivery location without mandatory pre-registration.
 
-### 4.2 Module 2: Enquiry (RFQ) Management
-* **FR-2.1 Customer RFQ Creation:** Authenticated customers can save drafts, attach multiple line items, upload revision drawings, and submit to the engineering queue.
+### 4.2 Module 2: Enquiry Management
+* **FR-2.1 Customer Enquiry Creation:** Authenticated customers can save drafts, attach multiple line items, upload revision drawings, and submit to the engineering queue.
 * **FR-2.2 Draft & Edit Lifecycle:** Draft enquiries remain fully mutable by the customer; once submitted, fields lock to prevent alteration during estimation review.
 * **FR-2.3 Technical Assessment:** Engineers evaluate casting feasibility, pattern tooling requirements, weight estimates, alloy grade availability, and machining allowances.
 * **FR-2.4 Enquiry Status Flow:**
@@ -147,7 +147,7 @@ graph TD
 * **FR-7.2 Private Storage:** Zero public directory exposure. Binary assets stream through authenticated API endpoints (`GET /api/v1/customer/documents/{id}/download`) after company authorization validation.
 
 ### 4.8 Module 8: Executive Reporting & Exports
-* **FR-8.1 Real-Time Dashboards:** KPI metric cards (Total Revenue, Active RFQs, In-Production Tonnes, Overdue Invoices, Delivery On-Time Rate).
+* **FR-8.1 Real-Time Dashboards:** KPI metric cards (Total Revenue, Active Enquiries, In-Production Tonnes, Overdue Invoices, Delivery On-Time Rate).
 * **FR-8.2 Export Formats:** On-demand generation of QuestPDF reports and streaming CSV/Excel data exports for Order Pipeline, Revenue Reconciliation, and Shop-Floor Throughput.
 
 ---
@@ -165,7 +165,7 @@ sequenceDiagram
     actor ShopFloor as Foundry Operations
     actor Transporter as Logistics / Driver
 
-    Note over Customer,Admin: Phase 1: RFQ & Estimation
+    Note over Customer,Admin: Phase 1: Enquiry & Estimation
     Customer->>Engineer: Submit Enquiry / Drawings (Draft -> Submitted)
     Engineer->>Engineer: Feasibility Check (Under Review -> Approved)
     Engineer->>Admin: Draft Quotation (Pending Approval)
@@ -194,7 +194,7 @@ sequenceDiagram
 
 ---
 
-### 5.2 Enquiry (RFQ) State Machine & Transition Rules
+### 5.2 Enquiry State Machine & Transition Rules
 
 Stored as standardized string constants in [`backend/src/ShaktiUdyog.Domain/Constants/Statuses.cs`](file:///d:/Projects/Shakti%20Udyog/backend/src/ShaktiUdyog.Domain/Constants/Statuses.cs).
 
@@ -226,13 +226,13 @@ stateDiagram-v2
 | Source Status | Allowed Target Statuses | Triggering Actor / Event |
 | :--- | :--- | :--- |
 | `Draft` | `Submitted`, `Cancelled` | Customer completes multi-item requirements or abandons draft. |
-| `Submitted` | `Received`, `Cancelled` | System / Engineer opens inbound RFQ. |
+| `Submitted` | `Received`, `Cancelled` | System / Engineer opens inbound Enquiry. |
 | `Received` | `Under Review`, `Rejected`, `Cancelled` | Engineer starts technical feasibility study or flags uncastable geometry. |
 | `Under Review` | `Waiting for Customer`, `Approved`, `Rejected`, `Cancelled` | Engineer requests drawing revisions, approves casting feasibility, or declines. |
 | `Waiting for Customer` | `Under Review`, `Rejected`, `Cancelled` | Customer supplies revised drawings or clarifications. |
 | `Approved` | `Quoted`, `Cancelled` | Estimation cost sheet drafted and quotation generated. |
 | `Quoted` | `Accepted`, `Declined`, `Expired`, `Cancelled` | Customer reviews issued quotation or validity timestamp expires. |
-| `Accepted` | *None (Terminal)* | System transitions RFQ to Confirmed Order pipeline. |
+| `Accepted` | *None (Terminal)* | System transitions Enquiry to Confirmed Order pipeline. |
 | `Rejected`, `Declined`, `Expired`, `Cancelled` | *None (Terminal)* | Terminal states with immutable history log. |
 
 ---
@@ -374,8 +374,9 @@ Foundry floor execution follows a strict **forward-only** progression model acro
 
 ## 7. Success Metrics & Key Performance Indicators
 
-1. **Quotation Turnaround Time (TAT):** Reduction of RFQ-to-issued quote from 72 hours to $\le 12$ hours.
+1. **Quotation Turnaround Time (TAT):** Reduction of Enquiry-to-issued quote from 72 hours to $\le 12$ hours.
 2. **Customer Self-Service Adoption:** $> 85\%$ of regular customers tracking orders and downloading documents via customer portal rather than telephone/WhatsApp.
 3. **Dispatch Delivery Accuracy:** $100\%$ tracking of vehicle number, driver contact, and digital POD attached prior to invoice closing.
 4. **Zero Cross-Company Data Leaks:** Strict zero-tolerance compliance verified through automated integration test suites.
+
 

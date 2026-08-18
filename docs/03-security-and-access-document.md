@@ -105,7 +105,7 @@ sequenceDiagram
 | :--- | :--- | :--- |
 | `Admin` | Admin Portal (`/admin/*`) | Global management: Users, roles, companies, approvals, financial invoices, system settings, immutable audit logs. |
 | `Engineer` | Engineer Portal (`/admin/*`) | Operational execution: Enquiries review, quotation drafting, assigned order milestones, 25-stage manufacturing Kanban. |
-| `Customer` | Customer Portal (`/customer/*`) | Corporate client access: View own company's RFQs, quotations, orders, invoices, payments, and document library. |
+| `Customer` | Customer Portal (`/customer/*`) | Corporate client access: View own company's enquiries, quotations, orders, invoices, payments, and document library. |
 
 ### 3.2 Fine-Grained Permission Matrix
 
@@ -124,8 +124,8 @@ sequenceDiagram
 | `companies.manage` | Approve new corporate accounts and tax profiles | ✅ | ❌ | ❌ |
 | `content.edit` | Create and modify drafts of products, alloys, FAQs | ✅ | ✅ | ❌ |
 | `content.publish` | Formally approve and publish marketing catalogue items | ✅ | ❌ | ❌ |
-| `enquiry.read.assigned` | View inbound RFQs assigned to user | ✅ | ✅ | ❌ |
-| `enquiry.update.assigned`| Update RFQ details and technical feasibility notes | ✅ | ✅ | ❌ |
+| `enquiry.read.assigned` | View inbound enquiries assigned to user | ✅ | ✅ | ❌ |
+| `enquiry.update.assigned`| Update enquiry details and technical feasibility notes | ✅ | ✅ | ❌ |
 | `quotation.create` | Draft cost sheets and quotation line items | ✅ | ✅ | ❌ |
 | `quotation.approve` | Formally approve quotations for customer issuance | ✅ | ❌ | ❌ |
 | `quotation.issue` | Transmit approved quotations to customer portal | ✅ | ❌ | ❌ |
@@ -223,6 +223,6 @@ private void GuardAuditLogImmutability()
 | **Reverse Proxy** | Forwarded Headers | Only explicitly trusted proxy IPs (`KnownProxies`) are permitted to supply `X-Forwarded-For`. |
 | **CORS** | Strict Origin Whitelisting | Permitted only for `Frontend:BaseUrl` (e.g. `http://localhost:5173`) with `AllowCredentials` enabled. |
 | **Rate Limiting** | Auth Partition | 10 requests per minute per IP on `/api/v1/auth/*` (HTTP 429). |
-| **Rate Limiting** | Public Ingestion | 20 requests per minute per IP on public RFQ / contact submissions. |
+| **Rate Limiting** | Public Ingestion | 20 requests per minute per IP on public Enquiry / contact submissions. |
 | **Spam Defense** | Honeypot Field | Public forms include an invisible trap field (`website`). Bots filling this field receive a 200 OK fake success without persisting data. |
 | **API Errors** | ProblemDetails RFC 7807 | Internal stack traces and SQL exceptions are masked behind a unique `TraceId`. |

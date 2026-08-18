@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Seo } from '../components/Seo';
 import { seoPages } from '../content/seo';
@@ -684,7 +683,7 @@ export default function ProductsPage() {
                   <div className="mt-5 pt-3 border-t border-neutral-100 dark:border-white/[0.06] flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => setIsEnquiryModalOpen(true)}
+                      onClick={() => openEnquiryModal(product.title)}
                       className={`flex-1 py-2.5 px-3 rounded-xl font-mono text-xs font-bold text-center transition-all inline-flex items-center justify-center gap-1.5 cursor-pointer ${
                         isLight
                           ? 'bg-orange-500 hover:bg-orange-600 text-white shadow-md shadow-orange-500/20'
@@ -864,7 +863,7 @@ export default function ProductsPage() {
                     : 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-white shadow-[0_0_30px_rgba(249,115,22,0.4)]'
                 }`}
               >
-                <span className="text-white font-extrabold">Submit RFQ &amp; CAD</span>
+                <span className="text-white font-extrabold">Submit Enquiry &amp; CAD</span>
                 <ArrowRight className="w-4 h-4 text-white shrink-0" />
               </button>
 
@@ -932,7 +931,7 @@ export default function ProductsPage() {
                 </div>
                 <div className="py-2.5 flex justify-between">
                   <span className="text-neutral-500">Piece Weight Envelope:</span>
-                  <span className="font-semibold">{activeModalProduct.weightRange}</span>
+                  <span className="font-semibold">{activeModalProduct.weight}</span>
                 </div>
                 <div className="py-2.5 flex justify-between">
                   <span className="text-neutral-500">Tensile Strength:</span>

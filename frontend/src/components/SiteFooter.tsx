@@ -19,7 +19,10 @@ export const SiteFooter: React.FC = () => {
   const isLight = theme === 'light';
   const year = new Date().getFullYear();
 
-  const quickLinks = [
+  const quickLinks: Array<
+    | { label: string; path: string }
+    | { label: string; action: () => void }
+  > = [
     { label: 'Products', path: '/products' },
     { label: 'Capabilities', path: '/capabilities' },
     { label: 'Industries', path: '/industries' },

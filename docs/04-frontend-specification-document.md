@@ -151,7 +151,7 @@ frontend/
 │   │
 │   ├── api/                           # Strongly typed API client wrappers
 │   │   ├── client.ts                  # Base fetch wrapper (JWT, 401 retry, trace IDs)
-│   │   ├── publicApi.ts               # Public catalogue, contact, and RFQ submissions
+│   │   ├── publicApi.ts               # Public catalogue, contact, and Enquiry submissions
 │   │   ├── customerApi.ts             # Customer portal endpoints
 │   │   ├── engineerApi.ts             # Engineer endpoints & manufacturing board
 │   │   └── adminApi.ts                # Admin management, users, invoices, audit logs
@@ -166,7 +166,7 @@ frontend/
 │   │   └── ThemeContext.tsx           # Glacier dark/light theme switcher
 │   │
 │   ├── context/                       # Global state providers
-│   │   └── EnquiryModalContext.tsx    # Global RFQ modal trigger context
+│   │   └── EnquiryModalContext.tsx    # Global Enquiry modal trigger context
 │   │
 │   ├── realtime/                      # WebSockets & SignalR
 │   │   └── signalR.ts                 # SignalR hub connection manager & event dispatch
@@ -179,7 +179,7 @@ frontend/
 │   │   ├── AppleProductLineup.tsx     # Apple-style product carousel
 │   │   ├── ProductMarqueeGallery.tsx  # Continuous sliding photo gallery
 │   │   ├── TrustMetricStrip.tsx       # Live metric highlights (60+ yrs, 299 tonnes)
-│   │   ├── RequestQuoteModal.tsx      # Multi-step RFQ submission modal
+│   │   ├── RequestQuoteModal.tsx      # Multi-step Enquiry quotation request modal
 │   │   ├── AdminCharts.tsx            # Recharts analytical widgets
 │   │   ├── ui.tsx                     # Atoms: Button, Input, Select, Badge, Loading, Dialog
 │   │   ├── sidebar/                   # Portal navigation sidebar
@@ -216,8 +216,8 @@ frontend/
 │   │   │   └── erpListView.css        # Shared ERP table styling system
 │   │   └── pages/engineer/            # Dedicated engineer sub-pages
 │   │       ├── CreateQuotationPage.tsx# Quotation builder & cost estimator
-│   │       ├── EnquiryListPage.tsx    # Inbound RFQ review list
-│   │       ├── EnquiryDetailPage.tsx  # RFQ technical assessment view
+│   │       ├── EnquiryListPage.tsx    # Inbound Enquiry review list
+│   │       ├── EnquiryDetailPage.tsx  # Enquiry technical assessment view
 │   │       └── OrderListPage.tsx      # Assigned orders management
 │   │
 │   ├── styles/                        # Styling tokens & global CSS
@@ -354,9 +354,9 @@ All portal data tables (Invoices, Quotations, Orders, Enquiries, Payments, Users
 
 | Route Path | Component | Key Features |
 | :--- | :--- | :--- |
-| `/customer/dashboard` | `DashboardPage` | Summary metric cards, open RFQs, active orders, recent documents. |
+| `/customer/dashboard` | `DashboardPage` | Summary metric cards, open Enquiries, active orders, recent documents. |
 | `/customer/enquiries` | `EnquiryListPage` | Paginated enquiry list with status filter. |
-| `/customer/enquiries/new` | `EnquiryNewPage` | Multi-step RFQ submission form with drawing uploader. |
+| `/customer/enquiries/new` | `EnquiryNewPage` | Multi-step Enquiry submission form with drawing uploader. |
 | `/customer/enquiries/:id` | `EnquiryDetailPage` | Technical status timeline, engineer notes, downloadable drawings. |
 | `/customer/enquiries/:id/edit` | `EnquiryEditPage` | Draft editor prior to final submission. |
 | `/customer/quotations` | `QuotationListPage` | Received quotations with commercial totals and validity indicators. |
@@ -381,7 +381,7 @@ All portal data tables (Invoices, Quotations, Orders, Enquiries, Payments, Users
 | Route Path | Component | Role Access | Key Capabilities |
 | :--- | :--- | :--- | :--- |
 | `/admin/dashboard` | `PortalDashboardSwitch` | Admin / Engineer | Switches between `AdminDashboardPage` and `EngineerDashboardPage`. |
-| `/admin/enquiries` | `EngineerEnquiryListPage` | Admin / Engineer | Inbound RFQ queue with assignment and review filters. |
+| `/admin/enquiries` | `EngineerEnquiryListPage` | Admin / Engineer | Inbound Enquiry queue with assignment and review filters. |
 | `/admin/enquiries/:id` | `EngineerEnquiryDetailPage`| Admin / Engineer | Technical feasibility review, drawing download, status updates. |
 | `/admin/quotations` | `EngineerQuotationListPage`| Admin / Engineer | Master quotation list with approval states. |
 | `/admin/quotations/new` | `CreateQuotationPage` | Admin / Engineer | Itemized quotation builder (raw casting, machining, tooling). |

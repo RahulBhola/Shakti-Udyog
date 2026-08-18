@@ -112,7 +112,7 @@ backend/
 The core business logic enforces state integrity directly through immutable domain constants and validated transition dictionaries in `ShaktiUdyog.Domain.Constants`:
 
 1. **`EnquiryStatuses.cs` (`EnquiryStatuses.ValidTransitions`):**
-   - Defines all 12 RFQ states (`Draft`, `Submitted`, `Received`, `Under Review`, `Waiting for Customer`, `Approved`, `Rejected`, `Quoted`, `Accepted`, `Declined`, `Expired`, `Cancelled`).
+   - Defines all 12 Enquiry states (`Draft`, `Submitted`, `Received`, `Under Review`, `Waiting for Customer`, `Approved`, `Rejected`, `Quoted`, `Accepted`, `Declined`, `Expired`, `Cancelled`).
    - Exposes `IsValidTransition(string from, string to)` ensuring invalid jumps (e.g. `Draft` directly to `Quoted`) are rejected server-side.
 
 2. **`QuotationStatuses.cs` (`QuotationStatuses.ValidTransitions`):**
@@ -182,12 +182,12 @@ erDiagram
 | `CompanyDocument`| `CompanyDocuments`| Verification documents (GST cert, MSME, PAN, cancelled cheque). |
 | `ContactPerson` | `ContactPersons` | Departmental contact directory (Procurement Head, QA Lead, Accounts). |
 | `ContactRequest` | `ContactRequests` | Inbound public contact enquiries with spam honeypot tracking. |
-| `Enquiry` | `Enquiries` | Customer quotation requests (RFQs), target quantities, delivery requirements, status, `RowVersion`. |
+| `Enquiry` | `Enquiries` | Customer quotation requests and enquiries, target quantities, delivery requirements, status, `RowVersion`. |
 | `EnquiryItem` | `EnquiryItems` | Line-level casting specifications, part numbers, alloy grade requirements. |
 | `EnquiryFile` | `EnquiryFiles` | Uploaded CAD drawings (`.dwg`, `.step`, `.pdf`) with private storage keys. |
 | `EnquiryStatusHistory`| `EnquiryStatusHistory`| Audit trail of enquiry lifecycle transitions with author role and notes. |
-| `EnquiryComment` | `EnquiryComments` | Internal and customer-visible discussion threads on specific RFQs. |
-| `EnquiryAssignment` | `EnquiryAssignments` | Ingestion routing assigning RFQs to specific estimation engineers. |
+| `EnquiryComment` | `EnquiryComments` | Internal and customer-visible discussion threads on specific enquiries. |
+| `EnquiryAssignment` | `EnquiryAssignments` | Ingestion routing assigning enquiries to specific estimation engineers. |
 | `Quotation` | `Quotations` | Commercial proposal, unit rates, total tax, validity date, delivery timeline, warranty, `RowVersion`. |
 | `QuotationItem` | `QuotationItems` | Itemized pricing: raw casting rate, machining charge, tooling cost, line total. |
 | `QuotationRevision` | `QuotationRevisions` | Historical snapshots of revisions, delta differences, modification rationales. |
@@ -260,7 +260,7 @@ The API exposes versioned RESTful endpoints rooted at `/api/v1/`.
 
 | Controller Class | Route Base | Role / Policy | Key Purpose & Capabilities |
 | :--- | :--- | :--- | :--- |
-| `PublicController` | `/api/v1/public` | Anonymous | Public catalogue, alloy details, contact forms, public RFQ ingestion. |
+| `PublicController` | `/api/v1/public` | Anonymous | Public catalogue, alloy details, contact forms, public Enquiry ingestion. |
 | `AuthController` | `/api/v1/auth` | Anonymous / User | Login, Token Refresh, Password Reset, Registration, `/me` profile. |
 | `ExternalAuthController` | `/api/v1/auth/external` | Anonymous | Google OAuth & Apple Sign-In callbacks and session initialization. |
 | `CustomerController` | `/api/v1/customer` | `CustomerOnly` | Enquiries, Quotation review, Order timeline, Payments, Invoices, Document streaming. |
@@ -288,7 +288,7 @@ The API exposes versioned RESTful endpoints rooted at `/api/v1/`.
 * `GET /api/v1/public/resources` $\to$ Returns list of published engineering articles and casting resources.
 * `GET /api/v1/public/resources/{slug}` $\to$ Returns resource details by slug.
 * `POST /api/v1/public/contact-requests` *(Rate limit: 20/min)* $\to$ Ingests contact message with honeypot validation.
-* `POST /api/v1/public/enquiries` *(Rate limit: 20/min)* $\to$ Ingests public RFQ with multi-file drawing attachments.
+* `POST /api/v1/public/enquiries` *(Rate limit: 20/min)* $\to$ Ingests public Enquiry with multi-file drawing attachments.
 
 #### 2. Authentication API (`AuthController` — `/api/v1/auth`)
 * `POST /api/v1/auth/login` *(Rate limit: 10/min)* $\to$ Authenticates user, issues 15-min JWT, sets HttpOnly refresh cookie.
@@ -306,15 +306,15 @@ The API exposes versioned RESTful endpoints rooted at `/api/v1/`.
 * `GET /signin-apple` $\to$ Apple OpenID Connect form post callback endpoint.
 
 #### 4. Customer Portal API (`CustomerController` — `/api/v1/customer`, Policy: `CustomerOnly`)
-* `GET /api/v1/customer/dashboard` $\to$ Returns customer KPIs, active RFQs, in-progress orders, recent documents.
-* `GET /api/v1/customer/enquiries` $\to$ Returns paginated list of RFQs belonging to caller's approved company.
-* `GET /api/v1/customer/enquiries/{id}` $\to$ Returns full RFQ details, drawing downloads, and timeline history.
-* `POST /api/v1/customer/enquiries` $\to$ Creates a new customer RFQ (draft or submitted).
-* `PATCH /api/v1/customer/enquiries/{id}` $\to$ Updates a draft RFQ prior to submission.
-* `DELETE /api/v1/customer/enquiries/{id}` $\to$ Soft-deletes a draft RFQ.
-* `POST /api/v1/customer/enquiries/{id}/submit` $\to$ Submits draft RFQ to engineering queue.
-* `GET /api/v1/customer/enquiries/{id}/timeline` $\to$ Returns status progression history for the RFQ.
-* `POST /api/v1/customer/enquiries/{id}/files` $\to$ Uploads revision drawings to an existing RFQ.
+* `GET /api/v1/customer/dashboard` $\to$ Returns customer KPIs, active Enquiries, in-progress orders, recent documents.
+* `GET /api/v1/customer/enquiries` $\to$ Returns paginated list of Enquiries belonging to caller's approved company.
+* `GET /api/v1/customer/enquiries/{id}` $\to$ Returns full Enquiry details, drawing downloads, and timeline history.
+* `POST /api/v1/customer/enquiries` $\to$ Creates a new customer Enquiry (draft or submitted).
+* `PATCH /api/v1/customer/enquiries/{id}` $\to$ Updates a draft Enquiry prior to submission.
+* `DELETE /api/v1/customer/enquiries/{id}` $\to$ Soft-deletes a draft Enquiry.
+* `POST /api/v1/customer/enquiries/{id}/submit` $\to$ Submits draft Enquiry to engineering queue.
+* `GET /api/v1/customer/enquiries/{id}/timeline` $\to$ Returns status progression history for the Enquiry.
+* `POST /api/v1/customer/enquiries/{id}/files` $\to$ Uploads revision drawings to an existing Enquiry.
 * `GET /api/v1/customer/quotations` $\to$ Lists commercial quotations issued to the customer company.
 * `GET /api/v1/customer/quotations/{id}` $\to$ Returns itemized quotation details, pricing, terms, and PDF link.
 * `GET /api/v1/customer/quotations/{id}/timeline` $\to$ Quotation revision and approval history.
@@ -339,12 +339,12 @@ The API exposes versioned RESTful endpoints rooted at `/api/v1/`.
 * `GET /api/v1/customer/contacts`, `POST ...`, `PUT ...`, `DELETE ...` $\to$ Manages departmental contact persons.
 
 #### 5. Engineer Operations API (`EngineerController` — `/api/v1/engineer`, Policy: `EngineerOnly`)
-* `GET /api/v1/engineer/dashboard` $\to$ Returns engineer workload metrics, assigned RFQs, and active jobs.
-* `GET /api/v1/engineer/enquiries` $\to$ Lists inbound RFQs for technical review and estimation.
-* `GET /api/v1/engineer/enquiries/{id}` $\to$ Detailed RFQ technical assessment view with internal notes.
-* `PATCH /api/v1/engineer/enquiries/{id}/status` $\to$ Updates RFQ review status (e.g. Under Review, Approved).
-* `PATCH /api/v1/engineer/enquiries/{id}/assign` $\to$ Assigns RFQ to estimation engineer.
-* `POST /api/v1/engineer/enquiries/{id}/comments` $\to$ Adds internal or customer-visible comment to RFQ.
+* `GET /api/v1/engineer/dashboard` $\to$ Returns engineer workload metrics, assigned Enquiries, and active jobs.
+* `GET /api/v1/engineer/enquiries` $\to$ Lists inbound Enquiries for technical review and estimation.
+* `GET /api/v1/engineer/enquiries/{id}` $\to$ Detailed Enquiry technical assessment view with internal notes.
+* `PATCH /api/v1/engineer/enquiries/{id}/status` $\to$ Updates Enquiry review status (e.g. Under Review, Approved).
+* `PATCH /api/v1/engineer/enquiries/{id}/assign` $\to$ Assigns Enquiry to estimation engineer.
+* `POST /api/v1/engineer/enquiries/{id}/comments` $\to$ Adds internal or customer-visible comment to Enquiry.
 * `GET /api/v1/engineer/orders` $\to$ Lists orders assigned to current engineer (`AssignedToUserId` filter).
 * `GET /api/v1/engineer/orders/{id}` $\to$ Order details (enforces assigned-engineer ownership 403 guard).
 * `PATCH /api/v1/engineer/orders/{id}/milestones` $\to$ Updates production milestone (Pattern, Moulding, Pouring, QA).
@@ -360,7 +360,7 @@ The API exposes versioned RESTful endpoints rooted at `/api/v1/`.
 #### 7. Quotation Engineer API (`QuotationEngineerController` — `/api/v1/engineer/quotations`, Policy: `EngineerOnly`)
 * `GET /api/v1/engineer/quotations` $\to$ Lists all quotations in draft or review.
 * `GET /api/v1/engineer/quotations/{id}` $\to$ Returns detailed quotation calculation sheet.
-* `POST /api/v1/engineer/quotations` $\to$ Creates a new draft quotation against an approved RFQ.
+* `POST /api/v1/engineer/quotations` $\to$ Creates a new draft quotation against an approved Enquiry.
 * `PUT /api/v1/engineer/quotations/{id}` $\to$ Updates quotation line items, casting rates, machining charges, and taxes.
 * `POST /api/v1/engineer/quotations/{id}/submit` $\to$ Submits draft quotation for Admin approval.
 * `POST /api/v1/engineer/quotations/{id}/attachments` $\to$ Attaches technical annexure or drawing.
@@ -488,7 +488,7 @@ The API exposes versioned RESTful endpoints rooted at `/api/v1/`.
 | :--- | :--- | :--- |
 | **01** | `InitialCreate` | Base ASP.NET Core Identity tables + `AuditLogs`. |
 | **02** | `AddAuthTables` | `RefreshTokens`, `PasswordResetTokens`, `UserCompanies`. |
-| **03** | `AddPublicSubmissions` | `Enquiries` (RFQs) and Public Contact Submissions. |
+| **03** | `AddPublicSubmissions` | `Enquiries` (Customer Enquiries) and Public Contact Submissions. |
 | **04** | `AddCustomerPortal` | `Companies`, `Products`, Customer Profile relationships. |
 | **05** | `AddEnquiryModule` | `EnquiryItems`, `EnquiryFiles`, `EnquiryStatusHistory`, `EnquiryComments`, `EnquiryAssignments`. |
 | **06** | `AddQuotationModule` | `Quotations`, `QuotationItems`, `QuotationRevisions`, `QuotationApprovals`. |

@@ -281,7 +281,7 @@ export const ContactPreviewAndCtaSection: React.FC = () => {
                   : 'bg-white/10 backdrop-blur-md border border-white/20 text-sky-300'
               }`}>
                 <Sparkles className={`w-3.5 h-3.5 shrink-0 ${isLight ? 'text-blue-600' : 'text-sky-300'}`} />
-                <span>RAPID RFQ RESPONSE WITHIN 24 HOURS</span>
+                <span>RAPID ENQUIRY RESPONSE WITHIN 24 HOURS</span>
               </div>
 
               <h2 className={`text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.08] ${

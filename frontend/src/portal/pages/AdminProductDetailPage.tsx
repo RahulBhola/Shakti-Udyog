@@ -8,11 +8,11 @@ import { Loading } from "../../components/ui";
 import ProductDrawer from "./products/ProductDrawer";
 import { formatDate } from "../shared";
 import {
-  ArrowLeft, Package, CheckCircle, Clock, AlertTriangle,
-  FileText, Image, Download, Archive, Copy, Edit3,
-  Calendar, Hash, FileEdit, Activity, Ruler, Weight,
+  ArrowLeft, Package, Clock, AlertTriangle,
+  FileText, Download, Archive, Copy, Edit3,
+  Calendar, Hash, Activity, Ruler,
   Beaker, Cog, DollarSign, Paperclip, Building2,
-  ChevronDown, ChevronUp, ExternalLink,
+  ChevronDown, ChevronUp,
 } from "lucide-react";
 
 /* ------------------------------------------------------------------ */

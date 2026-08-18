@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft, Calendar, CheckCircle2, Clock, FileText, MapPin,
-  MessageSquare, Package, Truck, Loader2, Download,
+  MessageSquare, Package, Truck, Download,
 } from "lucide-react";
 import {
   customerApi,
@@ -205,7 +205,6 @@ export function OrderDetailPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
   const [order, setOrder] = useState<OrderDetail | null>(null);
-  const [timeline, setTimeline] = useState<TimelineEntry[] | null>(null);
   const [comments, setComments] = useState<OrderComment[]>([]);
   const [newComment, setNewComment] = useState("");
   const [postingComment, setPostingComment] = useState(false);
@@ -216,7 +215,6 @@ export function OrderDetailPage() {
 
   useEffect(() => {
     customerApi.order(id).then(setOrder).catch(() => setMissing(true));
-    customerApi.orderTimeline(id).then(setTimeline).catch(() => {});
     customerApi.orderComments(id).then(setComments).catch(() => {});
   }, [id]);
 
@@ -359,7 +357,7 @@ export function OrderDetailPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {order.items.map((item, idx) => (
+                  {order.items.map((item) => (
                     <tr key={item.partNumber} className="border-b border-[var(--border-default)] last:border-0 hover:bg-[var(--bg-surface-hover)]">
                       <td className="py-2.5 pr-3 font-medium text-[var(--text-primary)]">{item.partNumber}</td>
                       <td className="py-2.5 pr-3 text-[var(--text-secondary)]">{item.description}</td>

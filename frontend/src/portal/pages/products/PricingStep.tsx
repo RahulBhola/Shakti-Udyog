@@ -19,11 +19,6 @@ export default function PricingStep({ data, onChange }: PricingStepProps) {
 }
 
 function Field({ label, value, onChange }: { label: string; value: any; onChange: (v: any) => void }) {
-  const isNumeric = ["standardCost", "sellingPrice", "gstPercent"].some((f) =>
-    label.toLowerCase().includes(f.replace(/([A-Z])/g, " $1").trim().toLowerCase().split(" ")[0])
-  ) || label.includes("Cost") || label.includes("Price") || label.includes("GST");
-
-  // Simplified numeric detection
   const numeric = label.includes("Cost") || label.includes("Price") || label.includes("GST");
 
   return (

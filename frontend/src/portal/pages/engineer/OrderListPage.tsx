@@ -433,7 +433,7 @@ export default function EngineerOrderListPage() {
                 </tr>
               </thead>
               <tbody>
-                {data.items.map((o) => renderRow(o))}
+                {(data?.items ?? []).map((o) => renderRow(o))}
               </tbody>
             </table>
           </div>

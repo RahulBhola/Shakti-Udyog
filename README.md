@@ -146,7 +146,7 @@ npm run build
 
 - ✅ Milestone 1 — foundation: solution structure, EF Core + SQL Server, initial migration, role seeding, Swagger, health check, error handling, frontend scaffold.
 - ✅ Milestone 2 — authentication & authorization: JWT + refresh-token rotation, login/logout/refresh/forgot/reset/me endpoints, permission model and policy-based authorization, rate limiting, auth auditing, frontend auth foundation (context, protected routes, login page).
-- ✅ Milestone 3 — public website & RFQ flow: marketing pages from the requirements copy, enquiry + RFQ forms with server-side validation, secure drawing uploads, spam protection.
+- ✅ Milestone 3 — public website & enquiry flow: marketing pages from the requirements copy, enquiry submission forms with server-side validation, secure drawing uploads, spam protection.
 - ✅ Milestone 4 — customer portal: Enquiries, quotations, orders, tracking, documents, invoices, payments.
 - ✅ Milestone 5 — Engineer and Admin portals: dedicated Engineer Dashboard, real-time SignalR hub (`/hubs/portal`), role-filtered navigation, and dynamic 5-stage manufacturing Kanban board (`EngineerBoardPage.tsx`).
 - ✅ Milestone 6 — Full reports module (QuestPDF PDF generation, CSV/Excel exports), Advanced Shipment Management (Vehicle #, Phone, Edit, Delete), and UI dark theme token adaptivity.

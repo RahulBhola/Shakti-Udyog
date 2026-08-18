@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Seo } from '../components/Seo';
 import { seoPages } from '../content/seo';
@@ -15,25 +14,17 @@ import {
   Minus,
   ArrowRight,
   Sparkles,
-  Sliders,
   Scale,
   Gauge,
-  Maximize2,
   Wrench,
   Flame,
   CheckSquare,
   Compass,
-  Cpu,
   UserCheck,
   Users,
-  Boxes,
   Truck,
-  FileCheck,
   Clock,
-  CircleDot,
   FileSpreadsheet,
-  Zap,
-  Activity,
   Workflow,
 } from 'lucide-react';
 
@@ -97,7 +88,7 @@ const RESOURCES_FAQS: ExtendedFaqItem[] = [
 const APPLICATION_STAGES = [
   {
     stage: '01',
-    title: 'RFQ & Drawing Submission',
+    title: 'Enquiry & Drawing Submission',
     subtitle: 'Client Portal or Direct Web Form',
     timeframe: 'Instant Acknowledgment',
     role: 'Visitor / Customer',
@@ -107,7 +98,7 @@ const APPLICATION_STAGES = [
     keyPoints: [
       'Encrypted CAD upload up to 50 MB',
       'Automated confirmation email & reference ID',
-      'No upfront account required to submit initial RFQ',
+      'No upfront account required to submit initial enquiry',
     ],
   },
   {
@@ -197,7 +188,7 @@ const USER_ROLES = [
     capabilities: [
       'Explore 50+ casting grades and typical OEM components',
       'Access interactive DFM guides, alloy comparisons & FAQs',
-      'Submit RFQs and CAD files directly without mandatory account signup',
+      'Submit enquiries and CAD files directly without mandatory account signup',
       'Use quick "Send a Query" popup for instant metallurgical feedback',
     ],
   },
@@ -244,10 +235,10 @@ const USER_ROLES = [
 
 const STATUS_LIFECYCLES = [
   {
-    title: '1. RFQ & Enquiry Lifecycle',
+    title: '1. Customer Enquiry Lifecycle',
     subtitle: 'From initial customer inquiry to formal quotation',
     steps: [
-      { name: 'Submitted', desc: 'Customer submits RFQ with CAD drawing' },
+      { name: 'Submitted', desc: 'Customer submits enquiry with CAD drawing' },
       { name: 'Under Review', desc: 'Engineer performs metallurgical DFM check' },
       { name: 'Approved', desc: 'Technical feasibility verified and approved' },
       { name: 'Quoted', desc: 'Commercial quotation issued in portal' },
@@ -666,7 +657,7 @@ export default function ResourcesPage() {
             <div className="flex items-center gap-3 shrink-0">
               <button
                 type="button"
-                onClick={() => setIsEnquiryModalOpen(true)}
+                onClick={() => openEnquiryModal()}
                 className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-extrabold text-xs sm:text-sm transition-all transform hover:scale-105 shadow-md cursor-pointer ${
                   isLight
                     ? 'bg-orange-500 hover:bg-orange-600 text-white shadow-orange-500/25'
@@ -679,7 +670,7 @@ export default function ResourcesPage() {
 
               <button
                 type="button"
-                onClick={() => setIsEnquiryModalOpen(true)}
+                onClick={() => openEnquiryModal()}
                 className={`inline-flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-xs sm:text-sm transition-all border cursor-pointer ${
                   isLight
                     ? 'bg-white hover:bg-neutral-100 border-neutral-300 text-neutral-800 shadow-sm'
@@ -699,7 +690,7 @@ export default function ResourcesPage() {
           <div className="space-y-3">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-bold tracking-wider uppercase text-orange-600 dark:text-orange-400 bg-orange-500/10 border border-orange-500/30">
               <FileText className="w-3.5 h-3.5 text-orange-500" />
-              <span>RFQ PREPARATION BLUEPRINT</span>
+              <span>ENQUIRY PREPARATION BLUEPRINT</span>
             </div>
 
             <h2 className={`text-3xl sm:text-5xl font-extrabold tracking-tight ${
@@ -711,7 +702,7 @@ export default function ResourcesPage() {
             <p className={`text-sm sm:text-base max-w-2xl leading-relaxed ${
               isLight ? 'text-neutral-600' : 'text-neutral-300'
             }`}>
-              Include these 6 critical engineering parameters in your RFQ for accurate feasibility review, optimized pattern tooling quotes, and fixed unit pricing within 24 hours.
+              Include these 6 critical engineering parameters in your enquiry for accurate feasibility review, optimized pattern tooling quotes, and fixed unit pricing within 24 hours.
             </p>
           </div>
 

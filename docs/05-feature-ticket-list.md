@@ -14,7 +14,7 @@ This document defines the complete functional ticket breakdown for the **Shakti 
 ```mermaid
 graph LR
     Epic1[Epic 1: Identity & Auth] --> Epic2[Epic 2: Public Marketing]
-    Epic2 --> Epic3[Epic 3: RFQ & Enquiries]
+    Epic2 --> Epic3[Epic 3: Enquiries]
     Epic3 --> Epic4[Epic 4: Quotations]
     Epic4 --> Epic5[Epic 5: Customer Portal]
     Epic4 --> Epic6[Epic 6: Engineer Operations]
@@ -60,10 +60,10 @@ graph LR
 | `PUB-203` | **Scrollytelling Interactive Casting Canvas** | `P1` | Visitor | `Completed` |
 | `PUB-204` | **Apple-Style Alloy Lineup & Marquee Gallery** | `P1` | Visitor | `Completed` |
 | `PUB-205` | **Public Contact Form with Anti-Bot Honeypot** | `P0` | Visitor | `Completed` |
-| `PUB-206` | **Direct RFQ Modal Overlay (`/request-a-quote`)** | `P0` | Visitor | `Completed` |
+| `PUB-206` | **Direct Enquiry Modal Overlay (`/request-a-quote`)** | `P0` | Visitor | `Completed` |
 
-#### `PUB-206`: Direct RFQ Modal Overlay
-* **User Story:** As a prospective buyer, I want clicking "Request a Quote" anywhere on the site to trigger a streamlined RFQ modal without losing my page context.
+#### `PUB-206`: Direct Enquiry Modal Overlay
+* **User Story:** As a prospective buyer, I want clicking "Request a Quote" anywhere on the site to trigger a streamlined Enquiry modal without losing my page context.
 * **Acceptance Criteria:**
   - Route `/request-a-quote` triggers `EnquiryModalContext.openQuoteModal()` and redirects cleanly to `/`.
   - The modal accepts full name, company, email, phone, product type, alloy grade, target quantity, notes, and file drawings.
@@ -71,18 +71,18 @@ graph LR
 
 ---
 
-### Epic 3: RFQ & Customer Enquiry Lifecycle
+### Epic 3: Customer Enquiry Lifecycle
 
 | Ticket ID | Title | Priority | Target Role | Status |
 | :--- | :--- | :---: | :--- | :---: |
-| `ENQ-301` | **Customer Multi-Item RFQ Submission** | `P0` | Customer | `Completed` |
-| `ENQ-302` | **RFQ Draft Creation & Edit Capabilities** | `P0` | Customer | `Completed` |
+| `ENQ-301` | **Customer Multi-Item Enquiry Submission** | `P0` | Customer | `Completed` |
+| `ENQ-302` | **Enquiry Draft Creation & Edit Capabilities** | `P0` | Customer | `Completed` |
 | `ENQ-303` | **CAD Drawing & Specification Attachment Management** | `P0` | Customer / Engineer | `Completed` |
-| `ENQ-304` | **Engineer RFQ Technical Feasibility Review** | `P0` | Engineer | `Completed` |
-| `ENQ-305` | **RFQ Status Transition History & Internal Notes** | `P1` | Engineer / Admin | `Completed` |
-| `ENQ-306` | **RFQ Ingestion Assignment to Engineers** | `P1` | Admin | `Completed` |
+| `ENQ-304` | **Engineer Enquiry Technical Feasibility Review** | `P0` | Engineer | `Completed` |
+| `ENQ-305` | **Enquiry Status Transition History & Internal Notes** | `P1` | Engineer / Admin | `Completed` |
+| `ENQ-306` | **Enquiry Ingestion Assignment to Engineers** | `P1` | Admin | `Completed` |
 
-#### `ENQ-301`: Customer Multi-Item RFQ Submission
+#### `ENQ-301`: Customer Multi-Item Enquiry Submission
 * **User Story:** As an authenticated customer, I want to submit multi-item casting requirements with part numbers, target quantities, and drawing revisions.
 * **Acceptance Criteria:**
   - Persists to `Enquiries` and `EnquiryItems` tables with `RowVersion` concurrency tracking.

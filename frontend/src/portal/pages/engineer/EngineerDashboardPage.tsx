@@ -237,7 +237,7 @@ export default function EngineerDashboardPage() {
             <ArrowRight size={18} style={{ color: "var(--text-secondary)" }} />
           </div>
           <div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)" }}>Enquiries / RFQs</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)" }}>Enquiries</div>
             <div style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 2 }}>
               Review customer requirements, specs, and casting drawings.
             </div>

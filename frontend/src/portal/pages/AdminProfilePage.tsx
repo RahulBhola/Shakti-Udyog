@@ -497,7 +497,7 @@ export default function AdminProfilePage() {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 14 }}>
             {[
               { title: "User & Role Management", desc: "Create, view, and manage customer and staff accounts.", enabled: user?.roles.includes("Admin") },
-              { title: "Enquiry & Quotation Approval", desc: "Review RFQs, generate formal quotations, and issue to clients.", enabled: true },
+              { title: "Enquiry & Quotation Approval", desc: "Review customer enquiries, generate formal quotations, and issue to clients.", enabled: true },
               { title: "Order & Milestone Tracking", desc: "Oversee production stages, assign engineers, and update milestones.", enabled: true },
               { title: "Invoice & Financial Records", desc: "Generate tax invoices, record payment receipts, and verify advances.", enabled: user?.roles.includes("Admin") },
               { title: "Production Kanban Board", desc: "Drag-and-drop manufacturing jobs across 25 production stages.", enabled: true },

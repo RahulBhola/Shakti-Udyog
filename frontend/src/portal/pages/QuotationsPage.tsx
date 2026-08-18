@@ -2,8 +2,6 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { customerApi, type QuotationDetail, type QuotationListItem, type QuotationTimelineEntry } from "../../api/customerApi";
 import { EmptyState, Loading } from "../../components/ui";
-import { config } from "../../config";
-import { tokenStorage } from "../../auth/tokenStorage";
 import { formatDate, formatMoney } from "../shared";
 import {
   IndianRupee, Truck, Banknote, CalendarDays, FileText, Package,
@@ -67,11 +65,11 @@ export function QuotationDetailPage() {
     if (!quotation) return;
     const q = quotation;
     const items = q.items || [];
-    const formatItem = (n, curr) => {
+    const formatItem = (n: number, curr: string) => {
       try { return new Intl.NumberFormat("en-IN", { style: "currency", currency: curr, maximumFractionDigits: 0 }).format(n); }
       catch { return String(n); }
     };
-    const fmtDate = (d) => d ? new Date(d).toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" }) : "—";
+    const fmtDate = (d: string | null | undefined) => d ? new Date(d).toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" }) : "—";
     const w = window.open("", "_blank");
     if (!w) return;
 

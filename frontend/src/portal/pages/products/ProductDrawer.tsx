@@ -31,7 +31,6 @@ export default function ProductDrawer({ open, onClose, onSave, categories, initi
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
   const [data, setData] = useState<Record<string, any>>(initialData ?? {
     productName: "", productCode: "", description: "", categoryId: "", castingType: "", unit: "", status: "Draft",
     material: "", materialGrade: "", weight: null, tolerance: "", density: "", hardness: "", heatTreatment: "", surfaceFinish: "",
@@ -79,7 +78,6 @@ export default function ProductDrawer({ open, onClose, onSave, categories, initi
       }
       await onSave(payload, files);
       setStep(0);
-      setSaved(true);
     } catch (err: any) {
       setSaveError(err?.message || "Failed to save product. Check console for details.");
       console.error("Product save error:", err);

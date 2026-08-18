@@ -507,7 +507,7 @@ export const customerApi = {
   quotations: () => apiGet<QuotationListItem[]>(`${base}/quotations`),
   quotation: (id: string) => apiGet<QuotationDetail>(`${base}/quotations/${id}`),
   quotationTimeline: (id: string) => apiGet<QuotationTimelineEntry[]>(`${base}/quotations/${id}/timeline`),
-  respondToQuotation: (id: string, response: "accept" | "decline", comment?: string) =>
+  respondToQuotation: (id: string, response: "accept" | "decline" | "negotiate", comment?: string) =>
     apiPost<{ message: string }>(`${base}/quotations/${id}/response`, { response, comment }),
 
   orders: () => apiGet<OrderListItem[]>(`${base}/orders`),
