@@ -44,6 +44,15 @@ public static class DependencyInjection
         services.AddScoped<IProductionJobRepository, ProductionJobRepository>();
         services.AddScoped<ICompanyRepository, CompanyRepository>();
         services.AddScoped<IDocumentRepository, DocumentRepository>();
+        services.AddScoped<IShipmentRepository, ShipmentRepository>();
+        services.AddScoped<IPaymentRepository, PaymentRepository>();
+        services.AddScoped<IProductMasterRepository, ProductMasterRepository>();
+        services.AddScoped<INotificationRepository, NotificationRepository>();
+        services.AddScoped<ISupportRequestRepository, SupportRequestRepository>();
+        services.AddScoped<IProductRepository, ProductRepository>();
+        services.AddScoped<IAuditLogRepository, AuditLogRepository>();
+        services.AddScoped<IKanbanTaskRepository, KanbanTaskRepository>();
+        services.AddScoped<IContactRequestRepository, ContactRequestRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         // Infrastructure Services

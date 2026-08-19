@@ -23,6 +23,15 @@ public class UnitOfWork : IUnitOfWork
     private IProductionJobRepository? _productionJobs;
     private ICompanyRepository? _companies;
     private IDocumentRepository? _documents;
+    private IShipmentRepository? _shipments;
+    private IPaymentRepository? _payments;
+    private IProductMasterRepository? _productMasters;
+    private INotificationRepository? _notifications;
+    private ISupportRequestRepository? _supportRequests;
+    private IProductRepository? _products;
+    private IAuditLogRepository? _auditLogs;
+    private IKanbanTaskRepository? _kanbanTasks;
+    private IContactRequestRepository? _contactRequests;
 
     public UnitOfWork(AppDbContext db)
     {
@@ -36,6 +45,15 @@ public class UnitOfWork : IUnitOfWork
     public IProductionJobRepository ProductionJobs => _productionJobs ??= new ProductionJobRepository(_db);
     public ICompanyRepository Companies => _companies ??= new CompanyRepository(_db);
     public IDocumentRepository Documents => _documents ??= new DocumentRepository(_db);
+    public IShipmentRepository Shipments => _shipments ??= new ShipmentRepository(_db);
+    public IPaymentRepository Payments => _payments ??= new PaymentRepository(_db);
+    public IProductMasterRepository ProductMasters => _productMasters ??= new ProductMasterRepository(_db);
+    public INotificationRepository Notifications => _notifications ??= new NotificationRepository(_db);
+    public ISupportRequestRepository SupportRequests => _supportRequests ??= new SupportRequestRepository(_db);
+    public IProductRepository Products => _products ??= new ProductRepository(_db);
+    public IAuditLogRepository AuditLogs => _auditLogs ??= new AuditLogRepository(_db);
+    public IKanbanTaskRepository KanbanTasks => _kanbanTasks ??= new KanbanTaskRepository(_db);
+    public IContactRequestRepository ContactRequests => _contactRequests ??= new ContactRequestRepository(_db);
 
     public IRepository<TEntity> Repository<TEntity>() where TEntity : class
     {

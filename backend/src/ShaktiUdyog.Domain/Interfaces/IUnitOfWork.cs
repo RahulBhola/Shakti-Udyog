@@ -15,6 +15,15 @@ public interface IUnitOfWork : IDisposable, IAsyncDisposable
     IProductionJobRepository ProductionJobs { get; }
     ICompanyRepository Companies { get; }
     IDocumentRepository Documents { get; }
+    IShipmentRepository Shipments { get; }
+    IPaymentRepository Payments { get; }
+    IProductMasterRepository ProductMasters { get; }
+    INotificationRepository Notifications { get; }
+    ISupportRequestRepository SupportRequests { get; }
+    IProductRepository Products { get; }
+    IAuditLogRepository AuditLogs { get; }
+    IKanbanTaskRepository KanbanTasks { get; }
+    IContactRequestRepository ContactRequests { get; }
 
     IRepository<TEntity> Repository<TEntity>() where TEntity : class;
 

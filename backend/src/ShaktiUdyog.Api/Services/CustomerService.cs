@@ -83,7 +83,7 @@ public class CustomerService(
         var unpaidInvoices = await uow.Invoices.CountAsync(i =>
             companies.Contains(i.CompanyId)
             && (i.Status == InvoiceStatuses.Issued || i.Status == InvoiceStatuses.PartiallyPaid || i.Status == InvoiceStatuses.Overdue));
-        var unread = await uow.Repository<Notification>().CountAsync(n => n.UserId == ctx.UserId && !n.IsRead);
+        var unread = await uow.Notifications.GetUnreadCountAsync(ctx.UserId);
 
         var recentMilestones = await db.OrderMilestones
             .Where(m => m.IsCustomerVisible && companies.Contains(m.Order.CompanyId))

@@ -51,7 +51,7 @@ public class EmailSmsQueueDispatcherWorker(
 
             // Retrieve recent unread notifications that were created within the last 5 minutes
             var cutoff = DateTimeOffset.UtcNow.AddMinutes(-5);
-            var pendingNotifications = await uow.Repository<Notification>()
+            var pendingNotifications = await uow.Notifications
                 .Query(asNoTracking: true)
                 .Where(n => !n.IsRead && n.CreatedAtUtc >= cutoff)
                 .OrderBy(n => n.CreatedAtUtc)

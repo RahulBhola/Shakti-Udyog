@@ -138,6 +138,15 @@ classDiagram
         +IProductionJobRepository ProductionJobs
         +ICompanyRepository Companies
         +IDocumentRepository Documents
+        +IShipmentRepository Shipments
+        +IPaymentRepository Payments
+        +IProductMasterRepository ProductMasters
+        +INotificationRepository Notifications
+        +ISupportRequestRepository SupportRequests
+        +IProductRepository Products
+        +IAuditLogRepository AuditLogs
+        +IKanbanTaskRepository KanbanTasks
+        +IContactRequestRepository ContactRequests
         +IRepository~TEntity~ Repository~TEntity~()
         +Task~int~ SaveChangesAsync(CancellationToken ct)
         +Task~IDisposable~ BeginTransactionAsync(CancellationToken ct)
@@ -168,6 +177,15 @@ classDiagram
         +IProductionJobRepository ProductionJobs
         +ICompanyRepository Companies
         +IDocumentRepository Documents
+        +IShipmentRepository Shipments
+        +IPaymentRepository Payments
+        +IProductMasterRepository ProductMasters
+        +INotificationRepository Notifications
+        +ISupportRequestRepository SupportRequests
+        +IProductRepository Products
+        +IAuditLogRepository AuditLogs
+        +IKanbanTaskRepository KanbanTasks
+        +IContactRequestRepository ContactRequests
         +IRepository~TEntity~ Repository~TEntity~()
         +Task~int~ SaveChangesAsync(CancellationToken ct)
         +Task~IDisposable~ BeginTransactionAsync(CancellationToken ct)
