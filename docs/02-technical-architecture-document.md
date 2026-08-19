@@ -668,11 +668,13 @@ erDiagram
 
 ### 4.5 Low-Level Design (LLD) Visual Table Connection Wireframes
 
-The following LLD UI schema layouts depict each database table as a visual schema card with primary keys, foreign keys, data types, and explicit string-connected relationship paths across all application pipelines.
+The following Low-Level Design (LLD) specifications depict every table in the database as a visual table card with explicit column types, primary keys (`[PK]`), foreign keys (`[FK]`), and attached connector strings showing all incoming and outgoing table relationships across all 10 application domains.
 
-#### LLD Pipeline 1: Identity, Multi-Tenancy & Corporate Structure Wireframe
+---
 
-```
+#### 1. Identity, Auth & Multi-Tenancy Subsystem
+
+```text
 ┌────────────────────────────────────────────────────────┐
 │                   AspNetUsers                          │
 ├────────────────────────────────────────────────────────┤
@@ -680,6 +682,8 @@ The following LLD UI schema layouts depict each database table as a visual schem
 │      Email               : NVARCHAR(256)               │
 │      FullName            : NVARCHAR(200)               │
 │      PhoneNumber         : NVARCHAR(50)                │
+│      PasswordHash        : NVARCHAR(MAX)               │
+│      SecurityStamp       : NVARCHAR(MAX)               │
 │      IsActive            : BIT                         │
 │      CreatedAtUtc        : DATETIMEOFFSET              │
 └───────┬────────────────────────────┬───────────────────┘
@@ -692,11 +696,21 @@ The following LLD UI schema layouts depict each database table as a visual schem
 │ [PK] Id           : GUID       │ │ [PK] Id           : GUID            │
 │ [FK] UserId       : GUID       │ │ [FK] UserId       : GUID            │
 │ [FK] CompanyId    : GUID       │ │      TokenHash    : NVARCHAR(88)    │
-│      RoleInCompany: VARCHAR(50)│ │      ExpiresAtUtc : DATETIMEOFFSET  │
+│      RoleInCompany: VARCHAR(50)│ │      ReplacedBy   : NVARCHAR(88)    │
+│      IsPrimary    : BIT        │ │      ExpiresAtUtc : DATETIMEOFFSET  │
+│      CreatedAtUtc : TIME       │ │      RevokedAtUtc : DATETIMEOFFSET  │
 └───────▲────────────────────────┘ └─────────────────────────────────────┘
         │ [N:1]
- ──[FK: CompanyId]──
-        │
+        │                     ──[FK: UserId]──►
+ ──[FK: CompanyId]──          ┌──────────────────────────────────────────┐
+        │                     │       PasswordResetTokens                │
+        │                     ├──────────────────────────────────────────┤
+        │                     │ [PK] Id           : GUID                 │
+        │                     │ [FK] UserId       : GUID                 │
+        │                     │      TokenHash    : NVARCHAR(88)         │
+        │                     │      ExpiresAtUtc : DATETIMEOFFSET       │
+        │                     │      UsedAtUtc    : DATETIMEOFFSET       │
+        │                     └──────────────────────────────────────────┘
 ┌───────┴────────────────────────────────────────────────┐
 │                    Companies                           │
 ├────────────────────────────────────────────────────────┤
@@ -719,203 +733,646 @@ The following LLD UI schema layouts depict each database table as a visual schem
 │ [FK] CompanyId    : GUID       │ │ [FK] CompanyId    : GUID            │
 │      AddressType  : VARCHAR(50)│ │      DocumentType : VARCHAR(50)     │
 │      AddressLine1 : VARCHAR(200│ │      StorageKey   : NVARCHAR(200)   │
-│      City         : VARCHAR(100│ │      FileName     : NVARCHAR(200)   │
-└────────────────────────────────┘ └─────────────────────────────────────┘
+│      AddressLine2 : VARCHAR(200│ │      FileName     : NVARCHAR(200)   │
+│      City         : VARCHAR(100│ │      VerifiedBy   : GUID            │
+│      State        : VARCHAR(100│ │      UploadedAtUtc: DATETIME        │
+│      PinCode      : VARCHAR(20)│ └─────────────────────────────────────┘
+└────────────────────────────────┘
+        │
+        │ [1:N]
+ ──[FK: CompanyId]──►
+┌───────▼────────────────────────┐
+│        ContactPersons          │
+├────────────────────────────────┤
+│ [PK] Id           : GUID       │
+│ [FK] CompanyId    : GUID       │
+│      FullName     : VARCHAR(200│
+│      Designation  : VARCHAR(100│
+│      Email        : VARCHAR(200│
+│      Phone        : VARCHAR(50)│
+└────────────────────────────────┘
 ```
 
-#### LLD Pipeline 2: Sales, Enquiries & Commercial Quotation Engine
+---
 
-```
+#### 2. Public Ingestion, Enquiries & Specifications Subsystem
+
+```text
 ┌────────────────────────────────────────────────────────┐
 │                    Companies                           │
 │ [PK] Id : UNIQUEIDENTIFIER                             │
-└───────┬────────────────────────────┬───────────────────┘
-        │ [1:N]                      │ [1:N]
- ──[FK: CompanyId]──►                │
-┌───────▼────────────────────────┐   │
-│                   Enquiries    │   │
-├────────────────────────────────┤   │
-│ [PK] Id                  : GUID│   │
-│ [FK] CompanyId           : GUID│   │
-│      EnquiryNumber       : TEXT│   │
-│      Status              : TEXT│   │
-│      TargetQuantity      : INT │   │
-│      CreatedAtUtc        : TIME│   │
-└───────┬────────────┬───────────┘   │
-        │ [1:N]      │ [1:N]         │
-        │            │               │
- ──[FK: EnquiryId]──►│               │
-┌───────▼────────────┴───────────┐   │
-│           EnquiryItems         │   │
-├────────────────────────────────┤   │
-│ [PK] Id           : GUID       │   │
-│ [FK] EnquiryId    : GUID       │   │
-│      PartNumber   : VARCHAR(50)│   │
-│      MaterialGrade: VARCHAR(50)│   │
-│      Quantity     : INT        │   │
-└────────────────────────────────┘   │
-        │                            │
- ──[FK: EnquiryId]───────────────────┼───────────────────┐
-        │                            │                   │
-        │ [1:N]                      │ [1:N]             │
-        │                            │                   │
- ──[FK: EnquiryId]──►         ──[FK: CompanyId]──►       │
-┌───────▼────────────────────────┐ ┌─▼───────────────────▼───────────────┐
-│           EnquiryFiles         │ │                Quotations           │
-├────────────────────────────────┤ ├─────────────────────────────────────┤
-│ [PK] Id           : GUID       │ │ [PK] Id                  : GUID     │
-│ [FK] EnquiryId    : GUID       │ │ [FK] EnquiryId           : GUID     │
-│      FileName     : TEXT       │ │ [FK] CompanyId           : GUID     │
-│      ContentType  : TEXT       │ │      QuotationNumber     : TEXT     │
-│      StorageKey   : TEXT       │ │      Subtotal            : DECIMAL  │
-│      SizeBytes    : BIGINT     │ │      Tax                 : DECIMAL  │
-└────────────────────────────────┘ │      Total               : DECIMAL  │
-                                   │      ValidUntilUtc       : DATETIME │
-                                   │      Status              : TEXT     │
-                                   └───────┬─────────────┬───────────────┘
-                                           │ [1:N]       │ [1:N]
-                                    ──[FK: QuotationId]─►│
-                                   ┌───────▼────────┐  ┌─▼───────────────┐
-                                   │ QuotationItems │  │QuotationRevision│
-                                   ├────────────────┤  ├─────────────────┤
-                                   │[PK] Id  : GUID │  │[PK] Id   : GUID │
-                                   │[FK] QId : GUID │  │[FK] QId  : GUID │
-                                   │ Rate    : DEC  │  │ Revision : INT  │
-                                   │ Tax     : DEC  │  │ Snapshot : JSON │
-                                   └────────────────┘  └─────────────────┘
-```
-
-#### LLD Pipeline 3: Orders, 25-Stage Manufacturing & Shop-Floor Kanban
-
-```
-┌────────────────────────────────────────────────────────┐
-│                   Quotations                           │
-│ [PK] Id : UNIQUEIDENTIFIER                             │
 └───────┬────────────────────────────────────────────────┘
-        │ [1:1 / 1:N]
- ──[FK: QuotationId]──►
+        │ [1:N]
+ ──[FK: CompanyId]──►
 ┌───────▼────────────────────────────────────────────────┐
-│                     Orders                             │
+│                   Enquiries                            │
+├────────────────────────────────────────────────────────┤
+│ [PK] Id                  : UNIQUEIDENTIFIER            │
+│ [FK] CompanyId           : UNIQUEIDENTIFIER (Nullable) │
+│      EnquiryNumber       : NVARCHAR(50)                │
+│      Status              : NVARCHAR(50)                │
+│      TargetQuantity      : INT                         │
+│      AnnualRequirement   : INT                         │
+│      ExpectedDeliveryDate: DATETIMEOFFSET              │
+│      IsDraft             : BIT                         │
+│      Priority            : NVARCHAR(20)                │
+│      CreatedAtUtc        : DATETIMEOFFSET              │
+│      RowVersion          : VARBINARY(8)                │
+└───────┬────────────┬─────────────┬─────────────┬───────┘
+        │ [1:N]      │ [1:N]       │ [1:N]       │ [1:N]
+        │            │             │             │
+ ──[FK: EnquiryId]──►│             │             │
+┌───────▼────────────┴───────────┐ │             │
+│           EnquiryItems         │ │             │
+├────────────────────────────────┤ │             │
+│ [PK] Id           : GUID       │ │             │
+│ [FK] EnquiryId    : GUID       │ │             │
+│      PartNumber   : VARCHAR(50)│ │             │
+│      PartName     : VARCHAR(200│ │             │
+│      MaterialGrade: VARCHAR(50)│ │             │
+│      UnitWeightKg : DECIMAL    │ │             │
+│      Quantity     : INT        │ │             │
+└────────────────────────────────┘ │             │
+                                   │             │
+ ──[FK: EnquiryId]─────────────────┘             │
+┌───────▼────────────────────────┐               │
+│           EnquiryFiles         │               │
+├────────────────────────────────┤               │
+│ [PK] Id           : GUID       │               │
+│ [FK] EnquiryId    : GUID       │               │
+│      FileName     : TEXT       │               │
+│      ContentType  : TEXT       │               │
+│      StorageKey   : TEXT       │               │
+│      SizeBytes    : BIGINT     │               │
+│      UploadedAtUtc: DATETIME   │               │
+└────────────────────────────────┘               │
+                                                 │
+ ──[FK: EnquiryId]───────────────────────────────┘
+┌───────▼────────────────────────┐ ┌─────────────────────────────────────┐
+│      EnquiryStatusHistories    │ │          EnquiryComments            │
+├────────────────────────────────┤ ├─────────────────────────────────────┤
+│ [PK] Id           : GUID       │ │ [PK] Id           : GUID            │
+│ [FK] EnquiryId    : GUID       │ │ [FK] EnquiryId    : GUID            │
+│      FromStatus   : VARCHAR(50)│ │      AuthorName   : NVARCHAR(200)   │
+│      ToStatus     : VARCHAR(50)│ │      AuthorRole   : NVARCHAR(50)    │
+│      ChangedByRole: VARCHAR(50)│ │      Message      : NVARCHAR(MAX)   │
+│      Note         : TEXT       │ │      CreatedAtUtc : DATETIMEOFFSET  │
+│      CreatedAtUtc : TIME       │ └─────────────────────────────────────┘
+└────────────────────────────────┘
+        │
+        │ [1:N]
+ ──[FK: EnquiryId]──►
+┌───────▼────────────────────────┐ ┌─────────────────────────────────────┐
+│       EnquiryAssignments       │ │          ContactRequests            │
+├────────────────────────────────┤ ├─────────────────────────────────────┤
+│ [PK] Id           : GUID       │ │ [PK] Id           : GUID            │
+│ [FK] EnquiryId    : GUID       │ │      FullName     : NVARCHAR(200)   │
+│ [FK] EngineerId   : GUID       │ │      Email        : NVARCHAR(200)   │
+│      AssignedBy   : GUID       │ │      Phone        : NVARCHAR(50)    │
+│      AssignedAtUtc: DATETIME   │ │      Subject      : NVARCHAR(200)   │
+└────────────────────────────────┘ │      Message      : NVARCHAR(MAX)   │
+                                   │      IsSpam       : BIT             │
+                                   │      CreatedAtUtc : DATETIME        │
+                                   └─────────────────────────────────────┘
+```
+
+---
+
+#### 3. Commercial Proposals & Quotation Engine Subsystem
+
+```text
+┌───────────────────────────┐ ┌──────────────────────────┐
+│         Enquiries         │ │        Companies         │
+│ [PK] Id : UNIQUEIDENTIFIER│ │[PK] Id : UNIQUEIDENTIFIER│
+└─────────────┬─────────────┘ └────────────┬─────────────┘
+              │ [1:N]                      │ [1:N]
+ ──[FK: EnquiryId]──►        ──[FK: CompanyId]──►
+┌─────────────▼────────────────────────────▼─────────────┐
+│                      Quotations                        │
+├────────────────────────────────────────────────────────┤
+│ [PK] Id                  : UNIQUEIDENTIFIER            │
+│ [FK] EnquiryId           : UNIQUEIDENTIFIER            │
+│ [FK] CompanyId           : UNIQUEIDENTIFIER            │
+│      QuotationNumber     : NVARCHAR(50)                │
+│      RevisionNumber      : INT                         │
+│      Subtotal            : DECIMAL(18,2)               │
+│      Tax                 : DECIMAL(18,2)               │
+│      Total               : DECIMAL(18,2)               │
+│      Currency            : NVARCHAR(10)                │
+│      ValidUntilUtc       : DATETIMEOFFSET              │
+│      PaymentTerms        : NVARCHAR(200)               │
+│      DeliveryTerms       : NVARCHAR(200)               │
+│      Status              : NVARCHAR(50)                │
+│      CreatedAtUtc        : DATETIMEOFFSET              │
+│      RowVersion          : VARBINARY(8)                │
+└───────┬────────────┬─────────────┬─────────────┬───────┘
+        │ [1:N]      │ [1:N]       │ [1:N]       │ [1:N]
+        │            │             │             │
+ ──[FK: QuotationId]►│             │             │
+┌───────▼────────────┴───────────┐ │             │
+│         QuotationItems         │ │             │
+├────────────────────────────────┤ │             │
+│ [PK] Id           : GUID       │ │             │
+│ [FK] QuotationId  : GUID       │ │             │
+│      PartNumber   : VARCHAR(50)│ │             │
+│      Description  : TEXT       │ │             │
+│      RawCastingRate: DECIMAL   │ │             │
+│      MachiningRate : DECIMAL   │ │             │
+│      PatternCharge : DECIMAL   │ │             │
+│      TaxPercentage : DECIMAL   │ │             │
+│      LineTotal     : DECIMAL   │ │             │
+└────────────────────────────────┘ │             │
+                                   │             │
+ ──[FK: QuotationId]───────────────┘             │
+┌───────▼────────────────────────┐               │
+│       QuotationRevisions       │               │
+├────────────────────────────────┤               │
+│ [PK] Id           : GUID       │               │
+│ [FK] QuotationId  : GUID       │               │
+│      RevisionNo   : INT        │               │
+│      SnapshotJson : TEXT       │               │
+│      ModifiedBy   : GUID       │               │
+│      CreatedAtUtc : DATETIME   │               │
+└────────────────────────────────┘               │
+                                                 │
+ ──[FK: QuotationId]─────────────────────────────┘
+┌───────▼────────────────────────┐ ┌─▼───────────────────────────────────┐
+│     QuotationStatusHistories   │ │        QuotationApprovals           │
+├────────────────────────────────┤ ├─────────────────────────────────────┤
+│ [PK] Id           : GUID       │ │ [PK] Id           : GUID            │
+│ [FK] QuotationId  : GUID       │ │ [FK] QuotationId  : GUID            │
+│      FromStatus   : VARCHAR(50)│ │ [FK] ApproverId   : GUID            │
+│      ToStatus     : VARCHAR(50)│ │      Decision     : VARCHAR(50)     │
+│      ChangedByRole: VARCHAR(50)│ │      DecisionNotes: NVARCHAR(MAX)   │
+│      Note         : TEXT       │ │      DecidedAtUtc : DATETIMEOFFSET  │
+│      CreatedAtUtc : TIME       │ └─────────────────────────────────────┘
+└────────────────────────────────┘
+        │
+        │ [1:N]
+ ──[FK: QuotationId]──►
+┌───────▼────────────────────────┐ ┌─────────────────────────────────────┐
+│       QuotationComments        │ │        QuotationAttachments         │
+├────────────────────────────────┤ ├─────────────────────────────────────┤
+│ [PK] Id           : GUID       │ │ [PK] Id           : GUID            │
+│ [FK] QuotationId  : GUID       │ │ [FK] QuotationId  : GUID            │
+│      AuthorName   : TEXT       │ │      FileName     : NVARCHAR(200)   │
+│      Message      : TEXT       │ │      StorageKey   : NVARCHAR(200)   │
+│      IsInternal   : BIT        │ │      SizeBytes    : BIGINT          │
+│      CreatedAtUtc : TIME       │ │      UploadedAtUtc: DATETIME        │
+└────────────────────────────────┘ └─────────────────────────────────────┘
+```
+
+---
+
+#### 4. Order Execution, Milestones & Allocation Subsystem
+
+```text
+┌───────────────────────────┐ ┌──────────────────────────┐
+│        Quotations         │ │        Companies         │
+│ [PK] Id : UNIQUEIDENTIFIER│ │[PK] Id : UNIQUEIDENTIFIER│
+└─────────────┬─────────────┘ └────────────┬─────────────┘
+              │ [1:1 / 1:N]                │ [1:N]
+ ──[FK: QuotationId]──►       ──[FK: CompanyId]──►
+┌─────────────▼────────────────────────────▼─────────────┐
+│                        Orders                          │
 ├────────────────────────────────────────────────────────┤
 │ [PK] Id                  : UNIQUEIDENTIFIER            │
 │ [FK] CompanyId           : UNIQUEIDENTIFIER            │
 │ [FK] QuotationId         : UNIQUEIDENTIFIER (Nullable) │
 │ [FK] AssignedToUserId    : UNIQUEIDENTIFIER (Nullable) │
 │      OrderNumber         : NVARCHAR(50)                │
+│      CustomerPoNumber    : NVARCHAR(100)               │
 │      Status              : NVARCHAR(50)                │
 │      ManufacturingStage  : NVARCHAR(50)                │
 │      TotalAmount         : DECIMAL(18,2)               │
+│      AdvanceRequiredPct  : DECIMAL(5,2)                │
 │      AdvancePaidAmount   : DECIMAL(18,2)               │
 │      PlacedAtUtc         : DATETIMEOFFSET              │
-└───────┬────────────────────────────┬───────────────────┘
-        │ [1:N]                      │ [1:N]
-        │                            │
- ──[FK: OrderId]──►           ──[FK: OrderId]──►
+│      TargetDeliveryDate  : DATETIMEOFFSET              │
+│      RowVersion          : VARBINARY(8)                │
+└───────┬────────────┬─────────────┬─────────────┬───────┘
+        │ [1:N]      │ [1:N]       │ [1:N]       │ [1:N]
+        │            │             │             │
+ ──[FK: OrderId]────►│             │             │
+┌───────▼────────────┴───────────┐ │             │
+│           OrderItems           │ │             │
+├────────────────────────────────┤ │             │
+│ [PK] Id           : GUID       │ │             │
+│ [FK] OrderId      : GUID       │ │             │
+│      PartNumber   : VARCHAR(50)│ │             │
+│      QuantityOrdered: INT      │ │             │
+│      QuantityProduced: INT     │ │             │
+│      QuantityDispatched: INT   │ │             │
+│      UnitPrice    : DECIMAL    │ │             │
+│      LineTotal    : DECIMAL    │ │             │
+└────────────────────────────────┘ │             │
+                                   │             │
+ ──[FK: OrderId]───────────────────┘             │
+┌───────▼────────────────────────┐               │
+│         OrderMilestones        │               │
+├────────────────────────────────┤               │
+│ [PK] Id           : GUID       │               │
+│ [FK] OrderId      : GUID       │               │
+│      MilestoneCode: VARCHAR(50)│               │
+│      Title        : VARCHAR(100│               │
+│      IsCompleted  : BIT        │               │
+│      IsVisible    : BIT        │               │
+│      CompletedAt  : DATETIME   │               │
+└────────────────────────────────┘               │
+                                                 │
+ ──[FK: OrderId]─────────────────────────────────┘
 ┌───────▼────────────────────────┐ ┌─▼───────────────────────────────────┐
-│         OrderMilestones        │ │             ProductionJobs          │
+│        OrderAssignments        │ │         OrderStatusHistories        │
 ├────────────────────────────────┤ ├─────────────────────────────────────┤
-│ [PK] Id           : GUID       │ │ [PK] Id                  : GUID     │
-│ [FK] OrderId      : GUID       │ │ [FK] OrderId             : GUID     │
-│      MilestoneCode: VARCHAR(50)│ │ [FK] CompanyId           : GUID     │
-│      Title        : VARCHAR(100│ │      JobNumber           : TEXT     │
-│      IsCompleted  : BIT        │ │      CurrentStage        : TEXT     │
-│      CompletedAt  : DATETIME   │ │      TargetDispatchDate  : DATETIME │
-└────────────────────────────────┘ │      IsBlocked           : BIT      │
-                                   │      BlockReason         : TEXT     │
-                                   └───────┬─────────────┬───────────────┘
-                                           │ [1:N]       │ [1:N]
-                                    ──[FK: JobId]──►     │
-                                   ┌───────▼────────┐  ┌─▼───────────────┐
-                                   │ProdStageHistory│  │ProductionQuality│
-                                   ├────────────────┤  ├─────────────────┤
-                                   │[PK] Id  : GUID │  │[PK] Id   : GUID │
-                                   │[FK] JobId: GUID│  │[FK] JobId: GUID │
-                                   │ FromStage:TEXT │  │ Hardness : DEC  │
-                                   │ ToStage  :TEXT │  │ Chemistry: JSON │
-                                   │ Operator :TEXT │  │ IsPassed : BIT  │
-                                   └────────────────┘  └─────────────────┘
+│ [PK] Id           : GUID       │ │ [PK] Id           : GUID            │
+│ [FK] OrderId      : GUID       │ │ [FK] OrderId      : GUID            │
+│ [FK] EngineerId   : GUID       │ │      FromStatus   : NVARCHAR(50)    │
+│      AssignedBy   : GUID       │ │      ToStatus     : NVARCHAR(50)    │
+│      AssignedAtUtc: DATETIME   │ │      Note         : NVARCHAR(MAX)   │
+└────────────────────────────────┘ │      CreatedAtUtc : DATETIMEOFFSET  │
+                                   └─────────────────────────────────────┘
+        │
+        │ [1:N]
+ ──[FK: OrderId]──►
+┌───────▼────────────────────────┐ ┌─────────────────────────────────────┐
+│         OrderComments          │ │          SupportRequests            │
+├────────────────────────────────┤ ├─────────────────────────────────────┤
+│ [PK] Id           : GUID       │ │ [PK] Id           : GUID            │
+│ [FK] OrderId      : GUID       │ │ [FK] OrderId      : GUID            │
+│      AuthorName   : TEXT       │ │ [FK] CompanyId    : GUID            │
+│      Message      : TEXT       │ │      TicketNumber : NVARCHAR(50)    │
+│      IsInternal   : BIT        │ │      Category     : NVARCHAR(50)    │
+│      CreatedAtUtc : TIME       │ │      Subject      : NVARCHAR(200)   │
+│                                │ │      Status       : NVARCHAR(50)    │
+└────────────────────────────────┘ └─────────────────────────────────────┘
 ```
 
-#### LLD Pipeline 4: Tax Invoicing, Credit Notes, Payments & Logistics Wireframe
+---
 
+#### 5. 25-Stage Shop-Floor Manufacturing & Quality Engine Subsystem
+
+```text
+┌───────────────────────────┐ ┌──────────────────────────┐
+│          Orders           │ │        Companies         │
+│ [PK] Id : UNIQUEIDENTIFIER│ │[PK] Id : UNIQUEIDENTIFIER│
+└─────────────┬─────────────┘ └────────────┬─────────────┘
+              │ [1:N]                      │ [1:N]
+ ──[FK: OrderId]──►           ──[FK: CompanyId]──►
+┌─────────────▼────────────────────────────▼─────────────┐
+│                    ProductionJobs                      │
+├────────────────────────────────────────────────────────┤
+│ [PK] Id                  : UNIQUEIDENTIFIER            │
+│ [FK] OrderId             : UNIQUEIDENTIFIER (Nullable) │
+│ [FK] CompanyId           : UNIQUEIDENTIFIER (Nullable) │
+│      JobNumber           : NVARCHAR(50)                │
+│      CastingName         : NVARCHAR(200)               │
+│      PatternCode         : NVARCHAR(50)                │
+│      Quantity            : INT                         │
+│      CurrentStage        : NVARCHAR(50)                │
+│      Priority            : NVARCHAR(20)                │
+│      ProgressPct         : INT                         │
+│      TargetDispatchDate  : DATETIMEOFFSET              │
+│      IsBlocked           : BIT                         │
+│      BlockReason         : NVARCHAR(MAX)               │
+│      CreatedAtUtc        : DATETIMEOFFSET              │
+└───────┬────────────┬─────────────┬─────────────┬───────┘
+        │ [1:N]      │ [1:N]       │ [1:N]       │ [1:N]
+        │            │             │             │
+ ──[FK: JobId]──────►│             │             │
+┌───────▼────────────┴───────────┐ │             │
+│     ProductionStageHistories   │ │             │
+├────────────────────────────────┤ │             │
+│ [PK] Id           : GUID       │ │             │
+│ [FK] JobId        : GUID       │ │             │
+│      FromStage    : VARCHAR(50)│ │             │
+│      ToStage      : VARCHAR(50)│ │             │
+│      OperatorName : VARCHAR(100│ │             │
+│      DurationMins : INT        │ │             │
+│      CompletedAt  : DATETIME   │ │             │
+└────────────────────────────────┘ │             │
+                                   │             │
+ ──[FK: JobId]─────────────────────┘             │
+┌───────▼────────────────────────┐               │
+│       ProductionQualities      │               │
+├────────────────────────────────┤               │
+│ [PK] Id           : GUID       │               │
+│ [FK] JobId        : GUID       │               │
+│      InspectionType: VARCHAR(50│               │
+│      HardnessBhn  : DECIMAL    │               │
+│      SpectroJson  : TEXT       │               │
+│      TensileMpa   : DECIMAL    │               │
+│      IsPassed     : BIT        │               │
+│      InspectorName: VARCHAR(100│               │
+│      InspectedAt  : DATETIME   │               │
+└────────────────────────────────┘               │
+                                                 │
+ ──[FK: JobId]───────────────────────────────────┘
+┌───────▼────────────────────────┐ ┌─▼───────────────────────────────────┐
+│       ProductionComments       │ │        ProductionTimelines          │
+├────────────────────────────────┤ ├─────────────────────────────────────┤
+│ [PK] Id           : GUID       │ │ [PK] Id           : GUID            │
+│ [FK] JobId        : GUID       │ │ [FK] JobId        : GUID            │
+│      AuthorName   : TEXT       │ │      EventName    : NVARCHAR(100)   │
+│      AuthorRole   : TEXT       │ │      Stage        : NVARCHAR(50)    │
+│      CommentType  : TEXT       │ │      TimestampUtc : DATETIMEOFFSET  │
+│      Message      : TEXT       │ └─────────────────────────────────────┘
+└────────────────────────────────┘
+                                   ┌─────────────────────────────────────┐
+                                   │        ProductionStages             │
+                                   ├─────────────────────────────────────┤
+                                   │ [PK] Id           : GUID            │
+                                   │      StageCode    : NVARCHAR(50)    │
+                                   │      Name         : NVARCHAR(100)   │
+                                   │      SortOrder    : INT             │
+                                   │      Department   : NVARCHAR(50)    │
+                                   │      ColorHex     : NVARCHAR(20)    │
+                                   └─────────────────────────────────────┘
+┌────────────────────────────────┐ ┌─────────────────────────────────────┐
+│     ProductionDepartments      │ │        ProductionMachines           │
+├────────────────────────────────┤ ├─────────────────────────────────────┤
+│ [PK] Id           : GUID       │ │ [PK] Id           : GUID            │
+│      Name         : VARCHAR(100│ │ [FK] DepartmentId: GUID            │
+│      Supervisor   : VARCHAR(100│ │      MachineCode  : NVARCHAR(50)    │
+│      CapacityTons : DECIMAL    │ │      MachineName  : NVARCHAR(100)   │
+└───────┬────────────────────────┘ │      Status       : NVARCHAR(50)    │
+        │ [1:N]                    └─────────────────────────────────────┘
+ ──[FK: DepartmentId]──►
+                                   ┌─────────────────────────────────────┐
+                                   │       UserBoardPreferences          │
+                                   ├─────────────────────────────────────┤
+                                   │ [PK] Id           : GUID            │
+                                   │ [FK] UserId       : GUID            │
+                                   │      CardSize     : NVARCHAR(20)    │
+                                   │      VisibleCols  : NVARCHAR(MAX)   │
+                                   └─────────────────────────────────────┘
 ```
+
+---
+
+#### 6. Invoicing, GST Taxation, Adjustments & Payments Subsystem
+
+```text
+┌───────────────────────────┐ ┌──────────────────────────┐
+│          Orders           │ │        Companies         │
+│ [PK] Id : UNIQUEIDENTIFIER│ │[PK] Id : UNIQUEIDENTIFIER│
+└─────────────┬─────────────┘ └────────────┬─────────────┘
+              │ [1:N]                      │ [1:N]
+ ──[FK: OrderId]──►           ──[FK: CompanyId]──►
+┌─────────────▼────────────────────────────▼─────────────┐
+│                       Invoices                         │
+├────────────────────────────────────────────────────────┤
+│ [PK] Id                  : UNIQUEIDENTIFIER            │
+│ [FK] OrderId             : UNIQUEIDENTIFIER (Nullable) │
+│ [FK] CompanyId           : UNIQUEIDENTIFIER            │
+│      InvoiceNumber       : NVARCHAR(50)                │
+│      IssueDateUtc        : DATETIMEOFFSET              │
+│      DueDateUtc          : DATETIMEOFFSET              │
+│      TaxableAmount       : DECIMAL(18,2)               │
+│      CGST                : DECIMAL(18,2)               │
+│      SGST                : DECIMAL(18,2)               │
+│      IGST                : DECIMAL(18,2)               │
+│      TotalAmount         : DECIMAL(18,2)               │
+│      PaidAmount          : DECIMAL(18,2)               │
+│      BalanceDue          : DECIMAL(18,2)               │
+│      Status              : NVARCHAR(50)                │
+│      RowVersion          : VARBINARY(8)                │
+└───────┬────────────┬─────────────┬─────────────┬───────┘
+        │ [1:N]      │ [1:N]       │ [1:N]       │ [1:N]
+        │            │             │             │
+ ──[FK: InvoiceId]──►│             │             │
+┌───────▼────────────┴───────────┐ │             │
+│          InvoiceItems          │ │             │
+├────────────────────────────────┤ │             │
+│ [PK] Id           : GUID       │ │             │
+│ [FK] InvoiceId    : GUID       │ │             │
+│      HsnCode      : VARCHAR(20)│ │             │
+│      PartNumber   : VARCHAR(50)│ │             │
+│      Quantity     : INT        │ │             │
+│      UnitPrice    : DECIMAL    │ │             │
+│      TaxRatePct   : DECIMAL    │ │             │
+│      LineTotal    : DECIMAL    │ │             │
+└────────────────────────────────┘ │             │
+                                   │             │
+ ──[FK: InvoiceId]─────────────────┘             │
+┌───────▼────────────────────────┐               │
+│     InvoiceStatusHistories     │               │
+├────────────────────────────────┤               │
+│ [PK] Id           : GUID       │               │
+│ [FK] InvoiceId    : GUID       │               │
+│      FromStatus   : VARCHAR(50)│               │
+│      ToStatus     : VARCHAR(50)│               │
+│      ChangedByRole: VARCHAR(50)│               │
+│      Note         : TEXT       │               │
+│      CreatedAtUtc : TIME       │               │
+└────────────────────────────────┘               │
+                                                 │
+ ──[FK: InvoiceId]───────────────────────────────┘
+┌───────▼────────────────────────┐ ┌─▼───────────────────────────────────┐
+│          Payments              │ │         InvoiceAttachments          │
+├────────────────────────────────┤ ├─────────────────────────────────────┤
+│ [PK] Id           : GUID       │ │ [PK] Id           : GUID            │
+│ [FK] InvoiceId    : GUID       │ │ [FK] InvoiceId    : GUID            │
+│ [FK] CompanyId    : GUID       │ │      FileName     : NVARCHAR(200)   │
+│      Amount       : DECIMAL    │ │      StorageKey   : NVARCHAR(200)   │
+│      PaymentMethod: VARCHAR(50)│ │      SizeBytes    : BIGINT          │
+│      ReferenceNo  : VARCHAR(100│ │      UploadedAtUtc: DATETIME        │
+│      Status       : VARCHAR(50)│ └─────────────────────────────────────┘
+│      PaymentDate  : DATETIME   │
+└────────────────────────────────┘
+        │
+        │ [1:N]
+ ──[FK: InvoiceId]──►
+┌───────▼────────────────────────┐ ┌─────────────────────────────────────┐
+│          CreditNotes           │ │            DebitNotes               │
+├────────────────────────────────┤ ├─────────────────────────────────────┤
+│ [PK] Id           : GUID       │ │ [PK] Id           : GUID            │
+│ [FK] InvoiceId    : GUID       │ │ [FK] InvoiceId    : GUID            │
+│      CreditNoteNo : VARCHAR(50)│ │      DebitNoteNo  : NVARCHAR(50)    │
+│      AdjustmentAmt: DECIMAL    │ │      DebitAmount  : DECIMAL(18,2)   │
+│      Reason       : TEXT       │ │      Reason       : NVARCHAR(MAX)   │
+│      IssuedAtUtc  : DATETIME   │ │      IssuedAtUtc  : DATETIME        │
+└────────────────────────────────┘ └─────────────────────────────────────┘
+```
+
+---
+
+#### 7. Logistics, Transportation & Tracking Subsystem
+
+```text
+┌───────────────────────────┐ ┌──────────────────────────┐
+│          Orders           │ │        Companies         │
+│ [PK] Id : UNIQUEIDENTIFIER│ │[PK] Id : UNIQUEIDENTIFIER│
+└─────────────┬─────────────┘ └────────────┬─────────────┘
+              │ [1:N]                      │ [1:N]
+ ──[FK: OrderId]──►           ──[FK: CompanyId]──►
+┌─────────────▼────────────────────────────▼─────────────┐
+│                       Shipments                        │
+├────────────────────────────────────────────────────────┤
+│ [PK] Id                  : UNIQUEIDENTIFIER            │
+│ [FK] OrderId             : UNIQUEIDENTIFIER            │
+│ [FK] CompanyId           : UNIQUEIDENTIFIER            │
+│      ShipmentNumber      : NVARCHAR(50)                │
+│      TransporterName     : NVARCHAR(100)               │
+│      VehicleNumber       : NVARCHAR(50)                │
+│      DriverPhoneNumber   : NVARCHAR(50)                │
+│      LrNumber            : NVARCHAR(50)                │
+│      DispatchedAtUtc     : DATETIMEOFFSET              │
+│      EstimatedDeliveryUtc: DATETIMEOFFSET              │
+│      DeliveredAtUtc      : DATETIMEOFFSET              │
+│      Status              : NVARCHAR(50)                │
+└───────────────────────────┬────────────────────────────┘
+                            │ [1:N]
+ ──[FK: ShipmentId]─────────►
+┌───────────────────────────▼────────────────────────────┐
+│                ShipmentTrackingEvents                  │
+├────────────────────────────────────────────────────────┤
+│ [PK] Id                  : UNIQUEIDENTIFIER            │
+│ [FK] ShipmentId          : UNIQUEIDENTIFIER            │
+│      Location            : NVARCHAR(100)               │
+│      StatusNote          : NVARCHAR(200)               │
+│      EventTimeUtc        : DATETIMEOFFSET              │
+│      RecordedBy          : NVARCHAR(100)               │
+└────────────────────────────────────────────────────────┘
+```
+
+---
+
+#### 8. Controlled Document Vault & MTC Certificates Subsystem
+
+```text
+┌───────────────────────────┐ ┌──────────────────────────┐
+│         Companies         │ │          Orders          │
+│ [PK] Id : UNIQUEIDENTIFIER│ │[PK] Id : UNIQUEIDENTIFIER│
+└─────────────┬─────────────┘ └────────────┬─────────────┘
+              │ [1:N]                      │ [1:N]
+ ──[FK: CompanyId]──►         ──[FK: OrderId]──►
+┌─────────────▼────────────────────────────▼─────────────┐
+│                       Documents                        │
+├────────────────────────────────────────────────────────┤
+│ [PK] Id                  : UNIQUEIDENTIFIER            │
+│ [FK] CompanyId           : UNIQUEIDENTIFIER            │
+│ [FK] OrderId             : UNIQUEIDENTIFIER (Nullable) │
+│ [FK] FolderId            : UNIQUEIDENTIFIER (Nullable) │
+│      Title               : NVARCHAR(200)               │
+│      DocumentType        : NVARCHAR(50)                │
+│      StorageKey          : NVARCHAR(200)               │
+│      Sha256Checksum      : NVARCHAR(64)                │
+│      CurrentVersion      : INT                         │
+│      IsCustomerVisible   : BIT                         │
+│      CreatedAtUtc        : DATETIMEOFFSET              │
+└───────┬──────────────────────────────────┬─────────────┘
+        │ [N:1]                            │ [1:N]
+ ──[FK: FolderId]──                        │
+        │                                  │
+┌───────┴────────────────────────┐  ──[FK: DocumentId]──►
+│        DocumentFolders         │ ┌───────▼─────────────────────────────┐
+├────────────────────────────────┤ │          DocumentVersions           │
+│ [PK] Id           : GUID       │ ├─────────────────────────────────────┤
+│      FolderName   : VARCHAR(100│ │ [PK] Id           : GUID            │
+│      ParentFolder : GUID       │ │ [FK] DocumentId   : GUID            │
+│      Description  : TEXT       │ │      VersionNumber: INT             │
+└────────────────────────────────┘ │      StorageKey   : NVARCHAR(200)   │
+                                   │      Sha256Hash   : NVARCHAR(64)    │
+                                   │      ChangedBy    : GUID            │
+                                   │      CreatedAtUtc : DATETIME        │
+                                   └─────────────────────────────────────┘
+```
+
+---
+
+#### 9. Engineering Master & Casting Patterns Subsystem
+
+```text
 ┌────────────────────────────────────────────────────────┐
-│                     Orders                             │
-│ [PK] Id : UNIQUEIDENTIFIER                             │
-└───────┬────────────────────────────┬───────────────────┘
-        │ [1:N]                      │ [1:N]
- ──[FK: OrderId]──►           ──[FK: OrderId]──►
-┌───────▼────────────────────────┐ ┌─▼───────────────────────────────────┐
-│                    Invoices    │ │                   Shipments         │
-├────────────────────────────────┤ ├─────────────────────────────────────┤
-│ [PK] Id                  : GUID│ │ [PK] Id                  : GUID     │
-│ [FK] OrderId             : GUID│ │ [FK] OrderId             : GUID     │
-│ [FK] CompanyId           : GUID│ │ [FK] CompanyId           : GUID     │
-│      InvoiceNumber       : TEXT│ │      ShipmentNumber      : TEXT     │
-│      TaxableAmount       : DEC │ │      TransporterName     : TEXT     │
-│      CGST                : DEC │ │      VehicleNumber       : TEXT     │
-│      SGST                : DEC │ │      LrNumber            : TEXT     │
-│      TotalAmount         : DEC │ │      DispatchedAtUtc     : DATETIME │
-│      PaidAmount          : DEC │ │      Status              : TEXT     │
-│      Status              : TEXT│ └───────┬─────────────────────────────┘
-└───────┬────────────┬───────────┘         │ [1:N]
-        │ [1:N]      │ [1:N]               │
- ──[FK: InvoiceId]──►│              ──[FK: ShipmentId]──►
-┌───────▼────────┐ ┌─▼───────────┐ ┌───────▼─────────────────────────────┐
-│  InvoiceItems  │ │  Payments   │ │        ShipmentTrackingEvents       │
-├────────────────┤ ├─────────────┤ ├─────────────────────────────────────┤
-│[PK] Id  : GUID │ │[PK] Id: GUID│ │ [PK] Id           : GUID            │
-│[FK] InvId: GUID│ │[FK] InvId: G│ │ [FK] ShipmentId   : GUID            │
-│ HsnCode : TEXT │ │ Amount: DEC │ │      Location     : NVARCHAR(100)   │
-│ Rate    : DEC  │ │ Method: TEXT│ │      StatusNote   : NVARCHAR(200)   │
-│ TaxRate : DEC  │ │ RefNo : TEXT│ │      EventTimeUtc : DATETIMEOFFSET  │
-└────────────────┘ └─────────────┘ └─────────────────────────────────────┘
+│                    ProductMasters                      │
+├────────────────────────────────────────────────────────┤
+│ [PK] Id                  : UNIQUEIDENTIFIER            │
+│      DrawingNumber       : NVARCHAR(100)               │
+│      PatternCode         : NVARCHAR(50)                │
+│      CastingDescription  : NVARCHAR(200)               │
+│      BaseMaterialGrade   : NVARCHAR(50)                │
+│      StandardUnitWeightKg: DECIMAL(10,3)               │
+│      ToolingCost         : DECIMAL(18,2)               │
+│      Status              : NVARCHAR(50)                │
+│      CreatedAtUtc        : DATETIMEOFFSET              │
+└───────────────────────────┬────────────────────────────┘
+                            │ [1:N]
+ ──[FK: ProductMasterId]────►
+┌───────────────────────────▼────────────────────────────┐
+│               ProductMasterAttachments                 │
+├────────────────────────────────────────────────────────┤
+│ [PK] Id                  : UNIQUEIDENTIFIER            │
+│ [FK] ProductMasterId     : UNIQUEIDENTIFIER            │
+│      FileName            : NVARCHAR(200)               │
+│      AttachmentType      : NVARCHAR(50)                │
+│      StorageKey          : NVARCHAR(200)               │
+│      SizeBytes           : BIGINT                      │
+│      UploadedAtUtc       : DATETIMEOFFSET              │
+└────────────────────────────────────────────────────────┘
 ```
 
-#### LLD Visual Flowchart Diagram with Typed Schema Connectors
+---
 
-```mermaid
-flowchart TD
-    classDef tableCard fill:#1e293b,stroke:#3b82f6,stroke-width:2px,color:#f8fafc,font-family:monospace;
-    classDef coreCard fill:#0f172a,stroke:#10b981,stroke-width:2px,color:#f8fafc,font-family:monospace;
+#### 10. Marketing Catalogue, Content & System Audit Framework Subsystem
 
-    Users["<b>AspNetUsers</b><br/>• PK: Id (Guid)<br/>• Email (varchar)<br/>• FullName (varchar)"]:::tableCard
-    UserComp["<b>UserCompanies</b><br/>• PK: Id (Guid)<br/>• FK: UserId (Guid)<br/>• FK: CompanyId (Guid)"]:::tableCard
-    Comp["<b>Companies</b><br/>• PK: Id (Guid)<br/>• LegalName (varchar)<br/>• GstNumber (varchar)"]:::coreCard
-
-    Enq["<b>Enquiries</b><br/>• PK: Id (Guid)<br/>• FK: CompanyId (Guid)<br/>• Status (varchar)<br/>• TargetQty (int)"]:::tableCard
-    EnqFiles["<b>EnquiryFiles</b><br/>• PK: Id (Guid)<br/>• FK: EnquiryId (Guid)<br/>• StorageKey (varchar)"]:::tableCard
-
-    Quote["<b>Quotations</b><br/>• PK: Id (Guid)<br/>• FK: EnquiryId (Guid)<br/>• FK: CompanyId (Guid)<br/>• Total (decimal)"]:::coreCard
-    QuoteItems["<b>QuotationItems</b><br/>• PK: Id (Guid)<br/>• FK: QuotationId (Guid)<br/>• Rate (decimal)"]:::tableCard
-
-    Ord["<b>Orders</b><br/>• PK: Id (Guid)<br/>• FK: CompanyId (Guid)<br/>• FK: QuotationId (Guid)<br/>• Status (varchar)"]:::coreCard
-    OrdItems["<b>OrderItems</b><br/>• PK: Id (Guid)<br/>• FK: OrderId (Guid)<br/>• Quantity (int)"]:::tableCard
-
-    Jobs["<b>ProductionJobs</b><br/>• PK: Id (Guid)<br/>• FK: OrderId (Guid)<br/>• CurrentStage (varchar)"]:::tableCard
-    Stages["<b>ProductionStageHistory</b><br/>• PK: Id (Guid)<br/>• FK: JobId (Guid)<br/>• Stage (varchar)"]:::tableCard
-
-    Inv["<b>Invoices</b><br/>• PK: Id (Guid)<br/>• FK: OrderId (Guid)<br/>• TotalAmount (decimal)"]:::tableCard
-    Pay["<b>Payments</b><br/>• PK: Id (Guid)<br/>• FK: InvoiceId (Guid)<br/>• Amount (decimal)"]:::tableCard
-
-    Ship["<b>Shipments</b><br/>• PK: Id (Guid)<br/>• FK: OrderId (Guid)<br/>• VehicleNo (varchar)"]:::tableCard
-
-    %% Relationships with explicit connector strings
-    Users -->|"FK: UserId [1:N]"| UserComp
-    Comp -->|"FK: CompanyId [1:N]"| UserComp
-    Comp -->|"FK: CompanyId [1:N]"| Enq
-    Enq -->|"FK: EnquiryId [1:N]"| EnqFiles
-    Enq -->|"FK: EnquiryId [1:N]"| Quote
-    Comp -->|"FK: CompanyId [1:N]"| Quote
-    Quote -->|"FK: QuotationId [1:N]"| QuoteItems
-    Quote -->|"FK: QuotationId [1:N]"| Ord
-    Comp -->|"FK: CompanyId [1:N]"| Ord
-    Ord -->|"FK: OrderId [1:N]"| OrdItems
-    Ord -->|"FK: OrderId [1:N]"| Jobs
-    Jobs -->|"FK: JobId [1:N]"| Stages
-    Ord -->|"FK: OrderId [1:N]"| Inv
-    Inv -->|"FK: InvoiceId [1:N]"| Pay
-    Ord -->|"FK: OrderId [1:N]"| Ship
+```text
+┌────────────────────────────────┐ ┌─────────────────────────────────────┐
+│           Categories           │ │             Industries              │
+├────────────────────────────────┤ ├─────────────────────────────────────┤
+│ [PK] Id           : GUID       │ │ [PK] Id           : GUID            │
+│      Name         : VARCHAR(100│ │      Name         : NVARCHAR(100)   │
+│      Slug         : VARCHAR(100│ │      Description  : NVARCHAR(MAX)   │
+│      Description  : TEXT       │ │      IconName     : NVARCHAR(50)    │
+└───────┬────────────────────────┘ └─────────────────────────────────────┘
+        │ [1:N]
+ ──[FK: CategoryId]──►
+┌───────▼────────────────────────┐ ┌─────────────────────────────────────┐
+│            Products            │ │              Resources              │
+├────────────────────────────────┤ ├─────────────────────────────────────┤
+│ [PK] Id           : GUID       │ │ [PK] Id           : GUID            │
+│ [FK] CategoryId   : GUID       │ │      Title        : NVARCHAR(200)   │
+│      Name         : VARCHAR(200│ │      ResourceType : NVARCHAR(50)    │
+│      Slug         : VARCHAR(200│ │      Content      : NVARCHAR(MAX)   │
+│      AlloyFamily  : VARCHAR(100│ └─────────────────────────────────────┘
+│      Description  : TEXT       │
+└───────┬────────────────────────┘ ┌─────────────────────────────────────┐
+        │ [1:N]                    │                Faqs                 │
+ ──[FK: ProductId]──►              ├─────────────────────────────────────┤
+┌───────▼────────────────────────┐ │ [PK] Id           : GUID            │
+│          ProductMedias         │ │      Category     : NVARCHAR(50)    │
+├────────────────────────────────┤ │      Question     : NVARCHAR(300)   │
+│ [PK] Id           : GUID       │ │      Answer       : NVARCHAR(MAX)   │
+│ [FK] ProductId    : GUID       │ └─────────────────────────────────────┘
+│      MediaUrl     : TEXT       │
+│      MediaType    : VARCHAR(50)│ ┌─────────────────────────────────────┐
+│      DisplayOrder : INT        │ │            GalleryItems             │
+└────────────────────────────────┘ ├─────────────────────────────────────┤
+                                   │ [PK] Id           : GUID            │
+┌────────────────────────────────┐ │      Title        : NVARCHAR(100)   │
+│          Notifications         │ │      ImageUrl     : NVARCHAR(500)   │
+├────────────────────────────────┤ │      Tag          : NVARCHAR(50)    │
+│ [PK] Id           : GUID       │ └─────────────────────────────────────┘
+│ [FK] UserId       : GUID       │
+│      Title        : VARCHAR(200│ ┌─────────────────────────────────────┐
+│      Body         : TEXT       │ │            KanbanTasks              │
+│      LinkPath     : VARCHAR(200│ ├─────────────────────────────────────┤
+│      IsRead       : BIT        │ │ [PK] Id           : GUID            │
+│      CreatedAtUtc : TIME       │ │      Title        : NVARCHAR(200)   │
+└────────────────────────────────┘ │      Status       : NVARCHAR(50)    │
+                                   │      Priority     : NVARCHAR(20)    │
+┌────────────────────────────────┐ └─────────────────────────────────────┘
+│            AuditLogs           │
+├────────────────────────────────┤ ┌─────────────────────────────────────┐
+│ [PK] Id           : GUID       │ │           SystemSettings            │
+│      Action       : VARCHAR(50)│ ├─────────────────────────────────────┤
+│      EntityName   : VARCHAR(100│ │ [PK] Key          : NVARCHAR(100)   │
+│      EntityId     : VARCHAR(100│ │      Value        : NVARCHAR(MAX)   │
+│      OldValues    : TEXT       │ │      Description  : NVARCHAR(500)   │
+│      NewValues    : TEXT       │ │      LastModified : DATETIME        │
+│      UserId       : GUID       │ └─────────────────────────────────────┘
+│      IpAddress    : VARCHAR(64)│
+│      TimestampUtc : TIME       │
+└────────────────────────────────┘
 ```
 
 ---
