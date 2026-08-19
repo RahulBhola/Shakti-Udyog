@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using ShaktiUdyog.Api.Contracts.Customer;
 using ShaktiUdyog.Api.Contracts.ProductMaster;
 using ShaktiUdyog.Domain.Entities;
+using ShaktiUdyog.Domain.Exceptions;
 using ShaktiUdyog.Infrastructure.Auditing;
 using ShaktiUdyog.Infrastructure.Data;
 using ShaktiUdyog.Infrastructure.Storage;
@@ -147,7 +148,7 @@ public class ProductMasterService(
         var exists = await db.ProductMasters.IgnoreQueryFilters()
             .AnyAsync(p => p.ProductCode == code);
         if (exists)
-            throw new InvalidOperationException($"Product code '{code}' already exists. Please use a unique code.");
+            throw new ConflictException("ProductCode", code, $"Product code '{code}' already exists. Please use a unique code.");
 
         var product = new ProductMaster
         {
@@ -320,7 +321,7 @@ public class ProductMasterService(
     {
         var product = await db.ProductMasters.IgnoreQueryFilters()
             .FirstOrDefaultAsync(pm => pm.Id == id)
-            ?? throw new KeyNotFoundException("Product not found");
+            ?? throw new NotFoundException("ProductMaster", id);
 
         using var stream = file.OpenReadStream();
         var stored = await storage.SaveAsync(stream, file.FileName, file.ContentType);

@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using ShaktiUdyog.Api.Contracts.Production;
 using ShaktiUdyog.Domain.Constants;
 using ShaktiUdyog.Domain.Entities;
+using ShaktiUdyog.Domain.Exceptions;
 using ShaktiUdyog.Infrastructure.Auditing;
 using ShaktiUdyog.Infrastructure.Data;
 
@@ -344,7 +345,7 @@ public class ProductionBoardService(AppDbContext db, IAuditWriter audit) : IProd
     public async Task<CommentDto> AddCommentAsync(Guid id, AddProductionCommentRequest request, Guid userId, string? ip)
     {
         var job = await db.ProductionJobs.FirstOrDefaultAsync(j => j.Id == id && !j.IsDeleted)
-            ?? throw new InvalidOperationException("Job not found.");
+            ?? throw new NotFoundException("ProductionJob", id);
 
         var user = await db.Users.FirstOrDefaultAsync(u => u.Id == userId);
         var authorName = user?.FullName ?? user?.Email ?? "Unknown";
@@ -385,8 +386,8 @@ public class ProductionBoardService(AppDbContext db, IAuditWriter audit) : IProd
     public async Task<CommentDto?> UpdateCommentAsync(Guid jobId, Guid commentId, UpdateCommentRequest request, Guid userId)
     {
         var comment = await db.ProductionComments.FirstOrDefaultAsync(c => c.Id == commentId && c.JobId == jobId)
-            ?? throw new InvalidOperationException("Comment not found.");
-        if (comment.AuthorId != userId) throw new InvalidOperationException("You can only edit your own comments.");
+            ?? throw new NotFoundException("ProductionComment", commentId);
+        if (comment.AuthorId != userId) throw new ForbiddenAccessException("You can only edit your own comments.");
 
         comment.Message = request.Message;
         comment.EditedAtUtc = DateTimeOffset.UtcNow;
@@ -398,8 +399,8 @@ public class ProductionBoardService(AppDbContext db, IAuditWriter audit) : IProd
     public async Task<bool> DeleteCommentAsync(Guid jobId, Guid commentId, Guid userId)
     {
         var comment = await db.ProductionComments.FirstOrDefaultAsync(c => c.Id == commentId && c.JobId == jobId)
-            ?? throw new InvalidOperationException("Comment not found.");
-        if (comment.AuthorId != userId) throw new InvalidOperationException("You can only delete your own comments.");
+            ?? throw new NotFoundException("ProductionComment", commentId);
+        if (comment.AuthorId != userId) throw new ForbiddenAccessException("You can only delete your own comments.");
 
         db.ProductionComments.Remove(comment);
         await db.SaveChangesAsync();

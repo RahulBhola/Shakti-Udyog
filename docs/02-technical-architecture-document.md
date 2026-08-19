@@ -297,9 +297,130 @@ sequenceDiagram
 | **`CadFileCleanupWorker`** | Every 12 hours | Scans and purges orphaned temporary CAD drawings (`.dwg`, `.step`, `.pdf`) and unsubmitted draft enquiry attachments older than 24 hours from private storage (`IFileStorageService`) and database. |
 | **`ShopFloorSlaAlertWorker`** | Every 30 minutes | Monitors the 25-stage manufacturing Kanban board for production jobs exceeding target dispatch dates or delayed in bottleneck stages. Flags `IsBlocked`, adds `ProductionComment`, and broadcasts real-time SignalR alerts to foundry engineers and supervisors. |
 
+### 3.5 Centralized Exception Handling & RFC 7807 Architecture
+
+The API implements a centralized, non-leaking exception handling pipeline via `GlobalExceptionHandler` adhering to **RFC 7807 / RFC 9110 Problem Details**.
+
+#### 3.5.1 Domain Exception Hierarchy
+
+```mermaid
+classDiagram
+    class Exception {
+        <<System>>
+    }
+
+    class ShaktiUdyogDomainException {
+        <<abstract>>
+        +string ErrorCode
+    }
+
+    class NotFoundException {
+        +string EntityName
+        +object Key
+    }
+
+    class ForbiddenAccessException {
+    }
+
+    class ConflictException {
+        +string ConflictField
+        +object ConflictValue
+    }
+
+    class InvalidStateTransitionException {
+        +string EntityType
+        +string CurrentState
+        +string TargetState
+    }
+
+    class DomainValidationException {
+        +IDictionary~string, string[]~ Errors
+    }
+
+    class FileValidationException {
+        +string FileName
+        +long? FileSizeBytes
+    }
+
+    Exception <|-- ShaktiUdyogDomainException
+    ShaktiUdyogDomainException <|-- NotFoundException : 404 Not Found
+    ShaktiUdyogDomainException <|-- ForbiddenAccessException : 403 Forbidden
+    ShaktiUdyogDomainException <|-- ConflictException : 409 Conflict
+    ShaktiUdyogDomainException <|-- InvalidStateTransitionException : 422 Unprocessable
+    ShaktiUdyogDomainException <|-- DomainValidationException : 422 Unprocessable
+    ShaktiUdyogDomainException <|-- FileValidationException : 400 Bad Request
+```
+
+#### 3.5.2 Exception to HTTP Status Mapping Matrix
+
+| Exception Class | HTTP Status | Error Code | RFC 9110 Specification Type | Description & Security Policy |
+| :--- | :--- | :--- | :--- | :--- |
+| `NotFoundException` / `KeyNotFoundException` | `404 Not Found` | `NOT_FOUND` | `https://tools.ietf.org/html/rfc9110#section-15.5.5` | Entity or resource not found. Cross-tenant IDs also return 404 to avoid information disclosure. |
+| `ForbiddenAccessException` / `OrderAccessException` | `403 Forbidden` | `FORBIDDEN` | `https://tools.ietf.org/html/rfc9110#section-15.5.4` | Authenticated user lacks permission or company association for this resource. |
+| `UnauthorizedAccessException` | `401 Unauthorized` | `UNAUTHORIZED` | `https://tools.ietf.org/html/rfc9110#section-15.5.2` | Authentication token missing, expired, or invalid. |
+| `ConflictException` | `409 Conflict` | `CONFLICT` | `https://tools.ietf.org/html/rfc9110#section-15.5.10` | Unique constraint conflict (e.g. duplicate ProductCode, duplicate GST/PAN). |
+| `DbUpdateConcurrencyException` | `409 Conflict` | `CONCURRENCY_CONFLICT` | `https://tools.ietf.org/html/rfc9110#section-15.5.10` | Optimistic locking violation (`RowVersion` mismatch). Prompts client to refresh. |
+| `DbUpdateException` (Error 2601/2627) | `409 Conflict` | `DUPLICATE_ENTITY` | `https://tools.ietf.org/html/rfc9110#section-15.5.10` | SQL Server primary key or unique index violation. |
+| `DbUpdateException` (Error 547) | `400 Bad Request` | `FOREIGN_KEY_VIOLATION` | `https://tools.ietf.org/html/rfc9110#section-15.5.1` | Relational dependency constraint violation. |
+| `DomainValidationException` | `422 Unprocessable` | `VALIDATION_FAILED` | `https://tools.ietf.org/html/rfc9110#section-15.5.21` | Domain validation rules failed. Includes structured `errors` property map. |
+| `InvalidStateTransitionException` | `422 Unprocessable` | `INVALID_STATE_TRANSITION`| `https://tools.ietf.org/html/rfc9110#section-15.5.21` | Disallowed entity lifecycle state movement (e.g. Draft $\to$ Dispatched). |
+| `FileValidationException` | `400 Bad Request` | `FILE_VALIDATION_ERROR` | `https://tools.ietf.org/html/rfc9110#section-15.5.1` | Prohibited file extension, oversized payload, or invalid magic-byte signature. |
+| `ArgumentException` / `BadHttpRequestException` | `400 Bad Request` | `BAD_REQUEST` | `https://tools.ietf.org/html/rfc9110#section-15.5.1` | Malformed JSON or invalid parameter arguments. |
+| `OperationCanceledException` | `499 Client Closed`| `REQUEST_CANCELLED` | N/A | Request was cancelled by the browser client. Logged as Information. |
+| `Exception` (Unhandled Fallback) | `500 Server Error` | `INTERNAL_SERVER_ERROR` | `https://tools.ietf.org/html/rfc9110#section-15.6.1` | Server error. Internal stack traces are masked in Production and logged with `traceId`. |
+
+#### 3.5.3 Standard RFC 7807 Response Envelope Structure
+
+```json
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.21",
+  "title": "Validation Failure",
+  "status": 422,
+  "detail": "One or more validation failures occurred.",
+  "instance": "/api/v1/customer/enquiries",
+  "traceId": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+  "timestamp": "2026-08-19T21:55:00.1234567Z",
+  "errorCode": "VALIDATION_FAILED",
+  "errors": {
+    "Email": ["Invalid email format."],
+    "GstNumber": ["GST number must be 15 alphanumeric characters."]
+  }
+}
+```
+
+#### 3.5.4 Exception Handling Pipeline Lifecycle
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Client as Client App (SPA)
+    participant Pipeline as ASP.NET Core Middleware
+    participant Handler as GlobalExceptionHandler
+    participant Logger as ILogger (Serilog / Structured)
+    participant Action as Controller / Service
+
+    Client->>Pipeline: HTTP Request
+    Pipeline->>Action: Execute Request
+    alt Business / Domain Rule Violation
+        Action-->>Pipeline: throws DomainException (e.g. NotFoundException)
+    else Database Concurrency Collision
+        Action-->>Pipeline: throws DbUpdateConcurrencyException
+    else Unexpected Server Fault
+        Action-->>Pipeline: throws Exception
+    end
+    Pipeline->>Handler: TryHandleAsync(httpContext, exception)
+    Handler->>Handler: MapException() -> Status, Title, Detail, ErrorCode
+    alt Status >= 500 (Server Error)
+        Handler->>Logger: LogError(exception, "Unhandled server error TraceId: {TraceId}")
+    else Status < 500 (Client / Domain Error)
+        Handler->>Logger: LogWarning("Client error [{ErrorCode}]: {Message}")
+    end
+    Handler->>Client: RFC 7807 ProblemDetails (JSON) with TraceId & ErrorCode
+```
+
 ---
 
-### 3.5 Domain State Machines & Status Dictionaries (`ShaktiUdyog.Domain.Constants`)
+### 3.6 Domain State Machines & Status Dictionaries (`ShaktiUdyog.Domain.Constants`)
 
 The core business logic enforces state integrity directly through immutable domain constants and validated transition dictionaries in `ShaktiUdyog.Domain.Constants`:
 

@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using ShaktiUdyog.Api.Contracts.Customer;
 using ShaktiUdyog.Domain.Constants;
 using ShaktiUdyog.Domain.Entities;
+using ShaktiUdyog.Domain.Exceptions;
 using ShaktiUdyog.Infrastructure.Auditing;
 using ShaktiUdyog.Infrastructure.Data;
 using ShaktiUdyog.Infrastructure.Storage;
@@ -90,7 +91,7 @@ public class QuotationEngineerService(
     public async Task<Guid> CreateQuotationAsync(CreateQuotationRequest request, Guid userId, string? ip)
     {
         var enquiry = await db.Enquiries.SingleOrDefaultAsync(r => r.Id == request.EnquiryId && r.Status == EnquiryStatuses.Approved)
-            ?? throw new InvalidOperationException("Enquiry not found or not approved.");
+            ?? throw new NotFoundException("Enquiry not found or not approved.");
         var enquiryShortId = enquiry.Id.ToString("N")[..8].ToUpperInvariant();
         var number = $"QT-{DateTimeOffset.UtcNow:yyyyMMdd}-{enquiryShortId}";
 

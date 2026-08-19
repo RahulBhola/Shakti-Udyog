@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using ShaktiUdyog.Domain.Exceptions;
 
 namespace ShaktiUdyog.Infrastructure.Storage;
 

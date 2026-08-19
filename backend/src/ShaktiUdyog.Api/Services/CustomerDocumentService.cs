@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ShaktiUdyog.Api.Contracts.Customer;
 using ShaktiUdyog.Domain.Entities;
+using ShaktiUdyog.Domain.Exceptions;
 using ShaktiUdyog.Infrastructure.Auditing;
 using ShaktiUdyog.Infrastructure.Data;
 using ShaktiUdyog.Infrastructure.Storage;

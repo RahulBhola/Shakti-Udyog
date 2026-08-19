@@ -7,13 +7,15 @@ using ShaktiUdyog.Infrastructure.Data;
 using ShaktiUdyog.Infrastructure.Notifications;
 using ShaktiUdyog.Infrastructure.Storage;
 
+using ShaktiUdyog.Domain.Exceptions;
+
 namespace ShaktiUdyog.Api.Services;
 
 /// <summary>
 /// Thrown when an Engineer attempts to manage an order that is not assigned to
-/// them. The controller converts this into a 403 Forbidden response.
+/// them. Handled as a 403 Forbidden RFC 7807 response.
 /// </summary>
-public class OrderAccessException : Exception;
+public class OrderAccessException() : ForbiddenAccessException("You are not assigned to manage this order.");
 
 public interface IOrderEngineerService
 {

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using ShaktiUdyog.Domain.Entities;
+using ShaktiUdyog.Domain.Exceptions;
 using ShaktiUdyog.Infrastructure.Auditing;
 using ShaktiUdyog.Infrastructure.Data;
 using ShaktiUdyog.Infrastructure.Storage;
@@ -144,7 +145,7 @@ public class DocumentService(AppDbContext db, IFileStorageService storage, IAudi
 
     public async Task<DocumentVersion> UploadNewVersionAsync(Guid id, IFormFile file, string? comment, Guid userId, string? ip)
     {
-        var doc = await db.Documents.FindAsync(id) ?? throw new InvalidOperationException("Document not found.");
+        var doc = await db.Documents.FindAsync(id) ?? throw new NotFoundException("Document", id);
         await using var stream = file.OpenReadStream();
         var stored = await storage.SaveAsync(stream, file.FileName, file.ContentType);
         var version = new DocumentVersion

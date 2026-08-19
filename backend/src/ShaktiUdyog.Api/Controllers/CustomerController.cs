@@ -6,6 +6,7 @@ using ShaktiUdyog.Api.Contracts.Auth;
 using ShaktiUdyog.Api.Contracts.Customer;
 using ShaktiUdyog.Api.Services;
 using ShaktiUdyog.Domain.Constants;
+using ShaktiUdyog.Domain.Exceptions;
 using ShaktiUdyog.Infrastructure.Data;
 using ShaktiUdyog.Infrastructure.Storage;
 

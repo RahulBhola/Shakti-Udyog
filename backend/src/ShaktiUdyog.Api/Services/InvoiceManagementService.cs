@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using ShaktiUdyog.Api.Contracts.Customer;
 using ShaktiUdyog.Domain.Constants;
 using ShaktiUdyog.Domain.Entities;
+using ShaktiUdyog.Domain.Exceptions;
 using ShaktiUdyog.Infrastructure.Auditing;
 using ShaktiUdyog.Infrastructure.Data;
 using ShaktiUdyog.Infrastructure.Storage;
@@ -165,7 +166,7 @@ public class InvoiceManagementService(AppDbContext db, IAuditWriter audit) : IIn
 
     public async Task<CreditNote> CreateCreditNoteAsync(Guid invoiceId, decimal total, string reason, Guid userId, string? ip)
     {
-        var inv = await db.Invoices.FindAsync(invoiceId) ?? throw new InvalidOperationException("Invoice not found.");
+        var inv = await db.Invoices.FindAsync(invoiceId) ?? throw new NotFoundException("Invoice", invoiceId);
         var cn = new CreditNote { Id = Guid.NewGuid(), CreditNoteNumber = $"CN-{DateTimeOffset.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..6].ToUpperInvariant()}", InvoiceId = invoiceId, CompanyId = inv.CompanyId, Total = total, Reason = reason };
         db.CreditNotes.Add(cn);
         inv.Status = InvoiceStatuses.CreditNoteIssued;
@@ -176,7 +177,7 @@ public class InvoiceManagementService(AppDbContext db, IAuditWriter audit) : IIn
 
     public async Task<DebitNote> CreateDebitNoteAsync(Guid invoiceId, decimal total, string reason, Guid userId, string? ip)
     {
-        var inv = await db.Invoices.FindAsync(invoiceId) ?? throw new InvalidOperationException("Invoice not found.");
+        var inv = await db.Invoices.FindAsync(invoiceId) ?? throw new NotFoundException("Invoice", invoiceId);
         var dn = new DebitNote { Id = Guid.NewGuid(), DebitNoteNumber = $"DN-{DateTimeOffset.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..6].ToUpperInvariant()}", InvoiceId = invoiceId, CompanyId = inv.CompanyId, Total = total, Reason = reason };
         db.DebitNotes.Add(dn);
         await db.SaveChangesAsync();

@@ -1,3 +1,5 @@
+using ShaktiUdyog.Domain.Exceptions;
+
 namespace ShaktiUdyog.Infrastructure.Storage;
 
 public record StoredFile(string StorageKey, long SizeBytes);
@@ -21,5 +23,3 @@ public interface IFileStorageService
 
     Task DeleteAsync(string storageKey, CancellationToken ct = default);
 }
-
-public class FileValidationException(string message) : Exception(message);
