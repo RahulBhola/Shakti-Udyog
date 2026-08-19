@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using ShaktiUdyog.Api.Authorization;
+using ShaktiUdyog.Api.BackgroundServices;
 using ShaktiUdyog.Api.Hubs;
 using ShaktiUdyog.Api.Services;
 using ShaktiUdyog.Domain.Constants;
@@ -77,6 +78,10 @@ public static class DependencyInjection
         services.AddScoped<IProductMasterService, ProductMasterService>();
         services.AddScoped<IEngineerManufacturingService, EngineerManufacturingService>();
         services.AddScoped<IPortalPush, PortalPushService>();
+
+        // Background Workers
+        services.AddHostedService<QuotationExpirationWorker>();
+        services.AddHostedService<InvoiceOverdueWorker>();
 
         return services;
     }

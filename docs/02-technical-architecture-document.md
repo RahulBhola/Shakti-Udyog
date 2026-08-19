@@ -243,7 +243,42 @@ sequenceDiagram
     Controller-->>Client: 200 OK (JSON Payload)
 ```
 
-### 3.4 Domain State Machines & Status Dictionaries (`ShaktiUdyog.Domain.Constants`)
+### 3.4 Automated Background Workers (`IHostedService`)
+
+The backend registers automated hosted services via `AddHostedService<T>()` to execute scheduled maintenance, lifecycle state transitions, and asynchronous operations without blocking client HTTP threads.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Timer as PeriodicTimer (Loop)
+    participant Worker as BackgroundService (HostedService)
+    participant ScopeFactory as IServiceScopeFactory
+    participant Scope as IServiceScope (Scoped Container)
+    participant UoW as IUnitOfWork & Repositories
+    participant Database as SQL Server
+
+    Timer->>Worker: Periodic Tick (e.g. 1 hour / 4 hours)
+    Worker->>ScopeFactory: CreateScope()
+    ScopeFactory-->>Worker: Scoped IServiceProvider
+    Worker->>Scope: GetRequiredService<IUnitOfWork>()
+    Scope-->>Worker: IUnitOfWork Instance
+    Worker->>UoW: Query Expired / Overdue Entities
+    UoW->>Database: SELECT WHERE Status = 'Issued' AND Date < NOW
+    Database-->>UoW: Overdue Records
+    Worker->>UoW: Transition Status (e.g. 'Expired' / 'Overdue') & Append History
+    Worker->>UoW: SaveChangesAsync()
+    UoW->>Database: UPDATE Entities & INSERT StatusHistory
+    Worker->>Scope: Dispose Scope Container
+```
+
+| Background Worker | Scan Interval | Trigger Condition & State Transition |
+| :--- | :--- | :--- |
+| **`QuotationExpirationWorker`** | Every 1 hour | Queries quotations where `Status == 'Issued'` and `ValidUntilUtc < UtcNow`. Transitions status to `Expired` and logs audit transition. |
+| **`InvoiceOverdueWorker`** | Every 4 hours | Queries invoices where `(Status == 'Issued' \|\| Status == 'Partially Paid')` and `DueDateUtc < UtcNow`. Transitions status to `Overdue` and records timeline history. |
+
+---
+
+### 3.5 Domain State Machines & Status Dictionaries (`ShaktiUdyog.Domain.Constants`)
 
 The core business logic enforces state integrity directly through immutable domain constants and validated transition dictionaries in `ShaktiUdyog.Domain.Constants`:
 
