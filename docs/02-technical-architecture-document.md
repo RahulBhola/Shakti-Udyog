@@ -9,7 +9,7 @@
 
 ## 1. System Overview & Architecture Paradigm
 
-The **Shakti Udyog Platform** is engineered following **Clean Architecture (Onion Architecture)** principles on the backend combined with a modular, responsive **Single Page Application (SPA)** on the frontend.
+The **Shakti Udyog Platform** is engineered following **Clean Architecture (Onion Architecture)** principles on the backend combined with a modular, responsive **Single Page Application (SPA)** on the frontend. Data access is decoupled via the **Repository Pattern** and **Unit of Work**, and the composition root is organized through modular **Dependency Injection (DI)** extension methods.
 
 ```mermaid
 graph TB
@@ -19,34 +19,43 @@ graph TB
         SPA --- Mobile
     end
 
-    subgraph Presentation & Gateway Layer
-        API[ASP.NET Core 9 Web API]
+    subgraph Presentation & Gateway Layer (ShaktiUdyog.Api)
+        API[17 REST API Controllers]
         SignalR[SignalR Real-Time Hub /hubs/portal]
         AuthMW[JWT Bearer & Rate Limiting Middleware]
         Swagger[Swagger / OpenAPI Documentation]
+        DIExt[Modular ServiceCollection Extensions]
         
         API --- AuthMW
         API --- SignalR
         API --- Swagger
+        DIExt -.configures.-> API
     end
 
-    subgraph Application & Domain Core
+    subgraph Application & Domain Core (ShaktiUdyog.Domain & ShaktiUdyog.Api)
         Services[27 Application Services]
-        Domain[ShaktiUdyog.Domain POCO Entities & Rules]
+        Domain[60 POCO Domain Entities & State Machines]
+        RepoInterfaces[IRepository&lt;T&gt;, IUnitOfWork & Domain Repo Interfaces]
         AuthPolicies[Dynamic Permission Policy Engine]
         
         API --> Services
+        Services --> RepoInterfaces
         Services --> Domain
         Services --> AuthPolicies
     end
 
-    subgraph Infrastructure & Persistence Layer
-        EFCore[EF Core 9 AppDbContext]
+    subgraph Infrastructure & Persistence Layer (ShaktiUdyog.Infrastructure)
+        UoWImpl[UnitOfWork & Generic Repository&lt;T&gt;]
+        SpecializedRepos[Specialized EF Core Repositories]
+        EFCore[EF Core 9 AppDbContext & Migrations]
         SQL[(Microsoft SQL Server)]
         Storage[Private Local / Cloud Object Storage]
         AuditEngine[Immutable Audit Log Engine]
         
-        Services --> EFCore
+        UoWImpl -.implements.-> RepoInterfaces
+        SpecializedRepos -.implements.-> RepoInterfaces
+        UoWImpl --> EFCore
+        SpecializedRepos --> EFCore
         EFCore --> SQL
         Services --> Storage
         EFCore --> AuditEngine
@@ -63,6 +72,7 @@ graph TB
 | Layer | Framework / Technology | Version | Purpose |
 | :--- | :--- | :--- | :--- |
 | **Backend Runtime** | .NET SDK / ASP.NET Core | 9.0+ | Core Web API framework, high-throughput asynchronous execution |
+| **Data Access & UoW** | Repository Pattern + UnitOfWork | Custom | Decoupled data persistence, transaction boundary management |
 | **ORM / Data Access** | Entity Framework Core | 9.0+ | Code-first migrations, LINQ provider, connection pooling |
 | **Database** | Microsoft SQL Server | 2019+ | Relational enterprise database, ACID compliance |
 | **Realtime Messaging** | Microsoft.AspNetCore.SignalR | 9.0+ | Low-latency WebSockets for production Kanban & milestone updates |
@@ -83,31 +93,157 @@ backend/
 ├── ShaktiUdyog.sln
 ├── src/
 │   ├── ShaktiUdyog.Domain/           # Core domain layer (Zero external dependencies)
-│   │   ├── Entities/                 # 60 POCO entities
-│   │   └── Constants/                # Roles, Permissions, Statuses, AuthPolicies, ProductionStages
+│   │   ├── Entities/                 # 60 POCO entities (Company, Order, Quotation, Enquiry, ProductionJob, etc.)
+│   │   ├── Constants/                # Roles, Permissions, Statuses, AuthPolicies, ProductionStages
+│   │   └── Interfaces/               # Generic & specialized repository contracts, IUnitOfWork
+│   │       ├── IRepository.cs        # Generic CRUD & query interface
+│   │       ├── IUnitOfWork.cs        # Transaction coordinator & repository container
+│   │       └── Repositories/         # IEnquiryRepository, IQuotationRepository, IOrderRepository, etc.
 │   │
-│   ├── ShaktiUdyog.Infrastructure/   # Persistence, External I/O, Identity & Migrations
+│   ├── ShaktiUdyog.Infrastructure/   # Persistence, Repositories, Identity & Migrations
+│   │   ├── Repositories/             # Repository<T>, UnitOfWork, and Specialized EF Core implementations
 │   │   ├── Data/                     # AppDbContext, 35 EF Core migrations, Seeders
 │   │   ├── Auth/                     # TokenService, PasswordReset, OAuth Handlers
 │   │   ├── Auditing/                 # AuditWriter (Enforces log immutability)
 │   │   ├── Storage/                  # LocalFileStorageService (Private file stream handler)
-│   │   └── Notifications/            # PortalPushService & SignalR publisher
+│   │   ├── Notifications/            # PortalPushService & SignalR publisher
+│   │   └── DependencyInjection.cs    # AddInfrastructure service collection extension
 │   │
 │   └── ShaktiUdyog.Api/              # Presentation layer (HTTP Endpoints & DI Setup)
-│       ├── Controllers/              # 17 REST controllers
-│       ├── Services/                 # 27 Application business services
+│       ├── Controllers/              # 17 REST controllers (Customer, Admin, Engineer, Quotation, etc.)
+│       ├── Services/                 # 27 Application business services (CustomerService, OrderAdminService, etc.)
 │       ├── Contracts/                # C# record DTOs (Request / Response)
 │       ├── Hubs/                     # SignalR Hub (PortalHub.cs)
 │       ├── Authorization/            # PermissionPolicyProvider & AuthorizationHandler
 │       ├── Validation/               # FluentValidation request validators
-│       ├── Infrastructure/           # GlobalExceptionHandler, Swagger Config
-│       └── Program.cs                # Composition root, middleware pipeline, DB migration startup
+│       ├── Infrastructure/           # GlobalExceptionHandler, SwaggerSetup, DependencyInjection.cs
+│       └── Program.cs                # Modular composition root & middleware pipeline
 │
 └── tests/
-    └── ShaktiUdyog.Api.Tests/        # xUnit Integration and unit test suite
+    └── ShaktiUdyog.Api.Tests/        # xUnit Integration and unit test suite (34 automated tests)
 ```
 
-### 3.1 Domain State Machines & Status Dictionaries (`ShaktiUdyog.Domain.Constants`)
+### 3.1 Repository Pattern & Unit of Work Architecture
+
+The backend implements the **Repository Pattern** and **Unit of Work** to decouple application service logic from direct EF Core `AppDbContext` dependencies, ensure consistent transaction management, and simplify unit testing.
+
+```mermaid
+classDiagram
+    class IUnitOfWork {
+        <<interface>>
+        +IEnquiryRepository Enquiries
+        +IQuotationRepository Quotations
+        +IOrderRepository Orders
+        +IInvoiceRepository Invoices
+        +IProductionJobRepository ProductionJobs
+        +ICompanyRepository Companies
+        +IDocumentRepository Documents
+        +IRepository~TEntity~ Repository~TEntity~()
+        +Task~int~ SaveChangesAsync(CancellationToken ct)
+        +Task~IDisposable~ BeginTransactionAsync(CancellationToken ct)
+    }
+
+    class IRepository~T~ {
+        <<interface>>
+        +Task~T?~ GetByIdAsync(Guid id, CancellationToken ct)
+        +Task~IReadOnlyList~T~~ ListAllAsync(CancellationToken ct)
+        +Task~IReadOnlyList~T~~ ListAsync(Expression predicate, CancellationToken ct)
+        +Task~T?~ FirstOrDefaultAsync(Expression predicate, CancellationToken ct)
+        +Task~bool~ ExistsAsync(Expression predicate, CancellationToken ct)
+        +Task~int~ CountAsync(Expression predicate, CancellationToken ct)
+        +Task~T~ AddAsync(T entity, CancellationToken ct)
+        +Task AddRangeAsync(IEnumerable~T~ entities, CancellationToken ct)
+        +void Update(T entity)
+        +void Remove(T entity)
+        +void RemoveRange(IEnumerable~T~ entities)
+        +IQueryable~T~ Query(bool asNoTracking)
+    }
+
+    class UnitOfWork {
+        -AppDbContext _db
+        +IEnquiryRepository Enquiries
+        +IQuotationRepository Quotations
+        +IOrderRepository Orders
+        +IInvoiceRepository Invoices
+        +IProductionJobRepository ProductionJobs
+        +ICompanyRepository Companies
+        +IDocumentRepository Documents
+        +IRepository~TEntity~ Repository~TEntity~()
+        +Task~int~ SaveChangesAsync(CancellationToken ct)
+        +Task~IDisposable~ BeginTransactionAsync(CancellationToken ct)
+    }
+
+    class Repository~T~ {
+        #AppDbContext Db
+        #DbSet~T~ DbSet
+        +GetByIdAsync()
+        +ListAllAsync()
+        +ListAsync()
+        +FirstOrDefaultAsync()
+        +ExistsAsync()
+        +CountAsync()
+        +AddAsync()
+        +AddRangeAsync()
+        +Update()
+        +Remove()
+        +RemoveRange()
+        +Query()
+    }
+
+    IUnitOfWork <|.. UnitOfWork : implements
+    IRepository <|.. Repository : implements
+    UnitOfWork --> Repository : creates / caches
+    Repository --> AppDbContext : executes via DbSet
+```
+
+### 3.2 Modular Dependency Injection Pipeline
+
+The application setup in `Program.cs` is composed using clean, modular extension methods grouped by responsibility:
+
+```mermaid
+flowchart LR
+    Builder[WebApplication.CreateBuilder] --> AddInfra[AddInfrastructure<br/>DbContext, Repositories, UoW, Storage, Auditing]
+    AddInfra --> AddId[AddIdentityInfrastructure<br/>ASP.NET Core Identity & Role Stores]
+    AddId --> AddApps[AddApplicationServices<br/>27 Application Services & Realtime Push]
+    AddApps --> AddJwt[AddJwtAuthentication<br/>JWT Bearer, Google & Apple OAuth]
+    AddJwt --> AddAuth[AddSecurityAuthorization<br/>Dynamic Permission Policy Engine]
+    AddAuth --> AddRate[AddApiRateLimiting<br/>Per-IP Security Limiters]
+    AddRate --> AddPres[AddApiPresentation<br/>Controllers, SignalR, Swagger, CORS, Health]
+    AddPres --> AppBuild[WebApplication.Build]
+    AppBuild --> Pipeline[Middleware Pipeline & DB Migration]
+```
+
+### 3.3 Data Request Execution Lifecycle
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Client as Frontend Client (SPA)
+    participant RateLimit as RateLimiter & Auth MW
+    participant Controller as API Controller
+    participant Service as Application Service
+    participant UoW as UnitOfWork / Repository
+    participant DbContext as EF Core AppDbContext
+    participant Database as SQL Server
+
+    Client->>RateLimit: HTTP Request (JWT Bearer)
+    RateLimit->>RateLimit: Validate Rate Limit & Token
+    RateLimit->>Controller: Route to Controller Action
+    Controller->>Service: Invoke Business Method
+    Service->>UoW: Query / Mutate via Repository (e.g. uow.Orders)
+    UoW->>DbContext: AsNoTracking / DbSet Operation
+    DbContext->>Database: Optimized SQL Query
+    Database-->>DbContext: Rowset / Execution Result
+    DbContext-->>UoW: Domain Entities
+    UoW-->>Service: Entity / DTO Mapping
+    Service->>UoW: SaveChangesAsync() (if mutated)
+    UoW->>DbContext: Commit Transaction
+    DbContext->>Database: INSERT / UPDATE / DELETE
+    Service-->>Controller: DTO Response
+    Controller-->>Client: 200 OK (JSON Payload)
+```
+
+### 3.4 Domain State Machines & Status Dictionaries (`ShaktiUdyog.Domain.Constants`)
 
 The core business logic enforces state integrity directly through immutable domain constants and validated transition dictionaries in `ShaktiUdyog.Domain.Constants`:
 

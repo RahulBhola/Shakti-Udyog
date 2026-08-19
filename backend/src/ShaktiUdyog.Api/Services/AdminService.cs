@@ -5,6 +5,7 @@ using ShaktiUdyog.Api.Contracts.Customer;
 using ShaktiUdyog.Api.Contracts.Engineer;
 using ShaktiUdyog.Domain.Constants;
 using ShaktiUdyog.Domain.Entities;
+using ShaktiUdyog.Domain.Interfaces;
 using ShaktiUdyog.Infrastructure.Auditing;
 using ShaktiUdyog.Infrastructure.Data;
 
@@ -28,6 +29,7 @@ public interface IAdminService
 public class AdminService : IAdminService
 {
     private readonly AppDbContext db;
+    private readonly IUnitOfWork uow;
     private readonly IAuditWriter audit;
     private readonly UserManager<ApplicationUser> userManager;
     private readonly RoleManager<ApplicationRole> roleManager;
@@ -35,12 +37,14 @@ public class AdminService : IAdminService
 
     public AdminService(
         AppDbContext db,
+        IUnitOfWork uow,
         IAuditWriter audit,
         UserManager<ApplicationUser> userManager,
         RoleManager<ApplicationRole> roleManager,
         ILogger<AdminService> logger)
     {
         this.db = db;
+        this.uow = uow;
         this.audit = audit;
         this.userManager = userManager;
         this.roleManager = roleManager;

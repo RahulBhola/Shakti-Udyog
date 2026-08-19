@@ -4,6 +4,7 @@ using ShaktiUdyog.Api.Contracts.Engineer;
 using ShaktiUdyog.Api.Validation;
 using ShaktiUdyog.Domain.Constants;
 using ShaktiUdyog.Domain.Entities;
+using ShaktiUdyog.Domain.Interfaces;
 using ShaktiUdyog.Infrastructure.Auditing;
 using ShaktiUdyog.Infrastructure.Data;
 
@@ -23,16 +24,17 @@ public record EngineerDashboardDto(int PendingEnquiries, int PendingQuotations, 
 
 public class EngineerService(
     AppDbContext db,
+    IUnitOfWork uow,
     IAuditWriter audit) : IEngineerService
 {
     // ---- Dashboard ---------------------------------------------------------
 
     public async Task<EngineerDashboardDto> GetDashboardAsync()
     {
-        var pendingEnquiries = await db.Enquiries.CountAsync(r => r.Status == "Received");
-        var pendingQuotations = await db.Quotations.CountAsync(q => q.Status == "Draft" || q.Status == "Pending Approval");
-        var ordersInProduction = await db.Orders.CountAsync(o => o.Status == "production" || o.Status == "quality_check");
-        var ordersAwaitingShipment = await db.Orders.CountAsync(o => o.Status == "packed" || o.Status == "ready_to_dispatch");
+        var pendingEnquiries = await uow.Enquiries.CountAsync(r => r.Status == "Received");
+        var pendingQuotations = await uow.Quotations.CountAsync(q => q.Status == "Draft" || q.Status == "Pending Approval");
+        var ordersInProduction = await uow.Orders.CountAsync(o => o.Status == "production" || o.Status == "quality_check");
+        var ordersAwaitingShipment = await uow.Orders.CountAsync(o => o.Status == "packed" || o.Status == "ready_to_dispatch");
         return new EngineerDashboardDto(pendingEnquiries, pendingQuotations, ordersInProduction, ordersAwaitingShipment);
     }
 

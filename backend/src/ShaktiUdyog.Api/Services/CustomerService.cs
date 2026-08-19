@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using ShaktiUdyog.Api.Contracts.Customer;
 using ShaktiUdyog.Domain.Constants;
 using ShaktiUdyog.Domain.Entities;
+using ShaktiUdyog.Domain.Interfaces;
 using ShaktiUdyog.Infrastructure.Auditing;
 using ShaktiUdyog.Infrastructure.Data;
 using ShaktiUdyog.Infrastructure.Storage;
@@ -60,6 +61,7 @@ public interface ICustomerService
 
 public class CustomerService(
     AppDbContext db,
+    IUnitOfWork uow,
     UserManager<ApplicationUser> userManager,
     IFileStorageService storage,
     IAuditWriter audit) : ICustomerService
@@ -70,18 +72,18 @@ public class CustomerService(
     {
         var companies = ctx.CompanyIds;
 
-        var openEnquiries = await db.Enquiries.CountAsync(r =>
+        var openEnquiries = await uow.Enquiries.CountAsync(r =>
             r.CompanyId != null && companies.Contains(r.CompanyId.Value)
             && (r.Status == EnquiryStatuses.Received || r.Status == EnquiryStatuses.UnderReview));
-        var activeQuotes = await db.Quotations.CountAsync(q =>
+        var activeQuotes = await uow.Quotations.CountAsync(q =>
             companies.Contains(q.CompanyId) && q.Status == QuotationStatuses.Issued);
-        var activeOrders = await db.Orders.CountAsync(o =>
+        var activeOrders = await uow.Orders.CountAsync(o =>
             companies.Contains(o.CompanyId)
             && o.Status != OrderStatuses.Delivered);
-        var unpaidInvoices = await db.Invoices.CountAsync(i =>
+        var unpaidInvoices = await uow.Invoices.CountAsync(i =>
             companies.Contains(i.CompanyId)
             && (i.Status == InvoiceStatuses.Issued || i.Status == InvoiceStatuses.PartiallyPaid || i.Status == InvoiceStatuses.Overdue));
-        var unread = await db.Notifications.CountAsync(n => n.UserId == ctx.UserId && !n.IsRead);
+        var unread = await uow.Repository<Notification>().CountAsync(n => n.UserId == ctx.UserId && !n.IsRead);
 
         var recentMilestones = await db.OrderMilestones
             .Where(m => m.IsCustomerVisible && companies.Contains(m.Order.CompanyId))
