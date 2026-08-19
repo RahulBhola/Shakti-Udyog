@@ -666,6 +666,260 @@ erDiagram
 
 ---
 
+### 4.5 Low-Level Design (LLD) Visual Table Connection Wireframes
+
+The following LLD UI schema layouts depict each database table as a visual schema card with primary keys, foreign keys, data types, and explicit string-connected relationship paths across all application pipelines.
+
+#### LLD Pipeline 1: Identity, Multi-Tenancy & Corporate Structure Wireframe
+
+```
+┌────────────────────────────────────────────────────────┐
+│                   AspNetUsers                          │
+├────────────────────────────────────────────────────────┤
+│ [PK] Id                  : UNIQUEIDENTIFIER            │
+│      Email               : NVARCHAR(256)               │
+│      FullName            : NVARCHAR(200)               │
+│      PhoneNumber         : NVARCHAR(50)                │
+│      IsActive            : BIT                         │
+│      CreatedAtUtc        : DATETIMEOFFSET              │
+└───────┬────────────────────────────┬───────────────────┘
+        │ [1:N]                      │ [1:N]
+        │                            │
+ ──[FK: UserId]──►            ──[FK: UserId]──►
+┌───────▼────────────────────────┐ ┌─▼───────────────────────────────────┐
+│        UserCompanies           │ │          RefreshTokens              │
+├────────────────────────────────┤ ├─────────────────────────────────────┤
+│ [PK] Id           : GUID       │ │ [PK] Id           : GUID            │
+│ [FK] UserId       : GUID       │ │ [FK] UserId       : GUID            │
+│ [FK] CompanyId    : GUID       │ │      TokenHash    : NVARCHAR(88)    │
+│      RoleInCompany: VARCHAR(50)│ │      ExpiresAtUtc : DATETIMEOFFSET  │
+└───────▲────────────────────────┘ └─────────────────────────────────────┘
+        │ [N:1]
+ ──[FK: CompanyId]──
+        │
+┌───────┴────────────────────────────────────────────────┐
+│                    Companies                           │
+├────────────────────────────────────────────────────────┤
+│ [PK] Id                  : UNIQUEIDENTIFIER            │
+│      Name                : NVARCHAR(200)               │
+│      LegalBusinessName   : NVARCHAR(200)               │
+│      GstNumber           : NVARCHAR(20)                │
+│      PANNumber           : NVARCHAR(20)                │
+│      VerificationStatus  : NVARCHAR(50)                │
+│      IsActive            : BIT                         │
+│      CreatedAtUtc        : DATETIMEOFFSET              │
+└───────┬────────────────────────────┬───────────────────┘
+        │ [1:N]                      │ [1:N]
+        │                            │
+ ──[FK: CompanyId]──►         ──[FK: CompanyId]──►
+┌───────▼────────────────────────┐ ┌─▼───────────────────────────────────┐
+│       CompanyAddresses         │ │         CompanyDocuments            │
+├────────────────────────────────┤ ├─────────────────────────────────────┤
+│ [PK] Id           : GUID       │ │ [PK] Id           : GUID            │
+│ [FK] CompanyId    : GUID       │ │ [FK] CompanyId    : GUID            │
+│      AddressType  : VARCHAR(50)│ │      DocumentType : VARCHAR(50)     │
+│      AddressLine1 : VARCHAR(200│ │      StorageKey   : NVARCHAR(200)   │
+│      City         : VARCHAR(100│ │      FileName     : NVARCHAR(200)   │
+└────────────────────────────────┘ └─────────────────────────────────────┘
+```
+
+#### LLD Pipeline 2: Sales, Enquiries & Commercial Quotation Engine
+
+```
+┌────────────────────────────────────────────────────────┐
+│                    Companies                           │
+│ [PK] Id : UNIQUEIDENTIFIER                             │
+└───────┬────────────────────────────┬───────────────────┘
+        │ [1:N]                      │ [1:N]
+ ──[FK: CompanyId]──►                │
+┌───────▼────────────────────────┐   │
+│                   Enquiries    │   │
+├────────────────────────────────┤   │
+│ [PK] Id                  : GUID│   │
+│ [FK] CompanyId           : GUID│   │
+│      EnquiryNumber       : TEXT│   │
+│      Status              : TEXT│   │
+│      TargetQuantity      : INT │   │
+│      CreatedAtUtc        : TIME│   │
+└───────┬────────────┬───────────┘   │
+        │ [1:N]      │ [1:N]         │
+        │            │               │
+ ──[FK: EnquiryId]──►│               │
+┌───────▼────────────┴───────────┐   │
+│           EnquiryItems         │   │
+├────────────────────────────────┤   │
+│ [PK] Id           : GUID       │   │
+│ [FK] EnquiryId    : GUID       │   │
+│      PartNumber   : VARCHAR(50)│   │
+│      MaterialGrade: VARCHAR(50)│   │
+│      Quantity     : INT        │   │
+└────────────────────────────────┘   │
+        │                            │
+ ──[FK: EnquiryId]───────────────────┼───────────────────┐
+        │                            │                   │
+        │ [1:N]                      │ [1:N]             │
+        │                            │                   │
+ ──[FK: EnquiryId]──►         ──[FK: CompanyId]──►       │
+┌───────▼────────────────────────┐ ┌─▼───────────────────▼───────────────┐
+│           EnquiryFiles         │ │                Quotations           │
+├────────────────────────────────┤ ├─────────────────────────────────────┤
+│ [PK] Id           : GUID       │ │ [PK] Id                  : GUID     │
+│ [FK] EnquiryId    : GUID       │ │ [FK] EnquiryId           : GUID     │
+│      FileName     : TEXT       │ │ [FK] CompanyId           : GUID     │
+│      ContentType  : TEXT       │ │      QuotationNumber     : TEXT     │
+│      StorageKey   : TEXT       │ │      Subtotal            : DECIMAL  │
+│      SizeBytes    : BIGINT     │ │      Tax                 : DECIMAL  │
+└────────────────────────────────┘ │      Total               : DECIMAL  │
+                                   │      ValidUntilUtc       : DATETIME │
+                                   │      Status              : TEXT     │
+                                   └───────┬─────────────┬───────────────┘
+                                           │ [1:N]       │ [1:N]
+                                    ──[FK: QuotationId]─►│
+                                   ┌───────▼────────┐  ┌─▼───────────────┐
+                                   │ QuotationItems │  │QuotationRevision│
+                                   ├────────────────┤  ├─────────────────┤
+                                   │[PK] Id  : GUID │  │[PK] Id   : GUID │
+                                   │[FK] QId : GUID │  │[FK] QId  : GUID │
+                                   │ Rate    : DEC  │  │ Revision : INT  │
+                                   │ Tax     : DEC  │  │ Snapshot : JSON │
+                                   └────────────────┘  └─────────────────┘
+```
+
+#### LLD Pipeline 3: Orders, 25-Stage Manufacturing & Shop-Floor Kanban
+
+```
+┌────────────────────────────────────────────────────────┐
+│                   Quotations                           │
+│ [PK] Id : UNIQUEIDENTIFIER                             │
+└───────┬────────────────────────────────────────────────┘
+        │ [1:1 / 1:N]
+ ──[FK: QuotationId]──►
+┌───────▼────────────────────────────────────────────────┐
+│                     Orders                             │
+├────────────────────────────────────────────────────────┤
+│ [PK] Id                  : UNIQUEIDENTIFIER            │
+│ [FK] CompanyId           : UNIQUEIDENTIFIER            │
+│ [FK] QuotationId         : UNIQUEIDENTIFIER (Nullable) │
+│ [FK] AssignedToUserId    : UNIQUEIDENTIFIER (Nullable) │
+│      OrderNumber         : NVARCHAR(50)                │
+│      Status              : NVARCHAR(50)                │
+│      ManufacturingStage  : NVARCHAR(50)                │
+│      TotalAmount         : DECIMAL(18,2)               │
+│      AdvancePaidAmount   : DECIMAL(18,2)               │
+│      PlacedAtUtc         : DATETIMEOFFSET              │
+└───────┬────────────────────────────┬───────────────────┘
+        │ [1:N]                      │ [1:N]
+        │                            │
+ ──[FK: OrderId]──►           ──[FK: OrderId]──►
+┌───────▼────────────────────────┐ ┌─▼───────────────────────────────────┐
+│         OrderMilestones        │ │             ProductionJobs          │
+├────────────────────────────────┤ ├─────────────────────────────────────┤
+│ [PK] Id           : GUID       │ │ [PK] Id                  : GUID     │
+│ [FK] OrderId      : GUID       │ │ [FK] OrderId             : GUID     │
+│      MilestoneCode: VARCHAR(50)│ │ [FK] CompanyId           : GUID     │
+│      Title        : VARCHAR(100│ │      JobNumber           : TEXT     │
+│      IsCompleted  : BIT        │ │      CurrentStage        : TEXT     │
+│      CompletedAt  : DATETIME   │ │      TargetDispatchDate  : DATETIME │
+└────────────────────────────────┘ │      IsBlocked           : BIT      │
+                                   │      BlockReason         : TEXT     │
+                                   └───────┬─────────────┬───────────────┘
+                                           │ [1:N]       │ [1:N]
+                                    ──[FK: JobId]──►     │
+                                   ┌───────▼────────┐  ┌─▼───────────────┐
+                                   │ProdStageHistory│  │ProductionQuality│
+                                   ├────────────────┤  ├─────────────────┤
+                                   │[PK] Id  : GUID │  │[PK] Id   : GUID │
+                                   │[FK] JobId: GUID│  │[FK] JobId: GUID │
+                                   │ FromStage:TEXT │  │ Hardness : DEC  │
+                                   │ ToStage  :TEXT │  │ Chemistry: JSON │
+                                   │ Operator :TEXT │  │ IsPassed : BIT  │
+                                   └────────────────┘  └─────────────────┘
+```
+
+#### LLD Pipeline 4: Tax Invoicing, Credit Notes, Payments & Logistics Wireframe
+
+```
+┌────────────────────────────────────────────────────────┐
+│                     Orders                             │
+│ [PK] Id : UNIQUEIDENTIFIER                             │
+└───────┬────────────────────────────┬───────────────────┘
+        │ [1:N]                      │ [1:N]
+ ──[FK: OrderId]──►           ──[FK: OrderId]──►
+┌───────▼────────────────────────┐ ┌─▼───────────────────────────────────┐
+│                    Invoices    │ │                   Shipments         │
+├────────────────────────────────┤ ├─────────────────────────────────────┤
+│ [PK] Id                  : GUID│ │ [PK] Id                  : GUID     │
+│ [FK] OrderId             : GUID│ │ [FK] OrderId             : GUID     │
+│ [FK] CompanyId           : GUID│ │ [FK] CompanyId           : GUID     │
+│      InvoiceNumber       : TEXT│ │      ShipmentNumber      : TEXT     │
+│      TaxableAmount       : DEC │ │      TransporterName     : TEXT     │
+│      CGST                : DEC │ │      VehicleNumber       : TEXT     │
+│      SGST                : DEC │ │      LrNumber            : TEXT     │
+│      TotalAmount         : DEC │ │      DispatchedAtUtc     : DATETIME │
+│      PaidAmount          : DEC │ │      Status              : TEXT     │
+│      Status              : TEXT│ └───────┬─────────────────────────────┘
+└───────┬────────────┬───────────┘         │ [1:N]
+        │ [1:N]      │ [1:N]               │
+ ──[FK: InvoiceId]──►│              ──[FK: ShipmentId]──►
+┌───────▼────────┐ ┌─▼───────────┐ ┌───────▼─────────────────────────────┐
+│  InvoiceItems  │ │  Payments   │ │        ShipmentTrackingEvents       │
+├────────────────┤ ├─────────────┤ ├─────────────────────────────────────┤
+│[PK] Id  : GUID │ │[PK] Id: GUID│ │ [PK] Id           : GUID            │
+│[FK] InvId: GUID│ │[FK] InvId: G│ │ [FK] ShipmentId   : GUID            │
+│ HsnCode : TEXT │ │ Amount: DEC │ │      Location     : NVARCHAR(100)   │
+│ Rate    : DEC  │ │ Method: TEXT│ │      StatusNote   : NVARCHAR(200)   │
+│ TaxRate : DEC  │ │ RefNo : TEXT│ │      EventTimeUtc : DATETIMEOFFSET  │
+└────────────────┘ └─────────────┘ └─────────────────────────────────────┘
+```
+
+#### LLD Visual Flowchart Diagram with Typed Schema Connectors
+
+```mermaid
+flowchart TD
+    classDef tableCard fill:#1e293b,stroke:#3b82f6,stroke-width:2px,color:#f8fafc,font-family:monospace;
+    classDef coreCard fill:#0f172a,stroke:#10b981,stroke-width:2px,color:#f8fafc,font-family:monospace;
+
+    Users["<b>AspNetUsers</b><br/>• PK: Id (Guid)<br/>• Email (varchar)<br/>• FullName (varchar)"]:::tableCard
+    UserComp["<b>UserCompanies</b><br/>• PK: Id (Guid)<br/>• FK: UserId (Guid)<br/>• FK: CompanyId (Guid)"]:::tableCard
+    Comp["<b>Companies</b><br/>• PK: Id (Guid)<br/>• LegalName (varchar)<br/>• GstNumber (varchar)"]:::coreCard
+
+    Enq["<b>Enquiries</b><br/>• PK: Id (Guid)<br/>• FK: CompanyId (Guid)<br/>• Status (varchar)<br/>• TargetQty (int)"]:::tableCard
+    EnqFiles["<b>EnquiryFiles</b><br/>• PK: Id (Guid)<br/>• FK: EnquiryId (Guid)<br/>• StorageKey (varchar)"]:::tableCard
+
+    Quote["<b>Quotations</b><br/>• PK: Id (Guid)<br/>• FK: EnquiryId (Guid)<br/>• FK: CompanyId (Guid)<br/>• Total (decimal)"]:::coreCard
+    QuoteItems["<b>QuotationItems</b><br/>• PK: Id (Guid)<br/>• FK: QuotationId (Guid)<br/>• Rate (decimal)"]:::tableCard
+
+    Ord["<b>Orders</b><br/>• PK: Id (Guid)<br/>• FK: CompanyId (Guid)<br/>• FK: QuotationId (Guid)<br/>• Status (varchar)"]:::coreCard
+    OrdItems["<b>OrderItems</b><br/>• PK: Id (Guid)<br/>• FK: OrderId (Guid)<br/>• Quantity (int)"]:::tableCard
+
+    Jobs["<b>ProductionJobs</b><br/>• PK: Id (Guid)<br/>• FK: OrderId (Guid)<br/>• CurrentStage (varchar)"]:::tableCard
+    Stages["<b>ProductionStageHistory</b><br/>• PK: Id (Guid)<br/>• FK: JobId (Guid)<br/>• Stage (varchar)"]:::tableCard
+
+    Inv["<b>Invoices</b><br/>• PK: Id (Guid)<br/>• FK: OrderId (Guid)<br/>• TotalAmount (decimal)"]:::tableCard
+    Pay["<b>Payments</b><br/>• PK: Id (Guid)<br/>• FK: InvoiceId (Guid)<br/>• Amount (decimal)"]:::tableCard
+
+    Ship["<b>Shipments</b><br/>• PK: Id (Guid)<br/>• FK: OrderId (Guid)<br/>• VehicleNo (varchar)"]:::tableCard
+
+    %% Relationships with explicit connector strings
+    Users -->|"FK: UserId [1:N]"| UserComp
+    Comp -->|"FK: CompanyId [1:N]"| UserComp
+    Comp -->|"FK: CompanyId [1:N]"| Enq
+    Enq -->|"FK: EnquiryId [1:N]"| EnqFiles
+    Enq -->|"FK: EnquiryId [1:N]"| Quote
+    Comp -->|"FK: CompanyId [1:N]"| Quote
+    Quote -->|"FK: QuotationId [1:N]"| QuoteItems
+    Quote -->|"FK: QuotationId [1:N]"| Ord
+    Comp -->|"FK: CompanyId [1:N]"| Ord
+    Ord -->|"FK: OrderId [1:N]"| OrdItems
+    Ord -->|"FK: OrderId [1:N]"| Jobs
+    Jobs -->|"FK: JobId [1:N]"| Stages
+    Ord -->|"FK: OrderId [1:N]"| Inv
+    Inv -->|"FK: InvoiceId [1:N]"| Pay
+    Ord -->|"FK: OrderId [1:N]"| Ship
+```
+
+---
+
 ## 5. API Design & Complete Controller Architecture
 
 The API exposes versioned RESTful endpoints rooted at `/api/v1/`.
