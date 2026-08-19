@@ -308,41 +308,294 @@ The core business logic enforces state integrity directly through immutable doma
 
 The database consists of **60 POCO Entity Tables** mapped via EF Core Fluent API.
 
-### 4.1 Entity Classification Matrix
+### 4.1 Master Entity-Relationship Diagram (ERD)
+
+The database schema connects **60 POCO Entity Tables** across 6 core functional domains:
 
 ```mermaid
 erDiagram
-    ApplicationUser ||--o{ UserCompany : maps
-    Company ||--o{ UserCompany : belongs
-    Company ||--o{ CompanyAddress : has
-    Company ||--o{ CompanyDocument : verifies
-    Company ||--o{ ContactPerson : lists
-    Company ||--o{ Enquiry : submits
+    ApplicationUser ||--o{ UserCompany : "maps user access"
+    Company ||--o{ UserCompany : "linked company"
+    Company ||--o{ CompanyAddress : "has multiple addresses"
+    Company ||--o{ CompanyDocument : "holds verification docs"
+    Company ||--o{ ContactPerson : "maintains contacts"
+    ApplicationUser ||--o{ RefreshToken : "owns tokens"
+    ApplicationUser ||--o{ PasswordResetToken : "owns reset tokens"
+    ApplicationUser ||--o{ AuditLog : "initiates actions"
+    ApplicationUser ||--o{ Notification : "receives alerts"
     
-    Enquiry ||--o{ EnquiryItem : contains
-    Enquiry ||--o{ EnquiryFile : attaches
-    Enquiry ||--o{ EnquiryStatusHistory : tracks
-    Enquiry ||--o{ Quotation : generates
+    Company ||--o{ Enquiry : "submits enquiries"
+    Enquiry ||--o{ EnquiryItem : "contains line specs"
+    Enquiry ||--o{ EnquiryFile : "attaches CAD drawings"
+    Enquiry ||--o{ EnquiryStatusHistory : "tracks state log"
+    Enquiry ||--o{ EnquiryComment : "has discussion thread"
+    Enquiry ||--o{ EnquiryAssignment : "assigned to engineer"
     
-    Quotation ||--o{ QuotationItem : contains
-    Quotation ||--o{ QuotationRevision : tracks
-    Quotation ||--o{ Order : converts
+    Enquiry ||--o{ Quotation : "generates quotation"
+    Company ||--o{ Quotation : "issued to company"
+    Quotation ||--o{ QuotationItem : "itemizes pricing"
+    Quotation ||--o{ QuotationRevision : "tracks revisions"
+    Quotation ||--o{ QuotationStatusHistory : "records quote transitions"
+    Quotation ||--o{ QuotationComment : "holds quote notes"
+    Quotation ||--o{ QuotationAttachment : "attaches proposals"
+    Quotation ||--o{ QuotationApproval : "tracks staff approvals"
     
-    Order ||--o{ OrderItem : contains
-    Order ||--o{ OrderMilestone : advances
-    Order ||--o{ OrderAssignment : assigns
-    Order ||--o{ Shipment : dispatches
-    Order ||--o{ ProductionJob : manufactures
-    Order ||--o{ Invoice : bills
+    Quotation ||--o{ Order : "converts to order"
+    Company ||--o{ Order : "placed by company"
+    ApplicationUser ||--o{ Order : "assigned engineer"
+    Order ||--o{ OrderItem : "contains manufactured items"
+    Order ||--o{ OrderMilestone : "advances customer milestones"
+    Order ||--o{ OrderAssignment : "assignment history"
+    Order ||--o{ OrderStatusHistory : "order state changes"
+    Order ||--o{ OrderComment : "order remarks"
+    Order ||--o{ SupportRequest : "customer support tickets"
     
-    Invoice ||--o{ InvoiceItem : lists
-    Invoice ||--o{ Payment : settles
+    Order ||--o{ ProductionJob : "initiates shop-floor job"
+    Company ||--o{ ProductionJob : "manufactured for"
+    ProductionJob ||--o{ ProductionStageHistory : "advances 25 stages"
+    ProductionJob ||--o{ ProductionQuality : "records QA inspection"
+    ProductionJob ||--o{ ProductionComment : "shop-floor notes"
+    ProductionJob ||--o{ ProductionTimeline : "automated event logs"
     
-    ProductionJob ||--o{ ProductionStageHistory : moves
-    ProductionJob ||--o{ ProductionQuality : inspects
+    Order ||--o{ Invoice : "bills delivered items"
+    Company ||--o{ Invoice : "billed company"
+    Invoice ||--o{ InvoiceItem : "tax line breakdown"
+    Invoice ||--o{ InvoiceStatusHistory : "billing lifecycle"
+    Invoice ||--o{ InvoiceAttachment : "stores signed PDFs"
+    Invoice ||--o{ CreditNote : "adjusts tax/shortages"
+    Invoice ||--o{ DebitNote : "customer debit claims"
+    Invoice ||--o{ Payment : "settles invoices"
+    Company ||--o{ Payment : "customer payments"
+    
+    Order ||--o{ Shipment : "dispatches goods"
+    Company ||--o{ Shipment : "recipient company"
+    Shipment ||--o{ ShipmentTrackingEvent : "transit checkpoints"
+    
+    Company ||--o{ Document : "holds official files"
+    Order ||--o{ Document : "order-linked MTCs"
+    DocumentFolder ||--o{ Document : "categorizes files"
+    Document ||--o{ DocumentVersion : "version control & hashes"
+    
+    ProductMaster ||--o{ ProductMasterAttachment : "attaches master CADs"
+    Category ||--o{ Product : "classifies catalogue"
 ```
 
-### 4.2 Comprehensive Entity Catalog
+---
+
+### 4.2 Sub-Domain Entity Connection Drawings
+
+#### Drawing 1: Identity, Multi-Tenancy & Corporate Structure
+```mermaid
+erDiagram
+    ApplicationUser {
+        Guid Id PK
+        string Email
+        string FullName
+        string PhoneNumber
+        string CompanyName
+        bool IsActive
+        DateTimeOffset CreatedAtUtc
+    }
+    ApplicationRole {
+        Guid Id PK
+        string Name
+        string Description
+    }
+    UserCompany {
+        Guid Id PK
+        Guid UserId FK
+        Guid CompanyId FK
+        string RoleInCompany
+        bool IsPrimary
+        DateTimeOffset CreatedAtUtc
+    }
+    Company {
+        Guid Id PK
+        string Name
+        string LegalBusinessName
+        string GstNumber
+        string PANNumber
+        string VerificationStatus
+        bool IsActive
+        DateTimeOffset CreatedAtUtc
+    }
+    CompanyAddress {
+        Guid Id PK
+        Guid CompanyId FK
+        string AddressType
+        string AddressLine1
+        string City
+        string State
+        string PinCode
+    }
+    CompanyDocument {
+        Guid Id PK
+        Guid CompanyId FK
+        string DocumentType
+        string FileName
+        string StorageKey
+    }
+    ContactPerson {
+        Guid Id PK
+        Guid CompanyId FK
+        string FullName
+        string Designation
+        string Email
+        string Phone
+    }
+    RefreshToken {
+        Guid Id PK
+        Guid UserId FK
+        string TokenHash
+        DateTimeOffset ExpiresAtUtc
+    }
+
+    ApplicationUser ||--o{ UserCompany : "belongs to (N:1)"
+    Company ||--o{ UserCompany : "associates (1:N)"
+    Company ||--o{ CompanyAddress : "has (1:N)"
+    Company ||--o{ CompanyDocument : "verifies with (1:N)"
+    Company ||--o{ ContactPerson : "lists (1:N)"
+    ApplicationUser ||--o{ RefreshToken : "has active (1:N)"
+```
+
+#### Drawing 2: Commercial & Sales Pipeline (Enquiries $\to$ Quotations)
+```mermaid
+erDiagram
+    Company ||--o{ Enquiry : "submits (1:N)"
+    Enquiry ||--o{ EnquiryItem : "contains items (1:N)"
+    Enquiry ||--o{ EnquiryFile : "uploads CAD (1:N)"
+    Enquiry ||--o{ EnquiryStatusHistory : "audits state (1:N)"
+    Enquiry ||--o{ EnquiryComment : "discusses (1:N)"
+    Enquiry ||--o{ EnquiryAssignment : "assigned to (1:N)"
+    
+    Enquiry ||--o{ Quotation : "generates (1:N)"
+    Company ||--o{ Quotation : "billed to (1:N)"
+    Quotation ||--o{ QuotationItem : "itemizes (1:N)"
+    Quotation ||--o{ QuotationRevision : "revises (1:N)"
+    Quotation ||--o{ QuotationStatusHistory : "status trail (1:N)"
+    Quotation ||--o{ QuotationComment : "negotiation notes (1:N)"
+    Quotation ||--o{ QuotationAttachment : "stores PDFs (1:N)"
+    Quotation ||--o{ QuotationApproval : "staff sign-off (1:N)"
+```
+
+#### Drawing 3: Production Orders & Customer Milestones
+```mermaid
+erDiagram
+    Quotation ||--o{ Order : "converts to (1:1/1:N)"
+    Company ||--o{ Order : "owns order (1:N)"
+    ApplicationUser ||--o{ Order : "managed by engineer (N:1)"
+    
+    Order ||--o{ OrderItem : "contains line parts (1:N)"
+    Order ||--o{ OrderMilestone : "customer timeline (1:N)"
+    Order ||--o{ OrderAssignment : "engineer assignments (1:N)"
+    Order ||--o{ OrderStatusHistory : "internal status log (1:N)"
+    Order ||--o{ OrderComment : "order communications (1:N)"
+    Order ||--o{ SupportRequest : "support tickets (1:N)"
+```
+
+#### Drawing 4: 25-Stage Shop-Floor Manufacturing Engine
+```mermaid
+erDiagram
+    Order ||--o{ ProductionJob : "triggers job card (1:N)"
+    Company ||--o{ ProductionJob : "manufactured for (1:N)"
+    ProductionJob ||--o{ ProductionStageHistory : "advances 25 stages (1:N)"
+    ProductionJob ||--o{ ProductionQuality : "QA test readings (1:N)"
+    ProductionJob ||--o{ ProductionComment : "shift remarks (1:N)"
+    ProductionJob ||--o{ ProductionTimeline : "timestamped events (1:N)"
+    ProductionDepartment ||--o{ ProductionMachine : "houses equipment (1:N)"
+```
+
+#### Drawing 5: Billing, Taxation & Financial Settlements
+```mermaid
+erDiagram
+    Company ||--o{ Invoice : "billed corporate (1:N)"
+    Order ||--o{ Invoice : "invoiced against (1:N)"
+    Invoice ||--o{ InvoiceItem : "tax invoice lines (1:N)"
+    Invoice ||--o{ InvoiceStatusHistory : "payment status log (1:N)"
+    Invoice ||--o{ InvoiceAttachment : "stored signed PDFs (1:N)"
+    Invoice ||--o{ Payment : "settles balance (1:N)"
+    Company ||--o{ Payment : "payer company (1:N)"
+    Invoice ||--o{ CreditNote : "tax credit note (1:N)"
+    Invoice ||--o{ DebitNote : "debit claim (1:N)"
+```
+
+#### Drawing 6: Logistics, Dispatch & Controlled Documents
+```mermaid
+erDiagram
+    Order ||--o{ Shipment : "dispatches batch (1:N)"
+    Company ||--o{ Shipment : "delivery client (1:N)"
+    Shipment ||--o{ ShipmentTrackingEvent : "scans transit point (1:N)"
+    
+    Company ||--o{ Document : "holds files (1:N)"
+    Order ||--o{ Document : "certified MTCs (1:N)"
+    DocumentFolder ||--o{ Document : "folder hierarchy (1:N)"
+    Document ||--o{ DocumentVersion : "SHA-256 versioning (1:N)"
+    ProductMaster ||--o{ ProductMasterAttachment : "drawings & tooling (1:N)"
+```
+
+---
+
+### 4.3 Comprehensive Foreign Key & Table Relationship Matrix
+
+| Source Table | Foreign Key Column | Target Table (Primary Key) | Relationship Type | Delete Behavior | Functional Purpose |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `UserCompanies` | `UserId` | `AspNetUsers(Id)` | Many-to-One | Cascade | Maps user to corporate accounts |
+| `UserCompanies` | `CompanyId` | `Companies(Id)` | Many-to-One | Cascade | Multi-company tenancy mapping |
+| `CompanyAddresses` | `CompanyId` | `Companies(Id)` | Many-to-One | Cascade | Factory, shipping, and registered offices |
+| `CompanyDocuments` | `CompanyId` | `Companies(Id)` | Many-to-One | Cascade | GST, PAN, and MSME verification files |
+| `ContactPersons` | `CompanyId` | `Companies(Id)` | Many-to-One | Cascade | Company personnel contact directory |
+| `RefreshTokens` | `UserId` | `AspNetUsers(Id)` | Many-to-One | Cascade | JWT refresh token rotation chain |
+| `PasswordResetTokens`| `UserId` | `AspNetUsers(Id)` | Many-to-One | Cascade | Secure single-use password resets |
+| `Enquiries` | `CompanyId` | `Companies(Id)` | Many-to-One | Restrict | Customer quotation request ownership |
+| `EnquiryItems` | `EnquiryId` | `Enquiries(Id)` | Many-to-One | Cascade | Line-level casting specifications |
+| `EnquiryFiles` | `EnquiryId` | `Enquiries(Id)` | Many-to-One | Cascade | Uploaded CAD/STEP drawings |
+| `EnquiryStatusHistory`| `EnquiryId`| `Enquiries(Id)` | Many-to-One | Cascade | Audit trail of enquiry lifecycle |
+| `EnquiryComments` | `EnquiryId` | `Enquiries(Id)` | Many-to-One | Cascade | Discussion thread on enquiries |
+| `EnquiryAssignments` | `EnquiryId` | `Enquiries(Id)` | Many-to-One | Cascade | Assignment routing to engineers |
+| `Quotations` | `EnquiryId` | `Enquiries(Id)` | Many-to-One | Restrict | Commercial quote linked to enquiry |
+| `Quotations` | `CompanyId` | `Companies(Id)` | Many-to-One | Restrict | Corporate quote recipient |
+| `QuotationItems` | `QuotationId` | `Quotations(Id)` | Many-to-One | Cascade | Itemized line rates and tooling |
+| `QuotationRevisions`| `QuotationId`| `Quotations(Id)` | Many-to-One | Cascade | Snapshot of quotation revisions |
+| `QuotationStatusHistory`|`QuotationId`| `Quotations(Id)`| Many-to-One | Cascade | Status progression history |
+| `QuotationComments` | `QuotationId` | `Quotations(Id)` | Many-to-One | Cascade | Commercial negotiation notes |
+| `QuotationAttachments`|`QuotationId`| `Quotations(Id)` | Many-to-One | Cascade | Generated PDF proposals & annexures |
+| `QuotationApprovals`| `QuotationId` | `Quotations(Id)` | Many-to-One | Cascade | Manager approval sign-offs |
+| `Orders` | `CompanyId` | `Companies(Id)` | Many-to-One | Restrict | Confirmed manufacturing order |
+| `Orders` | `QuotationId` | `Quotations(Id)` | Many-to-One | SetNull | Source quotation reference |
+| `Orders` | `AssignedToUserId`| `AspNetUsers(Id)` | Many-to-One | SetNull | Assigned lead foundry engineer |
+| `OrderItems` | `OrderId` | `Orders(Id)` | Many-to-One | Cascade | Ordered part numbers and quantities |
+| `OrderMilestones` | `OrderId` | `Orders(Id)` | Many-to-One | Cascade | Customer-visible execution stages |
+| `OrderAssignments` | `OrderId` | `Orders(Id)` | Many-to-One | Cascade | Shift engineer assignment log |
+| `OrderStatusHistory`| `OrderId` | `Orders(Id)` | Many-to-One | Cascade | State audit log for orders |
+| `OrderComments` | `OrderId` | `Orders(Id)` | Many-to-One | Cascade | Internal and customer remarks |
+| `SupportRequests` | `OrderId` | `Orders(Id)` | Many-to-One | Restrict | Customer dispute or query ticket |
+| `ProductionJobs` | `OrderId` | `Orders(Id)` | Many-to-One | SetNull | Shop-floor manufacturing job card |
+| `ProductionJobs` | `CompanyId` | `Companies(Id)` | Many-to-One | Restrict | Company casting production |
+| `ProductionStageHistory`|`JobId` | `ProductionJobs(Id)`| Many-to-One | Cascade | 25-stage Kanban transition history |
+| `ProductionQualities`| `JobId` | `ProductionJobs(Id)`| Many-to-One | Cascade | Spectrometer & hardness test readings |
+| `ProductionComments`| `JobId` | `ProductionJobs(Id)`| Many-to-One | Cascade | Shop-floor delay & shift remarks |
+| `ProductionTimelines`| `JobId` | `ProductionJobs(Id)`| Many-to-One | Cascade | Automated milestone timestamps |
+| `Invoices` | `CompanyId` | `Companies(Id)` | Many-to-One | Restrict | Customer billing account |
+| `Invoices` | `OrderId` | `Orders(Id)` | Many-to-One | SetNull | Order invoiced against |
+| `InvoiceItems` | `InvoiceId` | `Invoices(Id)` | Many-to-One | Cascade | HSN tax line items |
+| `InvoiceStatusHistory`| `InvoiceId` | `Invoices(Id)` | Many-to-One | Cascade | Tax invoice status lifecycle |
+| `InvoiceAttachments`| `InvoiceId` | `Invoices(Id)` | Many-to-One | Cascade | Stored PDF tax invoice files |
+| `Payments` | `CompanyId` | `Companies(Id)` | Many-to-One | Restrict | Customer paying company |
+| `Payments` | `InvoiceId` | `Invoices(Id)` | Many-to-One | SetNull | Invoice payment settlement |
+| `CreditNotes` | `InvoiceId` | `Invoices(Id)` | Many-to-One | Restrict | Tax credit note adjustments |
+| `DebitNotes` | `InvoiceId` | `Invoices(Id)` | Many-to-One | Restrict | Supplementary debit claims |
+| `Shipments` | `OrderId` | `Orders(Id)` | Many-to-One | Restrict | Batch dispatch record |
+| `Shipments` | `CompanyId` | `Companies(Id)` | Many-to-One | Restrict | Delivery recipient company |
+| `ShipmentTrackingEvents`|`ShipmentId`| `Shipments(Id)` | Many-to-One | Cascade | In-transit GPS & checkpoint logs |
+| `Documents` | `CompanyId` | `Companies(Id)` | Many-to-One | Restrict | Corporate vault file ownership |
+| `Documents` | `OrderId` | `Orders(Id)` | Many-to-One | SetNull | Order-specific test certificates (MTC) |
+| `Documents` | `FolderId` | `DocumentFolders(Id)`| Many-to-One | SetNull | Folder hierarchy placement |
+| `DocumentVersions` | `DocumentId` | `Documents(Id)` | Many-to-One | Cascade | Controlled document version revisions |
+| `ProductMasterAttachments`|`ProductMasterId`|`ProductMasters(Id)`| Many-to-One| Cascade | Pattern & master CAD attachments |
+
+---
+
+### 4.4 Comprehensive Entity Catalog
 
 | Entity Name | Database Table | Primary Purpose & Key Fields |
 | :--- | :--- | :--- |
