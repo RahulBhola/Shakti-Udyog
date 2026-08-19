@@ -273,8 +273,11 @@ sequenceDiagram
 
 | Background Worker | Scan Interval | Trigger Condition & State Transition |
 | :--- | :--- | :--- |
-| **`QuotationExpirationWorker`** | Every 1 hour | Queries quotations where `Status == 'Issued'` and `ValidUntilUtc < UtcNow`. Transitions status to `Expired` and logs audit transition. |
+| **`QuotationExpirationWorker`** | Every 1 hour | Queries quotations where `Status == 'Issued'` and `ValidUntilUtc < UtcNow`. Transitions status to `Expired` and logs audit transition to `QuotationStatusHistory`. |
 | **`InvoiceOverdueWorker`** | Every 4 hours | Queries invoices where `(Status == 'Issued' \|\| Status == 'Partially Paid')` and `DueDateUtc < UtcNow`. Transitions status to `Overdue` and records timeline history. |
+| **`EmailSmsQueueDispatcherWorker`** | Every 30 seconds | Asynchronously drains queued/unread system notifications, broadcasting real-time SignalR push payloads (`IPortalPush`) and triggering external emails (`IEmailSender`) without blocking API client requests. |
+| **`CadFileCleanupWorker`** | Every 12 hours | Scans and purges orphaned temporary CAD drawings (`.dwg`, `.step`, `.pdf`) and unsubmitted draft enquiry attachments older than 24 hours from private storage (`IFileStorageService`) and database. |
+| **`ShopFloorSlaAlertWorker`** | Every 30 minutes | Monitors the 25-stage manufacturing Kanban board for production jobs exceeding target dispatch dates or delayed in bottleneck stages. Flags `IsBlocked`, adds `ProductionComment`, and broadcasts real-time SignalR alerts to foundry engineers and supervisors. |
 
 ---
 

@@ -79,9 +79,12 @@ public static class DependencyInjection
         services.AddScoped<IEngineerManufacturingService, EngineerManufacturingService>();
         services.AddScoped<IPortalPush, PortalPushService>();
 
-        // Background Workers
+        // Background Workers (Automated Scheduled Hosted Services)
         services.AddHostedService<QuotationExpirationWorker>();
         services.AddHostedService<InvoiceOverdueWorker>();
+        services.AddHostedService<EmailSmsQueueDispatcherWorker>();
+        services.AddHostedService<CadFileCleanupWorker>();
+        services.AddHostedService<ShopFloorSlaAlertWorker>();
 
         return services;
     }
