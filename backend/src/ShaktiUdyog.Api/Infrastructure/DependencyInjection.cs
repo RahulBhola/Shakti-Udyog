@@ -1,13 +1,16 @@
+using System.IO.Compression;
 using System.Text;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.IdentityModel.Tokens;
 using ShaktiUdyog.Api.Authorization;
 using ShaktiUdyog.Api.BackgroundServices;
 using ShaktiUdyog.Api.Hubs;
+using ShaktiUdyog.Api.Infrastructure.Performance;
 using ShaktiUdyog.Api.Services;
 using ShaktiUdyog.Domain.Constants;
 using ShaktiUdyog.Domain.Entities;
@@ -213,6 +216,31 @@ public static class DependencyInjection
         services.AddProblemDetails();
         services.AddExceptionHandler<GlobalExceptionHandler>();
         services.AddSwaggerDocumentation();
+
+        // Performance Profiling & Metrics
+        services.AddSingleton<IPerformanceMetricsService, PerformanceMetricsService>();
+
+        // Response Compression (Brotli & Gzip)
+        services.AddResponseCompression(options =>
+        {
+            options.EnableForHttps = true;
+            options.Providers.Add<BrotliCompressionProvider>();
+            options.Providers.Add<GzipCompressionProvider>();
+            options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat([
+                "application/json",
+                "application/problem+json",
+                "text/plain",
+                "image/svg+xml"
+            ]);
+        });
+        services.Configure<BrotliCompressionProviderOptions>(options =>
+        {
+            options.Level = CompressionLevel.Fastest;
+        });
+        services.Configure<GzipCompressionProviderOptions>(options =>
+        {
+            options.Level = CompressionLevel.Fastest;
+        });
 
         services.AddHealthChecks()
             .AddDbContextCheck<AppDbContext>("database");

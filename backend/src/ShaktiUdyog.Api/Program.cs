@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using ShaktiUdyog.Api.Hubs;
 using ShaktiUdyog.Api.Infrastructure;
+using ShaktiUdyog.Api.Infrastructure.Performance;
 using ShaktiUdyog.Domain.Entities;
 using ShaktiUdyog.Infrastructure;
 using ShaktiUdyog.Infrastructure.Data;
@@ -20,6 +21,10 @@ builder.Services
     .AddApiPresentation(builder.Configuration);
 
 var app = builder.Build();
+
+// --- Performance Profiling & Response Compression ---
+app.UseResponseCompression();
+app.UseMiddleware<PerformanceMonitoringMiddleware>();
 
 // --- Reverse Proxy & Security Headers ---
 var forwardedOptions = new ForwardedHeadersOptions
@@ -65,6 +70,10 @@ app.MapControllers();
 app.MapHub<PortalHub>("/api/v1/portal-hub");
 app.MapHub<PortalHub>("/hubs/portal");
 app.MapHealthChecks("/health");
+
+// Real-Time Server Performance & Health Diagnostics Endpoint
+app.MapGet("/api/v1/meta/performance", (IPerformanceMetricsService metrics) => Results.Ok(metrics.GetMetrics()))
+    .AllowAnonymous();
 
 // --- Database Migration & Development Seeding ---
 using (var scope = app.Services.CreateScope())

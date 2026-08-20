@@ -3,6 +3,7 @@ using ShaktiUdyog.Api.Contracts.Production;
 using ShaktiUdyog.Domain.Constants;
 using ShaktiUdyog.Domain.Entities;
 using ShaktiUdyog.Domain.Exceptions;
+using ShaktiUdyog.Domain.Interfaces;
 using ShaktiUdyog.Infrastructure.Auditing;
 using ShaktiUdyog.Infrastructure.Data;
 
@@ -28,47 +29,55 @@ public interface IProductionBoardService
     Task<BoardPreferenceDto> SavePreferencesAsync(Guid userId, SaveBoardPreferenceRequest request);
 }
 
-public class ProductionBoardService(AppDbContext db, IAuditWriter audit) : IProductionBoardService
+public class ProductionBoardService(
+    AppDbContext db,
+    IAuditWriter audit,
+    ICacheService cache) : IProductionBoardService
 {
-    public async Task<IReadOnlyList<StageDto>> GetStagesAsync()
-    {
-        // Return all 25 workflow stages from the database, or fall back to the constants
-        var dbStages = await db.ProductionStages
-            .Where(s => s.IsActive)
-            .OrderBy(s => s.SortOrder)
-            .Select(s => new StageDto(s.Id, s.Name, s.SortOrder, s.Color, s.IsActive))
-            .ToListAsync();
+    public async Task<IReadOnlyList<StageDto>> GetStagesAsync() =>
+        await cache.GetOrCreateAsync("production:stages", async () =>
+        {
+            var dbStages = await db.ProductionStages
+                .AsNoTracking()
+                .Where(s => s.IsActive)
+                .OrderBy(s => s.SortOrder)
+                .Select(s => new StageDto(s.Id, s.Name, s.SortOrder, s.Color, s.IsActive))
+                .ToListAsync();
 
-        if (dbStages.Count > 0) return dbStages;
+            if (dbStages.Count > 0) return (IReadOnlyList<StageDto>)dbStages;
 
-        // Fallback: return stages from constants
-        return ProductionStageNames.Workflow.Select((name, index) =>
-            new StageDto(Guid.Empty, name, index, ProductionStageNames.Colors.GetValueOrDefault(name, "#6b7280"), true)
-        ).ToList();
-    }
+            return ProductionStageNames.Workflow.Select((name, index) =>
+                new StageDto(Guid.Empty, name, index, ProductionStageNames.Colors.GetValueOrDefault(name, "#6b7280"), true)
+            ).ToList();
+        }, TimeSpan.FromHours(1));
 
-    public async Task<IReadOnlyList<DepartmentDto>> GetDepartmentsAsync()
-    {
-        return await db.ProductionDepartments
-            .Where(d => d.IsActive)
-            .OrderBy(d => d.Name)
-            .Select(d => new DepartmentDto(d.Id, d.Name))
-            .ToListAsync();
-    }
+    public async Task<IReadOnlyList<DepartmentDto>> GetDepartmentsAsync() =>
+        await cache.GetOrCreateAsync("production:departments", async () =>
+        {
+            return (IReadOnlyList<DepartmentDto>)await db.ProductionDepartments
+                .AsNoTracking()
+                .Where(d => d.IsActive)
+                .OrderBy(d => d.Name)
+                .Select(d => new DepartmentDto(d.Id, d.Name))
+                .ToListAsync();
+        }, TimeSpan.FromHours(1));
 
-    public async Task<IReadOnlyList<MachineDto>> GetMachinesAsync()
-    {
-        return await db.ProductionMachines
-            .Where(m => m.IsActive)
-            .OrderBy(m => m.Name)
-            .Select(m => new MachineDto(m.Id, m.Name, m.Department, m.Status))
-            .ToListAsync();
-    }
+    public async Task<IReadOnlyList<MachineDto>> GetMachinesAsync() =>
+        await cache.GetOrCreateAsync("production:machines", async () =>
+        {
+            return (IReadOnlyList<MachineDto>)await db.ProductionMachines
+                .AsNoTracking()
+                .Where(m => m.IsActive)
+                .OrderBy(m => m.Name)
+                .Select(m => new MachineDto(m.Id, m.Name, m.Department, m.Status))
+                .ToListAsync();
+        }, TimeSpan.FromHours(1));
 
     public async Task<IReadOnlyList<ProductionJobListItemDto>> GetBoardJobsAsync(
         string? search, string? stage, string? priority, string? status)
     {
         var query = db.ProductionJobs
+            .AsNoTracking()
             .Where(j => !j.IsDeleted)
             .Include(j => j.Company)
             .AsQueryable();

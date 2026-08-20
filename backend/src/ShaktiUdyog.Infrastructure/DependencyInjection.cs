@@ -7,7 +7,9 @@ using ShaktiUdyog.Domain.Interfaces;
 using ShaktiUdyog.Domain.Interfaces.Repositories;
 using ShaktiUdyog.Infrastructure.Auditing;
 using ShaktiUdyog.Infrastructure.Auth;
+using ShaktiUdyog.Infrastructure.Caching;
 using ShaktiUdyog.Infrastructure.Data;
+using ShaktiUdyog.Infrastructure.Data.Interceptors;
 using ShaktiUdyog.Infrastructure.Notifications;
 using ShaktiUdyog.Infrastructure.Repositories;
 using ShaktiUdyog.Infrastructure.Storage;
@@ -21,19 +23,25 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        // Database Context
+        // Database Context & Performance Interceptor
         var connectionString = configuration.GetConnectionString("DefaultConnection")
             ?? throw new InvalidOperationException(
                 "Connection string 'DefaultConnection' is not configured. "
                 + "Set it via user secrets or the ConnectionStrings__DefaultConnection environment variable.");
 
-        services.AddDbContext<AppDbContext>(options =>
+        services.AddSingleton<SlowQueryInterceptor>();
+        services.AddDbContext<AppDbContext>((sp, options) =>
         {
             options.UseSqlServer(connectionString, sql =>
                 sql.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName));
             options.ConfigureWarnings(warnings =>
                 warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+            options.AddInterceptors(sp.GetRequiredService<SlowQueryInterceptor>());
         });
+
+        // Caching
+        services.AddMemoryCache();
+        services.AddSingleton<ICacheService, MemoryCacheService>();
 
         // Repositories & Unit of Work
         services.AddScoped(typeof(IRepository<>), typeof(Repository<>));

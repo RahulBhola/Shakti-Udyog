@@ -12,6 +12,7 @@ public class OrderRepository : Repository<Order>, IOrderRepository
     public async Task<Order?> GetWithMilestonesAndShipmentsAsync(Guid orderId, CancellationToken ct = default)
     {
         return await Db.Orders
+            .AsSplitQuery()
             .Include(o => o.Items)
             .Include(o => o.Milestones)
             .Include(o => o.Shipments)

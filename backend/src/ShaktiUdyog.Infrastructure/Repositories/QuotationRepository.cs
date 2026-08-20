@@ -12,6 +12,7 @@ public class QuotationRepository : Repository<Quotation>, IQuotationRepository
     public async Task<Quotation?> GetWithItemsAndRevisionsAsync(Guid quotationId, CancellationToken ct = default)
     {
         return await Db.Quotations
+            .AsSplitQuery()
             .Include(q => q.Items)
             .Include(q => q.Revisions)
             .Include(q => q.Approvals)
