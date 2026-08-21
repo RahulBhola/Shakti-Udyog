@@ -1,9 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
+import { Bell, User, LogOut, ExternalLink, Sun, Moon, HelpCircle } from "lucide-react";
 import { useAuth } from "../auth/AuthContext";
+import { useTheme } from "../auth/ThemeContext";
 import { customerApi, type NotificationItem } from "../api/customerApi";
 import { Sidebar } from "../components/sidebar/Sidebar";
 import type { NavSection } from "../components/sidebar/Sidebar";
+import { cn } from "../lib/utils";
 import "./portal.css";
 
 const customerSections: NavSection[] = [
@@ -65,7 +68,64 @@ export function CustomerBreadcrumb() {
   );
 }
 
-function NotificationBell() {
+export function CustomerLayout() {
+  const { user } = useAuth();
+  const displayName = user?.fullName ?? user?.email ?? "Customer";
+  const initials = displayName.charAt(0).toUpperCase();
+
+  return (
+    <div className="admin-portal-layout">
+      <Sidebar sections={customerSections} />
+
+      <div className="admin-portal-main">
+        {/* Top Bar */}
+        <header className="portal__topbar">
+          <strong className="text-[15px] font-semibold text-[var(--text-primary)]">Customer Portal</strong>
+
+          <span className="nav-spacer" />
+
+          {/* Public site link */}
+          <Link
+            to="/"
+            className="flex items-center gap-1.5 text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--color-primary)] no-underline transition-colors duration-200"
+          >
+            <ExternalLink size={13} />
+            Public site
+          </Link>
+
+          {/* Notification Bell */}
+          <CustomerNotificationBell />
+
+          {/* Profile Avatar */}
+          <CustomerProfileAvatar initials={initials} displayName={displayName} />
+        </header>
+
+        {/* Mobile Nav */}
+        <nav className="portal-mobile-nav" aria-label="Customer portal">
+          {customerSections.map((section) =>
+            section.items.map((item) => (
+              <NavLink key={item.href} to={item.href}>
+                {item.label}
+              </NavLink>
+            )),
+          )}
+        </nav>
+
+        {/* Main Content */}
+        <main className="portal__content" id="main-content">
+          <CustomerBreadcrumb />
+          <Outlet />
+        </main>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Notification Bell — Theme-aware                                    */
+/* ------------------------------------------------------------------ */
+
+function CustomerNotificationBell() {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<NotificationItem[]>([]);
   const ref = useRef<HTMLDivElement>(null);
@@ -88,169 +148,169 @@ function NotificationBell() {
   const unread = items.length;
 
   return (
-    <div ref={ref} style={{ position: "relative" }}>
+    <div ref={ref} className="relative">
       <button
         type="button"
-        className="btn btn--ghost"
-        style={{
-          padding: "0.4rem 0.7rem",
-          position: "relative",
-        }}
         onClick={() => setOpen(!open)}
+        className={cn(
+          "flex items-center justify-center w-10 h-10 rounded-full",
+          "text-[var(--text-secondary)] hover:text-[var(--color-primary)] hover:bg-[var(--bg-surface-hover)]",
+          "shadow-sm border border-[var(--border-default)]",
+          "transition-all duration-200",
+          "focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--color-primary)]",
+        )}
+        aria-label="Notifications"
+        aria-expanded={open}
       >
-        <svg
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="var(--c-ink)"
-          strokeWidth="2"
-        >
-          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-          <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-        </svg>
+        <Bell size={16} />
         {unread > 0 && (
-          <span
-            style={{
-              position: "absolute",
-              top: "-2px",
-              right: "-2px",
-              background: "var(--c-error)",
-              color: "white",
-              fontSize: "10px",
-              fontWeight: 700,
-              borderRadius: "50%",
-              width: 16,
-              height: 16,
-              display: "grid",
-              placeItems: "center",
-            }}
-          >
-            {unread}
-          </span>
+          <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-[var(--color-danger)] rounded-full ring-2 ring-[var(--bg-header)]" />
         )}
       </button>
+
       {open && (
-        <div
-          style={{
-            position: "absolute",
-            top: "100%",
-            right: 0,
-            width: 300,
-            background: "var(--c-iron-800)",
-            border: "1px solid var(--c-line)",
-            borderRadius: "var(--radius-lg)",
-            boxShadow: "var(--shadow-md)",
-            zIndex: 100,
-            padding: "var(--sp-3)",
-            marginTop: "var(--sp-1)",
-          }}
-        >
-          <div
-            style={{
-              fontWeight: 700,
-              marginBottom: "var(--sp-3)",
-              fontSize: "var(--fs-sm)",
-            }}
-          >
-            Notifications
+        <div className="absolute right-0 top-full mt-2 w-80 z-50 rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] p-3 shadow-lg backdrop-blur-xl">
+          <div className="flex items-center justify-between border-b border-[var(--border-default)] pb-2 mb-2">
+            <span className="text-sm font-semibold text-[var(--text-primary)]">Notifications</span>
+            {unread > 0 && (
+              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-[var(--color-primary)]/15 text-[var(--color-primary)]">
+                {unread} new
+              </span>
+            )}
           </div>
+
           {items.length === 0 ? (
-            <p className="placeholder-note" style={{ margin: 0 }}>
-              No unread notifications.
-            </p>
+            <div className="text-xs text-[var(--text-secondary)] py-6 text-center">No unread notifications</div>
           ) : (
-            <div style={{ display: "grid", gap: "var(--sp-2)" }}>
+            <div className="flex flex-col gap-1.5 max-h-64 overflow-y-auto">
               {items.map((n) => (
                 <Link
                   key={n.id}
                   to={n.linkPath ?? "/customer/notifications"}
-                  style={{
-                    display: "block",
-                    padding: "var(--sp-2)",
-                    borderRadius: "var(--radius)",
-                    background: "var(--glass)",
-                    fontSize: "var(--fs-sm)",
-                  }}
+                  className="flex flex-col gap-0.5 p-2 rounded-lg hover:bg-[var(--bg-surface-hover)] no-underline transition-colors duration-150"
                   onClick={() => setOpen(false)}
                 >
-                  <div style={{ fontWeight: 600 }}>{n.title}</div>
-                  <div
-                    style={{
-                      color: "var(--c-ink-muted)",
-                      fontSize: "var(--fs-xs)",
-                    }}
-                  >
-                    {n.type}
-                  </div>
+                  <span className="text-xs font-semibold text-[var(--text-primary)] truncate">{n.title}</span>
+                  <span className="text-[11px] text-[var(--text-secondary)]">{n.type}</span>
                 </Link>
               ))}
             </div>
           )}
-          <Link
-            to="/customer/notifications"
-            style={{
-              display: "block",
-              textAlign: "center",
-              marginTop: "var(--sp-2)",
-              fontSize: "var(--fs-sm)",
-            }}
-            onClick={() => setOpen(false)}
-          >
-            View all
-          </Link>
+
+          <div className="border-t border-[var(--border-default)] pt-2 mt-2 text-center">
+            <Link
+              to="/customer/notifications"
+              className="text-xs font-semibold text-[var(--color-primary)] hover:underline no-underline"
+              onClick={() => setOpen(false)}
+            >
+              View all notifications
+            </Link>
+          </div>
         </div>
       )}
     </div>
   );
 }
 
-export function CustomerLayout() {
-  const { logout } = useAuth();
+/* ------------------------------------------------------------------ */
+/*  Customer Profile Avatar Dropdown — Theme-aware                     */
+/* ------------------------------------------------------------------ */
 
-  async function handleLogout() {
+function CustomerProfileAvatar({ initials, displayName }: { initials: string; displayName: string }) {
+  const { logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  const handleLogout = useCallback(async () => {
     await logout();
     window.location.href = "/login";
-  }
+  }, [logout]);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
 
   return (
-    <div className="admin-portal-layout">
-      <Sidebar sections={customerSections} onLogout={handleLogout} />
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className={cn(
+          "flex items-center justify-center w-10 h-10 rounded-full",
+          "bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-hover)]",
+          "text-white text-sm font-bold",
+          "shadow-md hover:shadow-lg",
+          "transition-all duration-200",
+          "focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--color-primary)]",
+        )}
+        aria-label="User menu"
+        aria-expanded={open}
+      >
+        {initials}
+      </button>
 
-      <div className="admin-portal-main">
-        <header className="portal__topbar">
-          <strong>Customer Portal</strong>
-          <span className="nav-spacer" />
-          <NotificationBell />
-          <Link to="/" style={{ fontSize: "var(--fs-sm)" }}>
-            Public site
-          </Link>
+      {open && (
+        <div className="absolute right-0 top-full mt-2 w-56 z-50 rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] p-1.5 shadow-lg backdrop-blur-xl">
+          <div className="px-3 py-2.5 border-b border-[var(--border-default)] mb-1">
+            <div className="flex items-center gap-3">
+              <span className="flex items-center justify-center w-9 h-9 rounded-full bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-hover)] text-white text-xs font-bold shrink-0">
+                {initials}
+              </span>
+              <div className="min-w-0">
+                <div className="text-sm font-semibold text-[var(--text-primary)] truncate">{displayName}</div>
+                <div className="text-[11px] text-[var(--text-secondary)] mt-0.5 font-medium">Customer Account</div>
+              </div>
+            </div>
+          </div>
+
+          <CustomerDropdownItem icon={User} label="Company & Profile" href="/customer/profile" />
+          <CustomerDropdownItem icon={HelpCircle} label="Help & Support" href="/customer/support" />
+          <CustomerDropdownItem
+            icon={theme === "light" ? Moon : Sun}
+            label={theme === "light" ? "Dark mode" : "Light mode"}
+            onClick={toggleTheme}
+          />
+
+          <div className="border-t border-[var(--border-default)] my-1" />
+
           <button
-            className="btn btn--ghost"
+            type="button"
             onClick={() => void handleLogout()}
-            style={{
-              fontSize: "var(--fs-sm)",
-              color: "var(--c-error)",
-              marginLeft: "0.5rem",
-            }}
+            className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-xs font-medium text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10 hover:text-[var(--color-danger)] transition-all duration-200"
           >
-            Logout
+            <LogOut size={15} />
+            Sign out
           </button>
-        </header>
-        <nav className="portal-mobile-nav" aria-label="Customer portal">
-          {customerSections.map((section) =>
-            section.items.map((item) => (
-              <NavLink key={item.href} to={item.href}>
-                {item.label}
-              </NavLink>
-            )),
-          )}
-        </nav>
-        <main className="portal__content" id="main-content">
-          <CustomerBreadcrumb />
-          <Outlet />
-        </main>
-      </div>
+        </div>
+      )}
     </div>
   );
+}
+
+function CustomerDropdownItem({
+  icon: Icon,
+  label,
+  href,
+  onClick,
+}: {
+  icon: typeof User;
+  label: string;
+  href?: string;
+  onClick?: () => void;
+}) {
+  const classes = cn(
+    "flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-xs font-medium",
+    "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)]",
+    "transition-all duration-200 no-underline hover:no-underline",
+  );
+
+  if (href) {
+    return <Link to={href} className={classes}><Icon size={15} />{label}</Link>;
+  }
+  return <button type="button" onClick={onClick} className={classes}><Icon size={15} />{label}</button>;
 }
