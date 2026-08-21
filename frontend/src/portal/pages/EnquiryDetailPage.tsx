@@ -1,171 +1,219 @@
-import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import { customerApi, type EnquiryDetail, type EnquiryTimelineEntry, type QuotationListItem } from "../../api/customerApi";
+import { useEffect, useRef, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import {
+  customerApi,
+  type EnquiryDetail,
+  type EnquiryTimelineEntry,
+  type QuotationListItem,
+} from "../../api/customerApi";
 import { config } from "../../config";
 import { tokenStorage } from "../../auth/tokenStorage";
 import { Loading } from "../../components/ui";
 import { formatDate } from "../shared";
 import {
-  Clock, CheckCircle, XCircle, AlertCircle, FileText, Package,
-  Send, FileEdit, Info, CheckSquare, Loader2, Phone, Mail, Headphones
+  Clock,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  FileText,
+  Package,
+  Send,
+  FileEdit,
+  Info,
+  ChevronLeft,
+  Download,
+  Trash2,
+  Paperclip,
+  UploadCloud,
+  FileCode,
+  FileSpreadsheet,
+  FileImage,
+  Layers,
+  Phone,
+  Mail,
+  Headphones,
+  Check,
+  Calendar,
+  MapPin,
+  Scale,
+  Wrench,
+  Loader2,
 } from "lucide-react";
+import "./erpListView.css";
 
-/* ── Status timeline steps ──────────────────────────────────── */
+/* ── Status Stepper Definitions ───────────────────────────────────── */
 
-const Enquiry_STATUSES = [
-  "Draft", "Submitted", "Received", "Under Review",
-  "Approved", "Quoted", "Accepted",
+const STEPPER_STAGES = [
+  { key: "Draft", label: "Drafted", desc: "Requirement details drafted" },
+  { key: "Submitted", label: "Submitted", desc: "Sent to Shakti Udyog" },
+  { key: "Received", label: "Received", desc: "Acknowledged by foundry" },
+  { key: "Under Review", label: "Under Review", desc: "Feasibility & pattern check" },
+  { key: "Approved", label: "Approved", desc: "Technical specs validated" },
+  { key: "Quoted", label: "Quoted", desc: "Commercial quotation ready" },
+  { key: "Accepted", label: "Accepted", desc: "Order confirmed & scheduled" },
 ];
 
-const STATUS_ICONS: Record<string, any> = {
-  Draft: FileEdit, Submitted: Send, Received: Clock, "Under Review": AlertCircle,
-  Approved: CheckCircle, Rejected: XCircle,
-  Quoted: FileText, Accepted: CheckCircle, Declined: XCircle, Expired: Clock, Cancelled: XCircle,
-};
-
-/* ── Status colors ──────────────────────────────────────────── */
-
-const STATUS_COLORS: Record<string, string> = {
-  Draft: "bg-slate-100 text-slate-600 dark:bg-slate-500/10 dark:text-slate-400",
-  Submitted: "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400",
-  Received: "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400",
-  "Under Review": "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400",
-  Approved: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400",
-  Rejected: "bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400",
-  Quoted: "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400",
-  Accepted: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400",
-  Declined: "bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400",
-  Expired: "bg-slate-50 text-slate-600 dark:bg-slate-500/10 dark:text-slate-400",
-  Cancelled: "bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400",
-};
+function statusTone(status: string): string {
+  switch (status) {
+    case "Accepted":
+    case "Approved":
+      return "green";
+    case "Rejected":
+    case "Cancelled":
+    case "Declined":
+      return "red";
+    case "Under Review":
+    case "UnderReview":
+      return "orange";
+    case "Quoted":
+      return "purple";
+    case "Draft":
+    case "Submitted":
+    case "Received":
+      return "blue";
+    default:
+      return "gray";
+  }
+}
 
 function StatusBadge({ status }: { status: string }) {
-  const c = STATUS_COLORS[status] ?? "bg-[#F1F5F9] text-[#64748B]";
-  return (
-    <span className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold tracking-wide ${c}`}>
-      {status}
-    </span>
-  );
+  const norm = status === "UnderReview" ? "Under Review" : status;
+  return <span className={`inv-badge inv-badge--${statusTone(norm)}`}>{norm}</span>;
 }
 
-/* ── Field label + value ────────────────────────────────────── */
-
-function Field({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between py-1.5 border-b border-[var(--border-default)]/60 last:border-b-0">
-      <span className="text-[11px] text-[var(--text-muted)] font-medium">{label}</span>
-      <span className="text-xs font-semibold text-[var(--text-primary)] text-right">{value}</span>
-    </div>
-  );
+function formatBytes(bytes: number): string {
+  if (!bytes || bytes === 0) return "0 B";
+  const k = 1024;
+  const sizes = ["B", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 }
 
-/* ── Section card ───────────────────────────────────────────── */
+function getFileIcon(fileName: string) {
+  const ext = fileName.split(".").pop()?.toLowerCase() ?? "";
+  if (["pdf"].includes(ext)) return <FileText size={18} className="text-red-500" />;
+  if (["step", "stp", "iges", "igs", "dwg", "dxf"].includes(ext))
+    return <FileCode size={18} className="text-blue-500" />;
+  if (["xlsx", "xls", "csv"].includes(ext))
+    return <FileSpreadsheet size={18} className="text-emerald-500" />;
+  if (["png", "jpg", "jpeg", "webp"].includes(ext))
+    return <FileImage size={18} className="text-purple-500" />;
+  return <Paperclip size={18} className="text-[var(--text-secondary)]" />;
+}
 
-function SectionCard({ title, icon: Icon, children }: { title: string; icon?: any; children: React.ReactNode }) {
+/* ── Section Card Component ───────────────────────────────────────── */
+
+function SectionCard({
+  title,
+  icon: Icon,
+  badge,
+  children,
+  action,
+}: {
+  title: string;
+  icon?: any;
+  badge?: React.ReactNode;
+  children: React.ReactNode;
+  action?: React.ReactNode;
+}) {
   return (
-    <div className="rounded-[16px] border border-[var(--border-default)] bg-[var(--bg-card)] shadow-sm overflow-hidden">
-      <div className="px-5 py-4 border-b border-[var(--border-default)] flex items-center gap-2.5 bg-[var(--bg-surface)]/50">
-        {Icon && <Icon size={16} className="text-[var(--color-primary)]" />}
-        <h3 className="text-sm font-semibold text-[var(--text-primary)] m-0">{title}</h3>
+    <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] shadow-sm overflow-hidden transition-all duration-200">
+      <div className="px-5 py-3.5 border-b border-[var(--border-default)] flex items-center justify-between bg-[var(--bg-surface)]/60">
+        <div className="flex items-center gap-2.5">
+          {Icon && (
+            <span className="p-1.5 rounded-lg bg-[var(--color-primary)]/10 text-[var(--color-primary)]">
+              <Icon size={16} />
+            </span>
+          )}
+          <h3 className="text-sm font-bold text-[var(--text-primary)] m-0">{title}</h3>
+          {badge}
+        </div>
+        {action}
       </div>
       <div className="p-5">{children}</div>
     </div>
   );
 }
 
-/* ── Chip (pill with green check) ───────────────────────────── */
+/* ── Spec Row Component ───────────────────────────────────────────── */
 
-function Chip({ label }: { label: string }) {
+function SpecField({
+  label,
+  value,
+  icon: Icon,
+}: {
+  label: string;
+  value?: string | number | null;
+  icon?: any;
+}) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium bg-white dark:bg-[var(--bg-surface)] border border-[var(--border-default)] text-[var(--text-primary)]">
-      <CheckCircle size={12} className="text-emerald-500 shrink-0" />
+    <div className="flex flex-col p-3 rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)]/50">
+      <span className="text-[11px] font-medium text-[var(--text-muted)] flex items-center gap-1.5 mb-1">
+        {Icon && <Icon size={12} className="text-[var(--text-muted)]" />}
+        {label}
+      </span>
+      <span className="text-xs font-bold text-[var(--text-primary)] break-words">
+        {value != null && String(value).trim() !== "" ? String(value) : "—"}
+      </span>
+    </div>
+  );
+}
+
+/* ── Chip Pill ────────────────────────────────────────────────────── */
+
+function RequirementChip({ label }: { label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold bg-[var(--bg-surface)] border border-[var(--border-default)] text-[var(--text-primary)] shadow-sm">
+      <CheckCircle2 size={13} className="text-emerald-500 shrink-0" />
       {label}
     </span>
   );
 }
 
-/* ── Summary row (label / value) ────────────────────────────── */
-
-function SummaryRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex justify-between py-2.5 border-b border-[var(--border-default)]/60 last:border-b-0">
-      <span className="text-[11px] text-[var(--text-muted)]">{label}</span>
-      <span className="text-xs font-semibold text-[var(--text-primary)] text-right">{value}</span>
-    </div>
-  );
-}
-
-/* ── Enquiry Info section (numbered) ─────────────────────────────── */
-
-function InfoSection({ number, title, children }: { number: number; title: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <div className="flex items-center gap-2.5 mb-4">
-        <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[var(--color-primary)] text-[10px] font-bold text-white shrink-0">
-          {number}
-        </span>
-        <h4 className="text-xs font-semibold text-[var(--text-primary)] m-0 uppercase tracking-wide">{title}</h4>
-      </div>
-      {children}
-    </div>
-  );
-}
-
-/* ── Info field (used inside Enquiry Information grids) ──────────── */
-
-function InfoField({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="py-1.5">
-      <div className="text-[11px] text-[var(--text-muted)] font-medium mb-0.5">{label}</div>
-      <div className="text-sm font-medium text-[var(--text-primary)]">{value}</div>
-    </div>
-  );
-}
-
-/* ── Auth-fetched image ─────────────────────────────────────── */
-
-function EnquiryImage({ enquiryId, fileId, fileName }: { enquiryId: string; fileId: string; fileName: string }) {
-  const [url, setUrl] = useState<string | null>(null);
-  useEffect(() => {
-    let cancelled = false;
-    const token = tokenStorage.getAccessToken();
-    fetch(`${config.apiBaseUrl}/api/v1/customer/enquiries/${enquiryId}/files/${fileId}`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {}, credentials: "include",
-    }).then((r) => { if (!r.ok) throw new Error(); return r.blob(); })
-      .then((blob) => { if (!cancelled) setUrl(URL.createObjectURL(blob)); })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, [enquiryId, fileId]);
-  if (!url) return <div className="w-full h-full rounded-xl bg-[var(--bg-surface)] animate-pulse" />;
-  return <img src={url} alt={fileName} className="w-full h-full object-cover rounded-xl" />;
-}
-
-/* ── Main Page ──────────────────────────────────────────────── */
+/* ── Main Component ───────────────────────────────────────────────── */
 
 export default function EnquiryDetailPage() {
   const { id = "" } = useParams();
+  const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
   const [enquiry, setEnquiry] = useState<EnquiryDetail | null>(null);
   const [timeline, setTimeline] = useState<EnquiryTimelineEntry[] | null>(null);
   const [missing, setMissing] = useState(false);
   const [quotation, setQuotation] = useState<QuotationListItem | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  const loadData = async () => {
+    try {
+      const enq = await customerApi.enquiry(id);
+      setEnquiry(enq);
+    } catch {
+      setMissing(true);
+    }
+
+    try {
+      const t = await customerApi.enquiryTimeline(id);
+      setTimeline(t);
+    } catch {}
+
+    try {
+      const quotes = await customerApi.quotations();
+      const match = quotes.find((q) => q.enquiryId === id);
+      if (match) setQuotation(match);
+    } catch {}
+  };
 
   useEffect(() => {
-    customerApi.enquiry(id).then(setEnquiry).catch(() => setMissing(true));
-    customerApi.enquiryTimeline(id).then(setTimeline).catch(() => {});
-    customerApi.quotations().then((list) => {
-      const found = list.find((q) => q.enquiryId === id);
-      if (found) setQuotation(found);
-    }).catch(() => {});
+    void loadData();
   }, [id]);
 
   async function submitDraft() {
     setSubmitting(true);
     try {
       await customerApi.submitEnquiry(id);
-      const updated = await customerApi.enquiry(id);
-      setEnquiry(updated);
-      setTimeline(await customerApi.enquiryTimeline(id));
+      await loadData();
     } catch {
       alert("Could not submit the draft.");
     } finally {
@@ -173,321 +221,591 @@ export default function EnquiryDetailPage() {
     }
   }
 
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setUploading(true);
+    setUploadError(null);
+
+    try {
+      for (let i = 0; i < files.length; i++) {
+        await customerApi.uploadEnquiryFile(id, files[i]);
+      }
+      await loadData();
+    } catch (err: any) {
+      setUploadError(err.message || "Failed to upload file. Check allowed format (max 10MB).");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
+  async function handleDeleteFile(fileId: string, fileName: string) {
+    if (!confirm(`Delete attachment "${fileName}"?`)) return;
+    try {
+      await customerApi.deleteEnquiryFile(id, fileId);
+      await loadData();
+    } catch {
+      alert("Could not delete the file.");
+    }
+  }
+
+  function downloadFile(fileId: string, fileName: string) {
+    const token = tokenStorage.getAccessToken();
+    const downloadUrl = `${config.apiBaseUrl}/api/v1/customer/enquiries/${id}/files/${fileId}`;
+
+    fetch(downloadUrl, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      credentials: "include",
+    })
+      .then((r) => {
+        if (!r.ok) throw new Error("Download failed");
+        return r.blob();
+      })
+      .then((blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      })
+      .catch(() => {
+        alert("Failed to download attachment.");
+      });
+  }
+
   if (missing) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px]">
         <XCircle size={48} className="text-[var(--text-muted)] mb-4 opacity-40" />
-        <h2 className="text-lg font-semibold text-[var(--text-primary)] m-0">Enquiry not found</h2>
-        <p className="text-sm text-[var(--text-secondary)] mt-1 mb-4">This Enquiry may have been removed or you may not have access.</p>
-        <Link to="/customer/enquiries" className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg bg-[var(--color-primary)] text-white text-xs font-semibold hover:bg-[var(--color-primary-hover)] transition-all no-underline">Back to Enquiries</Link>
+        <h2 className="text-lg font-bold text-[var(--text-primary)] m-0">Enquiry Not Found</h2>
+        <p className="text-xs text-[var(--text-secondary)] mt-1 mb-4">
+          This enquiry may have been removed or you do not have permission to view it.
+        </p>
+        <Link
+          to="/customer/enquiries"
+          className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg bg-[var(--color-primary)] text-white text-xs font-bold hover:bg-[var(--color-primary-hover)] transition-all no-underline"
+        >
+          Back to Enquiries
+        </Link>
       </div>
     );
   }
-  if (!enquiry) return <div className="py-10"><Loading label="Loading Enquiry" /></div>;
+
+  if (!enquiry) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loading label="Loading enquiry specifications" />
+      </div>
+    );
+  }
 
   const isDraft = enquiry.isDraft && enquiry.status === "Draft";
-  const flowIndex = Enquiry_STATUSES.indexOf(enquiry.status);
-  const terminal = ["Rejected", "Declined", "Expired", "Cancelled"].includes(enquiry.status);
+  const normStatus = enquiry.status === "UnderReview" ? "Under Review" : enquiry.status;
+  const currentStageIndex = STEPPER_STAGES.findIndex(
+    (s) => s.key.toLowerCase() === normStatus.toLowerCase(),
+  );
 
-  // Additional requirements array
-  const additionalReqs = enquiry.additionalRequirements ? enquiry.additionalRequirements.split(", ").filter(Boolean) : [];
+  const additionalReqs = enquiry.additionalRequirements
+    ? enquiry.additionalRequirements.split(", ").filter(Boolean)
+    : [];
 
-  // Tips
-  const tips = [
-    "Provide accurate material grade",
-    "Share complete drawings",
-    "Mention weight",
-    "Specify machining",
-    "Mention annual quantity",
-  ];
+  const enqRef = `ENQ-${enquiry.id.slice(0, 8).toUpperCase()}`;
+  const partTitle = enquiry.partName || enquiry.productType;
 
   return (
-    <div>
-      {/* ── Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-6 border-b border-[var(--border-default)]">
+    <div className="flex flex-col gap-6">
+      {/* ── Breadcrumb & Top Action Header ─────────────────────────── */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[var(--border-default)]">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight m-0">
-            Enquiry — {enquiry.productType}
-          </h1>
-          <div className="flex items-center gap-2 mt-2">
+          <div className="flex items-center gap-2 text-xs text-[var(--text-muted)] mb-1.5">
+            <Link
+              to="/customer/dashboard"
+              className="hover:text-[var(--color-primary)] transition-colors no-underline text-[var(--text-muted)]"
+            >
+              Dashboard
+            </Link>
+            <span>/</span>
+            <Link
+              to="/customer/enquiries"
+              className="hover:text-[var(--color-primary)] transition-colors no-underline text-[var(--text-muted)]"
+            >
+              My Enquiries
+            </Link>
+            <span>/</span>
+            <span className="font-mono font-semibold text-[var(--text-secondary)]">{enqRef}</span>
+          </div>
+
+          <div className="flex items-center flex-wrap gap-3">
+            <h1 className="text-2xl font-extrabold tracking-tight text-[var(--text-primary)] m-0">
+              {partTitle}
+            </h1>
+            <span className="font-mono text-xs px-2.5 py-0.5 rounded-md bg-[var(--bg-surface)] border border-[var(--border-default)] text-[var(--text-secondary)] font-semibold">
+              {enqRef}
+            </span>
             <StatusBadge status={isDraft ? "Draft" : enquiry.status} />
           </div>
+
+          <p className="text-xs text-[var(--text-secondary)] mt-1.5 mb-0">
+            Submitted on {formatDate(enquiry.createdAtUtc)} · Category:{" "}
+            <strong>{enquiry.productType}</strong>
+            {enquiry.partNumber ? ` · Part No: ${enquiry.partNumber}` : ""}
+          </p>
         </div>
-        {isDraft && (
-          <div className="flex items-center gap-2 shrink-0">
-            <Link to={`/customer/enquiries/${id}/edit`}
-              className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg border border-[var(--border-default)] text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] transition-all no-underline">
-              <FileEdit size={15} /> Save as Draft
+
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <button
+            type="button"
+            onClick={() => navigate("/customer/enquiries")}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all duration-200"
+          >
+            <ChevronLeft size={14} />
+            Back to List
+          </button>
+
+          {isDraft && (
+            <>
+              <Link
+                to={`/customer/enquiries/${id}/edit`}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all duration-200 no-underline"
+              >
+                <FileEdit size={14} />
+                Edit Draft
+              </Link>
+              <button
+                type="button"
+                disabled={submitting}
+                onClick={submitDraft}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)] shadow-sm hover:shadow-md transition-all duration-200"
+              >
+                {submitting ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                Submit Enquiry
+              </button>
+            </>
+          )}
+
+          {quotation && ["Quoted", "Accepted", "Declined"].includes(normStatus) && (
+            <Link
+              to={`/customer/quotations/${quotation.id}`}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)] shadow-sm hover:shadow-md transition-all duration-200 no-underline"
+            >
+              <FileText size={14} />
+              View Commercial Quotation
             </Link>
-            <button type="button" disabled={submitting} onClick={submitDraft}
-              className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg bg-[var(--color-primary)] text-white text-xs font-semibold hover:bg-[var(--color-primary-hover)] disabled:opacity-50 transition-all">
-              {submitting ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-              Submit Enquiry
-            </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
-      {/* ── Main Grid: 3 columns ── */}
-      <div className="grid grid-cols-12 gap-x-6">
+      {/* ── Main Layout Grid ───────────────────────────────────────── */}
+      <div className="grid grid-cols-12 gap-6 items-start">
+        {/* ══ LEFT SIDEBAR (4 Cols) ══ */}
+        <div className="col-span-12 lg:col-span-4 flex flex-col gap-6">
+          {/* Status Progress Stepper */}
+          <SectionCard title="Enquiry Progress" icon={Clock}>
+            <div className="flex flex-col gap-4">
+              {STEPPER_STAGES.map((step, idx) => {
+                const isPassed = currentStageIndex > idx;
+                const isCurrent = currentStageIndex === idx;
 
-        {/* ══ LEFT COLUMN (3) — Status Timeline ══ */}
-        <div className="col-span-12 lg:col-span-3 lg:col-start-1 lg:row-start-1">
-          <SectionCard title="Status">
-            {terminal ? (
-              <p className="text-sm text-[var(--text-secondary)]">This Enquiry has been <strong>{enquiry.status.toLowerCase()}</strong>.</p>
-            ) : (
-              <div className="space-y-1">
-                {Enquiry_STATUSES.map((step, i) => {
-                  const Icon = STATUS_ICONS[step] ?? Clock;
-                  const isDone = i < flowIndex;
-                  const isCurrent = i === flowIndex;
-                  if (["Rejected","Declined","Expired","Cancelled"].includes(step) && step !== enquiry.status) return null;
-                  // Approved and Rejected are mutually exclusive — show only the active one
-                  return (
-                    <div key={step} className={`flex gap-2.5 ${isCurrent ? "" : isDone ? "opacity-70" : "opacity-40"}`}>
-                      <div className="flex flex-col items-center">
-                        <div className={`w-2.5 h-2.5 rounded-full ${
-                          isCurrent
-                            ? "bg-[var(--color-primary)] ring-2 ring-[var(--color-primary)]/30"
-                            : isDone
-                            ? "border-[1.5px] border-[var(--color-primary)]"
-                            : "border-[1.5px] border-[var(--border-default)]"
-                        }`} />
-                        {i < Enquiry_STATUSES.length - 1 && <div className="w-px h-3.5 bg-[var(--border-default)]/60" />}
-                      </div>
-                      <div className="flex items-center gap-1.5 min-w-0 py-0.5">
-                        <Icon size={11} className={isCurrent ? "text-[var(--color-primary)]" : "text-[var(--text-muted)]"} />
-                        <span className={`text-[11px] ${isCurrent ? "font-semibold text-[var(--color-primary)]" : "text-[var(--text-secondary)]"}`}>
-                          {step}
+                return (
+                  <div key={step.key} className="flex items-start gap-3 relative">
+                    {/* Vertical Connector Line */}
+                    {idx < STEPPER_STAGES.length - 1 && (
+                      <div
+                        className={`absolute left-[13px] top-[26px] bottom-[-16px] w-[2px] ${
+                          isPassed
+                            ? "bg-[var(--color-primary)]"
+                            : "bg-[var(--border-default)]"
+                        }`}
+                      />
+                    )}
+
+                    {/* Step Node Icon */}
+                    <div
+                      className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 z-10 transition-all ${
+                        isPassed
+                          ? "bg-[var(--color-primary)] text-white shadow-sm"
+                          : isCurrent
+                          ? "bg-[var(--color-primary)] text-white ring-4 ring-[var(--color-primary)]/20 shadow-md animate-pulse"
+                          : "bg-[var(--bg-surface)] border-2 border-[var(--border-default)] text-[var(--text-muted)]"
+                      }`}
+                    >
+                      {isPassed ? (
+                        <Check size={14} className="stroke-[3]" />
+                      ) : (
+                        <span className="text-[11px] font-bold">{idx + 1}</span>
+                      )}
+                    </div>
+
+                    {/* Step Text Info */}
+                    <div className="flex flex-col min-w-0 pt-0.5">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`text-xs font-bold ${
+                            isCurrent
+                              ? "text-[var(--color-primary)]"
+                              : isPassed
+                              ? "text-[var(--text-primary)]"
+                              : "text-[var(--text-muted)]"
+                          }`}
+                        >
+                          {step.label}
                         </span>
+                        {isCurrent && (
+                          <span className="text-[10px] uppercase font-extrabold px-1.5 py-0.2 rounded bg-[var(--color-primary)]/10 text-[var(--color-primary)]">
+                            Active
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[11px] text-[var(--text-secondary)] mt-0.5 leading-tight">
+                        {step.desc}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {timeline && timeline.length > 0 && (
+              <div className="mt-5 pt-4 border-t border-[var(--border-default)]">
+                <span className="text-[10px] uppercase font-bold tracking-wider text-[var(--text-muted)] mb-2.5 block">
+                  Status History Logs
+                </span>
+                <div className="flex flex-col gap-2">
+                  {timeline.map((entry, tIdx) => (
+                    <div
+                      key={tIdx}
+                      className="p-2 rounded-lg bg-[var(--bg-surface)]/60 border border-[var(--border-default)] text-[11px]"
+                    >
+                      <div className="flex items-center justify-between font-semibold text-[var(--text-primary)]">
+                        <span>
+                          {entry.fromStatus} → {entry.toStatus}
+                        </span>
+                        <span className="text-[10px] text-[var(--text-muted)]">
+                          {formatDate(entry.occurredAtUtc)}
+                        </span>
+                      </div>
+                      {entry.note && (
+                        <div className="text-[10px] text-[var(--text-secondary)] mt-0.5">
+                          {entry.note}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </SectionCard>
+
+          {/* Quick Summary Card */}
+          <SectionCard title="Quick Summary" icon={Layers}>
+            <div className="flex flex-col gap-2.5">
+              <div className="flex justify-between items-center text-xs pb-2 border-b border-[var(--border-default)]">
+                <span className="text-[var(--text-muted)]">Product Type</span>
+                <span className="font-semibold text-[var(--text-primary)]">{enquiry.productType}</span>
+              </div>
+              <div className="flex justify-between items-center text-xs pb-2 border-b border-[var(--border-default)]">
+                <span className="text-[var(--text-muted)]">Material Grade</span>
+                <span className="font-semibold text-[var(--text-primary)]">
+                  {enquiry.materialGrade || "—"}
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-xs pb-2 border-b border-[var(--border-default)]">
+                <span className="text-[var(--text-muted)]">Order Volume</span>
+                <span className="font-semibold text-[var(--text-primary)]">
+                  {enquiry.productionQuantity || enquiry.quantity} pcs
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-xs pb-2 border-b border-[var(--border-default)]">
+                <span className="text-[var(--text-muted)]">Target Delivery</span>
+                <span className="font-semibold text-[var(--text-primary)]">
+                  {enquiry.expectedDeliveryDate ? formatDate(enquiry.expectedDeliveryDate) : "—"}
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-[var(--text-muted)]">Attachments</span>
+                <span className="font-semibold text-[var(--color-primary)]">
+                  {enquiry.files.length} {enquiry.files.length === 1 ? "file" : "files"}
+                </span>
+              </div>
+            </div>
+          </SectionCard>
+
+          {/* Technical Support & Foundry Contact */}
+          <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] p-5 shadow-sm">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="p-1.5 rounded-lg bg-amber-500/10 text-amber-500">
+                <Headphones size={16} />
+              </span>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)] m-0">
+                Foundry Assistance
+              </h4>
+            </div>
+            <p className="text-[11px] text-[var(--text-secondary)] mb-4 leading-relaxed">
+              Have customized alloy requirements or strict tolerance standards? Reach out directly to our
+              foundry engineers.
+            </p>
+            <div className="flex flex-col gap-2 text-xs">
+              <a
+                href="mailto:iamrahulbhola@gmail.com"
+                className="flex items-center gap-2.5 text-[var(--text-secondary)] hover:text-[var(--color-primary)] transition-colors no-underline"
+              >
+                <Mail size={13} className="text-[var(--text-muted)]" />
+                iamrahulbhola@gmail.com
+              </a>
+              <a
+                href="tel:+918283041140"
+                className="flex items-center gap-2.5 text-[var(--text-secondary)] hover:text-[var(--color-primary)] transition-colors no-underline"
+              >
+                <Phone size={13} className="text-[var(--text-muted)]" />
+                +91 8283041140
+              </a>
+            </div>
+          </div>
+        </div>
+
+        {/* ══ MAIN CONTENT COLUMN (8 Cols) ══ */}
+        <div className="col-span-12 lg:col-span-8 flex flex-col gap-6">
+          {/* ── HERO ATTACHMENTS CARD ─────────────────────────────────── */}
+          <SectionCard
+            title="Technical Drawings & CAD Models"
+            icon={Paperclip}
+            badge={
+              <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--color-primary)]/10 text-[var(--color-primary)] font-bold">
+                {enquiry.files.length} {enquiry.files.length === 1 ? "file" : "files"}
+              </span>
+            }
+            action={
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)] transition-all shadow-sm"
+              >
+                {uploading ? (
+                  <Loader2 size={13} className="animate-spin" />
+                ) : (
+                  <UploadCloud size={13} />
+                )}
+                Upload Drawing
+              </button>
+            }
+          >
+            {/* Hidden File Input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              onChange={handleFileUpload}
+              className="hidden"
+              accept=".pdf,.dwg,.dxf,.step,.stp,.iges,.igs,.jpg,.jpeg,.png,.zip"
+            />
+
+            {uploadError && (
+              <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-semibold flex items-center gap-2">
+                <AlertCircle size={14} />
+                {uploadError}
+              </div>
+            )}
+
+            {/* Attachments List */}
+            {enquiry.files.length === 0 ? (
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="border-2 border-dashed border-[var(--border-default)] rounded-xl p-8 text-center cursor-pointer hover:border-[var(--color-primary)] hover:bg-[var(--bg-surface)] transition-all"
+              >
+                <div className="w-12 h-12 rounded-xl bg-[var(--color-primary)]/10 text-[var(--color-primary)] flex items-center justify-center mx-auto mb-3">
+                  <UploadCloud size={24} />
+                </div>
+                <h4 className="text-xs font-bold text-[var(--text-primary)] mb-1">
+                  No technical drawings attached yet
+                </h4>
+                <p className="text-[11px] text-[var(--text-secondary)] max-w-sm mx-auto mb-3">
+                  Upload 2D engineering blueprints (PDF, DWG, DXF) or 3D CAD files (STEP, IGES) for precise
+                  cost estimation.
+                </p>
+                <span className="inline-flex items-center gap-1 text-xs font-bold text-[var(--color-primary)]">
+                  Browse Files (Max 10MB each)
+                </span>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2.5">
+                {enquiry.files.map((file) => {
+                  return (
+                    <div
+                      key={file.id}
+                      className="flex items-center justify-between p-3.5 rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] hover:bg-[var(--bg-surface-hover)] transition-all duration-150 group"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-10 h-10 rounded-lg bg-[var(--bg-card)] border border-[var(--border-default)] flex items-center justify-center shrink-0">
+                          {getFileIcon(file.fileName)}
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-xs font-bold text-[var(--text-primary)] truncate group-hover:text-[var(--color-primary)] transition-colors">
+                            {file.fileName}
+                          </span>
+                          <span className="text-[11px] text-[var(--text-muted)]">
+                            {formatBytes(file.sizeBytes)} · Uploaded {formatDate(file.uploadedAtUtc)}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => downloadFile(file.id, file.fileName)}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-colors"
+                          title="Download file"
+                        >
+                          <Download size={13} />
+                          Download
+                        </button>
+
+                        {isDraft && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteFile(file.id, file.fileName)}
+                            className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                            title="Delete file"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
                       </div>
                     </div>
                   );
                 })}
-              </div>
-            )}
-            {isDraft && (
-              <div className="mt-6 flex flex-col gap-3 pt-4 border-t border-[var(--border-default)]">
-                <Link to={`/customer/enquiries/${id}/edit`}
-                  className="w-full flex items-center justify-center gap-2 px-4 h-10 rounded-lg border border-[var(--border-default)] text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] transition-all no-underline">
-                  <FileEdit size={15} /> Edit Enquiry
-                </Link>
-                <button type="button" disabled={submitting} onClick={submitDraft}
-                  className="w-full flex items-center justify-center gap-2 px-4 h-10 rounded-lg bg-[var(--color-primary)] text-white text-sm font-semibold hover:bg-[var(--color-primary-hover)] disabled:opacity-50 transition-all">
-                  {submitting ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-                  Submit Draft
-                </button>
-              </div>
-            )}
 
-            {quotation && !isDraft && ["Quoted","Accepted","Declined"].includes(enquiry.status) && (
-              <div className="mt-6 pt-4 border-t border-[var(--border-default)]">
-                <Link to={"/customer/quotations/" + quotation.id}
-                  className="w-full flex items-center justify-center gap-2 px-4 h-10 rounded-lg bg-[var(--color-primary)] text-white text-sm font-semibold hover:bg-[var(--color-primary-hover)] transition-all no-underline">
-                  <FileText size={14} /> View Quote
-                </Link>
-                {enquiry.status === "Quoted" && quotation.status === "Issued" && (
-                  <p className="text-[11px] text-[var(--text-muted)] mt-2 text-center">
-                    You can accept or decline this quotation from the quotation page.
-                  </p>
-                )}
+                {/* Quick Add Another File bar */}
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className="mt-2 p-2.5 rounded-xl border border-dashed border-[var(--border-default)] bg-[var(--bg-surface)]/30 hover:bg-[var(--bg-surface)] text-center cursor-pointer transition-all flex items-center justify-center gap-2 text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--color-primary)]"
+                >
+                  <UploadCloud size={14} />
+                  Add more drawings or specifications
+                </div>
               </div>
             )}
           </SectionCard>
-        </div>
 
-        {/* ══ CENTER COLUMN (6) — Request Details ══ */}
-        <div className="col-span-12 lg:col-span-6 lg:col-start-4 lg:row-start-1">
-          <SectionCard title="Request Details" icon={FileText}>
-            <div className="flex flex-col lg:flex-row gap-6 lg:items-start">
-              <div className="flex-1 space-y-0">
-                <Field label="Requirement" value={enquiry.productType} />
-                <Field label="Material Grade" value={enquiry.materialGrade ?? "Not Available"} />
-                <Field label="Quantity" value={enquiry.quantity} />
-                <Field label="Delivery Location" value={enquiry.deliveryLocation ?? "Not Available"} />
-                <Field label="Submitted Date" value={formatDate(enquiry.createdAtUtc)} />
-                <Field label="Draft" value={enquiry.isDraft ? "Yes" : "No"} />
-              </div>
-              <div className="shrink-0">
-                <div className="w-full sm:w-[250px] aspect-[4/3] rounded-2xl border border-[var(--border-default)] overflow-hidden">
-                  {enquiry.files.length > 0 ? (
-                    <EnquiryImage enquiryId={id} fileId={enquiry.files[0].id} fileName={enquiry.files[0].fileName} />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-[var(--bg-surface)]">
-                      <Package size={52} className="text-[var(--text-muted)] opacity-30" />
-                    </div>
-                  )}
-                </div>
-              </div>
+          {/* ── MATERIAL & FOUNDRY SPECIFICATIONS ─────────────────────── */}
+          <SectionCard title="Material & Foundry Specifications" icon={Wrench}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+              <SpecField
+                label="Material Grade"
+                value={enquiry.materialGrade}
+                icon={Layers}
+              />
+              <SpecField
+                label="Metallurgy Standard"
+                value={enquiry.materialStandard}
+                icon={FileText}
+              />
+              <SpecField
+                label="Approx. Unit Weight"
+                value={enquiry.approxWeight != null ? `${enquiry.approxWeight} kg` : null}
+                icon={Scale}
+              />
+              <SpecField
+                label="Machining Required"
+                value={enquiry.machiningRequired}
+                icon={Wrench}
+              />
+              <SpecField
+                label="Pattern Tooling"
+                value={enquiry.patternAvailability}
+                icon={Package}
+              />
+              <SpecField
+                label="Operating Industry"
+                value={enquiry.industry}
+                icon={Layers}
+              />
             </div>
-            {enquiry.requirementDetails && (
-              <div className="mt-6 pt-5 border-t border-[var(--border-default)]">
-                <span className="text-xs font-medium text-[var(--text-muted)] mb-2 block">Details</span>
-                <p className="text-sm text-[var(--text-primary)] leading-relaxed m-0">{enquiry.requirementDetails}</p>
+          </SectionCard>
+
+          {/* ── PRODUCTION VOLUMES & LOGISTICS ────────────────────────── */}
+          <SectionCard title="Production Quantities & Logistics" icon={Package}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+              <SpecField
+                label="Production Order Qty"
+                value={`${enquiry.productionQuantity || enquiry.quantity} pcs`}
+                icon={Package}
+              />
+              <SpecField
+                label="Prototype Sample Qty"
+                value={enquiry.prototypeQuantity ? `${enquiry.prototypeQuantity} pcs` : "0 pcs"}
+                icon={Layers}
+              />
+              <SpecField
+                label="Annual Estimated Run"
+                value={enquiry.annualRequirement ? `${enquiry.annualRequirement} pcs/year` : null}
+                icon={Calendar}
+              />
+              <SpecField
+                label="Target Dispatch Date"
+                value={enquiry.expectedDeliveryDate ? formatDate(enquiry.expectedDeliveryDate) : null}
+                icon={Calendar}
+              />
+              <SpecField
+                label="Delivery Terms"
+                value={enquiry.preferredDeliveryTerms}
+                icon={MapPin}
+              />
+              <SpecField
+                label="Destination Location"
+                value={enquiry.deliveryLocation}
+                icon={MapPin}
+              />
+            </div>
+          </SectionCard>
+
+          {/* ── TECHNICAL REQUIREMENTS & DESCRIPTION ──────────────────── */}
+          <SectionCard title="Technical Scope & Requirement Details" icon={FileText}>
+            <div className="p-4 rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)]/60">
+              <p className="text-xs text-[var(--text-primary)] leading-relaxed m-0 whitespace-pre-wrap">
+                {enquiry.requirementDetails || "No detailed technical notes specified."}
+              </p>
+            </div>
+
+            {enquiry.application && (
+              <div className="mt-4 pt-4 border-t border-[var(--border-default)]">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1 block">
+                  Application & Environment
+                </span>
+                <p className="text-xs text-[var(--text-secondary)] m-0 leading-relaxed">
+                  {enquiry.application}
+                </p>
               </div>
             )}
           </SectionCard>
-        </div>
 
-        {/* ══ RIGHT COLUMN (3) — Summary & Tips ══ */}
-        <div className="col-span-12 lg:col-span-3 lg:col-start-10 lg:row-span-2 space-y-6 lg:sticky lg:top-6 lg:self-start">
-
-          {/* Card 1: Enquiry Summary */}
-          <SectionCard title="Enquiry Summary">
-            <div className="space-y-0">
-              <SummaryRow label="Requirement" value={enquiry.productType} />
-              <SummaryRow label="Material Grade" value={enquiry.materialGrade || "—"} />
-              <SummaryRow label="Quantity" value={enquiry.productionQuantity || enquiry.quantity} />
-              <SummaryRow label="Delivery Location" value={enquiry.deliveryLocation || "—"} />
-              <SummaryRow label="Expected Delivery" value={enquiry.expectedDeliveryDate ? formatDate(enquiry.expectedDeliveryDate) : "—"} />
-              <SummaryRow label="Attachments" value={enquiry.files.length > 0 ? `${enquiry.files.length} file(s)` : "—"} />
-            </div>
-          </SectionCard>
-
-          {/* Card 2: Blue Info Card */}
-          <div className="rounded-[16px] border border-blue-200/60 dark:border-blue-500/20 bg-blue-50/80 dark:bg-blue-500/10 p-5">
-            <div className="flex items-start gap-3">
-              <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 shrink-0">
-                <Info size={16} />
-              </span>
-              <div>
-                <h4 className="text-xs font-semibold text-[var(--text-primary)] m-0 mb-0.5 uppercase tracking-wide">Information</h4>
-                <p className="text-[11px] text-[var(--text-muted)] leading-relaxed m-0">The more details you provide, the more accurate our quotation will be.</p>
+          {/* ── QUALITY & COMPLIANCE CHIPS ────────────────────────────── */}
+          {additionalReqs.length > 0 && (
+            <SectionCard title="Quality & Inspection Standards" icon={CheckCircle2}>
+              <div className="flex flex-wrap gap-2.5">
+                {additionalReqs.map((req) => (
+                  <RequirementChip key={req} label={req} />
+                ))}
               </div>
-            </div>
-          </div>
+            </SectionCard>
+          )}
 
-          {/* Card 3: Tips */}
-          <div className="rounded-[16px] border border-[var(--border-default)] bg-[var(--bg-card)] p-5 shadow-sm">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="flex items-center justify-center w-6 h-6 rounded-md bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                <CheckSquare size={13} />
-              </span>
-              <h4 className="text-xs font-semibold text-[var(--text-primary)] m-0 uppercase tracking-wide">Tips</h4>
-            </div>
-            <ul className="space-y-2 m-0 p-0 list-none">
-              {tips.map((tip) => (
-                <li key={tip} className="flex items-start gap-2 text-xs text-[var(--text-secondary)]">
-                  <span className="text-emerald-500 shrink-0 mt-0.5">•</span>
-                  {tip}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Card 4: Need Help */}
-          <div className="rounded-[16px] border border-[var(--border-default)] bg-[var(--bg-card)] p-5 shadow-sm">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="flex items-center justify-center w-6 h-6 rounded-md bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                <Headphones size={13} />
-              </span>
-              <h4 className="text-xs font-semibold text-[var(--text-primary)] m-0 uppercase tracking-wide">Need Help?</h4>
-            </div>
-            <p className="text-[11px] text-[var(--text-muted)] mb-3">Our support team is here to help.</p>
-            <div className="space-y-1.5 text-[11px] text-[var(--text-muted)]">
-              <div className="flex items-center gap-2"><Mail size={13} /> iamrahulbhola@gmail.com</div>
-              <div className="flex items-center gap-2"><Phone size={13} /> +91 8283041140</div>
-            </div>
-          </div>
-        </div>
-
-        {/* ══ Enquiry INFORMATION — below Status + Request Details ══ */}
-        <div className="col-span-12 lg:col-span-9 lg:col-start-1 lg:row-start-2">
-          <SectionCard title="Enquiry Information" icon={Info}>
-            <div className="space-y-8">
-
-              {/* 1. Basic Information */}
-              <InfoSection number={1} title="Basic Information">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <InfoField label="Requirement Type" value={enquiry.productType} />
-                  <InfoField label="Part Name" value={enquiry.partName ?? "Not Available"} />
-                  <InfoField label="Part Number" value={enquiry.partNumber ?? "Not Available"} />
-                  <InfoField label="Application" value={enquiry.application ?? "Not Available"} />
-                  <InfoField label="Industry" value={enquiry.industry ?? "Not Available"} />
-                </div>
-              </InfoSection>
-              <div className="border-t border-[var(--border-default)]" />
-
-              {/* 2. Material Details */}
-              <InfoSection number={2} title="Material Details">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <InfoField label="Material Grade" value={enquiry.materialGrade ?? "Not Available"} />
-                  <InfoField label="Standard" value={enquiry.materialStandard ?? "Not Available"} />
-                  <InfoField label="Approx Weight" value={enquiry.approxWeight != null ? `${enquiry.approxWeight} kg` : "Not Available"} />
-                  <InfoField label="Machining Required" value={enquiry.machiningRequired ?? "Not Available"} />
-                  <InfoField label="Pattern Availability" value={enquiry.patternAvailability ?? "Not Available"} />
-                </div>
-              </InfoSection>
-              <div className="border-t border-[var(--border-default)]" />
-
-              {/* 3. Quantity Details */}
-              <InfoSection number={3} title="Quantity Details">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <InfoField label="Prototype Quantity" value={enquiry.prototypeQuantity ?? "Not Available"} />
-                  <InfoField label="Production Quantity" value={enquiry.productionQuantity ?? enquiry.quantity} />
-                  <InfoField label="Annual Requirement" value={enquiry.annualRequirement ?? "Not Available"} />
-                </div>
-              </InfoSection>
-              <div className="border-t border-[var(--border-default)]" />
-
-              {/* 4. Delivery Details */}
-              <InfoSection number={4} title="Delivery Details">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <InfoField label="Delivery Location" value={enquiry.deliveryLocation ?? "Not Available"} />
-                  <InfoField label="Expected Delivery Date" value={enquiry.expectedDeliveryDate ? formatDate(enquiry.expectedDeliveryDate) : "Not Available"} />
-                  <InfoField label="Preferred Delivery Terms" value={enquiry.preferredDeliveryTerms ?? "Not Available"} />
-                </div>
-              </InfoSection>
-              <div className="border-t border-[var(--border-default)]" />
-
-              {/* 5. Additional Requirements */}
-              <InfoSection number={5} title="Additional Requirements">
-                {additionalReqs.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {additionalReqs.map((r) => <Chip key={r} label={r} />)}
-                  </div>
-                ) : (
-                  <p className="text-sm text-[var(--text-muted)]">None specified</p>
-                )}
-              </InfoSection>
-              <div className="border-t border-[var(--border-default)]" />
-
-              {/* 6. Remarks */}
-              <InfoSection number={6} title="Remarks">
-                {enquiry.remarks ? (
-                  <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] px-4 py-3">
-                    <p className="text-sm text-[var(--text-primary)] leading-relaxed m-0 whitespace-pre-wrap">{enquiry.remarks}</p>
-                  </div>
-                ) : (
-                  <p className="text-sm text-[var(--text-muted)]">No remarks</p>
-                )}
-              </InfoSection>
-            </div>
-          </SectionCard>
+          {/* ── REMARKS & NOTES ───────────────────────────────────────── */}
+          {enquiry.remarks && (
+            <SectionCard title="Special Remarks & Notes" icon={Info}>
+              <div className="p-4 rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)]/60">
+                <p className="text-xs text-[var(--text-secondary)] leading-relaxed m-0 whitespace-pre-wrap">
+                  {enquiry.remarks}
+                </p>
+              </div>
+            </SectionCard>
+          )}
         </div>
       </div>
-
-      {/* ── Timeline ── */}
-      {timeline && timeline.length > 0 && (
-        <SectionCard title="Status History">
-          <div className="space-y-0">
-            {timeline.map((entry, i) => (
-              <div key={i} className="flex gap-3 pb-4 last:pb-0">
-                <div className="flex flex-col items-center">
-                  <div className="w-2 h-2 rounded-full bg-[var(--color-primary)]/70" />
-                  {i < timeline.length - 1 && <div className="flex-1 w-px bg-[var(--border-default)]/60 mt-1" />}
-                </div>
-                <div className="flex-1 min-w-0 pb-1">
-                  <div className="text-xs font-medium text-[var(--text-primary)]">{entry.fromStatus} → {entry.toStatus}</div>
-                  {entry.note && <div className="text-[11px] text-[var(--text-muted)] mt-0.5">{entry.note}</div>}
-                  <div className="text-[11px] text-[var(--text-muted)] mt-0.5">{formatDate(entry.occurredAtUtc)} · {entry.changedByRole}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </SectionCard>
-      )}
     </div>
   );
 }

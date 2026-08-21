@@ -507,6 +507,8 @@ export const customerApi = {
     form.append("file", file);
     return apiUpload<{ id: string; fileName: string }>(`${base}/enquiries/${enquiryId}/files`, form);
   },
+  deleteEnquiryFile: (enquiryId: string, fileId: string) =>
+    apiDelete<{ message?: string }>(`${base}/enquiries/${enquiryId}/files/${fileId}`),
 
   quotations: () => apiGet<QuotationListItem[]>(`${base}/quotations`),
   quotation: (id: string) => apiGet<QuotationDetail>(`${base}/quotations/${id}`),
