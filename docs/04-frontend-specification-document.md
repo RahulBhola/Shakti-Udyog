@@ -13,35 +13,36 @@ The **Shakti Udyog Frontend** is a modern Single Page Application (SPA) built on
 
 ```mermaid
 graph TD
-    subgraph Core Architecture
-        React[React 19 + TypeScript]
-        Vite[Vite 8 Build Tooling]
-        Router[React Router DOM 7.1]
+    subgraph Core Foundations
+        Types[src/types/ Domain Models & Contracts]
+        Utils[src/utils/ Formatters & Validators]
+        Hooks[src/hooks/ Reusable React Hooks]
     end
 
     subgraph State & Networking
-        AuthCtx[AuthContext / Token Storage]
-        ThemeCtx[ThemeContext Light / Dark]
-        ModalCtx[EnquiryModalContext]
-        ApiClient[client.ts Auto-Refresh HTTP Wrapper]
-        SignalRClient[signalR.ts Realtime WebSocket Client]
+        AuthCtx[src/auth/ AuthContext & Token Storage]
+        ThemeCtx[src/auth/ ThemeContext Light / Dark]
+        ModalCtx[src/context/ EnquiryModalContext]
+        ApiClient[src/api/ client.ts Auto-Refresh HTTP Wrapper]
+        SignalRClient[src/realtime/ signalR.ts WebSocket Hub]
     end
 
     subgraph UI Design System
-        Tokens[tokens.css Theme Variables]
-        Tailwind[TailwindCSS 4]
-        Glacier[Glacier Glassmorphism & Micro-animations]
-        ERPStyles[erpListView.css Shared ERP Tables]
+        Tokens[src/styles/ tokens.css Theme Variables]
+        Tailwind[src/styles/ TailwindCSS 4]
+        Glacier[src/styles/ Glacier Glassmorphism & UI]
+        UIPrimitives[src/components/ui/ Button, Badge, Card, Modal]
+        ERPStyles[src/portal/pages/ erpListView.css Shared ERP Tables]
     end
 
     subgraph Application Modules
         PublicPages[Public Marketing & Scrollytelling]
         CustomerPortal[Customer Portal /customer/*]
         AdminPortal[Admin & Engineer Portal /admin/*]
-        KanbanBoard[Production Kanban Board]
+        KanbanBoard[Production 25-Stage Kanban Board]
     end
 
-    CoreArchitecture --> StateNetworking
+    CoreFoundations --> StateNetworking
     StateNetworking --> UIDesignSystem
     UIDesignSystem --> ApplicationModules
 ```
