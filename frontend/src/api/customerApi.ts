@@ -34,7 +34,7 @@ export interface EnquiryDetail extends EnquiryListItem {
   materialGrade: string | null;
   deliveryLocation: string | null;
   requirementDetails: string;
-  files: { id: string; fileName: string; sizeBytes: number; uploadedAtUtc: string }[];
+  files: { id: string; fileName: string; contentType?: string; sizeBytes: number; uploadedAtUtc: string }[];
   partName: string | null;
   partNumber: string | null;
   industry: string | null;

@@ -82,21 +82,79 @@ function exportToCsv(items: EngineerEnquiryListItem[]) {
 }
 
 /*  Thumbnail image (auth-fetched)                                    */
-function ListEnquiryImage({ enquiryId, fileId }: { enquiryId: string; fileId: string }) {
+function ListEnquiryImage({
+  enquiryId,
+  fileId,
+  fileContentType,
+  hasFiles,
+}: {
+  enquiryId: string;
+  fileId?: string | null;
+  fileContentType?: string | null;
+  hasFiles: boolean;
+}) {
   const [url, setUrl] = useState<string | null>(null);
+
   useEffect(() => {
+    if (!hasFiles && !fileId) return;
+
     let cancelled = false;
     let objectUrl: string | null = null;
     const token = tokenStorage.getAccessToken();
-    fetch(`${config.apiBaseUrl}/api/v1/engineer/enquiries/${enquiryId}/files/${fileId}/download`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {}, credentials: "include",
-    }).then((r) => { if (!r.ok) throw new Error(); return r.blob(); })
-      .then((blob) => { if (!cancelled) { objectUrl = URL.createObjectURL(blob); setUrl(objectUrl); } })
-      .catch(() => {});
-    return () => { cancelled = true; if (objectUrl) URL.revokeObjectURL(objectUrl); };
-  }, [enquiryId, fileId]);
-  if (!url) return <span className="inv-avatar" style={{ background: "var(--bg-surface-hover)" }} />;
-  return <img src={url} alt="" className="inv-avatar" style={{ objectFit: "cover" }} />;
+
+    async function resolveAndFetchImage() {
+      try {
+        let targetFileId = fileId;
+
+        // If fileId is not an image or missing, fetch enquiry details to find attached drawing image
+        if ((!targetFileId || !fileContentType?.startsWith("image/")) && hasFiles) {
+          const detail = await engineerApi.enquiry(enquiryId);
+          const img = detail.files?.find(
+            (f) =>
+              f.contentType?.startsWith("image/") ||
+              /\.(png|jpg|jpeg|webp|gif|svg)$/i.test(f.fileName),
+          );
+          if (img) {
+            targetFileId = img.id;
+          }
+        }
+
+        if (!targetFileId) return;
+
+        const res = await fetch(
+          `${config.apiBaseUrl}/api/v1/engineer/enquiries/${enquiryId}/files/${targetFileId}/download`,
+          {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+            credentials: "include",
+          },
+        );
+
+        if (!res.ok) throw new Error();
+        const blob = await res.blob();
+        if (!cancelled) {
+          objectUrl = URL.createObjectURL(blob);
+          setUrl(objectUrl);
+        }
+      } catch {}
+    }
+
+    void resolveAndFetchImage();
+
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [enquiryId, fileId, fileContentType, hasFiles]);
+
+  if (url) return <img src={url} alt="Drawing Blueprint" className="inv-avatar" style={{ objectFit: "cover" }} />;
+  if (hasFiles) {
+    return (
+      <span className="inv-avatar" style={{ background: "var(--bg-surface-hover)" }}>
+        <FileText size={16} />
+      </span>
+    );
+  }
+  return <span className="inv-avatar" style={{ background: "var(--bg-surface)" }} />;
 }
 
 /* ---- main page ----------------------------------------------------- */
@@ -175,13 +233,14 @@ export default function EngineerEnquiryListPage() {
   const openEnquiry = (r: EngineerEnquiryListItem) => navigate(`/admin/enquiries/${r.id}`);
 
   const renderThumb = (r: EngineerEnquiryListItem) => {
-    if (r.firstFileId && r.firstFileContentType?.startsWith("image/")) {
-      return <ListEnquiryImage enquiryId={r.id} fileId={r.firstFileId} />;
-    }
-    if (r.fileCount > 0) {
-      return <span className="inv-avatar" style={{ background: "var(--bg-surface-hover)" }}><FileText size={16} /></span>;
-    }
-    return <span className="inv-avatar" style={{ background: "var(--bg-surface)" }} />;
+    return (
+      <ListEnquiryImage
+        enquiryId={r.id}
+        fileId={r.firstFileId}
+        fileContentType={r.firstFileContentType}
+        hasFiles={r.fileCount > 0}
+      />
+    );
   };
 
   const renderRow = (r: EngineerEnquiryListItem) => {

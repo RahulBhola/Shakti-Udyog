@@ -112,48 +112,73 @@ function exportToCsv(items: EnquiryListItem[]) {
 function ListEnquiryImage({
   enquiryId,
   fileId,
+  fileContentType,
   hasFiles,
 }: {
   enquiryId: string;
   fileId?: string | null;
+  fileContentType?: string | null;
   hasFiles: boolean;
 }) {
   const [url, setUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!fileId) return;
+    if (!hasFiles && !fileId) return;
+
     let cancelled = false;
     let objectUrl: string | null = null;
     const token = tokenStorage.getAccessToken();
 
-    fetch(`${config.apiBaseUrl}/api/v1/customer/enquiries/${enquiryId}/files/${fileId}`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-      credentials: "include",
-    })
-      .then((r) => {
-        if (!r.ok) throw new Error();
-        return r.blob();
-      })
-      .then((blob) => {
+    async function resolveAndFetchImage() {
+      try {
+        let targetFileId = fileId;
+
+        // If fileId is not an image or missing, fetch enquiry details to find attached drawing image
+        if ((!targetFileId || !fileContentType?.startsWith("image/")) && hasFiles) {
+          const detail = await customerApi.enquiry(enquiryId);
+          const img = detail.files?.find(
+            (f) =>
+              f.contentType?.startsWith("image/") ||
+              /\.(png|jpg|jpeg|webp|gif|svg)$/i.test(f.fileName),
+          );
+          if (img) {
+            targetFileId = img.id;
+          }
+        }
+
+        if (!targetFileId) return;
+
+        const res = await fetch(
+          `${config.apiBaseUrl}/api/v1/customer/enquiries/${enquiryId}/files/${targetFileId}`,
+          {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+            credentials: "include",
+          },
+        );
+
+        if (!res.ok) throw new Error("Failed to load thumbnail");
+        const blob = await res.blob();
         if (!cancelled) {
           objectUrl = URL.createObjectURL(blob);
           setUrl(objectUrl);
         }
-      })
-      .catch(() => {});
+      } catch {}
+    }
+
+    void resolveAndFetchImage();
 
     return () => {
       cancelled = true;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [enquiryId, fileId]);
+  }, [enquiryId, fileId, fileContentType, hasFiles]);
 
   if (url) {
     return (
       <img
         src={url}
-        alt=""
-        className="w-10 h-10 rounded-lg border border-[var(--border-default)] object-cover shrink-0 shadow-sm bg-[var(--bg-card)]"
+        alt="Drawing Blueprint Thumbnail"
+        className="w-10 h-10 rounded-lg border border-[var(--border-default)] object-cover shrink-0 shadow-sm bg-[var(--bg-card)] hover:scale-105 transition-transform"
       />
     );
   }
@@ -449,6 +474,7 @@ export default function EnquiryListPage() {
                           <ListEnquiryImage
                             enquiryId={r.id}
                             fileId={r.firstFileId}
+                            fileContentType={r.firstFileContentType}
                             hasFiles={r.fileCount > 0}
                           />
                         </div>
