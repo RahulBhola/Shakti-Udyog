@@ -28,22 +28,22 @@ function IconStar() { return <svg width="14" height="14" viewBox="0 0 24 24" fil
 // ── Design Tokens ──────────────────────────────────────────────────────────
 
 const colors = {
-  bg: "#F7F9FC",
-  card: "#FFFFFF",
-  primary: "#2563EB",
-  primaryHover: "#1D4ED8",
-  primaryLight: "rgba(37, 99, 235, 0.08)",
-  success: "#22C55E",
-  successLight: "rgba(34, 197, 94, 0.10)",
-  warning: "#F59E0B",
-  warningLight: "rgba(245, 158, 11, 0.10)",
-  danger: "#EF4444",
-  dangerLight: "rgba(239, 68, 68, 0.10)",
-  text: "#0F172A",
-  textSecondary: "#64748B",
-  textMuted: "#94A3B8",
-  border: "#E2E8F0",
-  borderLight: "#F1F5F9",
+  bg: "var(--bg-surface)",
+  card: "var(--bg-card)",
+  primary: "var(--color-primary)",
+  primaryHover: "var(--color-primary-hover)",
+  primaryLight: "rgba(59, 130, 246, 0.15)",
+  success: "var(--color-success, #22C55E)",
+  successLight: "rgba(34, 197, 94, 0.15)",
+  warning: "var(--color-warning, #F59E0B)",
+  warningLight: "rgba(245, 158, 11, 0.15)",
+  danger: "var(--color-danger, #EF4444)",
+  dangerLight: "rgba(239, 68, 68, 0.15)",
+  text: "var(--text-primary)",
+  textSecondary: "var(--text-secondary)",
+  textMuted: "var(--text-muted)",
+  border: "var(--border-default)",
+  borderLight: "var(--bg-surface-hover, rgba(255, 255, 255, 0.06))",
 };
 
 const cardStyle: React.CSSProperties = {
@@ -51,7 +51,7 @@ const cardStyle: React.CSSProperties = {
   border: `1px solid ${colors.border}`,
   borderRadius: 16,
   padding: 24,
-  boxShadow: "0 1px 2px 0 rgba(0,0,0,0.05), 0 1px 3px 0 rgba(0,0,0,0.03)",
+  boxShadow: "0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px -1px rgba(0,0,0,0.1)",
 };
 
 const inputStyle: React.CSSProperties = {
@@ -61,10 +61,11 @@ const inputStyle: React.CSSProperties = {
   borderRadius: 10,
   fontSize: 14,
   color: colors.text,
-  background: colors.card,
+  background: "var(--bg-input, var(--bg-surface))",
   outline: "none",
   boxSizing: "border-box",
-  transition: "border-color 0.15s ease",
+  transition: "border-color 0.15s ease, box-shadow 0.15s ease",
+  fontFamily: "inherit",
 };
 
 const labelStyle: React.CSSProperties = {
@@ -77,7 +78,7 @@ const labelStyle: React.CSSProperties = {
 
 const btnPrimary: React.CSSProperties = {
   background: colors.primary,
-  color: "#fff",
+  color: "#ffffff",
   border: "none",
   borderRadius: 10,
   padding: "10px 20px",
@@ -88,8 +89,8 @@ const btnPrimary: React.CSSProperties = {
 };
 
 const btnSecondary: React.CSSProperties = {
-  background: "transparent",
-  color: colors.textSecondary,
+  background: "var(--bg-surface-hover, rgba(255, 255, 255, 0.04))",
+  color: colors.text,
   border: `1px solid ${colors.border}`,
   borderRadius: 10,
   padding: "10px 20px",
