@@ -24,6 +24,8 @@ export interface EnquiryListItem {
   partNumber?: string | null;
   industry?: string | null;
   productionQuantity?: string | null;
+  firstFileId?: string | null;
+  firstFileContentType?: string | null;
 }
 
 export interface EnquiryDetail extends EnquiryListItem {

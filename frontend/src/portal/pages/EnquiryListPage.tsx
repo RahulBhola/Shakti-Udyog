@@ -19,7 +19,10 @@ import {
   Layers,
   Paperclip,
   CheckCircle2,
+  Package,
 } from "lucide-react";
+import { tokenStorage } from "../../auth/tokenStorage";
+import { config } from "../../config";
 import "./erpListView.css";
 
 const STATUS_FILTERS = [
@@ -103,6 +106,71 @@ function exportToCsv(items: EnquiryListItem[]) {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+/* ── Thumbnail image (auth-fetched) ────────────────────────────────── */
+function ListEnquiryImage({
+  enquiryId,
+  fileId,
+  hasFiles,
+}: {
+  enquiryId: string;
+  fileId?: string | null;
+  hasFiles: boolean;
+}) {
+  const [url, setUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!fileId) return;
+    let cancelled = false;
+    let objectUrl: string | null = null;
+    const token = tokenStorage.getAccessToken();
+
+    fetch(`${config.apiBaseUrl}/api/v1/customer/enquiries/${enquiryId}/files/${fileId}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      credentials: "include",
+    })
+      .then((r) => {
+        if (!r.ok) throw new Error();
+        return r.blob();
+      })
+      .then((blob) => {
+        if (!cancelled) {
+          objectUrl = URL.createObjectURL(blob);
+          setUrl(objectUrl);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [enquiryId, fileId]);
+
+  if (url) {
+    return (
+      <img
+        src={url}
+        alt=""
+        className="w-10 h-10 rounded-lg border border-[var(--border-default)] object-cover shrink-0 shadow-sm bg-[var(--bg-card)]"
+      />
+    );
+  }
+
+  if (hasFiles) {
+    return (
+      <span className="w-10 h-10 rounded-lg bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 flex items-center justify-center text-[var(--color-primary)] shrink-0">
+        <FileText size={16} />
+      </span>
+    );
+  }
+
+  return (
+    <span className="w-10 h-10 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-default)] flex items-center justify-center text-[var(--text-muted)] shrink-0">
+      <Package size={16} className="opacity-40" />
+    </span>
+  );
 }
 
 /* ── Main Component ───────────────────────────────────────────────── */
@@ -374,15 +442,22 @@ export default function EnquiryListPage() {
                       onClick={() => navigate(`/customer/enquiries/${r.id}`)}
                       className="hover:bg-[var(--bg-surface-hover)] cursor-pointer transition-colors duration-150 group"
                     >
-                      {/* Part Name & Reference */}
+                      {/* Part Name, Thumbnail & Reference */}
                       <td className="py-3 px-4">
-                        <div className="flex flex-col">
-                          <span className="text-xs font-bold text-[var(--text-primary)] group-hover:text-[var(--color-primary)] transition-colors">
-                            {partDisplay}
-                          </span>
-                          <span className="text-[11px] text-[var(--text-muted)] font-mono">
-                            {enquiryNo(r.id)} {r.partNumber ? `· Part: ${r.partNumber}` : ""}
-                          </span>
+                        <div className="flex items-center gap-3">
+                          <ListEnquiryImage
+                            enquiryId={r.id}
+                            fileId={r.firstFileId}
+                            hasFiles={r.fileCount > 0}
+                          />
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-xs font-bold text-[var(--text-primary)] group-hover:text-[var(--color-primary)] transition-colors">
+                              {partDisplay}
+                            </span>
+                            <span className="text-[11px] text-[var(--text-muted)] font-mono">
+                              {enquiryNo(r.id)} {r.partNumber ? `· Part: ${r.partNumber}` : ""}
+                            </span>
+                          </div>
                         </div>
                       </td>
 

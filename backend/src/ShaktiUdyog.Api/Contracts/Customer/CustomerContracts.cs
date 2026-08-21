@@ -20,7 +20,8 @@ public record ActivityItemDto(string Type, string Title, string? LinkPath, DateT
 public record EnquiryListItemDto(
     Guid Id, string ProductType, string Quantity, string Status, bool IsDraft,
     int FileCount, DateTimeOffset CreatedAtUtc,
-    string? PartName, string? PartNumber, string? Industry, string? ProductionQuantity);
+    string? PartName, string? PartNumber, string? Industry, string? ProductionQuantity,
+    Guid? FirstFileId = null, string? FirstFileContentType = null);
 
 public record EnquiryDetailDto(
     Guid Id, string FullName, string CompanyName, string ProductType,
