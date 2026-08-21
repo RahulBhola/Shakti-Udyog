@@ -816,7 +816,7 @@ export default function ProductsPage() {
         </section>
 
         {/* ========================================================================= */}
-        {/* CUSTOM REQUIREMENT / CAD RFQ BANNER */}
+        {/* CUSTOM REQUIREMENT / CAD QUERY BANNER */}
         {/* ========================================================================= */}
         <motion.div
           initial={{ opacity: 0, y: 35 }}

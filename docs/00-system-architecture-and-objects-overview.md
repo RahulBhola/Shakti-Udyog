@@ -23,7 +23,7 @@
 **Shakti Udyog** is an enterprise-grade, multi-tier industrial manufacturing ERP and customer portal for high-precision sand casting, centrifugal casting, and CNC machining operations.
 
 The system connects three primary stakeholder groups in real time:
-1. **B2B Industrial Customers:** Request quotes (RFQ), track multi-stage manufacturing progress, approve drawings, inspect test certificates, download invoices, and manage company accounts.
+1. **B2B Industrial Customers:** Submit queries/enquiries, track multi-stage manufacturing progress, approve drawings, inspect test certificates, download invoices, and manage company accounts.
 2. **Operations & Plant Engineers:** Manage a 25-stage Kanban production board, review engineering specifications, generate detailed line-item quotations, assign work orders, and log quality inspection results.
 3. **Executive & ERP Administrators:** Oversee company accounts, user roles, financial invoicing, commercial deal closures, system configuration, security audit logs, and operational reports.
 
@@ -237,10 +237,10 @@ Authorized procurement and engineering personnel.
 
 ---
 
-### 3.3 Sales, RFQ & Quotation Entities
+### 3.3 Sales, Query & Quotation Entities
 
-#### `Enquiry` (RFQ)
-Customer Request For Quotation with engineering attributes.
+#### `Enquiry` (Query)
+Customer Query with engineering attributes.
 - `Id: Guid` (PK)
 - `CompanyId: Guid` (FK $\to$ `Company.Id`)
 - `UserId: Guid` (FK $\to$ `ApplicationUser.Id`)
@@ -265,7 +265,7 @@ Customer Request For Quotation with engineering attributes.
 - `CreatedAtUtc: DateTimeOffset`
 
 #### `EnquiryFile`
-Secure drawings, 3D CAD models, and technical specifications attached to an RFQ.
+Secure drawings, 3D CAD models, and technical specifications attached to an Enquiry/Query.
 - `Id: Guid` (PK)
 - `EnquiryId: Guid` (FK $\to$ `Enquiry.Id`)
 - `FileName: string`

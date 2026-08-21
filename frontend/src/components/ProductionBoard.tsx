@@ -798,7 +798,7 @@ function OverviewTab({ detail }: { detail: JobDetailFull }) {
         <h4>Business Links</h4>
         <div className="prod-detail__field"><span>Customer:</span><strong>{detail.companyName}</strong></div>
         {detail.orderNumber && <div className="prod-detail__field"><span>Order:</span><strong>{detail.orderNumber}</strong></div>}
-        {detail.rfqProductType && <div className="prod-detail__field"><span>RFQ:</span><strong>{detail.rfqProductType}</strong></div>}
+        {detail.rfqProductType && <div className="prod-detail__field"><span>Query:</span><strong>{detail.rfqProductType}</strong></div>}
       </div>
       <div className="prod-detail__field-group">
         <h4>Dates</h4>

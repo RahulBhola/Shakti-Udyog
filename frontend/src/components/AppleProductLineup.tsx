@@ -358,7 +358,7 @@ export const AppleProductLineup: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Action Buttons: Learn More + Request RFQ */}
+                {/* Action Buttons: Learn More + Request Query */}
                 <div className="grid grid-cols-2 gap-3 pt-1">
                   <Link
                     to={prod.detailSlug}

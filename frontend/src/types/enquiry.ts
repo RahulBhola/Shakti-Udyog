@@ -1,5 +1,5 @@
 /**
- * Customer and Engineer RFQ / Enquiry domain models.
+ * Customer and Engineer Query / Enquiry domain models.
  */
 
 export interface EnquiryFile {

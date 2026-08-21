@@ -752,7 +752,7 @@ export default function ResourcesPage() {
             ))}
           </div>
 
-          {/* Quick RFQ CTA Button */}
+          {/* Quick Query CTA Button */}
           <div className="pt-2">
             <button
               type="button"
@@ -1145,7 +1145,7 @@ export default function ResourcesPage() {
               })}
             </div>
 
-            {/* Bottom RFQ Quick Action */}
+            {/* Bottom Query Quick Action */}
             <div className="pt-8 sm:pt-10 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-neutral-200/80 dark:border-white/10 mt-8">
               <span className="text-xs font-mono text-neutral-500 dark:text-neutral-400">
                 Have a specific question about your alloy specification or pattern?
