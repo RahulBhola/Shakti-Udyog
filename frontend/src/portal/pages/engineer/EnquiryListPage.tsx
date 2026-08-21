@@ -87,11 +87,13 @@ function ListEnquiryImage({
   fileId,
   fileContentType,
   hasFiles,
+  onImageClick,
 }: {
   enquiryId: string;
   fileId?: string | null;
   fileContentType?: string | null;
   hasFiles: boolean;
+  onImageClick?: (url: string) => void;
 }) {
   const [url, setUrl] = useState<string | null>(null);
 
@@ -146,15 +148,36 @@ function ListEnquiryImage({
     };
   }, [enquiryId, fileId, fileContentType, hasFiles]);
 
-  if (url) return <img src={url} alt="Drawing Blueprint" className="inv-avatar" style={{ objectFit: "cover" }} />;
-  if (hasFiles) {
+  if (url) {
     return (
-      <span className="inv-avatar" style={{ background: "var(--bg-surface-hover)" }}>
-        <FileText size={16} />
-      </span>
+      <div
+        className="inv-drawing-thumb"
+        title="Click to view full drawing"
+        onClick={(e) => {
+          if (onImageClick) {
+            e.stopPropagation();
+            onImageClick(url);
+          }
+        }}
+      >
+        <img src={url} alt="CAD Drawing Blueprint" />
+      </div>
     );
   }
-  return <span className="inv-avatar" style={{ background: "var(--bg-surface)" }} />;
+
+  if (hasFiles) {
+    return (
+      <div className="inv-drawing-thumb inv-drawing-thumb--empty" title="CAD Document Attached">
+        <FileText size={16} style={{ color: "var(--color-primary)" }} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="inv-drawing-thumb inv-drawing-thumb--empty" title="No Drawings">
+      <Package size={16} style={{ opacity: 0.3 }} />
+    </div>
+  );
 }
 
 /* ---- main page ----------------------------------------------------- */
@@ -174,6 +197,7 @@ export default function EngineerEnquiryListPage() {
   const [priorityFilter, setPriorityFilter] = useState("All");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [previewModalUrl, setPreviewModalUrl] = useState<string | null>(null);
 
   const load = useCallback(() => {
     engineerApi.enquiries(page, pageSize, search || undefined, statusFilter === "All" ? undefined : statusFilter, companyId || undefined)
@@ -239,6 +263,7 @@ export default function EngineerEnquiryListPage() {
         fileId={r.firstFileId}
         fileContentType={r.firstFileContentType}
         hasFiles={r.fileCount > 0}
+        onImageClick={(url) => setPreviewModalUrl(url)}
       />
     );
   };
@@ -249,7 +274,7 @@ export default function EngineerEnquiryListPage() {
         <td onClick={(e) => e.stopPropagation()}>
           <input type="checkbox" className="inv-check" checked={selectedIds.has(r.id)} onChange={() => toggleSelect(r.id)} aria-label="Select Enquiry" />
         </td>
-        <td>{renderThumb(r)}</td>
+        <td style={{ width: 68, padding: "8px 12px" }}>{renderThumb(r)}</td>
         <td>
           <span className="inv-link" role="link" tabIndex={0}
             onClick={(e) => e.stopPropagation()}
@@ -341,6 +366,39 @@ export default function EngineerEnquiryListPage() {
 
   return (
     <div className="inv-page">
+      {/* Lightbox Drawing Modal */}
+      {previewModalUrl && (
+        <div
+          style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0, 0, 0, 0.82)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+          onClick={() => setPreviewModalUrl(null)}
+        >
+          <div
+            style={{ position: "relative", maxWidth: "85vw", maxHeight: "88vh", background: "var(--bg-card)", borderRadius: 16, border: "1px solid var(--border-default)", overflow: "hidden", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)", padding: 16, display: "flex", flexDirection: "column", alignItems: "center" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: 12, borderBottom: "1px solid var(--border-default)" }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>
+                CAD Drawing & Blueprint Preview
+              </span>
+              <button
+                type="button"
+                onClick={() => setPreviewModalUrl(null)}
+                style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", padding: 4 }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div style={{ width: "100%", maxHeight: "72vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 12, marginTop: 8, background: "var(--bg-surface)", borderRadius: 12, overflow: "hidden" }}>
+              <img
+                src={previewModalUrl}
+                alt="Full Drawing Preview"
+                style={{ maxHeight: "68vh", maxWidth: "100%", objectFit: "contain", borderRadius: 8 }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="inv-header">
         <div>
@@ -426,22 +484,22 @@ export default function EngineerEnquiryListPage() {
           <div className="inv-scroll">
             <table className="inv-table">
               <colgroup>
-                <col style={{ width: "4%" }} />
-                <col style={{ width: "5%" }} />
+                <col style={{ width: "36px" }} />
+                <col style={{ width: "68px" }} />
                 <col style={{ width: "13%" }} />
                 <col style={{ width: "21%" }} />
                 <col style={{ width: "9%" }} />
                 <col style={{ width: "11%" }} />
-                <col style={{ width: "12%" }} />
-                <col style={{ width: "19%" }} />
+                <col style={{ width: "11%" }} />
+                <col style={{ width: "18%" }} />
                 <col style={{ width: "6%" }} />
               </colgroup>
               <thead>
                 <tr>
-                  <th style={{ width: 40 }}>
+                  <th style={{ width: 36 }}>
                     <input type="checkbox" className="inv-check" checked={allSelected} onChange={toggleSelectAll} aria-label="Select all" />
                   </th>
-                  <th style={{ width: 52 }}>Image</th>
+                  <th style={{ width: 68, textAlign: "center" }}>Drawing</th>
                   <th>Enquiry No.</th>
                   <th>Customer</th>
                   <th>Qty</th>

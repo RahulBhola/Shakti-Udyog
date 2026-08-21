@@ -273,6 +273,45 @@
   border: 1px solid var(--border-input);
 }
 .inv-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+/* CAD / Blueprint Drawing Thumbnail */
+.inv-drawing-thumb {
+  width: 52px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+  position: relative;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+.inv-drawing-thumb:hover {
+  transform: scale(1.06);
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+  z-index: 5;
+}
+.inv-drawing-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.inv-drawing-thumb--empty {
+  background: var(--bg-surface);
+  color: var(--text-muted);
+  cursor: default;
+}
+.inv-drawing-thumb--empty:hover {
+  transform: none;
+  border-color: var(--border-default);
+  box-shadow: none;
+}
 .inv-customer__name {
   font-weight: 700;
   color: var(--text-primary);

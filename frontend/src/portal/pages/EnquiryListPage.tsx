@@ -114,11 +114,13 @@ function ListEnquiryImage({
   fileId,
   fileContentType,
   hasFiles,
+  onImageClick,
 }: {
   enquiryId: string;
   fileId?: string | null;
   fileContentType?: string | null;
   hasFiles: boolean;
+  onImageClick?: (url: string) => void;
 }) {
   const [url, setUrl] = useState<string | null>(null);
 
@@ -175,26 +177,33 @@ function ListEnquiryImage({
 
   if (url) {
     return (
-      <img
-        src={url}
-        alt="Drawing Blueprint Thumbnail"
-        className="w-10 h-10 rounded-lg border border-[var(--border-default)] object-cover shrink-0 shadow-sm bg-[var(--bg-card)] hover:scale-105 transition-transform"
-      />
+      <div
+        className="inv-drawing-thumb"
+        title="Click to view full drawing"
+        onClick={(e) => {
+          if (onImageClick) {
+            e.stopPropagation();
+            onImageClick(url);
+          }
+        }}
+      >
+        <img src={url} alt="CAD Drawing Blueprint" />
+      </div>
     );
   }
 
   if (hasFiles) {
     return (
-      <span className="w-10 h-10 rounded-lg bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 flex items-center justify-center text-[var(--color-primary)] shrink-0">
-        <FileText size={16} />
-      </span>
+      <div className="inv-drawing-thumb inv-drawing-thumb--empty" title="CAD Document Attached">
+        <FileText size={16} className="text-[var(--color-primary)]" />
+      </div>
     );
   }
 
   return (
-    <span className="w-10 h-10 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-default)] flex items-center justify-center text-[var(--text-muted)] shrink-0">
+    <div className="inv-drawing-thumb inv-drawing-thumb--empty" title="No Drawings">
       <Package size={16} className="opacity-40" />
-    </span>
+    </div>
   );
 }
 
@@ -210,6 +219,7 @@ export default function EnquiryListPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [refreshing, setRefreshing] = useState(false);
+  const [previewModalUrl, setPreviewModalUrl] = useState<string | null>(null);
 
   const load = useCallback(() => {
     setRefreshing(true);
@@ -232,11 +242,11 @@ export default function EnquiryListPage() {
 
   // Debounce search input
   useEffect(() => {
-    const t = setTimeout(() => {
+    const timer = setTimeout(() => {
       setSearch(searchInput.trim());
       setPage(1);
-    }, 300);
-    return () => clearTimeout(t);
+    }, 350);
+    return () => clearTimeout(timer);
   }, [searchInput]);
 
   const totalPages = data ? Math.max(1, Math.ceil(data.totalCount / data.pageSize)) : 1;
@@ -264,6 +274,40 @@ export default function EnquiryListPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      {/* ── Lightbox Drawing Modal ──────────────────────────────────── */}
+      {previewModalUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in"
+          onClick={() => setPreviewModalUrl(null)}
+          style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0, 0, 0, 0.82)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+        >
+          <div
+            style={{ position: "relative", maxWidth: "85vw", maxHeight: "88vh", background: "var(--bg-card)", borderRadius: 16, border: "1px solid var(--border-default)", overflow: "hidden", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)", padding: 16, display: "flex", flexDirection: "column", alignItems: "center" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: 12, borderBottom: "1px solid var(--border-default)" }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>
+                CAD Drawing & Blueprint Preview
+              </span>
+              <button
+                type="button"
+                onClick={() => setPreviewModalUrl(null)}
+                style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", padding: 4 }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div style={{ width: "100%", maxHeight: "72vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 12, marginTop: 8, background: "var(--bg-surface)", borderRadius: 12, overflow: "hidden" }}>
+              <img
+                src={previewModalUrl}
+                alt="Full Drawing Preview"
+                style={{ maxHeight: "68vh", maxWidth: "100%", objectFit: "contain", borderRadius: 8 }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Top Header ────────────────────────────────────────────── */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
@@ -476,6 +520,7 @@ export default function EnquiryListPage() {
                             fileId={r.firstFileId}
                             fileContentType={r.firstFileContentType}
                             hasFiles={r.fileCount > 0}
+                            onImageClick={(u) => setPreviewModalUrl(u)}
                           />
                         </div>
                       </td>
