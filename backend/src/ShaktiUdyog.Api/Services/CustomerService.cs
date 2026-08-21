@@ -138,8 +138,8 @@ public class CustomerService(
             .Select(r => new EnquiryListItemDto(
                 r.Id, r.ProductType, r.Quantity, r.Status, r.IsDraft, r.Files.Count, r.CreatedAtUtc,
                 r.PartName, r.PartNumber, r.Industry, r.ProductionQuantity,
-                r.Files.OrderBy(f => f.UploadedAtUtc).Select(f => (Guid?)f.Id).FirstOrDefault(),
-                r.Files.OrderBy(f => f.UploadedAtUtc).Select(f => f.ContentType).FirstOrDefault()))
+                r.Files.OrderByDescending(f => f.ContentType.StartsWith("image/")).ThenBy(f => f.UploadedAtUtc).Select(f => (Guid?)f.Id).FirstOrDefault(),
+                r.Files.OrderByDescending(f => f.ContentType.StartsWith("image/")).ThenBy(f => f.UploadedAtUtc).Select(f => f.ContentType).FirstOrDefault()))
             .ToListAsync();
 
         return new PagedResult<EnquiryListItemDto>(items, page, pageSize, total);

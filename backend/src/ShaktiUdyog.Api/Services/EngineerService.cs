@@ -75,8 +75,8 @@ public class EngineerService(
                 r.Status, r.IsDraft,
                 r.Assignments.Where(a => a.IsActive).Select(a => (Guid?)a.AssignedToUserId).FirstOrDefault(),
                 r.Files.Count, r.CreatedAtUtc, r.Priority,
-                r.Files.OrderBy(f => f.UploadedAtUtc).Select(f => (Guid?)f.Id).FirstOrDefault(),
-                r.Files.OrderBy(f => f.UploadedAtUtc).Select(f => f.ContentType).FirstOrDefault()))
+                r.Files.OrderByDescending(f => f.ContentType.StartsWith("image/")).ThenBy(f => f.UploadedAtUtc).Select(f => (Guid?)f.Id).FirstOrDefault(),
+                r.Files.OrderByDescending(f => f.ContentType.StartsWith("image/")).ThenBy(f => f.UploadedAtUtc).Select(f => f.ContentType).FirstOrDefault()))
             .ToListAsync();
 
         return new PagedResult<EngineerEnquiryListItemDto>(items, page, pageSize, total);

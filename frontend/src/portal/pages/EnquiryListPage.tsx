@@ -424,6 +424,7 @@ export default function EnquiryListPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-[var(--border-default)] bg-[var(--bg-surface)] text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                  <th className="py-3.5 px-4 w-14 text-center">Image</th>
                   <th className="py-3.5 px-4">Enquiry & Part</th>
                   <th className="py-3.5 px-4">Category</th>
                   <th className="py-3.5 px-4">Quantity</th>
@@ -442,22 +443,26 @@ export default function EnquiryListPage() {
                       onClick={() => navigate(`/customer/enquiries/${r.id}`)}
                       className="hover:bg-[var(--bg-surface-hover)] cursor-pointer transition-colors duration-150 group"
                     >
-                      {/* Part Name, Thumbnail & Reference */}
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-3">
+                      {/* Image Thumbnail Column */}
+                      <td className="py-3 px-4 w-14 text-center">
+                        <div className="flex items-center justify-center">
                           <ListEnquiryImage
                             enquiryId={r.id}
                             fileId={r.firstFileId}
                             hasFiles={r.fileCount > 0}
                           />
-                          <div className="flex flex-col min-w-0">
-                            <span className="text-xs font-bold text-[var(--text-primary)] group-hover:text-[var(--color-primary)] transition-colors">
-                              {partDisplay}
-                            </span>
-                            <span className="text-[11px] text-[var(--text-muted)] font-mono">
-                              {enquiryNo(r.id)} {r.partNumber ? `· Part: ${r.partNumber}` : ""}
-                            </span>
-                          </div>
+                        </div>
+                      </td>
+
+                      {/* Part Name & Reference */}
+                      <td className="py-3 px-4">
+                        <div className="flex flex-col">
+                          <span className="text-xs font-bold text-[var(--text-primary)] group-hover:text-[var(--color-primary)] transition-colors">
+                            {partDisplay}
+                          </span>
+                          <span className="text-[11px] text-[var(--text-muted)] font-mono">
+                            {enquiryNo(r.id)} {r.partNumber ? `· Part: ${r.partNumber}` : ""}
+                          </span>
                         </div>
                       </td>
 
