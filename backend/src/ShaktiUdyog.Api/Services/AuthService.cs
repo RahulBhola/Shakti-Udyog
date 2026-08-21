@@ -19,6 +19,7 @@ public interface IAuthService
     Task LogoutAsync(string? rawRefreshToken, Guid? sessionId, Guid? userId, string? ipAddress);
     Task<MeResponse?> GetMeAsync(Guid userId);
     Task<AuthResponse?> RegisterAsync(RegisterRequest request, string? ipAddress, string? userAgent);
+    Task<(AuthResponse? Response, string? Error)> RegisterWithDetailAsync(RegisterRequest request, string? ipAddress, string? userAgent);
     Task<IReadOnlyList<UserSessionDto>> GetActiveSessionsAsync(Guid userId, Guid? currentSessionId);
     Task<bool> RevokeSessionAsync(Guid sessionId, Guid userId, string? ipAddress);
     Task<int> RevokeOtherSessionsAsync(Guid currentSessionId, Guid userId, string? ipAddress);
@@ -41,11 +42,14 @@ public class AuthService(
 {
     public async Task<AuthResponse?> LoginAsync(LoginRequest request, string? ipAddress, string? userAgent)
     {
-        var user = await userManager.FindByEmailAsync(request.Email);
+        var email = request.Email?.Trim() ?? string.Empty;
+        var user = await userManager.FindByEmailAsync(email)
+            ?? await userManager.FindByNameAsync(email);
+
         if (user is null || !user.IsActive)
         {
             // Same response as wrong password: do not disclose account existence.
-            await audit.WriteAsync("auth.login.failed", null, "User", request.Email, ipAddress, userAgent);
+            await audit.WriteAsync("auth.login.failed", null, "User", email, ipAddress, userAgent);
             return null;
         }
 
@@ -210,21 +214,33 @@ public class AuthService(
 
     public async Task<AuthResponse?> RegisterAsync(RegisterRequest request, string? ipAddress, string? userAgent)
     {
-        var existingUser = await userManager.FindByEmailAsync(request.Email);
+        var (response, _) = await RegisterWithDetailAsync(request, ipAddress, userAgent);
+        return response;
+    }
+
+    public async Task<(AuthResponse? Response, string? Error)> RegisterWithDetailAsync(RegisterRequest request, string? ipAddress, string? userAgent)
+    {
+        var email = request.Email?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return (null, "Email address is required.");
+        }
+
+        var existingUser = await userManager.FindByEmailAsync(email)
+            ?? await userManager.FindByNameAsync(email);
         if (existingUser is not null)
         {
-            // Same response as login failure: do not disclose account existence.
-            await audit.WriteAsync("auth.register.failed", null, "User", request.Email, ipAddress, userAgent);
-            return null;
+            await audit.WriteAsync("auth.register.failed", null, "User", email, ipAddress, userAgent);
+            return (null, "An account with this email address already exists. Please sign in.");
         }
 
         var user = new ApplicationUser
         {
-            UserName = request.Email,
-            Email = request.Email,
-            FullName = request.FullName,
-            PhoneNumber = request.Phone,
-            CompanyName = request.CompanyName,
+            UserName = email,
+            Email = email,
+            FullName = request.FullName?.Trim(),
+            PhoneNumber = request.Phone?.Trim(),
+            CompanyName = request.CompanyName?.Trim(),
             IsActive = true,
             CreatedAtUtc = DateTimeOffset.UtcNow,
         };
@@ -232,10 +248,10 @@ public class AuthService(
         var result = await userManager.CreateAsync(user, request.Password);
         if (!result.Succeeded)
         {
-            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-            logger.LogWarning("Registration failed for {Email}: {Errors}", request.Email, errors);
-            await audit.WriteAsync("auth.register.failed", null, "User", request.Email, ipAddress, userAgent);
-            return null;
+            var errors = string.Join(" ", result.Errors.Select(e => e.Description));
+            logger.LogWarning("Registration failed for {Email}: {Errors}", email, errors);
+            await audit.WriteAsync("auth.register.failed", null, "User", email, ipAddress, userAgent);
+            return (null, string.IsNullOrWhiteSpace(errors) ? "Registration failed. Please verify your details." : errors);
         }
 
         // Assign default Customer role
@@ -244,7 +260,7 @@ public class AuthService(
         // Auto-provision and link approved company immediately (no admin approval needed)
         var compName = !string.IsNullOrWhiteSpace(request.CompanyName)
             ? request.CompanyName.Trim()
-            : (!string.IsNullOrWhiteSpace(request.FullName) ? request.FullName.Trim() : request.Email.Trim());
+            : (!string.IsNullOrWhiteSpace(request.FullName) ? request.FullName.Trim() : email);
 
         var company = await db.Companies.FirstOrDefaultAsync(c => c.Name == compName);
         if (company is null)
@@ -252,7 +268,7 @@ public class AuthService(
             company = new Company
             {
                 Name = compName,
-                CompanyEmail = request.Email.Trim(),
+                CompanyEmail = email,
                 CompanyPhone = request.Phone?.Trim(),
                 VerificationStatus = "Approved",
                 IsActive = true,
@@ -262,21 +278,25 @@ public class AuthService(
             await db.SaveChangesAsync();
         }
 
-        db.UserCompanies.Add(new UserCompany
+        var existingUc = await db.UserCompanies.FirstOrDefaultAsync(uc => uc.UserId == user.Id && uc.CompanyId == company.Id);
+        if (existingUc is null)
         {
-            UserId = user.Id,
-            CompanyId = company.Id,
-            IsApproved = true,
-            ApprovedAtUtc = DateTimeOffset.UtcNow,
-        });
-        await db.SaveChangesAsync();
+            db.UserCompanies.Add(new UserCompany
+            {
+                UserId = user.Id,
+                CompanyId = company.Id,
+                IsApproved = true,
+                ApprovedAtUtc = DateTimeOffset.UtcNow,
+            });
+            await db.SaveChangesAsync();
+        }
 
         // Generate tokens and session for immediate login
         var refresh = await tokenService.IssueRefreshTokenAsync(user, ipAddress, userAgent);
         var access = await tokenService.CreateAccessTokenAsync(user, refresh.Entity.SessionId);
 
         await audit.WriteAsync("auth.register.succeeded", user.Id, "User", user.Id.ToString(), ipAddress, userAgent);
-        return new AuthResponse(access.Token, access.ExpiresAtUtc, refresh.RawToken);
+        return (new AuthResponse(access.Token, access.ExpiresAtUtc, refresh.RawToken), null);
     }
 
     public async Task<IReadOnlyList<UserSessionDto>> GetActiveSessionsAsync(Guid userId, Guid? currentSessionId)

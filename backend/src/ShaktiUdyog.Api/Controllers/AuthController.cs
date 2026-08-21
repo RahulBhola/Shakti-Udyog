@@ -37,13 +37,13 @@ public class AuthController(IAuthService authService) : ControllerBase
 
     [HttpPost("register")]
     [ProducesResponseType<AuthResponse>(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<MessageResponse>(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Register(RegisterRequest request)
     {
-        var result = await authService.RegisterAsync(request, ClientIp, UserAgent);
+        var (result, error) = await authService.RegisterWithDetailAsync(request, ClientIp, UserAgent);
         if (result is null)
         {
-            return BadRequest(new MessageResponse("Registration failed. Please try again."));
+            return BadRequest(new MessageResponse(error ?? "Registration failed. Please try again."));
         }
 
         SetRefreshCookie(result.RefreshToken);

@@ -93,10 +93,10 @@ export function SignUpPage() {
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          fullName: formData.fullName,
-          email: formData.email,
-          phone: formData.phone,
-          companyName: formData.companyName,
+          fullName: formData.fullName.trim(),
+          email: formData.email.trim(),
+          phone: formData.phone.trim(),
+          companyName: formData.companyName.trim(),
           password: formData.password,
         }),
       });
@@ -104,11 +104,14 @@ export function SignUpPage() {
       if (response.ok) {
         navigate("/login", {
           replace: true,
-          state: { message: "Registration successful! Please sign in with your credentials." },
+          state: {
+            message: "Account created successfully! Please sign in with your password.",
+            email: formData.email.trim(),
+          },
         });
       } else {
         const data = await response.json();
-        setError(data.message || "Registration could not be completed. Please try again.");
+        setError(data.message || "Registration could not be completed. Please verify your details.");
       }
     } catch {
       setError("Unable to reach the server. Please check your network connection.");

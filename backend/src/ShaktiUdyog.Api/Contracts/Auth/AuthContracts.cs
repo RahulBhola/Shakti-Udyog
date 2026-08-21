@@ -19,7 +19,7 @@ public record ForgotPasswordRequest([Required, EmailAddress] string Email);
 
 public record ResetPasswordRequest(
     [Required] string Token,
-    [Required, MinLength(12)] string NewPassword);
+    [Required, MinLength(8)] string NewPassword);
 
 public record LogoutRequest(string? RefreshToken);
 
@@ -42,7 +42,7 @@ public record MessageResponse(string Message);
 /// <summary>Request to create an engineer profile (admin only).</summary>
 public record CreateEngineerRequest(
     [Required] string FullName,
-    [Required, MinLength(12)] string Password,
+    [Required, MinLength(8)] string Password,
     [EmailAddress] string? Email = null);
 
 /// <summary>Response after creating an engineer profile.</summary>

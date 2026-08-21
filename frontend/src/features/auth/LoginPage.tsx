@@ -1,8 +1,9 @@
 import { useEffect, useState, type FormEvent, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../auth/AuthContext";
+import { authService } from "../../auth/authService";
 import { AuthLayout } from "./AuthLayout";
-import { Mail, Lock, ArrowRight, Eye, EyeOff, AlertCircle } from "lucide-react";
+import { Mail, Lock, ArrowRight, Eye, EyeOff, AlertCircle, CheckCircle2 } from "lucide-react";
 
 /** Official Full-Color Google G Logo */
 function GoogleIcon() {
@@ -41,6 +42,7 @@ export function LoginPage() {
   const { user, login, loginWithProvider } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const locationState = location.state as { from?: string; message?: string; email?: string } | null;
 
   // Already logged in — redirect to respective portal
   useEffect(() => {
@@ -53,8 +55,9 @@ export function LoginPage() {
     navigate(target, { replace: true });
   }, [user, navigate]);
 
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(locationState?.email ?? "");
   const [password, setPassword] = useState("");
+  const [successMessage, setSuccessMessage] = useState<string | null>(locationState?.message ?? null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [showPw, setShowPw] = useState(false);
@@ -63,12 +66,23 @@ export function LoginPage() {
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
+    setSuccessMessage(null);
     setSubmitting(true);
     try {
-      const ok = await login(email, password);
+      const ok = await login(email.trim(), password);
       if (ok) {
-        const from = (location.state as { from?: string } | null)?.from ?? "/";
-        navigate(from, { replace: true });
+        const from = locationState?.from;
+        if (from && from !== "/" && from !== "/login") {
+          navigate(from, { replace: true });
+        } else {
+          const me = await authService.me();
+          const role = me?.roles[0];
+          const target =
+            role === "Admin" || role === "Engineer"
+              ? "/admin/dashboard"
+              : "/customer/dashboard";
+          navigate(target, { replace: true });
+        }
       } else {
         setError("Invalid email or password. Please verify your credentials.");
       }
@@ -145,6 +159,25 @@ export function LoginPage() {
             Forgot password?
           </Link>
         </div>
+
+        {/* Success Alert */}
+        {successMessage && (
+          <div role="status" className="auth-alert-success" style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.5rem",
+            padding: "0.75rem 1rem",
+            borderRadius: "0.5rem",
+            backgroundColor: "rgba(34, 197, 94, 0.15)",
+            border: "1px solid rgba(34, 197, 94, 0.35)",
+            color: "#4ade80",
+            fontSize: "0.875rem",
+            marginBottom: "1rem"
+          }}>
+            <CheckCircle2 size={17} style={{ flexShrink: 0 }} />
+            <span>{successMessage}</span>
+          </div>
+        )}
 
         {/* Error Alert */}
         {error && (
