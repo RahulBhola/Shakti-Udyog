@@ -38,6 +38,9 @@ import {
   Scale,
   Wrench,
   Loader2,
+  Maximize2,
+  X,
+  ZoomIn,
 } from "lucide-react";
 import "./erpListView.css";
 
@@ -89,6 +92,10 @@ function formatBytes(bytes: number): string {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 }
 
+function isImageFile(fileName: string): boolean {
+  return /\.(png|jpg|jpeg|webp|gif|svg)$/i.test(fileName);
+}
+
 function getFileIcon(fileName: string) {
   const ext = fileName.split(".").pop()?.toLowerCase() ?? "";
   if (["pdf"].includes(ext)) return <FileText size={18} className="text-red-500" />;
@@ -99,6 +106,80 @@ function getFileIcon(fileName: string) {
   if (["png", "jpg", "jpeg", "webp"].includes(ext))
     return <FileImage size={18} className="text-purple-500" />;
   return <Paperclip size={18} className="text-[var(--text-secondary)]" />;
+}
+
+/* ── Auth-fetched Image Component ─────────────────────────────────── */
+
+function AuthEnquiryImage({
+  enquiryId,
+  fileId,
+  alt = "Casting Component Drawing",
+  className = "w-full h-full object-cover",
+  onClick,
+}: {
+  enquiryId: string;
+  fileId: string;
+  alt?: string;
+  className?: string;
+  onClick?: () => void;
+}) {
+  const [src, setSrc] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    let objUrl: string | null = null;
+    const token = tokenStorage.getAccessToken();
+
+    fetch(`${config.apiBaseUrl}/api/v1/customer/enquiries/${enquiryId}/files/${fileId}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      credentials: "include",
+    })
+      .then((r) => {
+        if (!r.ok) throw new Error("Failed to load image");
+        return r.blob();
+      })
+      .then((blob) => {
+        if (!cancelled) {
+          objUrl = URL.createObjectURL(blob);
+          setSrc(objUrl);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+      if (objUrl) URL.revokeObjectURL(objUrl);
+    };
+  }, [enquiryId, fileId]);
+
+  if (loading) {
+    return (
+      <div className="w-full h-full min-h-[140px] flex items-center justify-center bg-[var(--bg-surface)]/80 animate-pulse rounded-xl">
+        <Loader2 size={24} className="animate-spin text-[var(--color-primary)] opacity-60" />
+      </div>
+    );
+  }
+
+  if (!src) {
+    return (
+      <div className="w-full h-full min-h-[140px] flex items-center justify-center bg-[var(--bg-surface)]/60 rounded-xl text-[var(--text-muted)]">
+        <FileImage size={28} className="opacity-40" />
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className={`${className} cursor-pointer hover:opacity-95 transition-opacity`}
+      onClick={onClick}
+    />
+  );
 }
 
 /* ── Section Card Component ───────────────────────────────────────── */
@@ -184,6 +265,7 @@ export default function EnquiryDetailPage() {
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [previewImageFile, setPreviewImageFile] = useState<{ id: string; name: string } | null>(null);
 
   const loadData = async () => {
     try {
@@ -313,11 +395,61 @@ export default function EnquiryDetailPage() {
     ? enquiry.additionalRequirements.split(", ").filter(Boolean)
     : [];
 
+  const imageFiles = enquiry.files.filter((f) => isImageFile(f.fileName));
+  const primaryImage = imageFiles.length > 0 ? imageFiles[0] : null;
+
   const enqRef = `ENQ-${enquiry.id.slice(0, 8).toUpperCase()}`;
   const partTitle = enquiry.partName || enquiry.productType;
 
   return (
     <div className="flex flex-col gap-6">
+      {/* ── Lightbox Image Preview Modal ───────────────────────────── */}
+      {previewImageFile && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in"
+          onClick={() => setPreviewImageFile(null)}
+        >
+          <div
+            className="relative max-w-4xl w-full max-h-[90vh] bg-[var(--bg-card)] rounded-2xl border border-[var(--border-default)] overflow-hidden shadow-2xl p-4 flex flex-col items-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-full flex items-center justify-between pb-3 border-b border-[var(--border-default)]">
+              <div className="flex items-center gap-2">
+                <FileImage size={18} className="text-[var(--color-primary)]" />
+                <span className="text-xs font-bold text-[var(--text-primary)]">
+                  {previewImageFile.name}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => downloadFile(previewImageFile.id, previewImageFile.name)}
+                  className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-[var(--bg-surface)] border border-[var(--border-default)] text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] flex items-center gap-1"
+                >
+                  <Download size={13} />
+                  Download
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPreviewImageFile(null)}
+                  className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] transition-colors"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+            <div className="w-full h-[65vh] flex items-center justify-center p-2 mt-2 bg-[var(--bg-surface)]/40 rounded-xl overflow-hidden">
+              <AuthEnquiryImage
+                enquiryId={id}
+                fileId={previewImageFile.id}
+                alt={previewImageFile.name}
+                className="max-h-full max-w-full object-contain rounded-lg shadow-md"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Breadcrumb & Top Action Header ─────────────────────────── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[var(--border-default)]">
         <div>
@@ -569,6 +701,44 @@ export default function EnquiryDetailPage() {
 
         {/* ══ MAIN CONTENT COLUMN (8 Cols) ══ */}
         <div className="col-span-12 lg:col-span-8 flex flex-col gap-6">
+          {/* ── FEATURED IMAGE PREVIEW HERO (When Image Attachment Exists) ── */}
+          {primaryImage && (
+            <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] overflow-hidden shadow-sm">
+              <div className="px-5 py-3 border-b border-[var(--border-default)] flex items-center justify-between bg-[var(--bg-surface)]/60">
+                <div className="flex items-center gap-2">
+                  <FileImage size={16} className="text-[var(--color-primary)]" />
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)] m-0">
+                    Component Visual Blueprint & Schematic
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setPreviewImageFile({ id: primaryImage.id, name: primaryImage.fileName })}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold border border-[var(--border-default)] bg-[var(--bg-surface)] text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all"
+                >
+                  <ZoomIn size={13} />
+                  Full Size Preview
+                </button>
+              </div>
+
+              <div
+                className="relative w-full h-[260px] md:h-[320px] bg-[var(--bg-surface)]/40 flex items-center justify-center p-4 cursor-pointer group"
+                onClick={() => setPreviewImageFile({ id: primaryImage.id, name: primaryImage.fileName })}
+              >
+                <AuthEnquiryImage
+                  enquiryId={id}
+                  fileId={primaryImage.id}
+                  alt={primaryImage.fileName}
+                  className="max-h-full max-w-full object-contain rounded-xl shadow-md group-hover:scale-[1.01] transition-transform duration-200"
+                />
+                <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-mono text-white flex items-center gap-1.5">
+                  <Maximize2 size={11} />
+                  Click to Zoom · {primaryImage.fileName}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* ── HERO ATTACHMENTS CARD ─────────────────────────────────── */}
           <SectionCard
             title="Technical Drawings & CAD Models"
@@ -634,17 +804,37 @@ export default function EnquiryDetailPage() {
             ) : (
               <div className="flex flex-col gap-2.5">
                 {enquiry.files.map((file) => {
+                  const isImg = isImageFile(file.fileName);
                   return (
                     <div
                       key={file.id}
                       className="flex items-center justify-between p-3.5 rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] hover:bg-[var(--bg-surface-hover)] transition-all duration-150 group"
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-10 h-10 rounded-lg bg-[var(--bg-card)] border border-[var(--border-default)] flex items-center justify-center shrink-0">
-                          {getFileIcon(file.fileName)}
-                        </div>
+                        {isImg ? (
+                          <div
+                            className="w-12 h-12 rounded-lg bg-[var(--bg-card)] border border-[var(--border-default)] overflow-hidden shrink-0 cursor-pointer"
+                            onClick={() => setPreviewImageFile({ id: file.id, name: file.fileName })}
+                          >
+                            <AuthEnquiryImage
+                              enquiryId={id}
+                              fileId={file.id}
+                              alt={file.fileName}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-10 h-10 rounded-lg bg-[var(--bg-card)] border border-[var(--border-default)] flex items-center justify-center shrink-0">
+                            {getFileIcon(file.fileName)}
+                          </div>
+                        )}
                         <div className="flex flex-col min-w-0">
-                          <span className="text-xs font-bold text-[var(--text-primary)] truncate group-hover:text-[var(--color-primary)] transition-colors">
+                          <span
+                            onClick={() => isImg && setPreviewImageFile({ id: file.id, name: file.fileName })}
+                            className={`text-xs font-bold text-[var(--text-primary)] truncate group-hover:text-[var(--color-primary)] transition-colors ${
+                              isImg ? "cursor-pointer" : ""
+                            }`}
+                          >
                             {file.fileName}
                           </span>
                           <span className="text-[11px] text-[var(--text-muted)]">
@@ -654,6 +844,18 @@ export default function EnquiryDetailPage() {
                       </div>
 
                       <div className="flex items-center gap-1.5 shrink-0">
+                        {isImg && (
+                          <button
+                            type="button"
+                            onClick={() => setPreviewImageFile({ id: file.id, name: file.fileName })}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-colors"
+                            title="Preview Image"
+                          >
+                            <ZoomIn size={13} />
+                            Preview
+                          </button>
+                        )}
+
                         <button
                           type="button"
                           onClick={() => downloadFile(file.id, file.fileName)}
