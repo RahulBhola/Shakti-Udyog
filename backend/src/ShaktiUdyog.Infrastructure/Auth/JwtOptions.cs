@@ -18,4 +18,7 @@ public class JwtOptions
 
     /// <summary>Refresh-token lifetime in days.</summary>
     public int RefreshTokenDays { get; set; } = 7;
+
+    /// <summary>Persistent user session lifetime in days.</summary>
+    public int SessionDays { get; set; } = 90;
 }

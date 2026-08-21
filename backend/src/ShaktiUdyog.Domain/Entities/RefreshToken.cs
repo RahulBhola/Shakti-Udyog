@@ -14,6 +14,9 @@ public class RefreshToken
     public Guid UserId { get; set; }
     public ApplicationUser User { get; set; } = null!;
 
+    public Guid? SessionId { get; set; }
+    public UserSession? Session { get; set; }
+
     /// <summary>SHA-256 hash (Base64) of the raw token value.</summary>
     public required string TokenHash { get; set; }
 

@@ -1,4 +1,5 @@
 import { Panel } from "../shared";
+import { DevicesSessionsCard } from "../components/DevicesSessionsCard";
 
 export default function SettingsPage() {
   return (
@@ -7,9 +8,6 @@ export default function SettingsPage() {
       <div className="panel-grid panel-grid--2">
         <Panel title="Security">
           <p className="placeholder-note">Multi-factor authentication — coming in a later milestone.</p>
-          <p className="placeholder-note" style={{ marginTop: "var(--sp-3)" }}>
-            Active session management — view and revoke active sessions, coming later.
-          </p>
         </Panel>
         <Panel title="Preferences">
           <p className="placeholder-note">
@@ -17,6 +15,7 @@ export default function SettingsPage() {
           </p>
         </Panel>
       </div>
+      <DevicesSessionsCard />
     </>
   );
 }

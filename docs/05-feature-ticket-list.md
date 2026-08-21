@@ -34,13 +34,14 @@ graph LR
 ### Epic 1: Identity, Authentication & Security Governance
 
 | Ticket ID | Title | Priority | Target Role | Status |
-| :--- | :--- | :---: | :--- | :---: |
+| :--- | :--- | :--- | :--- | :--- |
 | `AUTH-101` | **Dual-Token Authentication (JWT + Refresh Cookie)** | `P0` | All | `Completed` |
 | `AUTH-102` | **Refresh Token Rotation & Chain Revocation** | `P0` | All | `Completed` |
 | `AUTH-103` | **Neutral-Response Password Reset Flow** | `P0` | All | `Completed` |
 | `AUTH-104` | **Account Lockout & Brute-Force Defense** | `P0` | System | `Completed` |
 | `AUTH-105` | **Dynamic Permission Policy Engine (`permission:<name>`)** | `P0` | System | `Completed` |
 | `AUTH-106` | **OAuth Integration (Google & Apple Sign-In)** | `P1` | Customer / Staff | `Completed` |
+| `AUTH-107` | **Multi-Device Persistent Session Management & Remote Revocation** | `P0` | All | `Completed` |
 
 #### `AUTH-101`: Dual-Token Authentication
 * **User Story:** As a user, I want to securely log in with my email and password so that I can access my designated portal with an automatically renewing session.
@@ -48,6 +49,16 @@ graph LR
   - `POST /api/v1/auth/login` returns a 15-minute JWT in the response body.
   - An `HttpOnly`, `Secure`, `SameSite=Strict` cookie containing a 64-byte random refresh token is set scoped to `/api/v1/auth`.
   - Frontend keeps JWT in memory only and never stores tokens in `localStorage` or `sessionStorage`.
+
+#### `AUTH-107`: Multi-Device Persistent Session Management & Remote Revocation
+* **User Story:** As a user, I want to view all active devices signed into my account, see their location, device type, and last active time, and remotely log out individual or all other devices in real-time.
+* **Acceptance Criteria:**
+  - Decoupled `UserSession` entity (1:N with `RefreshToken`) with User-Agent parsing (Browser, OS, Device Type, Location).
+  - 15-minute JWT access tokens embed the session ID (`sid` claim).
+  - Single-use token rotation preserves existing `SessionId` and updates `LastActiveAtUtc`.
+  - Remote session revocation (`DELETE /api/v1/auth/sessions/{sessionId}` and `POST /api/v1/auth/sessions/revoke-others`) transactionally revokes database session and broadcasts `SessionRevoked` via SignalR to `user:{userId}`.
+  - Offline devices are rejected on their next refresh request; cross-user session tampering returns `403 Forbidden` / `404 Not Found`.
+  - Frontend `DevicesSessionsCard` component provides visual device indicators, `This Device` badge, and remote logout dialogs.
 
 ---
 

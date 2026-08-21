@@ -48,48 +48,105 @@ graph TD
 
 ---
 
-## 2. Authentication Architecture
+## 2. Authentication & Multi-Device Session Architecture
 
-### 2.1 Dual-Token Authentication Strategy
+### 2.1 Multi-Device Persistent Session Strategy
+
+The Shakti Udyog platform implements an enterprise-grade multi-device persistent session management and real-time synchronization system. Users can authenticate once per device and remain securely logged in across desktop, laptop, tablet, and mobile clients with unified real-time access.
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Client as Frontend Browser
+    actor Client as Frontend Device (Browser / Mobile)
     participant API as ASP.NET Core Web API
     participant DB as SQL Server Database
+    participant SignalR as SignalR Realtime Hub
+    actor OtherClient as Remote Device (Phone / Laptop)
 
-    Note over Client,API: 1. Authentication Flow
-    Client->>API: POST /api/v1/auth/login {email, password}
+    Note over Client,API: 1. Initial Device Authentication
+    Client->>API: POST /api/v1/auth/login {email, password} (User-Agent, IP)
     API->>DB: Validate credentials & Lockout status
-    API->>DB: Store SHA-256 hashed refresh token
-    API-->>Client: Return 15-min JWT (In-Memory) + Set-Cookie (HttpOnly Refresh Token)
+    API->>DB: Create UserSession (Parsed Device, OS, Browser, 90-day expiry)
+    API->>DB: Issue RefreshToken (SHA-256 hash, linked to SessionId)
+    API-->>Client: Return 15-min JWT (with sid claim) + Set-Cookie (HttpOnly Refresh Token)
 
-    Note over Client,API: 2. Authenticated Request
-    Client->>API: GET /api/v1/customer/orders (Header: Bearer <JWT>)
-    API-->>Client: 200 OK (Data response)
-
-    Note over Client,API: 3. Silent Refresh Flow (On 401 Unauthorized)
+    Note over Client,API: 2. Single-Use Token Rotation (Preserving Session Identity)
     Client->>API: POST /api/v1/auth/refresh (Cookie: RefreshToken)
-    API->>DB: Validate hash, check expiry & revocation
-    API->>DB: Rotate token (Issue new hash, invalidate previous)
-    API-->>Client: Return New JWT + Updated HttpOnly Cookie
-    Client->>API: Retry original failed request
+    API->>DB: Validate token hash, verify UserSession is active and not expired
+    API->>DB: Invalidate current token, issue new token with same SessionId, update LastActiveAtUtc
+    API-->>Client: Return new 15-min JWT (with sid) + updated HttpOnly Cookie
+
+    Note over Client,OtherClient: 3. Remote Session Revocation & Real-Time Sync
+    Client->>API: DELETE /api/v1/auth/sessions/{sessionId} (Bearer JWT)
+    API->>DB: Verify session ownership (Session.UserId == CurrentUserId)
+    API->>DB: Revoke UserSession (RevokedAtUtc = UtcNow) & invalidate all associated RefreshTokens
+    API->>SignalR: Broadcast SessionRevoked(sessionId, reason) to Group "user:{userId}"
+    SignalR-->>OtherClient: Real-Time SignalR Event SessionRevoked
+    OtherClient->>OtherClient: If payload.sessionId == currentSid, clear memory & redirect to /login
 ```
 
-### 2.2 Token Specifications
+### 2.2 Token & Session Specifications
 
-| Parameter | Access Token (JWT) | Refresh Token |
-| :--- | :--- | :--- |
-| **Token Type** | JSON Web Token (RFC 7519) | Cryptographically Secure 64-byte Random String |
-| **Storage Location** | **In-Memory JavaScript State Only** (Never in localStorage or sessionStorage) | **HttpOnly, Secure, SameSite=Strict Cookie** scoped strictly to path `/api/v1/auth` |
-| **Time-to-Live (TTL)**| **15 Minutes** | **7 Days** |
-| **Signing / Hashing**| HMAC-SHA256 (HS256) with min 32-byte key | SHA-256 Hashed at Rest in `RefreshTokens` table |
-| **Clock Skew** | `TimeSpan.Zero` (Zero tolerance) | Timestamp UTC based |
-| **Rotation Policy** | Continuous issuance on valid refresh | **Mandatory single-use rotation** on every `/refresh` |
-| **Reuse Detection** | N/A | If a previously rotated token is presented, the **entire token family chain is immediately revoked**. |
+| Parameter | Access Token (JWT) | Refresh Token | User Session (`UserSession`) |
+| :--- | :--- | :--- | :--- |
+| **Identity / Scope** | Bearer authorization with claims (`sub`, `email`, `role`, `permissions`, `sid`) | Opaque cryptographically secure random token | Persistent device session identity (`Id`, `UserId`, `DeviceName`, `Browser`, `OS`, `IP`, `Location`) |
+| **Storage Location** | **In-Memory JavaScript State Only** (Never in localStorage or sessionStorage) | **HttpOnly, Secure, SameSite=Strict Cookie** scoped strictly to path `/api/v1/auth` | Relational database (`UserSessions` table) |
+| **Time-to-Live (TTL)**| **15 Minutes** | **90 Days** (or custom sliding window) | **90 Days** (`ExpiresAtUtc`), revoked upon explicit logout |
+| **Signing / Hashing**| HMAC-SHA256 (HS256) with min 32-byte key | SHA-256 Hashed at Rest in `RefreshTokens` table | N/A (Guarded by relational integrity and foreign keys) |
+| **Rotation Policy** | Continuous issuance on valid refresh | **Mandatory single-use rotation** on every `/refresh` | **Preserves existing SessionId** during rotation; updates `LastActiveAtUtc` |
+| **Reuse Detection** | N/A | If a previously rotated token is presented, the **entire token family and session are immediately revoked**. | If revoked, all associated tokens are rendered invalid |
 
-### 2.3 Password Security & Policy
+### 2.3 Session Domain Schema & Foreign Key Constraints
+
+```mermaid
+erDiagram
+    ApplicationUser ||--o{ UserSession : "has many (1:N)"
+    UserSession ||--o{ RefreshToken : "has many (1:N)"
+    ApplicationUser ||--o{ RefreshToken : "has many (1:N)"
+
+    UserSession {
+        Guid Id PK
+        Guid UserId FK
+        string DeviceName
+        string DeviceType
+        string OperatingSystem
+        string Browser
+        string UserAgent
+        string IpAddress
+        string Location
+        datetime CreatedAtUtc
+        datetime LastActiveAtUtc
+        datetime ExpiresAtUtc
+        datetime RevokedAtUtc
+        string RevocationReason
+    }
+
+    RefreshToken {
+        Guid Id PK
+        Guid UserId FK
+        Guid SessionId FK "Nullable (DeleteBehavior.Restrict)"
+        string TokenHash
+        datetime ExpiresAtUtc
+        datetime CreatedAtUtc
+        datetime RevokedAtUtc
+        string ReplacedByTokenHash
+    }
+```
+
+* **Non-Cascading Delete:** In EF Core, `RefreshToken.SessionId -> UserSession.Id` uses `DeleteBehavior.Restrict` to preserve token history and audit trail.
+* **Optimized Composite Indexes:**
+  * `IX_UserSessions_UserId_RevokedAtUtc`
+  * `IX_UserSessions_UserId_LastActiveAtUtc`
+  * `IX_UserSessions_UserId_ExpiresAtUtc`
+
+### 2.4 Remote Revocation & Offline Device Security
+
+1. **Transactional Database Revocation:** Remote revocation transactions write to SQL Server first, updating `UserSession.RevokedAtUtc` and setting `RevokedAtUtc` on all active refresh tokens for that session.
+2. **Real-Time SignalR Broadcast:** The backend `PortalPushService` dispatches `SessionRevoked(SessionRevokedPayload)` to the SignalR user group `user:{userId}`. Online devices matching the revoked `sessionId` immediately clear their in-memory access token, close real-time connections, and redirect to `/login?revoked=true`.
+3. **Offline Device Enforcement:** If a device is offline or asleep when revocation occurs, it will miss the SignalR broadcast. However, when the device wakes up or attempts its next background silent refresh (`POST /api/v1/auth/refresh`), the backend validates `UserSession.IsActive` and rejects the request with `401 Unauthorized`, terminating the offline session.
+4. **Ownership & Security Isolation:** Endpoints `DELETE /api/v1/auth/sessions/{sessionId}` and `POST /api/v1/auth/sessions/revoke-others` strictly validate that the targeted session belongs to the calling user's authenticated `UserId`. Users cannot view or revoke sessions belonging to other accounts.
+
+### 2.5 Password Security & Policy
 * **Password Hasher:** ASP.NET Core Identity PBKDF2 with HMAC-SHA512 and 100,000+ iterations.
 * **Complexity Requirements:** Minimum 12 characters, requiring uppercase, lowercase, numeric digit, and non-alphanumeric symbol.
 * **Brute-Force Lockout:** Account locks for **15 minutes** after **5 consecutive failed attempts**.

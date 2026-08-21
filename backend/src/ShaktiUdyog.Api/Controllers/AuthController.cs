@@ -8,10 +8,9 @@ using ShaktiUdyog.Api.Services;
 namespace ShaktiUdyog.Api.Controllers;
 
 /// <summary>
-/// Authentication endpoints (requirements §19). Thin controller: all rules
-/// live in <see cref="IAuthService"/>. The refresh token travels in the
-/// response body and as an HttpOnly cookie scoped to this controller's path;
-/// the refresh/logout endpoints accept either source.
+/// Authentication and multi-device session endpoints. All business rules live
+/// in <see cref="IAuthService"/>. The refresh token travels in the response body
+/// and as an HttpOnly cookie scoped to this controller's path.
 /// </summary>
 [ApiController]
 [Route("api/v1/auth")]
@@ -62,7 +61,7 @@ public class AuthController(IAuthService authService) : ControllerBase
             return Unauthorized(new MessageResponse("Refresh token is required."));
         }
 
-        var result = await authService.RefreshAsync(rawToken, ClientIp);
+        var result = await authService.RefreshAsync(rawToken, ClientIp, UserAgent);
         if (result is null)
         {
             ClearRefreshCookie();
@@ -102,7 +101,7 @@ public class AuthController(IAuthService authService) : ControllerBase
     public async Task<IActionResult> Logout(LogoutRequest request)
     {
         var rawToken = request.RefreshToken ?? Request.Cookies[RefreshCookieName];
-        await authService.LogoutAsync(rawToken, ClientIp);
+        await authService.LogoutAsync(rawToken, CurrentSessionId, CurrentUserId, ClientIp);
         ClearRefreshCookie();
         return Ok(new MessageResponse("Logged out."));
     }
@@ -114,9 +113,7 @@ public class AuthController(IAuthService authService) : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Me()
     {
-        var subject = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
-            ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-        if (!Guid.TryParse(subject, out var userId))
+        if (CurrentUserId is not { } userId)
         {
             return Unauthorized();
         }
@@ -125,6 +122,76 @@ public class AuthController(IAuthService authService) : ControllerBase
         return me is null ? Unauthorized() : Ok(me);
     }
 
+    [HttpGet("sessions")]
+    [Authorize]
+    [DisableRateLimiting]
+    [ProducesResponseType<IReadOnlyList<UserSessionDto>>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> GetSessions()
+    {
+        if (CurrentUserId is not { } userId)
+        {
+            return Unauthorized();
+        }
+
+        var sessions = await authService.GetActiveSessionsAsync(userId, CurrentSessionId);
+        return Ok(sessions);
+    }
+
+    [HttpDelete("sessions/{sessionId:guid}")]
+    [Authorize]
+    [ProducesResponseType<MessageResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> RevokeSession(Guid sessionId)
+    {
+        if (CurrentUserId is not { } userId)
+        {
+            return Unauthorized();
+        }
+
+        var succeeded = await authService.RevokeSessionAsync(sessionId, userId, ClientIp);
+        if (!succeeded)
+        {
+            return NotFound(new MessageResponse("Session not found or already revoked."));
+        }
+
+        return Ok(new MessageResponse("Session revoked."));
+    }
+
+    [HttpPost("sessions/revoke-others")]
+    [Authorize]
+    [ProducesResponseType<MessageResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> RevokeOtherSessions()
+    {
+        if (CurrentUserId is not { } userId)
+        {
+            return Unauthorized();
+        }
+
+        if (CurrentSessionId is not { } sessionId)
+        {
+            return BadRequest(new MessageResponse("Current session could not be identified from token."));
+        }
+
+        var count = await authService.RevokeOtherSessionsAsync(sessionId, userId, ClientIp);
+        return Ok(new MessageResponse($"Revoked {count} other active session(s)."));
+    }
+
+    private Guid? CurrentUserId =>
+        Guid.TryParse(User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
+            ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var id) ? id : null;
+
+    private Guid? CurrentSessionId =>
+        Guid.TryParse(
+            User.FindFirst("sid")?.Value
+            ?? User.FindFirst(System.Security.Claims.ClaimTypes.Sid)?.Value
+            ?? User.FindFirst(JwtRegisteredClaimNames.Sid)?.Value
+            ?? User.Claims.FirstOrDefault(c => c.Type == "sid" || c.Type.EndsWith("/sid", StringComparison.OrdinalIgnoreCase))?.Value,
+            out var sid) ? sid : null;
+
     private string? ClientIp => HttpContext.Connection.RemoteIpAddress?.ToString();
     private string? UserAgent => Request.Headers.UserAgent.ToString() is { Length: > 0 } ua ? ua : null;
 
@@ -132,7 +199,6 @@ public class AuthController(IAuthService authService) : ControllerBase
         Response.Cookies.Append(RefreshCookieName, rawToken, new CookieOptions
         {
             HttpOnly = true,
-            // Secure only in production (HTTPS); on HTTP the browser won't send it back.
             Secure = Request.IsHttps,
             SameSite = SameSiteMode.Lax,
             Path = "/api/v1/auth",

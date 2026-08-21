@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using ShaktiUdyog.Api.Contracts.Auth;
 using ShaktiUdyog.Domain.Constants;
 
 namespace ShaktiUdyog.Api.Hubs;
@@ -15,6 +16,9 @@ public interface IPortalClient
 
     /// <summary>A payment was verified by finance (Admins).</summary>
     Task PaymentVerified(PaymentVerifiedPayload payload);
+
+    /// <summary>A user session was revoked (→ that user's private group).</summary>
+    Task SessionRevoked(SessionRevokedPayload payload);
 }
 
 /// <summary>Broadcast payload for an order entering a new manufacturing stage.</summary>
@@ -87,6 +91,7 @@ public interface IPortalPush
     Task StageChangedAsync(Guid orderId, string orderNumber, string fromStage, string toStage);
     Task NotificationCreatedAsync(Guid userId, NotificationCreatedPayload payload);
     Task PaymentVerifiedAsync(PaymentVerifiedPayload payload);
+    Task SessionRevokedAsync(Guid userId, SessionRevokedPayload payload);
 }
 
 public class PortalPushService(IHubContext<PortalHub, IPortalClient> hub) : IPortalPush
@@ -103,4 +108,7 @@ public class PortalPushService(IHubContext<PortalHub, IPortalClient> hub) : IPor
 
     public async Task PaymentVerifiedAsync(PaymentVerifiedPayload payload) =>
         await hub.Clients.Group("admins").PaymentVerified(payload);
+
+    public async Task SessionRevokedAsync(Guid userId, SessionRevokedPayload payload) =>
+        await hub.Clients.Group($"user:{userId}").SessionRevoked(payload);
 }

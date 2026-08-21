@@ -10,6 +10,20 @@ export interface AuthUser {
   permissions: string[];
 }
 
+export interface UserSession {
+  id: string;
+  deviceName: string;
+  deviceType: string;
+  operatingSystem: string;
+  browser: string;
+  ipAddress: string | null;
+  location: string | null;
+  createdAtUtc: string;
+  lastActiveAtUtc: string;
+  expiresAtUtc: string;
+  isCurrent: boolean;
+}
+
 interface AuthResponse {
   accessToken: string;
   accessTokenExpiresAtUtc: string;
@@ -20,8 +34,7 @@ const base = config.apiBaseUrl;
 
 /**
  * Authentication API calls. All requests use credentials: "include" so the
- * HttpOnly refresh cookie flows to /api/v1/auth endpoints. The refresh token
- * in the response body is intentionally ignored — the cookie is the source.
+ * HttpOnly refresh cookie flows to /api/v1/auth endpoints.
  */
 export const authService = {
   async login(email: string, password: string): Promise<boolean> {
@@ -58,9 +71,13 @@ export const authService = {
 
   async logout(): Promise<void> {
     try {
+      const token = tokenStorage.getAccessToken();
       await fetch(`${base}/api/v1/auth/logout`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         credentials: "include",
         body: JSON.stringify({}),
       });
@@ -79,5 +96,41 @@ export const authService = {
     });
     if (!response.ok) return null;
     return (await response.json()) as AuthUser;
+  },
+
+  async getSessions(): Promise<UserSession[]> {
+    const token = tokenStorage.getAccessToken();
+    if (!token) return [];
+
+    const response = await fetch(`${base}/api/v1/auth/sessions`, {
+      headers: { Authorization: `Bearer ${token}` },
+      credentials: "include",
+    });
+    if (!response.ok) return [];
+    return (await response.json()) as UserSession[];
+  },
+
+  async revokeSession(sessionId: string): Promise<boolean> {
+    const token = tokenStorage.getAccessToken();
+    if (!token) return false;
+
+    const response = await fetch(`${base}/api/v1/auth/sessions/${sessionId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+      credentials: "include",
+    });
+    return response.ok;
+  },
+
+  async revokeOtherSessions(): Promise<boolean> {
+    const token = tokenStorage.getAccessToken();
+    if (!token) return false;
+
+    const response = await fetch(`${base}/api/v1/auth/sessions/revoke-others`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      credentials: "include",
+    });
+    return response.ok;
   },
 };

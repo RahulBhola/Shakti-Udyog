@@ -13,6 +13,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     : IdentityDbContext<ApplicationUser, ApplicationRole, Guid>(options)
 {
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<UserSession> UserSessions => Set<UserSession>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
     public DbSet<UserCompany> UserCompanies => Set<UserCompany>();
@@ -87,6 +88,26 @@ public DbSet<KanbanTask> KanbanTasks => Set<KanbanTask>();
             entity.Property(s => s.Value).HasMaxLength(4000);
         });
 
+        builder.Entity<UserSession>(entity =>
+        {
+            entity.ToTable("UserSessions");
+            entity.Property(s => s.DeviceName).HasMaxLength(200).IsRequired();
+            entity.Property(s => s.DeviceType).HasMaxLength(50).IsRequired();
+            entity.Property(s => s.OperatingSystem).HasMaxLength(100).IsRequired();
+            entity.Property(s => s.Browser).HasMaxLength(100).IsRequired();
+            entity.Property(s => s.UserAgent).HasMaxLength(500);
+            entity.Property(s => s.IpAddress).HasMaxLength(64);
+            entity.Property(s => s.Location).HasMaxLength(200);
+            entity.Property(s => s.RevocationReason).HasMaxLength(200);
+            entity.HasIndex(s => new { s.UserId, s.RevokedAtUtc });
+            entity.HasIndex(s => new { s.UserId, s.LastActiveAtUtc });
+            entity.HasIndex(s => new { s.UserId, s.ExpiresAtUtc });
+            entity.HasOne(s => s.User)
+                .WithMany()
+                .HasForeignKey(s => s.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
         builder.Entity<RefreshToken>(entity =>
         {
             entity.ToTable("RefreshTokens");
@@ -97,10 +118,15 @@ public DbSet<KanbanTask> KanbanTasks => Set<KanbanTask>();
             entity.Property(t => t.RevocationReason).HasMaxLength(200);
             entity.HasIndex(t => t.TokenHash).IsUnique();
             entity.HasIndex(t => t.UserId);
+            entity.HasIndex(t => t.SessionId);
             entity.HasOne(t => t.User)
                 .WithMany()
                 .HasForeignKey(t => t.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(t => t.Session)
+                .WithMany(s => s.RefreshTokens)
+                .HasForeignKey(t => t.SessionId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         builder.Entity<PasswordResetToken>(entity =>

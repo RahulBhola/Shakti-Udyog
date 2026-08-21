@@ -1661,13 +1661,16 @@ The API exposes versioned RESTful endpoints rooted at `/api/v1/`.
 * `POST /api/v1/public/enquiries` *(Rate limit: 20/min)* $\to$ Ingests public Enquiry with multi-file drawing attachments.
 
 #### 2. Authentication API (`AuthController` — `/api/v1/auth`)
-* `POST /api/v1/auth/login` *(Rate limit: 10/min)* $\to$ Authenticates user, issues 15-min JWT, sets HttpOnly refresh cookie.
-* `POST /api/v1/auth/register` *(Rate limit: 10/min)* $\to$ Creates customer account, issues JWT and session cookie.
-* `POST /api/v1/auth/refresh` *(Rate limit: 10/min)* $\to$ Validates and rotates refresh token, issues new JWT.
+* `POST /api/v1/auth/login` *(Rate limit: 10/min)* $\to$ Authenticates user, parses User-Agent, creates `UserSession`, issues 15-min JWT (with `sid` claim), sets HttpOnly refresh cookie.
+* `POST /api/v1/auth/register` *(Rate limit: 10/min)* $\to$ Creates customer account, creates `UserSession`, issues JWT and session cookie.
+* `POST /api/v1/auth/refresh` *(Rate limit: 10/min)* $\to$ Validates and rotates refresh token preserving `SessionId`, updates `LastActiveAtUtc`, issues new JWT.
 * `POST /api/v1/auth/forgot-password` *(Rate limit: 10/min)* $\to$ Generates single-use reset token; neutral response.
 * `POST /api/v1/auth/reset-password` *(Rate limit: 10/min)* $\to$ Validates token, updates password, revokes active sessions.
-* `POST /api/v1/auth/logout` $\to$ Revokes refresh token in database and clears HttpOnly cookie.
+* `POST /api/v1/auth/logout` $\to$ Revokes current device session in database and clears HttpOnly cookie.
 * `GET /api/v1/auth/me` *(Requires Auth)* $\to$ Returns authenticated user profile, assigned roles, and permissions.
+* `GET /api/v1/auth/sessions` *(Requires Auth)* $\to$ Returns active device sessions for current user with device metadata, browser, OS, IP, location, and `isCurrent` flag.
+* `DELETE /api/v1/auth/sessions/{sessionId}` *(Requires Auth)* $\to$ Remotely revokes a specific device session, invalidates tokens, and broadcasts SignalR `SessionRevoked`.
+* `POST /api/v1/auth/sessions/revoke-others` *(Requires Auth)* $\to$ Revokes all active sessions for current user except caller's current session.
 
 #### 3. External OAuth (`ExternalAuthController` — `/api/v1/auth/external`)
 * `POST /api/v1/auth/external/login` $\to$ Initiates Google or Apple OAuth challenge flow.
@@ -1848,7 +1851,8 @@ The API exposes versioned RESTful endpoints rooted at `/api/v1/`.
   * `ProductionStageMoved(jobId, orderId, fromStage, toStage)`
   * `QuotationIssued(quotationId, customerCompanyId)`
   * `NotificationReceived(userId, notificationDto)`
-* **Frontend Handler:** Managed via `frontend/src/realtime/signalR.ts`, providing automatic reconnection exponential backoff and localized cache invalidation.
+  * `SessionRevoked(sessionId, reason, revokedAtUtc, message)` $\to$ Dispatched to `user:{userId}` group for instantaneous multi-device remote logout.
+* **Frontend Handler:** Managed via `frontend/src/realtime/signalR.ts`, providing automatic reconnection exponential backoff, real-time cache invalidation, and session termination guards.
 
 ---
 
@@ -1887,3 +1891,4 @@ The API exposes versioned RESTful endpoints rooted at `/api/v1/`.
 | **33** | `AddShipmentVehicleAndPhone`| Enhanced logistics data schema. |
 | **34** | `AddManufacturingStageToOrder`| Direct `ManufacturingStage` tracking on Order entity. |
 | **35** | `AddCompanyNameColumn` | Direct company denormalization column for high-speed indexing. |
+| **36** | `AddUserSessionsAndMultiDeviceAuth` | `UserSessions` entity, composite indexes, and `RefreshTokens.SessionId` foreign key. |

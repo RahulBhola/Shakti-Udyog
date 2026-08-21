@@ -96,8 +96,8 @@ public class ExternalAuthService(
         user.LastLoginAtUtc = DateTimeOffset.UtcNow;
         await userManager.UpdateAsync(user);
 
-        var access = await tokenService.CreateAccessTokenAsync(user);
-        var refresh = await tokenService.IssueRefreshTokenAsync(user, ipAddress);
+        var refresh = await tokenService.IssueRefreshTokenAsync(user, ipAddress, userAgent);
+        var access = await tokenService.CreateAccessTokenAsync(user, refresh.Entity.SessionId);
 
         await audit.WriteAsync("auth.external.login.succeeded", user.Id, "User", user.Id.ToString(), ipAddress, userAgent);
         return new AuthResponse(access.Token, access.ExpiresAtUtc, refresh.RawToken);

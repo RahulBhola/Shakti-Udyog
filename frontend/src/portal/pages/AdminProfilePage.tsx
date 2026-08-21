@@ -6,6 +6,7 @@ import {
   AlertCircle, Building2, Eye, EyeOff, Save,
   Layers, BadgeCheck,
 } from "lucide-react";
+import { DevicesSessionsCard } from "../components/DevicesSessionsCard";
 import "./erpListView.css";
 
 interface ProfileData {
@@ -473,6 +474,8 @@ export default function AdminProfilePage() {
               </button>
             </div>
           </form>
+
+          <DevicesSessionsCard />
         </div>
       )}
 

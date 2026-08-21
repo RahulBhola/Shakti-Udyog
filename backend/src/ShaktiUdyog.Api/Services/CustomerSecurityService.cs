@@ -24,17 +24,17 @@ public class CustomerSecurityService(
 {
     public async Task<SecurityInfoDto> GetSecurityInfoAsync(CustomerContext ctx)
     {
-        var sessions = await db.RefreshTokens
-            .Where(rt => rt.UserId == ctx.UserId)
-            .OrderByDescending(rt => rt.CreatedAtUtc)
+        var sessions = await db.UserSessions
+            .Where(s => s.UserId == ctx.UserId && s.RevokedAtUtc == null && s.ExpiresAtUtc > DateTimeOffset.UtcNow)
+            .OrderByDescending(s => s.LastActiveAtUtc)
             .Take(10)
-            .Select(rt => new ActiveSessionDto(
-                rt.Id,
-                rt.CreatedByIp,
-                rt.CreatedByIp,
-                rt.CreatedAtUtc,
-                rt.RevokedAtUtc ?? rt.CreatedAtUtc,
-                rt.RevokedAtUtc == null))
+            .Select(s => new ActiveSessionDto(
+                s.Id,
+                s.DeviceName,
+                s.IpAddress,
+                s.CreatedAtUtc,
+                s.LastActiveAtUtc,
+                true))
             .ToListAsync();
 
         var user = await userManager.FindByIdAsync(ctx.UserId.ToString());

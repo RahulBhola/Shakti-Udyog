@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef, type FormEvent, type ReactNode } from "react";
 import { customerApi, type Profile, type CompanyDetail, type ContactPerson, type CompanyAddress, type CompanyDocument, type SecurityInfo } from "../../api/customerApi";
 import { formatDate } from "../shared";
+import { DevicesSessionsCard } from "../components/DevicesSessionsCard";
 
 // ── Icons (inline SVG for reliable availability) ──────────────────────────
 
@@ -19,7 +20,6 @@ function IconEye() { return <svg width="16" height="16" viewBox="0 0 24 24" fill
 function IconEyeOff() { return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.53 13.53 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>; }
 function IconDownload() { return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>; }
 function IconTrash2() { return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>; }
-function IconRefresh() { return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>; }
 function IconUpload() { return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>; }
 function IconToggleOn() { return <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1"><rect x="2" y="6" width="20" height="12" rx="6"/><circle cx="16" cy="12" r="4" fill="#fff"/></svg>; }
 function IconToggleOff() { return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="6" width="20" height="12" rx="6"/><circle cx="8" cy="12" r="4" fill="currentColor"/></svg>; }
@@ -1283,32 +1283,8 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Active Sessions */}
-          <div style={cardStyle}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-              <h2 style={{ fontSize: 18, fontWeight: 700, color: colors.text, margin: 0 }}>Active Sessions</h2>
-              <button style={{ ...btnSecondary, display: "flex", alignItems: "center", gap: 6, fontSize: 13, padding: "8px 16px" }}>
-                <IconRefresh /> View Sessions
-              </button>
-            </div>
-            {securityInfo?.activeSessions && securityInfo.activeSessions.length > 0 ? (
-              <div style={{ display: "grid", gap: 8 }}>
-                {securityInfo.activeSessions.slice(0, 3).map(s => (
-                  <div key={s.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", background: colors.bg, borderRadius: 10 }}>
-                    <div>
-                      <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: colors.text }}>
-                        {s.deviceName ?? "Unknown device"}
-                        {s.isCurrent && <span style={{ color: colors.success, marginLeft: 8, fontSize: 12, fontWeight: 500 }}>Current session</span>}
-                      </p>
-                      <p style={{ margin: "2px 0 0", fontSize: 12, color: colors.textMuted }}>{s.ipAddress} · {formatDate(s.createdAtUtc)}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p style={{ margin: 0, fontSize: 14, color: colors.textMuted }}>No active sessions found.</p>
-            )}
-          </div>
+          {/* Devices & Sessions */}
+          <DevicesSessionsCard />
 
           {/* Login History Placeholder */}
           <div style={cardStyle}>
