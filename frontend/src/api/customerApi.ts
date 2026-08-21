@@ -20,6 +20,10 @@ export interface EnquiryListItem {
   isDraft: boolean;
   fileCount: number;
   createdAtUtc: string;
+  partName?: string | null;
+  partNumber?: string | null;
+  industry?: string | null;
+  productionQuantity?: string | null;
 }
 
 export interface EnquiryDetail extends EnquiryListItem {
