@@ -12,35 +12,25 @@ const customerSections: NavSection[] = [
     items: [{ label: "Dashboard", href: "/customer/dashboard" }],
   },
   {
-    label: "Sales",
+    label: "Orders & Quotes",
     items: [
       { label: "Enquiries", href: "/customer/enquiries" },
-      { label: "Quotes", href: "/customer/quotations" },
-      { label: "Orders", href: "/customer/orders" },
+      { label: "Quotations", href: "/customer/quotations" },
+      { label: "My Orders", href: "/customer/orders" },
     ],
   },
   {
-    label: "Finance",
+    label: "Finance & Files",
     items: [
-      { label: "Invoices", href: "/customer/invoices" },
-      { label: "Payments", href: "/customer/payments" },
+      { label: "Invoices & Billing", href: "/customer/invoices" },
+      { label: "Document Library", href: "/customer/documents" },
     ],
-  },
-  {
-    label: "Documents",
-    items: [{ label: "Documents", href: "/customer/documents" }],
-  },
-  {
-    label: "Company",
-    items: [{ label: "Company", href: "/customer/company" }],
   },
   {
     label: "Account",
     items: [
-      { label: "Notifications", href: "/customer/notifications" },
-      { label: "Profile", href: "/customer/profile" },
-      { label: "Settings", href: "/customer/settings" },
-      { label: "Support", href: "/customer/support" },
+      { label: "Company & Profile", href: "/customer/profile" },
+      { label: "Help & Support", href: "/customer/support" },
     ],
   },
 ];

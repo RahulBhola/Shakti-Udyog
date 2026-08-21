@@ -44,10 +44,13 @@ const labelIconMap: Record<string, LucideIcon> = {
   Dashboard: Home,
   Enquiries: ClipboardList,
   Quotes: FileText,
+  Quotations: FileText,
   Orders: ShoppingCart,
+  "My Orders": ShoppingCart,
   "Manufacturing Board": Factory,
   "Upload Center": CloudUpload,
   Invoices: Receipt,
+  "Invoices & Billing": Receipt,
   Users: Users,
   Engineers: UserCheck,
   Companies: Building2,
@@ -58,10 +61,13 @@ const labelIconMap: Record<string, LucideIcon> = {
   Reports: BarChart3,
   Payments: CreditCard,
   Documents: FileText,
+  "Document Library": FileText,
   Company: Building,
+  "Company & Profile": User,
   Notifications: Bell,
   Profile: User,
   Support: HelpCircle,
+  "Help & Support": HelpCircle,
 };
 
 function iconForLabel(label: string): LucideIcon {
