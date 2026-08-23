@@ -457,56 +457,84 @@ public static class DevAdminSeeder
             }
         };
 
-        var existingCodes = await db.ProductMasters
+        var existingProducts = await db.ProductMasters
             .IgnoreQueryFilters()
-            .Select(p => p.ProductCode)
             .ToListAsync();
 
-        var existingCodeSet = new HashSet<string>(existingCodes, StringComparer.OrdinalIgnoreCase);
-        var addedProducts = 0;
+        var existingMap = existingProducts.ToDictionary(p => p.ProductCode, StringComparer.OrdinalIgnoreCase);
+        var addedOrUpdated = 0;
 
         foreach (var item in seedItems)
         {
-            if (existingCodeSet.Contains(item.Code))
-                continue;
-
             catMap.TryGetValue(item.Category, out var catId);
+            var targetCatId = catId != Guid.Empty ? catId : (Guid?)null;
 
-            var pm = new ProductMaster
+            if (existingMap.TryGetValue(item.Code, out var existing))
             {
-                Id = Guid.NewGuid(),
-                ProductCode = item.Code,
-                ProductName = item.Title,
-                CategoryId = catId != Guid.Empty ? catId : null,
-                Material = item.Material,
-                MaterialGrade = item.Grade,
-                Weight = item.Weight,
-                ImageUrl = item.Image,
-                Application = item.Application,
-                Description = item.Specs,
-                Tolerance = item.Tolerances,
-                Hardness = item.Hardness,
-                TensileStrength = item.Tensile,
-                Status = "Active",
-                CastingType = item.Material == "Ductile Iron" ? "Ductile Iron Casting" : "Sand Casting",
-                Unit = "Nos",
-                SellingPrice = item.Weight * 140m,
-                StandardCost = item.Weight * 95m,
-                GstPercent = 18m,
-                HsnCode = "7325",
-                Currency = "INR",
-                CreatedByUserId = adminUserId,
-                CreatedAtUtc = DateTimeOffset.UtcNow,
-            };
-
-            db.ProductMasters.Add(pm);
-            addedProducts++;
+                existing.ProductName = item.Title;
+                existing.CategoryId = targetCatId;
+                existing.Material = item.Material;
+                existing.MaterialGrade = item.Grade;
+                existing.Weight = item.Weight;
+                existing.ImageUrl = item.Image;
+                existing.Application = item.Application;
+                existing.Description = item.Specs;
+                existing.Tolerance = item.Tolerances;
+                existing.Hardness = item.Hardness;
+                existing.TensileStrength = item.Tensile;
+                existing.Status = "Active";
+                existing.IsArchived = false;
+                existing.CastingType = item.Material == "Ductile Iron" ? "Ductile Iron Casting" : "Sand Casting";
+                existing.Unit = "Nos";
+                existing.SellingPrice = item.Weight * 140m;
+                existing.StandardCost = item.Weight * 95m;
+                existing.GstPercent = 18m;
+                existing.HsnCode = "7325";
+                existing.Currency = "INR";
+                if (existing.CreatedByUserId == null)
+                {
+                    existing.CreatedByUserId = adminUserId;
+                }
+                addedOrUpdated++;
+            }
+            else
+            {
+                var pm = new ProductMaster
+                {
+                    Id = Guid.NewGuid(),
+                    ProductCode = item.Code,
+                    ProductName = item.Title,
+                    CategoryId = targetCatId,
+                    Material = item.Material,
+                    MaterialGrade = item.Grade,
+                    Weight = item.Weight,
+                    ImageUrl = item.Image,
+                    Application = item.Application,
+                    Description = item.Specs,
+                    Tolerance = item.Tolerances,
+                    Hardness = item.Hardness,
+                    TensileStrength = item.Tensile,
+                    Status = "Active",
+                    IsArchived = false,
+                    CastingType = item.Material == "Ductile Iron" ? "Ductile Iron Casting" : "Sand Casting",
+                    Unit = "Nos",
+                    SellingPrice = item.Weight * 140m,
+                    StandardCost = item.Weight * 95m,
+                    GstPercent = 18m,
+                    HsnCode = "7325",
+                    Currency = "INR",
+                    CreatedByUserId = adminUserId,
+                    CreatedAtUtc = DateTimeOffset.UtcNow,
+                };
+                db.ProductMasters.Add(pm);
+                addedOrUpdated++;
+            }
         }
 
-        if (addedProducts > 0)
+        if (addedOrUpdated > 0)
         {
             await db.SaveChangesAsync();
-            logger.LogInformation("Seeded {Count} initial ERP product masters for development.", addedProducts);
+            logger.LogInformation("Seeded/Synchronized {Count} ERP product masters for development.", addedOrUpdated);
         }
     }
 }

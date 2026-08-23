@@ -34,309 +34,6 @@ export interface CatalogProduct {
   tensileStrength: string;
 }
 
-export const ALL_PRODUCTS: CatalogProduct[] = [
-  {
-    id: 'sewing-arm',
-    title: 'TA 1 Industrial Sewing Machine Bracket',
-    category: 'Precision Mechanism',
-    materialType: 'Ductile Iron',
-    grade: 'SG 500/7',
-    standard: 'IS 1865 / EN-GJS-500-7',
-    weight: '0.65 kg',
-    image: '/images/Sewing_machine_parts/Cast Iron TA 1 Bracket Industrial Sewing Machine Part.png',
-    application: 'Industrial garment and footwear lockstitch machinery',
-    specs: 'Precision CNC machined kinematic bracket with micron bore alignment',
-    tolerances: '±0.015 mm CMM verified',
-    hardness: '170–230 HBW',
-    tensileStrength: '500 MPa min',
-  },
-  {
-    id: 'sizzler-s',
-    title: 'Continental Sizzler Platter Standard',
-    category: 'Commercial Hospitality',
-    materialType: 'Grey Iron',
-    grade: 'FG 200',
-    standard: 'IS 210 / EN-GJL-200',
-    weight: '2.4 kg',
-    image: '/images/Sizzler Plate/Continental Sizzler Plate.png',
-    application: 'Commercial restaurant sizzler and steak service',
-    specs: 'Thermal shock resistant pre-seasoned heat retention platter',
-    tolerances: '±0.5 mm surface profile',
-    hardness: '160–210 HBW',
-    tensileStrength: '200 MPa min',
-  },
-  {
-    id: 'v-belt-a',
-    title: 'Precision Balanced V-Belt Pulley 1A',
-    category: 'Power Transmission',
-    materialType: 'Grey Iron',
-    grade: 'FG 220',
-    standard: 'IS 210 / EN-GJL-220',
-    weight: '3.8 kg',
-    image: '/images/V Belt Pulley/Cast Iron V Belt Pulley Set.png',
-    application: 'Electric motor drives, air compressors, conveyors',
-    specs: 'Dynamically balanced to ISO 1940 G6.3 up to 3,500 RPM',
-    tolerances: '±0.025 mm bore & groove',
-    hardness: '180–230 HBW',
-    tensileStrength: '220 MPa min',
-  },
-  {
-    id: 'collar-plug',
-    title: 'High-Pressure Collar Sealing Plug',
-    category: 'Fluid & Pumps',
-    materialType: 'Grey Iron',
-    grade: 'FG 260',
-    standard: 'IS 210 / EN-GJL-260',
-    weight: '1.1 kg',
-    image: '/images/Collar Plug/Cast Iron Collar Plug.png',
-    application: 'High-pressure hydraulic manifolds & fluid lines',
-    specs: 'Hydrostatically tested for 250+ bar continuous working pressure',
-    tolerances: '±0.02 mm thread pitch',
-    hardness: '190–240 HBW',
-    tensileStrength: '260 MPa min',
-  },
-  {
-    id: 'tractor-bracket',
-    title: 'Heavy Duty Tractor Axle Support',
-    category: 'Agricultural Machinery',
-    materialType: 'Ductile Iron',
-    grade: 'SG 600/3',
-    standard: 'IS 1865 / EN-GJS-600-3',
-    weight: '8.5 kg',
-    image: '/images/cast_iron_casting/Cast Iron Tractor Part Casting.png',
-    application: 'Agricultural tractors and heavy tillage implements',
-    specs: 'High fatigue strength for continuous heavy field draft loads',
-    tolerances: '±0.03 mm mounting holes',
-    hardness: '190–270 HBW',
-    tensileStrength: '600 MPa min',
-  },
-  {
-    id: 'gear-lever-a',
-    title: 'Automotive Transmission Shift Lever',
-    category: 'Automotive & Powertrain',
-    materialType: 'Ductile Iron',
-    grade: 'SG 700/2',
-    standard: 'IS 1865 / EN-GJS-700-2',
-    weight: '1.4 kg',
-    image: '/images/Gear Lever Parts/Cast Iron Car Gear Lever Part.png',
-    application: 'Commercial vehicle manual and automated gearboxes',
-    specs: 'Surface induction hardened against gear shifting torsional fatigue',
-    tolerances: '±0.02 mm pivot hole',
-    hardness: '220–300 HBW',
-    tensileStrength: '700 MPa min',
-  },
-  {
-    id: 'pulley-wheel',
-    title: 'Industrial Heavy Duty Pulley Wheel',
-    category: 'Power Transmission',
-    materialType: 'Grey Iron',
-    grade: 'FG 260',
-    standard: 'IS 210 / EN-GJL-260',
-    weight: '12.0 kg',
-    image: '/images/Pulley Wheel/6 Inch Cast Iron Pulley Wheel.png',
-    application: 'Heavy overhead cranes, winches, elevator hoist drums',
-    specs: 'Wear-resistant deep groove profile with low rope friction coefficient',
-    tolerances: '±0.03 mm radial runout',
-    hardness: '190–240 HBW',
-    tensileStrength: '260 MPa min',
-  },
-  {
-    id: 'rotary-pump',
-    title: 'Hydraulic Rotary Barrel Pump Housing',
-    category: 'Fluid & Pumps',
-    materialType: 'Grey Iron',
-    grade: 'FG 260',
-    standard: 'IS 210 / EN-GJL-260',
-    weight: '5.6 kg',
-    image: '/images/cast_iron_casting/Cast Iron Rotary Barrel Pump Casting.png',
-    application: 'Fuel transfer pumps, chemical drums, fluid dispensing',
-    specs: '100% hydrostatically tested for zero porosity under continuous pressure',
-    tolerances: '±0.02 mm internal bore',
-    hardness: '190–240 HBW',
-    tensileStrength: '260 MPa min',
-  },
-  {
-    id: 'hillside-washer',
-    title: 'Structural Hillside Washer Casting',
-    category: 'Industrial & Structural',
-    materialType: 'Grey Iron',
-    grade: 'FG 220',
-    standard: 'IS 210 / EN-GJL-220',
-    weight: '0.9 kg',
-    image: '/images/Hillside Washer/Cast Iron Hillside Washer.png',
-    application: 'Pre-engineered steel buildings, diagonal cross-bracing rods',
-    specs: 'High load distributing diagonal anchor washer for structural I-beams',
-    tolerances: '±0.4 mm cast profile',
-    hardness: '180–220 HBW',
-    tensileStrength: '220 MPa min',
-  },
-  {
-    id: 'button-machine',
-    title: 'Button Machine Heavy Base Frame',
-    category: 'Industrial Machinery',
-    materialType: 'Grey Iron',
-    grade: 'FG 200',
-    standard: 'IS 210 / EN-GJL-200',
-    weight: '16.5 kg',
-    image: '/images/cast_iron_casting/Cast Iron Button Machine Casting.png',
-    application: 'Automated fastener press machinery, high-speed textile stamping',
-    specs: 'High vibrational damping base frame for industrial press automation',
-    tolerances: '±0.05 mm bed flatness',
-    hardness: '160–210 HBW',
-    tensileStrength: '200 MPa min',
-  },
-  {
-    id: 'link-part',
-    title: 'Forged Link Pivot Mechanism',
-    category: 'Precision Mechanism',
-    materialType: 'Ductile Iron',
-    grade: 'SG 500/7',
-    standard: 'IS 1865 / EN-GJS-500-7',
-    weight: '0.85 kg',
-    image: '/images/Link Part/Iron Link Part 50g.png',
-    application: 'Packaging machinery linkages, pick-and-place automation',
-    specs: 'Precision ground bore with high tensile kinematic endurance',
-    tolerances: '±0.015 mm center distance',
-    hardness: '170–230 HBW',
-    tensileStrength: '500 MPa min',
-  },
-  {
-    id: 'train-handle',
-    title: 'Railway Passenger Door Safety Handle',
-    category: 'Industrial & Structural',
-    materialType: 'Ductile Iron',
-    grade: 'SG 600/3',
-    standard: 'IS 1865 / EN-GJS-600-3',
-    weight: '1.75 kg',
-    image: '/images/cast_iron_casting/Cast Iron Train Door Handle Casting.png',
-    application: 'Rail passenger coach doors, transit rolling stock',
-    specs: 'High elongation impact-proof casting tested to railway safety norms',
-    tolerances: '±0.05 mm pivot pins',
-    hardness: '190–260 HBW',
-    tensileStrength: '600 MPa min',
-  },
-  {
-    id: 'sizzler-m',
-    title: 'Commercial Sizzler Platter Round',
-    category: 'Commercial Hospitality',
-    materialType: 'Grey Iron',
-    grade: 'FG 200',
-    standard: 'IS 210 / EN-GJL-200',
-    weight: '1.9 kg',
-    image: '/images/Sizzler Plate/Continental Sizzler Plate 1.png',
-    application: 'Restaurant hot-plate serving, cast iron culinary cookware',
-    specs: 'Uniform wall thickness for even heat distribution and retention',
-    tolerances: '±0.5 mm cast surface',
-    hardness: '160–210 HBW',
-    tensileStrength: '200 MPa min',
-  },
-  {
-    id: 'nut-heavy',
-    title: 'Industrial Hex Check Nut Casting',
-    category: 'Fasteners & Hardware',
-    materialType: 'Grey Iron',
-    grade: 'FG 220',
-    standard: 'IS 210 / EN-GJL-220',
-    weight: '0.45 kg',
-    image: '/images/Cast Iron Nut/Cast Iron Door Closer Nut.png',
-    application: 'Pneumatic door closers, heavy machinery shaft clamping',
-    specs: 'High torque resistance with precision metric internal threading',
-    tolerances: 'Class 6H thread fit',
-    hardness: '180–220 HBW',
-    tensileStrength: '220 MPa min',
-  },
-  {
-    id: 'gear-lever-b',
-    title: 'Commercial Truck Shift Control Link',
-    category: 'Automotive & Powertrain',
-    materialType: 'Ductile Iron',
-    grade: 'SG 600/3',
-    standard: 'IS 1865 / EN-GJS-600-3',
-    weight: '2.1 kg',
-    image: '/images/Gear Lever Parts/Cast Iron Car Gear Lever Part 1.png',
-    application: 'Heavy commercial truck transmission linkage assemblies',
-    specs: 'Reinforced pivot fork with anti-backlash bushing seat',
-    tolerances: '±0.02 mm bushing bore',
-    hardness: '190–260 HBW',
-    tensileStrength: '600 MPa min',
-  },
-  {
-    id: 'industrial-block',
-    title: 'Precision Machine Tool Pillow Block',
-    category: 'Industrial Machinery',
-    materialType: 'Grey Iron',
-    grade: 'FG 260',
-    standard: 'IS 210 / EN-GJL-260',
-    weight: '9.4 kg',
-    image: '/images/Industrial Iron Casting.png',
-    application: 'CNC machine spindle supports, heavy linear guide rails',
-    specs: 'Stress-relieved casting ensuring zero thermal deformation under load',
-    tolerances: '±0.015 mm bearing seat',
-    hardness: '190–240 HBW',
-    tensileStrength: '260 MPa min',
-  },
-  {
-    id: 'check-nut',
-    title: 'Slotted Locking Nut Casting',
-    category: 'Fasteners & Hardware',
-    materialType: 'Grey Iron',
-    grade: 'FG 220',
-    standard: 'IS 210 / EN-GJL-220',
-    weight: '0.35 kg',
-    image: '/images/cast_iron_casting/Cast Iron Check Nut Casting.png',
-    application: 'Heavy rotating equipment, wheel spindle vibration locks',
-    specs: 'Positive cotter-pin safety locking slots with precision pitch',
-    tolerances: 'Class 6H thread fit',
-    hardness: '180–220 HBW',
-    tensileStrength: '220 MPa min',
-  },
-  {
-    id: 'chal-t1',
-    title: 'Chal T1 Sewing Mechanism',
-    category: 'Precision Mechanism',
-    materialType: 'Grey Iron',
-    grade: 'FG 220',
-    standard: 'IS 210 / EN-GJL-220',
-    weight: '0.55 kg',
-    image: '/images/Sewing_machine_parts/Cast Iron Chal T1 Industrial Sewing Machine Part.png',
-    application: 'High-speed industrial embroidery and lockstitch machinery',
-    specs: 'Self-lubricating micro-porosity graphite structure for reduced friction',
-    tolerances: '±0.015 mm slide face',
-    hardness: '180–220 HBW',
-    tensileStrength: '220 MPa min',
-  },
-  {
-    id: 'sv-came',
-    title: 'SV Came Sewing Cam',
-    category: 'Precision Mechanism',
-    materialType: 'Ductile Iron',
-    grade: 'SG 500/7',
-    standard: 'IS 1865 / EN-GJS-500-7',
-    weight: '0.38 kg',
-    image: '/images/Sewing_machine_parts/Cast Iron SV Came Industrial Sewing Machine Part.png',
-    application: 'Mechanical timing cams for automated textile equipment',
-    specs: 'Precision profiled eccentric lobes ground to micron accuracy',
-    tolerances: '±0.010 mm cam lobe',
-    hardness: '170–230 HBW',
-    tensileStrength: '500 MPa min',
-  },
-  {
-    id: 'v-belt-2',
-    title: 'Dual Groove V-Belt Pulley',
-    category: 'Power Transmission',
-    materialType: 'Grey Iron',
-    grade: 'FG 260',
-    standard: 'IS 210 / EN-GJL-260',
-    weight: '5.2 kg',
-    image: '/images/V Belt Pulley/Cast Iron V Belt Pulley Set 1.png',
-    application: 'Heavy dual-belt drive assemblies, industrial blowers, gensets',
-    specs: 'Dual matched groove geometry ensuring equal tension load sharing',
-    tolerances: '±0.025 mm dual groove runout',
-    hardness: '190–240 HBW',
-    tensileStrength: '260 MPa min',
-  },
-];
-
 const MATERIALS = ['All Materials', 'Grey Iron', 'Ductile Iron'];
 
 export default function ProductsPage() {
@@ -344,7 +41,8 @@ export default function ProductsPage() {
   const { openQuoteModal, openEnquiryModal } = useEnquiryModal();
   const isLight = theme === 'light';
 
-  const [products, setProducts] = useState<CatalogProduct[]>(ALL_PRODUCTS);
+  const [products, setProducts] = useState<CatalogProduct[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
   const [selectedMaterial, setSelectedMaterial] = useState('All Materials');
@@ -352,10 +50,11 @@ export default function ProductsPage() {
 
   useEffect(() => {
     let mounted = true;
+    setLoading(true);
     getPublicProducts()
       .then((items) => {
-        if (!mounted || !items || items.length === 0) return;
-        const mapped: CatalogProduct[] = items.map((item) => ({
+        if (!mounted) return;
+        const mapped: CatalogProduct[] = (items || []).map((item) => ({
           id: item.id,
           title: item.title,
           category: item.category || 'Precision Mechanism',
@@ -371,9 +70,14 @@ export default function ProductsPage() {
           tensileStrength: item.tensileStrength || '200 MPa min',
         }));
         setProducts(mapped);
+        setLoading(false);
       })
       .catch((err) => {
-        console.warn('Could not fetch dynamic products from backend API, using initial catalog:', err);
+        console.error('Error fetching admin-published products:', err);
+        if (mounted) {
+          setProducts([]);
+          setLoading(false);
+        }
       });
     return () => {
       mounted = false;
@@ -576,7 +280,43 @@ export default function ProductsPage() {
         {/* ========================================================================= */}
         {/* EXHAUSTIVE PRODUCTS GRID */}
         {/* ========================================================================= */}
-        {filteredProducts.length === 0 ? (
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-7">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div
+                key={i}
+                className={`rounded-3xl p-5 sm:p-6 flex flex-col justify-between border animate-pulse ${
+                  isLight ? 'bg-white border-neutral-200' : 'bg-[#090b10] border-white/[0.08]'
+                }`}
+              >
+                <div>
+                  <div className="flex justify-between items-center mb-3">
+                    <div className="h-5 w-20 bg-neutral-200 dark:bg-white/10 rounded-full" />
+                    <div className="h-4 w-12 bg-neutral-200 dark:bg-white/10 rounded" />
+                  </div>
+                  <div className="w-full h-44 sm:h-48 my-2 rounded-2xl bg-neutral-100 dark:bg-white/5" />
+                  <div className="h-3 w-24 bg-neutral-200 dark:bg-white/10 rounded mt-3 mb-2" />
+                  <div className="h-5 w-full bg-neutral-200 dark:bg-white/10 rounded mb-2" />
+                  <div className="h-4 w-3/4 bg-neutral-200 dark:bg-white/10 rounded" />
+                </div>
+                <div className="mt-5 pt-3 border-t border-neutral-100 dark:border-white/[0.06] flex gap-2">
+                  <div className="h-10 flex-1 bg-neutral-200 dark:bg-white/10 rounded-xl" />
+                  <div className="h-10 w-10 bg-neutral-200 dark:bg-white/10 rounded-xl" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : products.length === 0 ? (
+          <div className={`p-16 text-center rounded-3xl border ${
+            isLight ? 'bg-white border-neutral-200' : 'bg-[#0a0d14] border-white/10'
+          }`}>
+            <Info className="w-12 h-12 mx-auto text-orange-500 mb-4" />
+            <h3 className="text-xl font-bold mb-2">No Products Published Yet</h3>
+            <p className="text-sm text-neutral-500 max-w-md mx-auto">
+              Products configured and published by administrators in the ERP Product Master will automatically appear here in the live catalog.
+            </p>
+          </div>
+        ) : filteredProducts.length === 0 ? (
           <div className={`p-12 text-center rounded-3xl border ${
             isLight ? 'bg-white border-neutral-200' : 'bg-[#0a0d14] border-white/10'
           }`}>
@@ -591,9 +331,9 @@ export default function ProductsPage() {
                 setSelectedCategory('All Categories');
                 setSelectedMaterial('All Materials');
               }}
-              className="px-6 py-2.5 rounded-xl bg-orange-500 text-white font-bold text-sm"
+              className="px-6 py-2.5 rounded-xl bg-orange-500 text-white font-bold text-sm hover:bg-orange-600 transition-colors"
             >
-              Show All 20 Products
+              Reset Filters
             </button>
           </div>
         ) : (

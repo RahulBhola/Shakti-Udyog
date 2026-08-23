@@ -115,14 +115,6 @@ public class PublicContentService(
             ]),
     ];
 
-    private static readonly IReadOnlyList<PublicProductItemDto> FallbackPublicProducts =
-    [
-        new(Guid.Parse("11111111-1111-1111-1111-111111111101"), "PRD-SEW-01", "TA 1 Industrial Sewing Machine Bracket", "Precision Mechanism", "Ductile Iron", "SG 500/7", "0.65 kg", "/images/Sewing_machine_parts/Cast Iron TA 1 Bracket Industrial Sewing Machine Part.png", "Industrial garment and footwear lockstitch machinery", "Precision CNC machined kinematic bracket with micron bore alignment", "±0.015 mm CMM verified", "170–230 HBW", "500 MPa min", null),
-        new(Guid.Parse("11111111-1111-1111-1111-111111111102"), "PRD-HOS-01", "Continental Sizzler Platter Standard", "Commercial Hospitality", "Grey Iron", "FG 200", "2.4 kg", "/images/Sizzler Plate/Continental Sizzler Plate.png", "Commercial restaurant sizzler and steak service", "Thermal shock resistant pre-seasoned heat retention platter", "±0.5 mm surface profile", "160–210 HBW", "200 MPa min", null),
-        new(Guid.Parse("11111111-1111-1111-1111-111111111103"), "PRD-PWR-01", "Precision Balanced V-Belt Pulley 1A", "Power Transmission", "Grey Iron", "FG 220", "3.8 kg", "/images/V Belt Pulley/Cast Iron V Belt Pulley Set.png", "Electric motor drives, air compressors, conveyors", "Dynamically balanced to ISO 1940 G6.3 up to 3,500 RPM", "±0.025 mm bore & groove", "180–230 HBW", "220 MPa min", null),
-        new(Guid.Parse("11111111-1111-1111-1111-111111111104"), "PRD-FLD-01", "High-Pressure Collar Sealing Plug", "Fluid & Pumps", "Grey Iron", "FG 260", "1.1 kg", "/images/Collar Plug/Cast Iron Collar Plug.png", "High-pressure hydraulic manifolds & fluid lines", "Hydrostatically tested for 250+ bar continuous working pressure", "±0.02 mm thread pitch", "190–240 HBW", "260 MPa min", null),
-    ];
-
     public async Task<IReadOnlyList<PublicProductItemDto>> GetPublicProductsAsync()
     {
         try
@@ -136,49 +128,44 @@ public class PublicContentService(
                 .ThenBy(p => p.ProductName)
                 .ToListAsync();
 
-            if (activeProducts.Count > 0)
+            return activeProducts.Select(p =>
             {
-                return activeProducts.Select(p =>
-                {
-                    var firstImageAttachment = p.Attachments
-                        .Where(a => a.ContentType.StartsWith("image/"))
-                        .OrderBy(a => a.UploadedAtUtc)
-                        .FirstOrDefault();
+                var firstImageAttachment = p.Attachments
+                    .Where(a => a.ContentType.StartsWith("image/"))
+                    .OrderBy(a => a.UploadedAtUtc)
+                    .FirstOrDefault();
 
-                    var imageUrl = !string.IsNullOrWhiteSpace(p.ImageUrl)
-                        ? p.ImageUrl
-                        : firstImageAttachment != null
-                            ? $"/api/v1/public/products/{p.Id}/image"
-                            : null;
-
-                    var dims = (p.Length.HasValue || p.Width.HasValue || p.Height.HasValue)
-                        ? $"{p.Length ?? 0} × {p.Width ?? 0} × {p.Height ?? 0} mm"
+                var imageUrl = !string.IsNullOrWhiteSpace(p.ImageUrl)
+                    ? p.ImageUrl
+                    : firstImageAttachment != null
+                        ? $"/api/v1/public/products/{p.Id}/image"
                         : null;
 
-                    return new PublicProductItemDto(
-                        p.Id,
-                        p.ProductCode,
-                        p.ProductName,
-                        p.Category?.Name ?? "General Castings",
-                        p.Material ?? "Grey Iron",
-                        p.MaterialGrade ?? "FG 200",
-                        p.Weight.HasValue ? $"{p.Weight.Value} kg" : "—",
-                        imageUrl,
-                        p.Application ?? p.Description ?? "Industrial and machinery applications",
-                        p.Description ?? "High precision engineered casting component",
-                        p.Tolerance ?? "±0.05 mm",
-                        p.Hardness ?? "180–220 HBW",
-                        p.TensileStrength ?? "200 MPa min",
-                        dims);
-                }).ToList();
-            }
+                var dims = (p.Length.HasValue || p.Width.HasValue || p.Height.HasValue)
+                    ? $"{p.Length ?? 0} × {p.Width ?? 0} × {p.Height ?? 0} mm"
+                    : null;
+
+                return new PublicProductItemDto(
+                    p.Id,
+                    p.ProductCode,
+                    p.ProductName,
+                    p.Category?.Name ?? "General Castings",
+                    p.Material ?? "Grey Iron",
+                    p.MaterialGrade ?? "FG 200",
+                    p.Weight.HasValue ? $"{p.Weight.Value} kg" : "—",
+                    imageUrl,
+                    p.Application ?? p.Description ?? "Industrial and machinery applications",
+                    p.Description ?? "High precision engineered casting component",
+                    p.Tolerance ?? "±0.05 mm",
+                    p.Hardness ?? "180–220 HBW",
+                    p.TensileStrength ?? "200 MPa min",
+                    dims);
+            }).ToList();
         }
         catch
         {
-            // Fallback for offline test environments
+            return [];
         }
-
-        return FallbackPublicProducts;
     }
 
     public async Task<PublicProductItemDto?> GetPublicProductByIdAsync(Guid id)
@@ -230,7 +217,7 @@ public class PublicContentService(
             // Fallback for offline test environments
         }
 
-        return FallbackPublicProducts.FirstOrDefault(p => p.Id == id);
+        return null;
     }
 
     public async Task<(Stream Stream, string ContentType, string FileName)?> GetPublicProductImageAsync(Guid id)
