@@ -66,7 +66,7 @@ function ProductThumb({ item }: { item: ProductMasterListItem }) {
         src={displaySrc}
         alt={item.productName}
         className="inv-avatar"
-        style={{ objectFit: "contain", background: "rgba(255,255,255,0.05)", padding: "2px", borderRadius: "8px" }}
+        style={{ objectFit: "contain", background: "var(--bg-surface-hover, rgba(0,0,0,0.03))", padding: "2px", borderRadius: "8px" }}
       />
     );
   }
@@ -74,7 +74,7 @@ function ProductThumb({ item }: { item: ProductMasterListItem }) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Rich Product Card (Matches Public Catalog 3D Studio Aesthetic)    */
+/*  Rich Product Card (Theme-Adaptive Light & Dark Modes)             */
 /* ------------------------------------------------------------------ */
 
 function AdminProductCard({
@@ -125,40 +125,24 @@ function AdminProductCard({
   return (
     <div
       onClick={onView}
-      className="group relative flex flex-col justify-between rounded-2xl p-5 border transition-all duration-300 cursor-pointer overflow-hidden"
-      style={{
-        backgroundColor: "var(--bg-surface, #0f121a)",
-        borderColor: "rgba(255, 255, 255, 0.08)",
-        boxShadow: "0 4px 20px rgba(0, 0, 0, 0.25)",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = "rgba(249, 115, 22, 0.4)";
-        e.currentTarget.style.transform = "translateY(-4px)";
-        e.currentTarget.style.boxShadow = "0 12px 30px rgba(249, 115, 22, 0.15)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)";
-        e.currentTarget.style.transform = "translateY(0)";
-        e.currentTarget.style.boxShadow = "0 4px 20px rgba(0, 0, 0, 0.25)";
-      }}
+      className="group relative flex flex-col justify-between rounded-2xl p-5 border transition-all duration-300 cursor-pointer overflow-visible bg-white dark:bg-[#0f121a] border-neutral-200/90 dark:border-white/[0.08] shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] hover:border-orange-400 dark:hover:border-orange-500/50 hover:shadow-[0_12px_28px_rgba(249,115,22,0.12)] hover:-translate-y-1"
     >
       <div>
         {/* Top Badges Row */}
         <div className="flex items-center justify-between gap-2 mb-3">
           <span
-            className="px-2.5 py-0.5 rounded-full font-mono text-[11px] font-bold uppercase border truncate"
-            style={{
-              backgroundColor: isDuctile ? "rgba(59, 130, 246, 0.12)" : "rgba(249, 115, 22, 0.12)",
-              color: isDuctile ? "#60a5fa" : "#fb923c",
-              borderColor: isDuctile ? "rgba(59, 130, 246, 0.3)" : "rgba(249, 115, 22, 0.3)",
-            }}
+            className={`px-2.5 py-0.5 rounded-full font-mono text-[11px] font-bold uppercase border truncate ${
+              isDuctile
+                ? "bg-blue-500/10 text-blue-600 dark:text-sky-400 border-blue-500/30"
+                : "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/30"
+            }`}
           >
             {product.materialGrade || product.material || "Cast Iron"}
           </span>
 
           <div className="flex items-center gap-2">
             {product.weight != null && (
-              <div className="flex items-center gap-1 font-mono text-[11px] text-[var(--text-secondary)]">
+              <div className="flex items-center gap-1 font-mono text-[11px] text-neutral-500 dark:text-neutral-400">
                 <Scale size={12} className="opacity-70" />
                 <span>{product.weight} kg</span>
               </div>
@@ -169,55 +153,50 @@ function AdminProductCard({
 
         {/* 3D Studio Visual Stage */}
         <div
-          className="relative w-full h-44 rounded-xl flex items-center justify-center p-3 overflow-hidden my-2"
-          style={{
-            background: "linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(0,0,0,0.3) 100%)",
-            border: "1px solid rgba(255, 255, 255, 0.04)",
-          }}
+          className="relative w-full h-44 rounded-xl flex items-center justify-center p-3 overflow-hidden my-2 bg-gradient-to-b from-neutral-50 to-neutral-100/90 dark:from-[#161a26] dark:to-[#0d1017] border border-neutral-200/70 dark:border-white/[0.04]"
         >
           {displayImg ? (
             <img
               src={displayImg}
               alt={product.productName}
               loading="lazy"
-              className="max-h-36 max-w-[90%] w-auto h-auto object-contain transition-transform duration-500 group-hover:scale-105"
-              style={{ filter: "drop-shadow(0 8px 16px rgba(0,0,0,0.6))" }}
+              className="max-h-36 max-w-[90%] w-auto h-auto object-contain transition-transform duration-500 group-hover:scale-105 filter drop-shadow-[0_6px_14px_rgba(0,0,0,0.12)] dark:drop-shadow-[0_8px_16px_rgba(0,0,0,0.75)]"
             />
           ) : (
-            <div className="flex flex-col items-center justify-center text-[var(--text-muted)] gap-2">
+            <div className="flex flex-col items-center justify-center text-neutral-400 dark:text-neutral-500 gap-2">
               <Package size={36} className="opacity-40" />
               <span className="text-[11px] font-mono">No Image Uploaded</span>
             </div>
           )}
 
           {/* Code Overlay Pill */}
-          <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-black/60 backdrop-blur-sm border border-white/10 font-mono text-[10px] text-white/90">
+          <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-white/90 dark:bg-black/60 backdrop-blur-sm border border-neutral-200 dark:border-white/10 font-mono text-[10px] font-semibold text-neutral-800 dark:text-white/90 shadow-sm">
             {product.productCode}
           </div>
         </div>
 
         {/* Title & Category */}
         <div className="mt-3 space-y-1">
-          <div className="text-[10.5px] font-mono font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+          <div className="text-[10.5px] font-mono font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
             {product.categoryName || "Uncategorized"}
           </div>
-          <h3 className="text-sm font-bold text-[var(--text-primary)] group-hover:text-[var(--color-primary)] transition-colors line-clamp-1">
+          <h3 className="text-sm font-bold text-neutral-900 dark:text-white group-hover:text-[var(--color-primary)] transition-colors line-clamp-1">
             {product.productName}
           </h3>
         </div>
 
         {/* Specification Attribute Pills Grid */}
-        <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-white/[0.06] text-[11px] font-mono">
-          <div className="p-2 rounded-lg bg-white/[0.02] border border-white/[0.04]">
-            <span className="text-[var(--text-muted)] block text-[9px] uppercase tracking-wider">Casting Type</span>
-            <span className="font-semibold text-[var(--text-secondary)] truncate block">
+        <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-neutral-100 dark:border-white/[0.06] text-[11px] font-mono">
+          <div className="p-2 rounded-lg bg-neutral-50 dark:bg-white/[0.03] border border-neutral-200/80 dark:border-white/[0.04]">
+            <span className="text-neutral-500 dark:text-neutral-400 block text-[9px] uppercase tracking-wider font-medium">Casting Type</span>
+            <span className="font-semibold text-neutral-800 dark:text-neutral-200 truncate block">
               {product.castingType || "Sand Casting"}
             </span>
           </div>
 
-          <div className="p-2 rounded-lg bg-white/[0.02] border border-white/[0.04]">
-            <span className="text-[var(--text-muted)] block text-[9px] uppercase tracking-wider">Material</span>
-            <span className="font-semibold text-[var(--text-secondary)] truncate block">
+          <div className="p-2 rounded-lg bg-neutral-50 dark:bg-white/[0.03] border border-neutral-200/80 dark:border-white/[0.04]">
+            <span className="text-neutral-500 dark:text-neutral-400 block text-[9px] uppercase tracking-wider font-medium">Material</span>
+            <span className="font-semibold text-neutral-800 dark:text-neutral-200 truncate block">
               {product.material || "Grey / SG Iron"}
             </span>
           </div>
@@ -226,7 +205,7 @@ function AdminProductCard({
 
       {/* Action Footer */}
       <div
-        className="mt-4 pt-3 border-t border-white/[0.06] flex items-center justify-between gap-2"
+        className="mt-4 pt-3 border-t border-neutral-100 dark:border-white/[0.06] flex items-center justify-between gap-2"
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -240,7 +219,7 @@ function AdminProductCard({
         <button
           type="button"
           onClick={onEdit}
-          className="inline-flex items-center justify-center p-2 rounded-lg border border-white/10 bg-white/5 text-[var(--text-secondary)] hover:text-white hover:bg-white/10 transition-all"
+          className="inline-flex items-center justify-center p-2 rounded-lg border border-neutral-200 dark:border-white/10 bg-neutral-50 hover:bg-neutral-100 dark:bg-white/5 dark:hover:bg-white/10 text-neutral-700 dark:text-neutral-300 transition-all"
           title="Edit Product"
         >
           <FileEdit size={15} />
@@ -250,7 +229,7 @@ function AdminProductCard({
           <button
             type="button"
             onClick={() => setOpenMenuId(isMenuOpen ? null : product.id)}
-            className="inline-flex items-center justify-center p-2 rounded-lg border border-white/10 bg-white/5 text-[var(--text-secondary)] hover:text-white hover:bg-white/10 transition-all"
+            className="inline-flex items-center justify-center p-2 rounded-lg border border-neutral-200 dark:border-white/10 bg-neutral-50 hover:bg-neutral-100 dark:bg-white/5 dark:hover:bg-white/10 text-neutral-700 dark:text-neutral-300 transition-all"
             title="More Options"
           >
             <MoreVertical size={15} />
@@ -258,27 +237,27 @@ function AdminProductCard({
 
           {isMenuOpen && (
             <div
-              className="absolute right-0 bottom-full mb-1 w-36 rounded-xl border border-white/10 bg-[#161a24] shadow-2xl p-1 z-30 flex flex-col gap-0.5"
+              className="absolute right-0 bottom-full mb-1 w-36 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#161a24] shadow-2xl p-1 z-30 flex flex-col gap-0.5"
             >
               <button
                 type="button"
                 onClick={() => { setOpenMenuId(null); onDuplicate(); }}
-                className="flex items-center gap-2 px-3 py-1.5 text-xs text-[var(--text-primary)] hover:bg-white/10 rounded-lg text-left"
+                className="flex items-center gap-2 px-3 py-1.5 text-xs text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-white/10 rounded-lg text-left font-medium"
               >
                 <Copy size={13} /> Duplicate
               </button>
               <button
                 type="button"
                 onClick={() => { setOpenMenuId(null); onArchive(); }}
-                className="flex items-center gap-2 px-3 py-1.5 text-xs text-[var(--text-primary)] hover:bg-white/10 rounded-lg text-left"
+                className="flex items-center gap-2 px-3 py-1.5 text-xs text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-white/10 rounded-lg text-left font-medium"
               >
                 <Archive size={13} /> Archive
               </button>
-              <div className="h-px bg-white/10 my-0.5" />
+              <div className="h-px bg-neutral-200 dark:bg-white/10 my-0.5" />
               <button
                 type="button"
                 onClick={() => { setOpenMenuId(null); onDelete(); }}
-                className="flex items-center gap-2 px-3 py-1.5 text-xs text-red-400 hover:bg-red-500/20 rounded-lg text-left"
+                className="flex items-center gap-2 px-3 py-1.5 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/20 rounded-lg text-left font-medium"
               >
                 <Trash2 size={13} /> Delete
               </button>
@@ -434,11 +413,7 @@ export default function AdminProductPage() {
         <div className="inv-header__actions">
           {/* Segmented Cards vs Table View Toggle */}
           <div
-            className="flex items-center p-1 rounded-xl border"
-            style={{
-              backgroundColor: "var(--bg-surface, #0f121a)",
-              borderColor: "rgba(255, 255, 255, 0.1)",
-            }}
+            className="flex items-center p-1 rounded-xl border bg-neutral-100 dark:bg-[#0f121a] border-neutral-200 dark:border-white/10"
           >
             <button
               type="button"
@@ -446,7 +421,7 @@ export default function AdminProductPage() {
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 viewMode === "cards"
                   ? "bg-[var(--color-primary)] text-white shadow-md shadow-orange-500/20"
-                  : "text-[var(--text-secondary)] hover:text-white"
+                  : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
               }`}
             >
               <LayoutGrid size={15} />
@@ -458,7 +433,7 @@ export default function AdminProductPage() {
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 viewMode === "table"
                   ? "bg-[var(--color-primary)] text-white shadow-md shadow-orange-500/20"
-                  : "text-[var(--text-secondary)] hover:text-white"
+                  : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
               }`}
             >
               <TableIcon size={15} />
