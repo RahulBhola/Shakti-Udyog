@@ -34,8 +34,7 @@ export default function ReviewStep({ data }: ReviewStepProps) {
         <Row label="Product Code" value={data.productCode} />
         <Row label="Category" value={data.categoryId} />
         <Row label="Casting Type" value={data.castingType} />
-        <Row label="Dark Mode Image" value={data.imageUrl} />
-        <Row label="Light Mode Image" value={data.lightImageUrl} />
+        <Row label="Application" value={data.application} />
         <Row label="Unit" value={data.unit} />
         <Row label="Status" value={data.status} />
       </Section>
