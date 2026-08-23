@@ -74,11 +74,8 @@ function ProductThumb({ item }: { item: ProductMasterListItem }) {
     return () => { cancelled = true; if (blobUrl) URL.revokeObjectURL(blobUrl); };
   }, [item.id, item.firstAttachmentId, item.imageUrl, item.lightImageUrl]);
 
-  const rawImage = isLightMode
-    ? (item.lightImageUrl || (item.imageUrl ? getThemedImage(item.imageUrl, true) : null))
-    : (item.imageUrl || (item.lightImageUrl ? getThemedImage(item.lightImageUrl, false) : null));
-
-  const displaySrc = rawImage || blobUrl;
+  const sourceImage = item.imageUrl || item.lightImageUrl;
+  const displaySrc = sourceImage ? getThemedImage(sourceImage, isLightMode) : blobUrl;
 
   if (displaySrc) {
     return (
