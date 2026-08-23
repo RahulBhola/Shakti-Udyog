@@ -8,3 +8,6 @@ Read the following core documentation files in `docs/` to understand the project
 4. `docs/03-security-and-access-document.md` (Security & Access Control Document - SAD)
 5. `docs/04-frontend-specification-document.md` (Frontend Specification Document - FSD)
 6. `docs/05-feature-ticket-list.md` (Feature Ticket List - FTL)
+
+## Testing Guidelines & User Management
+- **Always delete new users created after testing** or **reuse the standard existing demo/test users** (e.g. `customer@demo.local`, `engineer@demo.local`, `admin@demo.local`) so that test clutter does not accumulate in the database.
