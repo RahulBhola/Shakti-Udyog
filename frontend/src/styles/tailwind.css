@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *, [data-theme="dark"], [data-theme="dark"] *));
+
 /* Theme variables are defined in portal.css (.admin-portal-layout context).
    @theme tokens below are kept for backward compatibility but all new
    components use var() directly. */
