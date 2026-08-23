@@ -38,6 +38,8 @@ export default function ProductDrawer({ open, onClose, onSave, categories, initi
     length: null, width: null, height: null, diameter: null, drawingNumber: "", revision: "",
     patternNumber: "", coreRequired: false, machineRequired: false, inspectionRequired: false, machiningRequired: false, cycleTimeMinutes: null,
     standardCost: null, sellingPrice: null, gstPercent: null, hsnCode: "", currency: "INR",
+    _darkImageFile: null as File | null,
+    _lightImageFile: null as File | null,
     _files: [] as File[],
   });
 
@@ -45,20 +47,52 @@ export default function ProductDrawer({ open, onClose, onSave, categories, initi
     setData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const handleSetDarkImage = (file: File | null) => {
+    setData((prev) => ({ ...prev, _darkImageFile: file }));
+    if (saveError) setSaveError(null);
+  };
+
+  const handleSetLightImage = (file: File | null) => {
+    setData((prev) => ({ ...prev, _lightImageFile: file }));
+    if (saveError) setSaveError(null);
+  };
+
   const handleAddFiles = (fileList: FileList | null) => {
     if (!fileList) return;
     const newFiles = Array.from(fileList);
-    setData((prev) => ({ ...prev, _files: [...prev._files, ...newFiles] }));
+    setData((prev) => ({ ...prev, _files: [...(prev._files || []), ...newFiles] }));
   };
 
   const handleRemoveFile = (index: number) => {
     setData((prev) => ({
       ...prev,
-      _files: prev._files.filter((_: File, i: number) => i !== index),
+      _files: (prev._files || []).filter((_: File, i: number) => i !== index),
     }));
   };
 
+  const hasAtLeastOneImage = Boolean(
+    data._darkImageFile ||
+    data._lightImageFile ||
+    data.imageUrl ||
+    data.lightImageUrl ||
+    (initialData && (initialData.imageUrl || initialData.lightImageUrl || initialData.firstAttachmentId))
+  );
+
+  const handleNext = () => {
+    if (step === 5 && !hasAtLeastOneImage) {
+      setSaveError("Please attach at least one product image (Dark Mode or Light Mode render) before proceeding.");
+      return;
+    }
+    setSaveError(null);
+    setStep(Math.min(STEPS.length - 1, step + 1));
+  };
+
   const handleSave = async () => {
+    if (!hasAtLeastOneImage) {
+      setSaveError("Please attach at least one product image (Dark Mode or Light Mode render) before saving.");
+      setStep(5);
+      return;
+    }
     setSaving(true);
     try {
       // Clean payload: convert empty strings to null for nullable server-side fields
@@ -69,9 +103,16 @@ export default function ProductDrawer({ open, onClose, onSave, categories, initi
         "drawingNumber", "revision", "patternNumber", "hsnCode", "currency",
       ];
       const payload: Record<string, any> = {};
-      let files: File[] = [];
+      const files: File[] = [];
+
+      if (data._darkImageFile) files.push(data._darkImageFile);
+      if (data._lightImageFile) files.push(data._lightImageFile);
+      if (data._files && Array.isArray(data._files)) {
+        files.push(...data._files);
+      }
+
       for (const [key, value] of Object.entries(data)) {
-        if (key === "_files") { files = value as File[]; continue; }
+        if (key.startsWith("_")) continue;
         if (nullableFields.includes(key) && value === "") {
           payload[key] = null;
         } else {
@@ -110,7 +151,19 @@ export default function ProductDrawer({ open, onClose, onSave, categories, initi
       case 2: return <DimensionStep data={data} onChange={handleChange} />;
       case 3: return <ManufacturingStep data={data} onChange={handleChange} />;
       case 4: return <PricingStep data={data} onChange={handleChange} />;
-      case 5: return <AttachmentUploader files={data._files} onAdd={handleAddFiles} onRemove={handleRemoveFile} />;
+      case 5: return (
+        <AttachmentUploader
+          darkImageFile={data._darkImageFile ?? null}
+          lightImageFile={data._lightImageFile ?? null}
+          existingDarkImageUrl={data.imageUrl}
+          existingLightImageUrl={data.lightImageUrl}
+          onSetDarkImage={handleSetDarkImage}
+          onSetLightImage={handleSetLightImage}
+          files={data._files ?? []}
+          onAdd={handleAddFiles}
+          onRemove={handleRemoveFile}
+        />
+      );
       case 6: return <ReviewStep data={data} />;
       default: return null;
     }
@@ -144,7 +197,14 @@ export default function ProductDrawer({ open, onClose, onSave, categories, initi
                 <button
                   key={s.key}
                   type="button"
-                  onClick={() => setStep(i)}
+                  onClick={() => {
+                    if (step === 5 && i > 5 && !hasAtLeastOneImage) {
+                      setSaveError("Please attach at least one product image (Dark Mode or Light Mode render) before proceeding.");
+                      return;
+                    }
+                    setSaveError(null);
+                    setStep(i);
+                  }}
                   className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-left transition-all text-[12px] ${
                     i === step
                       ? "bg-[var(--color-primary)]/10 text-[var(--color-primary)] font-semibold"
@@ -194,7 +254,7 @@ export default function ProductDrawer({ open, onClose, onSave, categories, initi
           {step < STEPS.length - 1 ? (
             <button
               type="button"
-              onClick={() => setStep(Math.min(STEPS.length - 1, step + 1))}
+              onClick={handleNext}
               className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg bg-[var(--color-primary)] text-white text-[12px] font-semibold hover:bg-[var(--color-primary-hover)] transition-all"
             >
               Next

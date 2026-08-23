@@ -76,13 +76,20 @@ export default function ReviewStep({ data }: ReviewStepProps) {
         <Row label="Currency" value={data.currency} />
       </Section>
 
-      {(data._files?.length ?? 0) > 0 && (
-        <Section title="Attachments">
-          {data._files.map((f: any, i: number) => (
-            <Row key={i} label={`File ${i + 1}`} value={f.name} />
-          ))}
-        </Section>
-      )}
+      <Section title="Media & Attachments">
+        <Row
+          label="Dark Theme Image"
+          value={data._darkImageFile ? `Attached: ${data._darkImageFile.name}` : data.imageUrl ? data.imageUrl : "Not specified"}
+        />
+        <Row
+          label="Light Theme Image"
+          value={data._lightImageFile ? `Attached: ${data._lightImageFile.name}` : data.lightImageUrl ? data.lightImageUrl : "Not specified"}
+        />
+        <Row
+          label="Technical Drawings / PDFs"
+          value={data._files?.length ? `${data._files.length} document(s) attached` : "None"}
+        />
+      </Section>
     </div>
   );
 }
