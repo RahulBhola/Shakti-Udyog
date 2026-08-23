@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { adminApi, type AdminCategory, type AdminProduct } from "../../../api/adminApi";
+import { adminApi, type AdminCategory, type ProductMasterListItem } from "../../../api/adminApi";
 import { ConfirmDialog } from "../ConfirmDialog";
 import {
   Folder, FolderTree, Plus, Search, Eye, EyeOff,
@@ -18,6 +18,9 @@ const CAT_COLORS: Record<string, { bg: string; fg: string }> = {
   "Power Transmission": { bg: "rgba(168,85,247,0.15)", fg: "#A855F7" },
   "Agricultural Machinery": { bg: "rgba(34,197,94,0.15)", fg: "#22C55E" },
   "Automotive & Powertrain": { bg: "rgba(239,68,68,0.15)", fg: "#EF4444" },
+  "Industrial Machinery": { bg: "rgba(59,130,246,0.15)", fg: "#3B82F6" },
+  "Industrial & Structural": { bg: "rgba(139,92,246,0.15)", fg: "#8B5CF6" },
+  "Fasteners & Hardware": { bg: "rgba(236,72,153,0.15)", fg: "#EC4899" },
 };
 const DEFAULT_COLOR = { bg: "rgba(148,163,184,0.15)", fg: "#94A3B8" };
 
@@ -178,7 +181,7 @@ export interface CategoryManagerModalProps {
 
 export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: CategoryManagerModalProps) {
   const [categories, setCategories] = useState<AdminCategory[]>([]);
-  const [products, setProducts] = useState<AdminProduct[]>([]);
+  const [products, setProducts] = useState<ProductMasterListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"All" | "Visible" | "Hidden">("All");
@@ -194,11 +197,11 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
     setActionErr(null);
     Promise.all([
       adminApi.categories(),
-      adminApi.products().catch(() => [] as AdminProduct[]),
+      adminApi.productMaster.list({ pageSize: 1000 }).catch(() => null),
     ])
-      .then(([cats, prods]) => {
+      .then(([cats, prodRes]) => {
         setCategories(cats || []);
-        setProducts(prods || []);
+        setProducts(prodRes?.items || []);
       })
       .catch((e: Error) => setActionErr(e.message))
       .finally(() => setLoading(false));
@@ -210,12 +213,13 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
     }
   }, [open, loadData]);
 
-  // Map category product counts
+  // Map category product counts by categoryName
   const productCountMap = useMemo(() => {
     const map = new Map<string, number>();
     for (const p of products) {
-      if (p.categoryId) {
-        map.set(p.categoryId, (map.get(p.categoryId) ?? 0) + 1);
+      if (p.categoryName) {
+        const key = p.categoryName.trim().toLowerCase();
+        map.set(key, (map.get(key) ?? 0) + 1);
       }
     }
     return map;
@@ -362,46 +366,54 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
               </button>
             </div>
           ) : (
-            <table className="inv-table w-full">
+            <table className="inv-table w-full" style={{ tableLayout: "fixed" }}>
+              <colgroup>
+                <col style={{ width: "35%" }} />
+                <col style={{ width: "23%" }} />
+                <col style={{ width: "14%" }} />
+                <col style={{ width: "8%" }} />
+                <col style={{ width: "12%" }} />
+                <col style={{ width: "8%" }} />
+              </colgroup>
               <thead>
                 <tr>
-                  <th>Category</th>
-                  <th>Slug</th>
-                  <th>Products</th>
-                  <th>Order</th>
-                  <th>Visibility</th>
-                  <th style={{ textAlign: "right" }}>Actions</th>
+                  <th style={{ width: "35%" }}>Category</th>
+                  <th style={{ width: "23%" }}>Slug</th>
+                  <th style={{ width: "14%" }}>Products</th>
+                  <th style={{ width: "8%" }}>Order</th>
+                  <th style={{ width: "12%" }}>Visibility</th>
+                  <th style={{ width: "8%", textAlign: "right" }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((cat) => {
                   const cColor = catColor(cat.name);
-                  const pCount = productCountMap.get(cat.id) ?? 0;
+                  const pCount = productCountMap.get(cat.name.trim().toLowerCase()) ?? 0;
                   return (
                     <tr key={cat.id}>
-                      <td>
-                        <div className="flex items-center gap-2.5">
+                      <td style={{ overflow: "hidden", maxWidth: 0 }}>
+                        <div className="flex items-center gap-2.5 min-w-0">
                           <span
                             className="flex items-center justify-center w-8 h-8 rounded-lg shrink-0 font-bold text-xs"
                             style={{ background: cColor.bg, color: cColor.fg }}
                           >
                             <Folder size={15} />
                           </span>
-                          <div>
-                            <div className="text-xs font-bold text-neutral-900 dark:text-white">{cat.name}</div>
+                          <div className="min-w-0 flex-1 overflow-hidden">
+                            <div className="text-xs font-bold text-neutral-900 dark:text-white truncate">{cat.name}</div>
                             {cat.description && (
-                              <div className="text-[11px] text-neutral-400 truncate max-w-[200px]">{cat.description}</div>
+                              <div className="text-[11px] text-neutral-400 truncate">{cat.description}</div>
                             )}
                           </div>
                         </div>
                       </td>
-                      <td>
-                        <span className="font-mono text-[11px] text-neutral-500 dark:text-neutral-400">
+                      <td style={{ overflow: "hidden", maxWidth: 0 }}>
+                        <span className="font-mono text-[11px] text-neutral-500 dark:text-neutral-400 block truncate">
                           {cat.slug || "—"}
                         </span>
                       </td>
                       <td>
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10.5px] font-semibold bg-neutral-100 dark:bg-white/5 text-neutral-700 dark:text-neutral-300">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10.5px] font-semibold bg-neutral-100 dark:bg-white/5 text-neutral-700 dark:text-neutral-300 whitespace-nowrap">
                           {pCount} {pCount === 1 ? "product" : "products"}
                         </span>
                       </td>
