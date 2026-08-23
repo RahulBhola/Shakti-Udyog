@@ -38,8 +38,7 @@ export default function ProductDrawer({ open, onClose, onSave, categories, initi
     length: null, width: null, height: null, diameter: null, drawingNumber: "", revision: "",
     patternNumber: "", coreRequired: false, machineRequired: false, inspectionRequired: false, machiningRequired: false, cycleTimeMinutes: null,
     standardCost: null, sellingPrice: null, gstPercent: null, hsnCode: "", currency: "INR",
-    _darkImageFile: null as File | null,
-    _lightImageFile: null as File | null,
+    _productImageFile: null as File | null,
     _files: [] as File[],
   });
 
@@ -47,13 +46,8 @@ export default function ProductDrawer({ open, onClose, onSave, categories, initi
     setData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSetDarkImage = (file: File | null) => {
-    setData((prev) => ({ ...prev, _darkImageFile: file }));
-    if (saveError) setSaveError(null);
-  };
-
-  const handleSetLightImage = (file: File | null) => {
-    setData((prev) => ({ ...prev, _lightImageFile: file }));
+  const handleSetProductImage = (file: File | null) => {
+    setData((prev) => ({ ...prev, _productImageFile: file }));
     if (saveError) setSaveError(null);
   };
 
@@ -70,17 +64,16 @@ export default function ProductDrawer({ open, onClose, onSave, categories, initi
     }));
   };
 
-  const hasAtLeastOneImage = Boolean(
-    data._darkImageFile ||
-    data._lightImageFile ||
+  const hasProductImage = Boolean(
+    data._productImageFile ||
     data.imageUrl ||
     data.lightImageUrl ||
     (initialData && (initialData.imageUrl || initialData.lightImageUrl || initialData.firstAttachmentId))
   );
 
   const handleNext = () => {
-    if (step === 5 && !hasAtLeastOneImage) {
-      setSaveError("Please attach at least one product image (Dark Mode or Light Mode render) before proceeding.");
+    if (step === 5 && !hasProductImage) {
+      setSaveError("Please attach a primary product image before proceeding.");
       return;
     }
     setSaveError(null);
@@ -88,8 +81,8 @@ export default function ProductDrawer({ open, onClose, onSave, categories, initi
   };
 
   const handleSave = async () => {
-    if (!hasAtLeastOneImage) {
-      setSaveError("Please attach at least one product image (Dark Mode or Light Mode render) before saving.");
+    if (!hasProductImage) {
+      setSaveError("Please attach a primary product image before saving.");
       setStep(5);
       return;
     }
@@ -105,8 +98,9 @@ export default function ProductDrawer({ open, onClose, onSave, categories, initi
       const payload: Record<string, any> = {};
       const files: File[] = [];
 
-      if (data._darkImageFile) files.push(data._darkImageFile);
-      if (data._lightImageFile) files.push(data._lightImageFile);
+      if (data._productImageFile) {
+        files.push(data._productImageFile);
+      }
       if (data._files && Array.isArray(data._files)) {
         files.push(...data._files);
       }
@@ -153,12 +147,9 @@ export default function ProductDrawer({ open, onClose, onSave, categories, initi
       case 4: return <PricingStep data={data} onChange={handleChange} />;
       case 5: return (
         <AttachmentUploader
-          darkImageFile={data._darkImageFile ?? null}
-          lightImageFile={data._lightImageFile ?? null}
-          existingDarkImageUrl={data.imageUrl}
-          existingLightImageUrl={data.lightImageUrl}
-          onSetDarkImage={handleSetDarkImage}
-          onSetLightImage={handleSetLightImage}
+          productImageFile={data._productImageFile ?? null}
+          existingImageUrl={data.imageUrl || data.lightImageUrl}
+          onSetProductImage={handleSetProductImage}
           files={data._files ?? []}
           onAdd={handleAddFiles}
           onRemove={handleRemoveFile}
@@ -198,8 +189,8 @@ export default function ProductDrawer({ open, onClose, onSave, categories, initi
                   key={s.key}
                   type="button"
                   onClick={() => {
-                    if (step === 5 && i > 5 && !hasAtLeastOneImage) {
-                      setSaveError("Please attach at least one product image (Dark Mode or Light Mode render) before proceeding.");
+                    if (step === 5 && i > 5 && !hasProductImage) {
+                      setSaveError("Please attach a primary product image before proceeding.");
                       return;
                     }
                     setSaveError(null);

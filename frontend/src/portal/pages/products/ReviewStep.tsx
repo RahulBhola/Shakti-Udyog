@@ -78,12 +78,8 @@ export default function ReviewStep({ data }: ReviewStepProps) {
 
       <Section title="Media & Attachments">
         <Row
-          label="Dark Theme Image"
-          value={data._darkImageFile ? `Attached: ${data._darkImageFile.name}` : data.imageUrl ? data.imageUrl : "Not specified"}
-        />
-        <Row
-          label="Light Theme Image"
-          value={data._lightImageFile ? `Attached: ${data._lightImageFile.name}` : data.lightImageUrl ? data.lightImageUrl : "Not specified"}
+          label="Primary Product Image"
+          value={data._productImageFile ? `Attached: ${data._productImageFile.name}` : data.imageUrl ? data.imageUrl : "Not specified"}
         />
         <Row
           label="Technical Drawings / PDFs"
