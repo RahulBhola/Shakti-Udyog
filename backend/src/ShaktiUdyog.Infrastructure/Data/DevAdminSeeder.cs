@@ -102,6 +102,7 @@ public static class DevAdminSeeder
             }
         }
 
+        await PurgeEnquiryAndQuotationDataAsync(dbContext, logger);
         await SeedCategoriesAsync(dbContext, logger);
         await SeedProductMastersAsync(dbContext, adminUser?.Id, logger);
         await SeedHistoricalDemoOperationsAsync(dbContext, logger);
@@ -539,6 +540,68 @@ public static class DevAdminSeeder
         }
     }
 
+    public static async Task PurgeEnquiryAndQuotationDataAsync(AppDbContext db, ILogger logger)
+    {
+        try
+        {
+            // 1. Unlink any orders pointing to quotations
+            var ordersWithQuotes = await db.Orders.Where(o => o.QuotationId != null).ToListAsync();
+            if (ordersWithQuotes.Count > 0)
+            {
+                foreach (var o in ordersWithQuotes) o.QuotationId = null;
+                await db.SaveChangesAsync();
+            }
+
+            // 2. Delete all Quotation child rows and Quotations
+            var approvals = await db.QuotationApprovals.ToListAsync();
+            if (approvals.Count > 0) db.QuotationApprovals.RemoveRange(approvals);
+
+            var attachments = await db.QuotationAttachments.ToListAsync();
+            if (attachments.Count > 0) db.QuotationAttachments.RemoveRange(attachments);
+
+            var comments = await db.QuotationComments.ToListAsync();
+            if (comments.Count > 0) db.QuotationComments.RemoveRange(comments);
+
+            var items = await db.QuotationItems.ToListAsync();
+            if (items.Count > 0) db.QuotationItems.RemoveRange(items);
+
+            var revisions = await db.QuotationRevisions.ToListAsync();
+            if (revisions.Count > 0) db.QuotationRevisions.RemoveRange(revisions);
+
+            var histories = await db.QuotationStatusHistories.ToListAsync();
+            if (histories.Count > 0) db.QuotationStatusHistories.RemoveRange(histories);
+
+            var quotes = await db.Quotations.ToListAsync();
+            if (quotes.Count > 0) db.Quotations.RemoveRange(quotes);
+
+            // 3. Delete all Enquiry child rows and Enquiries
+            var enqAssignments = await db.EnquiryAssignments.ToListAsync();
+            if (enqAssignments.Count > 0) db.EnquiryAssignments.RemoveRange(enqAssignments);
+
+            var enqComments = await db.EnquiryComments.ToListAsync();
+            if (enqComments.Count > 0) db.EnquiryComments.RemoveRange(enqComments);
+
+            var enqFiles = await db.EnquiryFiles.ToListAsync();
+            if (enqFiles.Count > 0) db.EnquiryFiles.RemoveRange(enqFiles);
+
+            var enqItems = await db.EnquiryItems.ToListAsync();
+            if (enqItems.Count > 0) db.EnquiryItems.RemoveRange(enqItems);
+
+            var enqHistories = await db.EnquiryStatusHistories.ToListAsync();
+            if (enqHistories.Count > 0) db.EnquiryStatusHistories.RemoveRange(enqHistories);
+
+            var enquiries = await db.Enquiries.ToListAsync();
+            if (enquiries.Count > 0) db.Enquiries.RemoveRange(enquiries);
+
+            await db.SaveChangesAsync();
+            logger.LogInformation("Purged all enquiry and quotation data from database.");
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Could not purge enquiry or quotation data during startup: {Message}", ex.Message);
+        }
+    }
+
     private static async Task SeedHistoricalDemoOperationsAsync(AppDbContext db, ILogger logger)
     {
         var existingOrderCount = await db.Orders.CountAsync();
@@ -584,113 +647,74 @@ public static class DevAdminSeeder
             var monthDate = now.AddMonths(-i);
             var monthStart = new DateTimeOffset(new DateTime(monthDate.Year, monthDate.Month, 1), TimeSpan.Zero);
 
-            for (var e = 1; e <= 2; e++)
+            var prod = products[random.Next(products.Count)];
+            var qty = random.Next(200, 1500);
+            var rate = prod.SellingPrice ?? 450m;
+            var subtotal = qty * rate;
+            var tax = Math.Round(subtotal * 0.18m, 2);
+            var total = subtotal + tax;
+
+            var isPaid = i > 1;
+            var orderStage = i <= 1 ? stages[random.Next(stages.Length - 2)] : stages[^1];
+            var orderStatus = orderStage == OrderStatuses.Delivered ? OrderStatuses.Delivered : OrderStatuses.Production;
+
+            var order = new Order
             {
-                var prod = products[random.Next(products.Count)];
-                var enquiry = new Enquiry
+                Id = Guid.NewGuid(),
+                OrderNumber = $"ORD-{monthDate.Year}{monthDate.Month:D2}-{random.Next(1000, 9999)}",
+                CompanyId = company.Id,
+                QuotationId = null,
+                PurchaseOrderReference = $"PO-{monthDate.Year}/{random.Next(100, 999)}",
+                Status = orderStatus,
+                ManufacturingStage = orderStage,
+                PlacedAtUtc = monthStart.AddDays(random.Next(18, 25)),
+                PromisedDispatchDateUtc = monthStart.AddDays(random.Next(35, 55)),
+                DeliveryAddress = company.DeliveryAddresses,
+                QuotationTotal = total,
+                AdvancePercent = 30,
+                AdvanceAmount = Math.Round(total * 0.3m, 2),
+                AdvancePaid = true,
+                AdvancePaidAtUtc = monthStart.AddDays(20),
+                Items = new List<OrderItem>
                 {
-                    Id = Guid.NewGuid(),
-                    CompanyId = company.Id,
-                    CompanyName = company.Name,
-                    FullName = "Rahul Sharma",
-                    Email = "procurement@ludhianaheavy.in",
-                    Phone = "+91 9876543210",
-                    ProductType = prod.CastingType ?? "Sand Casting",
-                    MaterialGrade = prod.MaterialGrade ?? "FG 220",
-                    Quantity = $"{random.Next(100, 2000)} pcs",
-                    RequirementDetails = $"Standard industrial casting requirement for {prod.ProductName} with strict dimensional tolerances.",
-                    Status = i == 0 ? "Under Review" : "Quoted",
-                    CreatedAtUtc = monthStart.AddDays(random.Next(1, 10)),
-                    ConsentGiven = true,
-                };
-                db.Enquiries.Add(enquiry);
-
-                if (e == 1)
-                {
-                    var qty = random.Next(200, 1500);
-                    var rate = prod.SellingPrice ?? 450m;
-                    var subtotal = qty * rate;
-                    var tax = Math.Round(subtotal * 0.18m, 2);
-                    var total = subtotal + tax;
-
-                    var quotation = new Quotation
+                    new OrderItem
                     {
                         Id = Guid.NewGuid(),
-                        QuotationNumber = $"QT-{monthDate.Year}{monthDate.Month:D2}-{random.Next(100, 999)}",
-                        EnquiryId = enquiry.Id,
-                        CompanyId = company.Id,
-                        Subtotal = subtotal,
-                        Tax = tax,
-                        Total = total,
-                        Status = i == 0 ? QuotationStatuses.Issued : QuotationStatuses.Accepted,
-                        CreatedAtUtc = monthStart.AddDays(random.Next(11, 18)),
-                        ValidUntilUtc = monthStart.AddDays(45),
-                    };
-                    db.Quotations.Add(quotation);
-
-                    var isPaid = i > 1;
-                    var orderStage = i <= 1 ? stages[random.Next(stages.Length - 2)] : stages[^1];
-                    var orderStatus = orderStage == OrderStatuses.Delivered ? OrderStatuses.Delivered : OrderStatuses.Production;
-
-                    var order = new Order
-                    {
-                        Id = Guid.NewGuid(),
-                        OrderNumber = $"ORD-{monthDate.Year}{monthDate.Month:D2}-{random.Next(1000, 9999)}",
-                        CompanyId = company.Id,
-                        QuotationId = quotation.Id,
-                        PurchaseOrderReference = $"PO-{monthDate.Year}/{random.Next(100, 999)}",
-                        Status = orderStatus,
-                        ManufacturingStage = orderStage,
-                        PlacedAtUtc = monthStart.AddDays(random.Next(18, 25)),
-                        PromisedDispatchDateUtc = monthStart.AddDays(random.Next(35, 55)),
-                        DeliveryAddress = company.DeliveryAddresses,
-                        QuotationTotal = total,
-                        AdvancePercent = 30,
-                        AdvanceAmount = Math.Round(total * 0.3m, 2),
-                        AdvancePaid = true,
-                        AdvancePaidAtUtc = monthStart.AddDays(20),
-                        Items = new List<OrderItem>
-                        {
-                            new OrderItem
-                            {
-                                Id = Guid.NewGuid(),
-                                PartNumber = prod.ProductCode,
-                                Description = prod.ProductName,
-                                QuantityOrdered = qty,
-                                QuantityProduced = isPaid ? qty : (qty / 2),
-                                UnitRate = rate,
-                            }
-                        }
-                    };
-                    db.Orders.Add(order);
-
-                    var amountPaid = isPaid ? total : Math.Round(total * 0.3m, 2);
-                    var invStatus = isPaid ? InvoiceStatuses.Paid : (i == 1 ? InvoiceStatuses.PartiallyPaid : InvoiceStatuses.Issued);
-
-                    var invoice = new Invoice
-                    {
-                        Id = Guid.NewGuid(),
-                        InvoiceNumber = $"INV-{monthDate.Year}{monthDate.Month:D2}-{random.Next(1000, 9999)}",
-                        CompanyId = company.Id,
-                        OrderId = order.Id,
-                        IssueDateUtc = monthStart.AddDays(random.Next(22, 28)),
-                        DueDateUtc = monthStart.AddDays(50),
-                        Subtotal = subtotal,
-                        Tax = tax,
-                        Total = total,
-                        AmountPaid = amountPaid,
-                        BalanceDue = total - amountPaid,
-                        Status = invStatus,
-                        Currency = "INR",
-                        CreatedAtUtc = monthStart.AddDays(22),
-                    };
-                    db.Invoices.Add(invoice);
+                        PartNumber = prod.ProductCode,
+                        Description = prod.ProductName,
+                        QuantityOrdered = qty,
+                        QuantityProduced = isPaid ? qty : (qty / 2),
+                        UnitRate = rate,
+                    }
                 }
-            }
+            };
+            db.Orders.Add(order);
+
+            var amountPaid = isPaid ? total : Math.Round(total * 0.3m, 2);
+            var invStatus = isPaid ? InvoiceStatuses.Paid : (i == 1 ? InvoiceStatuses.PartiallyPaid : InvoiceStatuses.Issued);
+
+            var invoice = new Invoice
+            {
+                Id = Guid.NewGuid(),
+                InvoiceNumber = $"INV-{monthDate.Year}{monthDate.Month:D2}-{random.Next(1000, 9999)}",
+                CompanyId = company.Id,
+                OrderId = order.Id,
+                IssueDateUtc = monthStart.AddDays(random.Next(22, 28)),
+                DueDateUtc = monthStart.AddDays(50),
+                Subtotal = subtotal,
+                Tax = tax,
+                Total = total,
+                AmountPaid = amountPaid,
+                BalanceDue = total - amountPaid,
+                Status = invStatus,
+                Currency = "INR",
+                CreatedAtUtc = monthStart.AddDays(22),
+            };
+            db.Invoices.Add(invoice);
         }
 
         await db.SaveChangesAsync();
-        logger.LogInformation("Seeded 12-month historical ERP operations demo data.");
+        logger.LogInformation("Seeded 12-month historical ERP operations demo data without enquiries or quotations.");
     }
 }
 

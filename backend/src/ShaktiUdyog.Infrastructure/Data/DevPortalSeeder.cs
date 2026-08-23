@@ -34,7 +34,6 @@ public static class DevPortalSeeder
         // Runs regardless of whether the demo company is already seeded, so the
         // invoice detail view always has a line item.
         await EnsureDemoInvoiceItemAsync(db, logger);
-        await EnsureDemoOrderQuotationLinkAsync(db, logger);
 
         if (await db.Companies.AnyAsync(c => c.Name == CompanyName))
         {
@@ -85,68 +84,13 @@ public static class DevPortalSeeder
 
         var now = DateTimeOffset.UtcNow;
 
-        // Enquiry (quoted) → quotation (issued)
-        var enquiry = new Enquiry
-        {
-            Id = Guid.NewGuid(),
-            CompanyId = company.Id,
-            SubmittedByUserId = user.Id,
-            FullName = user.FullName!,
-            CompanyName = company.Name,
-            Email = user.Email!,
-            Phone = user.PhoneNumber!,
-            ProductType = "Ductile Iron Casting",
-            MaterialGrade = "[Demo grade]",
-            Quantity = "1000 pcs",
-            DeliveryLocation = "Ludhiana",
-            RequirementDetails = "[Demo] Pump housing casting per drawing PH-102 rev B.",
-            ConsentGiven = true,
-            Status = EnquiryStatuses.Quoted,
-            CreatedAtUtc = now.AddDays(-20),
-        };
-        db.Enquiries.Add(enquiry);
-
-        var quotation = new Quotation
-        {
-            Id = Guid.NewGuid(),
-            QuotationNumber = "QT-DEMO-0001",
-            EnquiryId = enquiry.Id,
-            CompanyId = company.Id,
-            Subtotal = 485000m,
-            Total = 485000m,
-            ValidUntilUtc = now.AddDays(15),
-            PaymentTerms = "[Demo] 50% advance, 50% before dispatch",
-            DeliveryTerms = "[Demo] Ex-works Ludhiana, 6 weeks",
-            Status = QuotationStatuses.Issued,
-            CreatedAtUtc = now.AddDays(-12),
-        };
-        db.Quotations.Add(quotation);
-
-        // A second Enquiry still under review
-        db.Enquiries.Add(new Enquiry
-        {
-            Id = Guid.NewGuid(),
-            CompanyId = company.Id,
-            SubmittedByUserId = user.Id,
-            FullName = user.FullName!,
-            CompanyName = company.Name,
-            Email = user.Email!,
-            Phone = user.PhoneNumber!,
-            ProductType = "Grey Iron Casting",
-            Quantity = "250 pcs",
-            RequirementDetails = "[Demo] Machine base casting, sample drawing to follow.",
-            ConsentGiven = true,
-            Status = EnquiryStatuses.UnderReview,
-            CreatedAtUtc = now.AddDays(-4),
-        });
-
         // Order in production with milestones (one internal-only milestone to
         // prove the visibility filter) and a shipment placeholder
         var order = new Order
         {
             Id = Guid.NewGuid(),
             OrderNumber = "SO-DEMO-0001",
-            QuotationId = quotation.Id,
+            QuotationId = null,
             CompanyId = company.Id,
             PurchaseOrderReference = "[Demo PO-4521]",
             Status = OrderStatuses.Production,
@@ -415,30 +359,5 @@ public static class DevPortalSeeder
         });
         await db.SaveChangesAsync();
         logger.LogInformation("Seeded a single demo line item on invoice {InvoiceNumber}.", invoice.InvoiceNumber);
-    }
-
-    /// <summary>
-    /// Idempotent: links the demo order (SO-DEMO-0001) to its quotation
-    /// (QT-DEMO-0001) when the link is missing, so the admin "Deal" page can
-    /// render the full Enquiry → Quotation → Order chain for demo data. Runs on
-    /// every Development startup, even when the demo company is already seeded.
-    /// </summary>
-    private static async Task EnsureDemoOrderQuotationLinkAsync(AppDbContext db, ILogger logger)
-    {
-        var order = await db.Orders.FirstOrDefaultAsync(o => o.OrderNumber == "SO-DEMO-0001");
-        if (order is null || order.QuotationId != null)
-        {
-            return;
-        }
-
-        var quotation = await db.Quotations.FirstOrDefaultAsync(q => q.QuotationNumber == "QT-DEMO-0001");
-        if (quotation is null)
-        {
-            return;
-        }
-
-        order.QuotationId = quotation.Id;
-        await db.SaveChangesAsync();
-        logger.LogInformation("Linked demo order {OrderNumber} to quotation {QuotationNumber}.", order.OrderNumber, quotation.QuotationNumber);
     }
 }
