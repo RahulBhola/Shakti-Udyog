@@ -98,10 +98,10 @@ export default function AdminProductPage() {
   }, [page, pageSize, search, statusFilter, categoryFilter]);
 
   const loadStats = useCallback(() => {
-    adminApi.productMaster.stats().then(setStats).catch(() => {});
+    adminApi.productMaster.stats().then(setStats).catch(() => { });
   }, []);
   const loadCategories = useCallback(() => {
-    adminApi.categories().then((cats) => setCategories(cats.map((c: any) => ({ id: c.id, name: c.name })))).catch(() => {});
+    adminApi.categories().then((cats) => setCategories(cats.map((c: any) => ({ id: c.id, name: c.name })))).catch(() => { });
   }, []);
 
   useEffect(() => { load(); }, [load]);

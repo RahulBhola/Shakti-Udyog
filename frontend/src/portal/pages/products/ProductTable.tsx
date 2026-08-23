@@ -144,11 +144,10 @@ export default function ProductTable({
                 <span key={`e${i}`} className="px-1 text-[var(--text-muted)] text-xs">…</span>
               ) : (
                 <button key={p} type="button" onClick={() => onPageChange(p)}
-                  className={`flex items-center justify-center min-w-[28px] h-7 rounded-md text-xs font-medium transition-all ${
-                    p === page
+                  className={`flex items-center justify-center min-w-[28px] h-7 rounded-md text-xs font-medium transition-all ${p === page
                       ? "bg-[var(--color-primary)] text-white"
                       : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)]"
-                  }`}>
+                    }`}>
                   {p}
                 </button>
               )
@@ -250,9 +249,8 @@ function ProductRow({
 function ActionItem({ icon: Icon, label, danger, onClick }: { icon: any; label: string; danger?: boolean; onClick: () => void }) {
   return (
     <button type="button" onClick={onClick}
-      className={`flex items-center gap-2 w-full px-3 py-1.5 text-[12px] transition-colors ${
-        danger ? "text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)]"
-      }`}>
+      className={`flex items-center gap-2 w-full px-3 py-1.5 text-[12px] transition-colors ${danger ? "text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)]"
+        }`}>
       <Icon size={13} />
       {label}
     </button>

@@ -104,6 +104,7 @@ public static class DevAdminSeeder
 
         await SeedCategoriesAsync(dbContext, logger);
         await SeedProductMastersAsync(dbContext, adminUser?.Id, logger);
+        await SeedHistoricalDemoOperationsAsync(dbContext, logger);
     }
 
     private static async Task SeedCategoriesAsync(AppDbContext db, ILogger logger)
@@ -536,6 +537,160 @@ public static class DevAdminSeeder
             await db.SaveChangesAsync();
             logger.LogInformation("Seeded/Synchronized {Count} ERP product masters for development.", addedOrUpdated);
         }
+    }
+
+    private static async Task SeedHistoricalDemoOperationsAsync(AppDbContext db, ILogger logger)
+    {
+        var existingOrderCount = await db.Orders.CountAsync();
+        if (existingOrderCount >= 10) return;
+
+        var company = await db.Companies.FirstOrDefaultAsync() ?? new Company
+        {
+            Id = Guid.NewGuid(),
+            Name = "Ludhiana Heavy Engineering Ltd",
+            AddressLine1 = "Phase VII Industrial Area",
+            City = "Ludhiana",
+            State = "Punjab",
+            PostalCode = "141010",
+            Country = "India",
+            GstNumber = "03AABCL1234F1Z9",
+            DeliveryAddresses = "Gate 2, Focal Point Industrial Area, Ludhiana",
+        };
+
+        if (!await db.Companies.AnyAsync(c => c.Id == company.Id))
+        {
+            db.Companies.Add(company);
+            await db.SaveChangesAsync();
+        }
+
+        var products = await db.ProductMasters.ToListAsync();
+        if (products.Count == 0) return;
+
+        var stages = new[]
+        {
+            ManufacturingStages.PatternDevelopment,
+            ManufacturingStages.Production,
+            ManufacturingStages.QualityCheck,
+            ManufacturingStages.Packed,
+            ManufacturingStages.ReadyToDispatch,
+            OrderStatuses.Delivered,
+        };
+
+        var now = DateTimeOffset.UtcNow;
+        var random = new Random(42);
+
+        for (var i = 11; i >= 0; i--)
+        {
+            var monthDate = now.AddMonths(-i);
+            var monthStart = new DateTimeOffset(new DateTime(monthDate.Year, monthDate.Month, 1), TimeSpan.Zero);
+
+            for (var e = 1; e <= 2; e++)
+            {
+                var prod = products[random.Next(products.Count)];
+                var enquiry = new Enquiry
+                {
+                    Id = Guid.NewGuid(),
+                    CompanyId = company.Id,
+                    CompanyName = company.Name,
+                    FullName = "Rahul Sharma",
+                    Email = "procurement@ludhianaheavy.in",
+                    Phone = "+91 9876543210",
+                    ProductType = prod.CastingType ?? "Sand Casting",
+                    MaterialGrade = prod.MaterialGrade ?? "FG 220",
+                    Quantity = $"{random.Next(100, 2000)} pcs",
+                    RequirementDetails = $"Standard industrial casting requirement for {prod.ProductName} with strict dimensional tolerances.",
+                    Status = i == 0 ? "Under Review" : "Quoted",
+                    CreatedAtUtc = monthStart.AddDays(random.Next(1, 10)),
+                    ConsentGiven = true,
+                };
+                db.Enquiries.Add(enquiry);
+
+                if (e == 1)
+                {
+                    var qty = random.Next(200, 1500);
+                    var rate = prod.SellingPrice ?? 450m;
+                    var subtotal = qty * rate;
+                    var tax = Math.Round(subtotal * 0.18m, 2);
+                    var total = subtotal + tax;
+
+                    var quotation = new Quotation
+                    {
+                        Id = Guid.NewGuid(),
+                        QuotationNumber = $"QT-{monthDate.Year}{monthDate.Month:D2}-{random.Next(100, 999)}",
+                        EnquiryId = enquiry.Id,
+                        CompanyId = company.Id,
+                        Subtotal = subtotal,
+                        Tax = tax,
+                        Total = total,
+                        Status = i == 0 ? QuotationStatuses.Issued : QuotationStatuses.Accepted,
+                        CreatedAtUtc = monthStart.AddDays(random.Next(11, 18)),
+                        ValidUntilUtc = monthStart.AddDays(45),
+                    };
+                    db.Quotations.Add(quotation);
+
+                    var isPaid = i > 1;
+                    var orderStage = i <= 1 ? stages[random.Next(stages.Length - 2)] : stages[^1];
+                    var orderStatus = orderStage == OrderStatuses.Delivered ? OrderStatuses.Delivered : OrderStatuses.Production;
+
+                    var order = new Order
+                    {
+                        Id = Guid.NewGuid(),
+                        OrderNumber = $"ORD-{monthDate.Year}{monthDate.Month:D2}-{random.Next(1000, 9999)}",
+                        CompanyId = company.Id,
+                        QuotationId = quotation.Id,
+                        PurchaseOrderReference = $"PO-{monthDate.Year}/{random.Next(100, 999)}",
+                        Status = orderStatus,
+                        ManufacturingStage = orderStage,
+                        PlacedAtUtc = monthStart.AddDays(random.Next(18, 25)),
+                        PromisedDispatchDateUtc = monthStart.AddDays(random.Next(35, 55)),
+                        DeliveryAddress = company.DeliveryAddresses,
+                        QuotationTotal = total,
+                        AdvancePercent = 30,
+                        AdvanceAmount = Math.Round(total * 0.3m, 2),
+                        AdvancePaid = true,
+                        AdvancePaidAtUtc = monthStart.AddDays(20),
+                        Items = new List<OrderItem>
+                        {
+                            new OrderItem
+                            {
+                                Id = Guid.NewGuid(),
+                                PartNumber = prod.ProductCode,
+                                Description = prod.ProductName,
+                                QuantityOrdered = qty,
+                                QuantityProduced = isPaid ? qty : (qty / 2),
+                                UnitRate = rate,
+                            }
+                        }
+                    };
+                    db.Orders.Add(order);
+
+                    var amountPaid = isPaid ? total : Math.Round(total * 0.3m, 2);
+                    var invStatus = isPaid ? InvoiceStatuses.Paid : (i == 1 ? InvoiceStatuses.PartiallyPaid : InvoiceStatuses.Issued);
+
+                    var invoice = new Invoice
+                    {
+                        Id = Guid.NewGuid(),
+                        InvoiceNumber = $"INV-{monthDate.Year}{monthDate.Month:D2}-{random.Next(1000, 9999)}",
+                        CompanyId = company.Id,
+                        OrderId = order.Id,
+                        IssueDateUtc = monthStart.AddDays(random.Next(22, 28)),
+                        DueDateUtc = monthStart.AddDays(50),
+                        Subtotal = subtotal,
+                        Tax = tax,
+                        Total = total,
+                        AmountPaid = amountPaid,
+                        BalanceDue = total - amountPaid,
+                        Status = invStatus,
+                        Currency = "INR",
+                        CreatedAtUtc = monthStart.AddDays(22),
+                    };
+                    db.Invoices.Add(invoice);
+                }
+            }
+        }
+
+        await db.SaveChangesAsync();
+        logger.LogInformation("Seeded 12-month historical ERP operations demo data.");
     }
 }
 
