@@ -28,6 +28,7 @@ public class ProductMaster
     // ── Catalog & Marketing ───────────────────────────────────────────────
     public string? Application { get; set; }
     public string? ImageUrl { get; set; }
+    public string? LightImageUrl { get; set; }
 
     // ── Dimensions ───────────────────────────────────────────────────────
     public decimal? Length { get; set; }

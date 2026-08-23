@@ -124,6 +124,20 @@ public static class DependencyInjection
                     RoleClaimType = System.Security.Claims.ClaimTypes.Role,
                     NameClaimType = "sub",
                 };
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+                        var path = context.HttpContext.Request.Path;
+                        if (!string.IsNullOrEmpty(accessToken) &&
+                            (path.StartsWithSegments("/hubs/portal") || path.StartsWithSegments("/api/v1/portal-hub")))
+                        {
+                            context.Token = accessToken;
+                        }
+                        return Task.CompletedTask;
+                    }
+                };
             })
             .AddCookie(IdentityConstants.ExternalScheme);
 
@@ -184,12 +198,13 @@ public static class DependencyInjection
         services.AddRateLimiter(options =>
         {
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+            var authLimit = configuration.GetValue("RateLimits:AuthPerMinute", 60);
             options.AddPolicy("auth", httpContext =>
                 RateLimitPartition.GetFixedWindowLimiter(
                     httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
                     _ => new FixedWindowRateLimiterOptions
                     {
-                        PermitLimit = 10,
+                        PermitLimit = authLimit,
                         Window = TimeSpan.FromMinutes(1),
                         QueueLimit = 0,
                     }));

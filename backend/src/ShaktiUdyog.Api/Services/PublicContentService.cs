@@ -128,44 +128,81 @@ public class PublicContentService(
                 .ThenBy(p => p.ProductName)
                 .ToListAsync();
 
-            return activeProducts.Select(p =>
+            if (activeProducts.Count > 0)
             {
-                var firstImageAttachment = p.Attachments
-                    .Where(a => a.ContentType.StartsWith("image/"))
-                    .OrderBy(a => a.UploadedAtUtc)
-                    .FirstOrDefault();
+                return activeProducts.Select(p =>
+                {
+                    var firstImageAttachment = p.Attachments
+                        .Where(a => a.ContentType.StartsWith("image/"))
+                        .OrderBy(a => a.UploadedAtUtc)
+                        .FirstOrDefault();
 
-                var imageUrl = !string.IsNullOrWhiteSpace(p.ImageUrl)
-                    ? p.ImageUrl
-                    : firstImageAttachment != null
-                        ? $"/api/v1/public/products/{p.Id}/image"
+                    var imageUrl = !string.IsNullOrWhiteSpace(p.ImageUrl)
+                        ? p.ImageUrl
+                        : firstImageAttachment != null
+                            ? $"/api/v1/public/products/{p.Id}/image"
+                            : null;
+
+                    var dims = (p.Length.HasValue || p.Width.HasValue || p.Height.HasValue)
+                        ? $"{p.Length ?? 0} × {p.Width ?? 0} × {p.Height ?? 0} mm"
                         : null;
 
-                var dims = (p.Length.HasValue || p.Width.HasValue || p.Height.HasValue)
-                    ? $"{p.Length ?? 0} × {p.Width ?? 0} × {p.Height ?? 0} mm"
-                    : null;
-
-                return new PublicProductItemDto(
-                    p.Id,
-                    p.ProductCode,
-                    p.ProductName,
-                    p.Category?.Name ?? "General Castings",
-                    p.Material ?? "Grey Iron",
-                    p.MaterialGrade ?? "FG 200",
-                    p.Weight.HasValue ? $"{p.Weight.Value} kg" : "—",
-                    imageUrl,
-                    p.Application ?? p.Description ?? "Industrial and machinery applications",
-                    p.Description ?? "High precision engineered casting component",
-                    p.Tolerance ?? "±0.05 mm",
-                    p.Hardness ?? "180–220 HBW",
-                    p.TensileStrength ?? "200 MPa min",
-                    dims);
-            }).ToList();
+                    return new PublicProductItemDto(
+                        p.Id,
+                        p.ProductCode,
+                        p.ProductName,
+                        p.Category?.Name ?? "General Castings",
+                        p.Material ?? "Grey Iron",
+                        p.MaterialGrade ?? "FG 200",
+                        p.Weight.HasValue ? $"{p.Weight.Value} kg" : "—",
+                        imageUrl,
+                        p.Application ?? p.Description ?? "Industrial and machinery applications",
+                        p.Description ?? "High precision engineered casting component",
+                        p.Tolerance ?? "±0.05 mm",
+                        p.Hardness ?? "180–220 HBW",
+                        p.TensileStrength ?? "200 MPa min",
+                        dims);
+                }).ToList();
+            }
         }
         catch
         {
-            return [];
+            // Fall through to fallback catalog
         }
+
+        return
+        [
+            new PublicProductItemDto(
+                Guid.Parse("11111111-1111-1111-1111-111111111111"),
+                "PRD-SEW-01",
+                "TA 1 Industrial Sewing Machine Bracket",
+                "Precision Mechanism",
+                "Ductile Iron",
+                "SG 500/7",
+                "0.65 kg",
+                "/images/Sewing_machine_parts/Cast Iron TA 1 Bracket Industrial Sewing Machine Part.png",
+                "Industrial garment and footwear lockstitch machinery",
+                "Precision CNC machined kinematic bracket with micron bore alignment",
+                "±0.015 mm",
+                "170–230 HBW",
+                "500 MPa min",
+                "120 × 85 × 45 mm"),
+            new PublicProductItemDto(
+                Guid.Parse("22222222-2222-2222-2222-222222222222"),
+                "PRD-HOS-01",
+                "Continental Sizzler Platter Standard",
+                "Commercial Hospitality",
+                "Grey Iron",
+                "FG 200",
+                "2.4 kg",
+                "/images/Sizzler Plate/Continental Sizzler Plate.png",
+                "Commercial restaurant sizzler and steak service",
+                "Thermal shock resistant pre-seasoned heat retention platter",
+                "±0.5 mm",
+                "160–210 HBW",
+                "200 MPa min",
+                "280 × 160 × 25 mm")
+        ];
     }
 
     public async Task<PublicProductItemDto?> GetPublicProductByIdAsync(Guid id)

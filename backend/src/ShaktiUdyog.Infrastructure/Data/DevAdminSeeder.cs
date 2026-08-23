@@ -102,10 +102,35 @@ public static class DevAdminSeeder
             }
         }
 
+        await EnsureProductMasterSchemaAsync(dbContext, logger);
         await PurgeEnquiryAndQuotationDataAsync(dbContext, logger);
+        await PurgeProductionAndInvoiceDataAsync(dbContext, logger);
         await SeedCategoriesAsync(dbContext, logger);
         await SeedProductMastersAsync(dbContext, adminUser?.Id, logger);
-        await SeedHistoricalDemoOperationsAsync(dbContext, logger);
+    }
+
+    private static async Task EnsureProductMasterSchemaAsync(AppDbContext db, ILogger logger)
+    {
+        try
+        {
+            await db.Database.ExecuteSqlRawAsync(@"
+                IF OBJECT_ID('ProductMasters', 'U') IS NOT NULL
+                BEGIN
+                    IF COL_LENGTH('ProductMasters', 'LightImageUrl') IS NULL
+                        ALTER TABLE ProductMasters ADD LightImageUrl nvarchar(1000) NULL;
+                    IF COL_LENGTH('ProductMasters', 'ImageUrl') IS NULL
+                        ALTER TABLE ProductMasters ADD ImageUrl nvarchar(1000) NULL;
+                    IF COL_LENGTH('ProductMasters', 'Application') IS NULL
+                        ALTER TABLE ProductMasters ADD Application nvarchar(500) NULL;
+                    IF COL_LENGTH('ProductMasters', 'TensileStrength') IS NULL
+                        ALTER TABLE ProductMasters ADD TensileStrength nvarchar(100) NULL;
+                END
+            ");
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Schema check for ProductMasters: {Message}", ex.Message);
+        }
     }
 
     private static async Task SeedCategoriesAsync(AppDbContext db, ILogger logger)
@@ -471,6 +496,11 @@ public static class DevAdminSeeder
             catMap.TryGetValue(item.Category, out var catId);
             var targetCatId = catId != Guid.Empty ? catId : (Guid?)null;
 
+            var darkImg = item.Image;
+            var lightImg = item.Image.EndsWith(".png", StringComparison.OrdinalIgnoreCase)
+                ? item.Image[..^4] + " light mode.png"
+                : item.Image;
+
             if (existingMap.TryGetValue(item.Code, out var existing))
             {
                 existing.ProductName = item.Title;
@@ -478,7 +508,8 @@ public static class DevAdminSeeder
                 existing.Material = item.Material;
                 existing.MaterialGrade = item.Grade;
                 existing.Weight = item.Weight;
-                existing.ImageUrl = item.Image;
+                existing.ImageUrl = darkImg;
+                existing.LightImageUrl = lightImg;
                 existing.Application = item.Application;
                 existing.Description = item.Specs;
                 existing.Tolerance = item.Tolerances;
@@ -510,7 +541,8 @@ public static class DevAdminSeeder
                     Material = item.Material,
                     MaterialGrade = item.Grade,
                     Weight = item.Weight,
-                    ImageUrl = item.Image,
+                    ImageUrl = darkImg,
+                    LightImageUrl = lightImg,
                     Application = item.Application,
                     Description = item.Specs,
                     Tolerance = item.Tolerances,
@@ -537,6 +569,68 @@ public static class DevAdminSeeder
         {
             await db.SaveChangesAsync();
             logger.LogInformation("Seeded/Synchronized {Count} ERP product masters for development.", addedOrUpdated);
+        }
+
+        // Ensure attachments exist for all products
+        var allPms = await db.ProductMasters.Include(p => p.Attachments).ToListAsync();
+        var attachmentsAdded = 0;
+        foreach (var p in allPms)
+        {
+            var seedItem = seedItems.FirstOrDefault(s => string.Equals(s.Code, p.ProductCode, StringComparison.OrdinalIgnoreCase));
+            var darkImg = p.ImageUrl ?? seedItem?.Image ?? "/images/Industrial Iron Casting.png";
+            var lightImg = p.LightImageUrl ?? (darkImg.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ? darkImg[..^4] + " light mode.png" : darkImg);
+
+            p.ImageUrl = darkImg;
+            p.LightImageUrl = lightImg;
+
+            if (p.Attachments.Count == 0)
+            {
+                p.Attachments.Add(new ProductMasterAttachment
+                {
+                    Id = Guid.NewGuid(),
+                    ProductMasterId = p.Id,
+                    FileName = $"{p.ProductName} (Dark Mode 3D Studio Render).png",
+                    ContentType = "image/png",
+                    SizeBytes = 684200,
+                    StorageKey = darkImg.TrimStart('/'),
+                    Description = "Official 3D CAD Foundry Studio Render (Dark Theme)",
+                    UploadedByUserId = adminUserId,
+                    UploadedAtUtc = DateTimeOffset.UtcNow.AddDays(-15),
+                });
+
+                p.Attachments.Add(new ProductMasterAttachment
+                {
+                    Id = Guid.NewGuid(),
+                    ProductMasterId = p.Id,
+                    FileName = $"{p.ProductName} (Light Mode 3D Studio Render).png",
+                    ContentType = "image/png",
+                    SizeBytes = 642100,
+                    StorageKey = lightImg.TrimStart('/'),
+                    Description = "Official 3D CAD Foundry Studio Render (Light Theme)",
+                    UploadedByUserId = adminUserId,
+                    UploadedAtUtc = DateTimeOffset.UtcNow.AddDays(-15),
+                });
+
+                p.Attachments.Add(new ProductMasterAttachment
+                {
+                    Id = Guid.NewGuid(),
+                    ProductMasterId = p.Id,
+                    FileName = $"{p.ProductCode}-Engineering-Specification-Drawing.pdf",
+                    ContentType = "application/pdf",
+                    SizeBytes = 1485000,
+                    StorageKey = $"drawings/{p.ProductCode}.pdf",
+                    Description = "Precision CMM Verified Metallurgical & Dimensional CAD Drawing",
+                    UploadedByUserId = adminUserId,
+                    UploadedAtUtc = DateTimeOffset.UtcNow.AddDays(-20),
+                });
+                attachmentsAdded += 3;
+            }
+        }
+
+        if (attachmentsAdded > 0)
+        {
+            await db.SaveChangesAsync();
+            logger.LogInformation("Seeded {Count} attachments for product masters.", attachmentsAdded);
         }
     }
 
@@ -602,119 +696,84 @@ public static class DevAdminSeeder
         }
     }
 
-    private static async Task SeedHistoricalDemoOperationsAsync(AppDbContext db, ILogger logger)
+    public static async Task PurgeProductionAndInvoiceDataAsync(AppDbContext db, ILogger logger)
     {
-        var existingOrderCount = await db.Orders.CountAsync();
-        if (existingOrderCount >= 10) return;
-
-        var company = await db.Companies.FirstOrDefaultAsync() ?? new Company
+        try
         {
-            Id = Guid.NewGuid(),
-            Name = "Ludhiana Heavy Engineering Ltd",
-            AddressLine1 = "Phase VII Industrial Area",
-            City = "Ludhiana",
-            State = "Punjab",
-            PostalCode = "141010",
-            Country = "India",
-            GstNumber = "03AABCL1234F1Z9",
-            DeliveryAddresses = "Gate 2, Focal Point Industrial Area, Ludhiana",
-        };
+            // 1. Remove Payments
+            var payments = await db.Payments.ToListAsync();
+            if (payments.Count > 0) db.Payments.RemoveRange(payments);
 
-        if (!await db.Companies.AnyAsync(c => c.Id == company.Id))
-        {
-            db.Companies.Add(company);
+            // 2. Remove Invoices and child items
+            var invItems = await db.InvoiceItems.ToListAsync();
+            if (invItems.Count > 0) db.InvoiceItems.RemoveRange(invItems);
+
+            var invHistories = await db.InvoiceStatusHistories.ToListAsync();
+            if (invHistories.Count > 0) db.InvoiceStatusHistories.RemoveRange(invHistories);
+
+            var invAttach = await db.InvoiceAttachments.ToListAsync();
+            if (invAttach.Count > 0) db.InvoiceAttachments.RemoveRange(invAttach);
+
+            var creditNotes = await db.CreditNotes.ToListAsync();
+            if (creditNotes.Count > 0) db.CreditNotes.RemoveRange(creditNotes);
+
+            var debitNotes = await db.DebitNotes.ToListAsync();
+            if (debitNotes.Count > 0) db.DebitNotes.RemoveRange(debitNotes);
+
+            var invoices = await db.Invoices.ToListAsync();
+            if (invoices.Count > 0) db.Invoices.RemoveRange(invoices);
+
+            // 3. Remove Kanban tasks and Production Jobs
+            var kanbanTasks = await db.KanbanTasks.ToListAsync();
+            if (kanbanTasks.Count > 0) db.KanbanTasks.RemoveRange(kanbanTasks);
+
+            var pq = await db.ProductionQualities.ToListAsync();
+            if (pq.Count > 0) db.ProductionQualities.RemoveRange(pq);
+
+            var pc = await db.ProductionComments.ToListAsync();
+            if (pc.Count > 0) db.ProductionComments.RemoveRange(pc);
+
+            var ph = await db.ProductionStageHistories.ToListAsync();
+            if (ph.Count > 0) db.ProductionStageHistories.RemoveRange(ph);
+
+            var pt = await db.ProductionTimelines.ToListAsync();
+            if (pt.Count > 0) db.ProductionTimelines.RemoveRange(pt);
+
+            var pj = await db.ProductionJobs.ToListAsync();
+            if (pj.Count > 0) db.ProductionJobs.RemoveRange(pj);
+
+            // 4. Remove Orders and child items
+            var oItems = await db.OrderItems.ToListAsync();
+            if (oItems.Count > 0) db.OrderItems.RemoveRange(oItems);
+
+            var oMilestones = await db.OrderMilestones.ToListAsync();
+            if (oMilestones.Count > 0) db.OrderMilestones.RemoveRange(oMilestones);
+
+            var oComments = await db.OrderComments.ToListAsync();
+            if (oComments.Count > 0) db.OrderComments.RemoveRange(oComments);
+
+            var oAssigns = await db.OrderAssignments.ToListAsync();
+            if (oAssigns.Count > 0) db.OrderAssignments.RemoveRange(oAssigns);
+
+            var oHistories = await db.OrderStatusHistories.ToListAsync();
+            if (oHistories.Count > 0) db.OrderStatusHistories.RemoveRange(oHistories);
+
+            var trackEvents = await db.ShipmentTrackingEvents.ToListAsync();
+            if (trackEvents.Count > 0) db.ShipmentTrackingEvents.RemoveRange(trackEvents);
+
+            var shipments = await db.Shipments.ToListAsync();
+            if (shipments.Count > 0) db.Shipments.RemoveRange(shipments);
+
+            var orders = await db.Orders.ToListAsync();
+            if (orders.Count > 0) db.Orders.RemoveRange(orders);
+
             await db.SaveChangesAsync();
+            logger.LogInformation("Purged all production and invoice data from database.");
         }
-
-        var products = await db.ProductMasters.ToListAsync();
-        if (products.Count == 0) return;
-
-        var stages = new[]
+        catch (Exception ex)
         {
-            ManufacturingStages.PatternDevelopment,
-            ManufacturingStages.Production,
-            ManufacturingStages.QualityCheck,
-            ManufacturingStages.Packed,
-            ManufacturingStages.ReadyToDispatch,
-            OrderStatuses.Delivered,
-        };
-
-        var now = DateTimeOffset.UtcNow;
-        var random = new Random(42);
-
-        for (var i = 11; i >= 0; i--)
-        {
-            var monthDate = now.AddMonths(-i);
-            var monthStart = new DateTimeOffset(new DateTime(monthDate.Year, monthDate.Month, 1), TimeSpan.Zero);
-
-            var prod = products[random.Next(products.Count)];
-            var qty = random.Next(200, 1500);
-            var rate = prod.SellingPrice ?? 450m;
-            var subtotal = qty * rate;
-            var tax = Math.Round(subtotal * 0.18m, 2);
-            var total = subtotal + tax;
-
-            var isPaid = i > 1;
-            var orderStage = i <= 1 ? stages[random.Next(stages.Length - 2)] : stages[^1];
-            var orderStatus = orderStage == OrderStatuses.Delivered ? OrderStatuses.Delivered : OrderStatuses.Production;
-
-            var order = new Order
-            {
-                Id = Guid.NewGuid(),
-                OrderNumber = $"ORD-{monthDate.Year}{monthDate.Month:D2}-{random.Next(1000, 9999)}",
-                CompanyId = company.Id,
-                QuotationId = null,
-                PurchaseOrderReference = $"PO-{monthDate.Year}/{random.Next(100, 999)}",
-                Status = orderStatus,
-                ManufacturingStage = orderStage,
-                PlacedAtUtc = monthStart.AddDays(random.Next(18, 25)),
-                PromisedDispatchDateUtc = monthStart.AddDays(random.Next(35, 55)),
-                DeliveryAddress = company.DeliveryAddresses,
-                QuotationTotal = total,
-                AdvancePercent = 30,
-                AdvanceAmount = Math.Round(total * 0.3m, 2),
-                AdvancePaid = true,
-                AdvancePaidAtUtc = monthStart.AddDays(20),
-                Items = new List<OrderItem>
-                {
-                    new OrderItem
-                    {
-                        Id = Guid.NewGuid(),
-                        PartNumber = prod.ProductCode,
-                        Description = prod.ProductName,
-                        QuantityOrdered = qty,
-                        QuantityProduced = isPaid ? qty : (qty / 2),
-                        UnitRate = rate,
-                    }
-                }
-            };
-            db.Orders.Add(order);
-
-            var amountPaid = isPaid ? total : Math.Round(total * 0.3m, 2);
-            var invStatus = isPaid ? InvoiceStatuses.Paid : (i == 1 ? InvoiceStatuses.PartiallyPaid : InvoiceStatuses.Issued);
-
-            var invoice = new Invoice
-            {
-                Id = Guid.NewGuid(),
-                InvoiceNumber = $"INV-{monthDate.Year}{monthDate.Month:D2}-{random.Next(1000, 9999)}",
-                CompanyId = company.Id,
-                OrderId = order.Id,
-                IssueDateUtc = monthStart.AddDays(random.Next(22, 28)),
-                DueDateUtc = monthStart.AddDays(50),
-                Subtotal = subtotal,
-                Tax = tax,
-                Total = total,
-                AmountPaid = amountPaid,
-                BalanceDue = total - amountPaid,
-                Status = invStatus,
-                Currency = "INR",
-                CreatedAtUtc = monthStart.AddDays(22),
-            };
-            db.Invoices.Add(invoice);
+            logger.LogWarning(ex, "Could not purge production or invoice data during startup: {Message}", ex.Message);
         }
-
-        await db.SaveChangesAsync();
-        logger.LogInformation("Seeded 12-month historical ERP operations demo data without enquiries or quotations.");
     }
 }
 

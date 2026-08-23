@@ -78,12 +78,15 @@ public class ProductMasterService(
                 p.Material,
                 p.MaterialGrade,
                 p.Weight,
+                p.TensileStrength,
+                p.Application,
                 p.Status,
                 p.Attachments.Count,
                 0,
                 firstAtt?.Id,
                 firstAtt?.ContentType,
                 p.ImageUrl,
+                p.LightImageUrl,
                 p.CreatedAtUtc,
                 p.UpdatedAtUtc);
         }).ToList();
@@ -178,6 +181,7 @@ public class ProductMasterService(
             SurfaceFinish = request.SurfaceFinish,
             Application = request.Application,
             ImageUrl = request.ImageUrl,
+            LightImageUrl = request.LightImageUrl,
             Length = request.Length,
             Width = request.Width,
             Height = request.Height,
@@ -233,6 +237,7 @@ public class ProductMasterService(
         if (request.SurfaceFinish is not null) p.SurfaceFinish = request.SurfaceFinish;
         if (request.Application is not null) p.Application = request.Application;
         if (request.ImageUrl is not null) p.ImageUrl = request.ImageUrl;
+        if (request.LightImageUrl is not null) p.LightImageUrl = request.LightImageUrl;
         if (request.Length.HasValue) p.Length = request.Length;
         if (request.Width.HasValue) p.Width = request.Width;
         if (request.Height.HasValue) p.Height = request.Height;
@@ -306,6 +311,7 @@ public class ProductMasterService(
             SurfaceFinish = original.SurfaceFinish,
             Application = original.Application,
             ImageUrl = original.ImageUrl,
+            LightImageUrl = original.LightImageUrl,
             Length = original.Length,
             Width = original.Width,
             Height = original.Height,
@@ -386,7 +392,7 @@ public class ProductMasterService(
             p.CastingType, p.Unit,
             p.Material, p.MaterialGrade, p.Weight,
             p.Tolerance, p.Density, p.Hardness, p.TensileStrength, p.HeatTreatment, p.SurfaceFinish,
-            p.Application, p.ImageUrl,
+            p.Application, p.ImageUrl, p.LightImageUrl,
             p.Length, p.Width, p.Height, p.Diameter,
             p.DrawingNumber, p.Revision, p.PatternNumber,
             p.CoreRequired, p.MachineRequired, p.InspectionRequired, p.MachiningRequired,

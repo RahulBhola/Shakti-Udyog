@@ -33,7 +33,7 @@ export default function ProductDrawer({ open, onClose, onSave, categories, initi
   const [saveError, setSaveError] = useState<string | null>(null);
   const [data, setData] = useState<Record<string, any>>(initialData ?? {
     productName: "", productCode: "", description: "", categoryId: "", castingType: "", unit: "", status: "Draft",
-    application: "", imageUrl: "",
+    application: "", imageUrl: "", lightImageUrl: "",
     material: "", materialGrade: "", weight: null, tolerance: "", density: "", hardness: "", tensileStrength: "", heatTreatment: "", surfaceFinish: "",
     length: null, width: null, height: null, diameter: null, drawingNumber: "", revision: "",
     patternNumber: "", coreRequired: false, machineRequired: false, inspectionRequired: false, machiningRequired: false, cycleTimeMinutes: null,
@@ -65,7 +65,7 @@ export default function ProductDrawer({ open, onClose, onSave, categories, initi
       const nullableFields = [
         "categoryId", "description", "castingType", "unit", "material", "materialGrade",
         "tolerance", "density", "hardness", "tensileStrength", "heatTreatment", "surfaceFinish",
-        "application", "imageUrl",
+        "application", "imageUrl", "lightImageUrl",
         "drawingNumber", "revision", "patternNumber", "hsnCode", "currency",
       ];
       const payload: Record<string, any> = {};

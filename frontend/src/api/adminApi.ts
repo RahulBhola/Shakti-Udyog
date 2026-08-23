@@ -278,6 +278,7 @@ export interface ProductMasterListItem {
   tensileStrength: string | null;
   application: string | null;
   imageUrl: string | null;
+  lightImageUrl: string | null;
   status: string;
   attachmentCount: number;
   usedInCount: number;
@@ -305,6 +306,7 @@ export interface ProductMasterDetail {
   tensileStrength: string | null;
   application: string | null;
   imageUrl: string | null;
+  lightImageUrl: string | null;
   heatTreatment: string | null;
   surfaceFinish: string | null;
   length: number | null;

@@ -22,6 +22,20 @@ const PAGE_SIZES = [8, 12, 24, 48];
 /*  Helpers                                                            */
 /* ------------------------------------------------------------------ */
 
+import { getThemedImage } from "../../utils/themeImage";
+
+function useIsLightMode() {
+  const [isLight, setIsLight] = useState(!document.documentElement.classList.contains("dark"));
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsLight(!document.documentElement.classList.contains("dark"));
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
+  return isLight;
+}
+
 function statusTone(status: string): string {
   switch (status) {
     case "Active": return "green";
@@ -37,9 +51,10 @@ function StatusBadge({ status }: { status: string }) {
 
 function ProductThumb({ item }: { item: ProductMasterListItem }) {
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const isLightMode = useIsLightMode();
 
   useEffect(() => {
-    if (item.imageUrl) return;
+    if (item.imageUrl || item.lightImageUrl) return;
     if (!item.firstAttachmentId) return;
     let cancelled = false;
     (async () => {
@@ -56,9 +71,13 @@ function ProductThumb({ item }: { item: ProductMasterListItem }) {
       } catch { /* ignore */ }
     })();
     return () => { cancelled = true; if (blobUrl) URL.revokeObjectURL(blobUrl); };
-  }, [item.id, item.firstAttachmentId, item.imageUrl]);
+  }, [item.id, item.firstAttachmentId, item.imageUrl, item.lightImageUrl]);
 
-  const displaySrc = item.imageUrl || blobUrl;
+  const rawImage = isLightMode
+    ? (item.lightImageUrl || (item.imageUrl ? getThemedImage(item.imageUrl, true) : null))
+    : (item.imageUrl || (item.lightImageUrl ? getThemedImage(item.lightImageUrl, false) : null));
+
+  const displaySrc = rawImage || blobUrl;
 
   if (displaySrc) {
     return (
@@ -97,10 +116,11 @@ function AdminProductCard({
   setOpenMenuId: (id: string | null) => void;
 }) {
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const isLightMode = useIsLightMode();
   const isDuctile = (product.material ?? "").toLowerCase().includes("ductile") || (product.materialGrade ?? "").startsWith("SG");
 
   useEffect(() => {
-    if (product.imageUrl) return;
+    if (product.imageUrl || product.lightImageUrl) return;
     if (!product.firstAttachmentId) return;
     let cancelled = false;
     (async () => {
@@ -117,9 +137,13 @@ function AdminProductCard({
       } catch { /* ignore */ }
     })();
     return () => { cancelled = true; if (blobUrl) URL.revokeObjectURL(blobUrl); };
-  }, [product.id, product.firstAttachmentId, product.imageUrl]);
+  }, [product.id, product.firstAttachmentId, product.imageUrl, product.lightImageUrl]);
 
-  const displayImg = product.imageUrl || blobUrl;
+  const rawImage = isLightMode
+    ? (product.lightImageUrl || (product.imageUrl ? getThemedImage(product.imageUrl, true) : null))
+    : (product.imageUrl || (product.lightImageUrl ? getThemedImage(product.lightImageUrl, false) : null));
+
+  const displayImg = rawImage || blobUrl;
   const isMenuOpen = openMenuId === product.id;
 
   return (

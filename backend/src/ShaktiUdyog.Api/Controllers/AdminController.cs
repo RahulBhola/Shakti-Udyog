@@ -115,23 +115,35 @@ public class AdminController(IAdminService adminService, IOrderAdminService orde
 
         try
         {
-            // 1. Remove refresh tokens and password reset tokens
+            // 1. Remove refresh tokens, sessions, and password reset tokens
+            var sessions = await db.UserSessions.Where(s => s.UserId == id).ToListAsync();
+            if (sessions.Count > 0) db.UserSessions.RemoveRange(sessions);
+
             var tokens = await db.RefreshTokens.Where(t => t.UserId == id).ToListAsync();
             if (tokens.Count > 0) db.RefreshTokens.RemoveRange(tokens);
 
             var resetTokens = await db.PasswordResetTokens.Where(t => t.UserId == id).ToListAsync();
             if (resetTokens.Count > 0) db.PasswordResetTokens.RemoveRange(resetTokens);
 
-            // 2. Remove company associations & track candidate orphan companies
+            // 2. Identify candidate associated companies for this user
             var userCompanies = await db.UserCompanies.Where(uc => uc.UserId == id).ToListAsync();
-            var companyIdsToCheck = userCompanies.Select(uc => uc.CompanyId).ToList();
+            var companyIdsToCheck = userCompanies.Select(uc => uc.CompanyId).Distinct().ToList();
 
             if (!string.IsNullOrWhiteSpace(user.CompanyName))
             {
-                var comp = await db.Companies.FirstOrDefaultAsync(c => c.Name == user.CompanyName);
-                if (comp != null && !companyIdsToCheck.Contains(comp.Id))
+                var compByName = await db.Companies.FirstOrDefaultAsync(c => c.Name == user.CompanyName);
+                if (compByName != null && !companyIdsToCheck.Contains(compByName.Id))
                 {
-                    companyIdsToCheck.Add(comp.Id);
+                    companyIdsToCheck.Add(compByName.Id);
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(user.Email))
+            {
+                var compByEmail = await db.Companies.FirstOrDefaultAsync(c => c.CompanyEmail == user.Email);
+                if (compByEmail != null && !companyIdsToCheck.Contains(compByEmail.Id))
+                {
+                    companyIdsToCheck.Add(compByEmail.Id);
                 }
             }
 
@@ -155,35 +167,18 @@ public class AdminController(IAdminService adminService, IOrderAdminService orde
                 await db.SaveChangesAsync();
             }
 
-            // 6. Clean up any orphan companies that have no other registered users and no linked business documents
+            // 6. Automatically delete company and all associated records if no other users are mapped
             foreach (var compId in companyIdsToCheck)
             {
-                var hasOtherUsers = await db.UserCompanies.AnyAsync(uc => uc.CompanyId == compId);
-                var hasOrders = await db.Orders.AnyAsync(o => o.CompanyId == compId);
-                var hasInvoices = await db.Invoices.AnyAsync(i => i.CompanyId == compId);
-                var hasEnquiries = await db.Enquiries.AnyAsync(e => e.CompanyId == compId);
-
-                if (!hasOtherUsers && !hasOrders && !hasInvoices && !hasEnquiries)
+                var hasOtherUsers = await db.UserCompanies.AnyAsync(uc => uc.CompanyId == compId && uc.UserId != id);
+                if (!hasOtherUsers)
                 {
-                    var comp = await db.Companies.FindAsync(compId);
-                    if (comp != null)
-                    {
-                        var contacts = await db.ContactPersons.Where(cp => cp.CompanyId == compId).ToListAsync();
-                        if (contacts.Count > 0) db.ContactPersons.RemoveRange(contacts);
-
-                        var addrs = await db.CompanyAddresses.Where(ca => ca.CompanyId == compId).ToListAsync();
-                        if (addrs.Count > 0) db.CompanyAddresses.RemoveRange(addrs);
-
-                        var docs = await db.CompanyDocuments.Where(cd => cd.CompanyId == compId).ToListAsync();
-                        if (docs.Count > 0) db.CompanyDocuments.RemoveRange(docs);
-
-                        db.Companies.Remove(comp);
-                    }
+                    await DeleteCompanyAndRelatedDataAsync(db, compId);
                 }
             }
             await db.SaveChangesAsync();
 
-            return Ok(new { message = $"User {user.Email} has been permanently deleted." });
+            return Ok(new { message = $"User {user.Email} and associated company data have been permanently deleted." });
         }
         catch (Exception ex)
         {
@@ -331,33 +326,7 @@ public class AdminController(IAdminService adminService, IOrderAdminService orde
 
         try
         {
-            // Check for active orders/invoices/enquiries
-            var hasOrders = await db.Orders.AnyAsync(o => o.CompanyId == id);
-            var hasInvoices = await db.Invoices.AnyAsync(i => i.CompanyId == id);
-            var hasEnquiries = await db.Enquiries.AnyAsync(e => e.CompanyId == id);
-
-            if (hasOrders || hasInvoices || hasEnquiries)
-            {
-                company.IsActive = false;
-                company.VerificationStatus = "Inactive";
-                await db.SaveChangesAsync();
-                return Ok(new { message = $"Company {company.Name} has linked operational records and has been deactivated." });
-            }
-
-            // Remove associated links
-            var userComps = await db.UserCompanies.Where(uc => uc.CompanyId == id).ToListAsync();
-            if (userComps.Count > 0) db.UserCompanies.RemoveRange(userComps);
-
-            var contacts = await db.ContactPersons.Where(cp => cp.CompanyId == id).ToListAsync();
-            if (contacts.Count > 0) db.ContactPersons.RemoveRange(contacts);
-
-            var addrs = await db.CompanyAddresses.Where(ca => ca.CompanyId == id).ToListAsync();
-            if (addrs.Count > 0) db.CompanyAddresses.RemoveRange(addrs);
-
-            var docs = await db.CompanyDocuments.Where(cd => cd.CompanyId == id).ToListAsync();
-            if (docs.Count > 0) db.CompanyDocuments.RemoveRange(docs);
-
-            db.Companies.Remove(company);
+            await DeleteCompanyAndRelatedDataAsync(db, id);
             await db.SaveChangesAsync();
 
             return Ok(new { message = $"Company {company.Name} has been deleted successfully." });
@@ -366,6 +335,164 @@ public class AdminController(IAdminService adminService, IOrderAdminService orde
         {
             return StatusCode(StatusCodes.Status500InternalServerError, new { message = $"Failed to delete company: {ex.Message}" });
         }
+    }
+
+    private static async Task DeleteCompanyAndRelatedDataAsync(AppDbContext db, Guid compId)
+    {
+        var comp = await db.Companies.FindAsync(compId);
+        if (comp is null) return;
+
+        // 1. Payments
+        var payments = await db.Payments.Where(p => p.CompanyId == compId).ToListAsync();
+        if (payments.Count > 0) db.Payments.RemoveRange(payments);
+
+        // 2. Documents
+        var docs = await db.Documents.Where(d => d.CompanyId == compId).ToListAsync();
+        if (docs.Count > 0) db.Documents.RemoveRange(docs);
+
+        // 3. Support Requests
+        var supportRequests = await db.SupportRequests.Where(sr => sr.CompanyId == compId).ToListAsync();
+        if (supportRequests.Count > 0) db.SupportRequests.RemoveRange(supportRequests);
+
+        // 4. Invoices and child items
+        var invoices = await db.Invoices.Where(i => i.CompanyId == compId).ToListAsync();
+        var invoiceIds = invoices.Select(i => i.Id).ToList();
+        if (invoiceIds.Count > 0)
+        {
+            var invItems = await db.InvoiceItems.Where(ii => invoiceIds.Contains(ii.InvoiceId)).ToListAsync();
+            if (invItems.Count > 0) db.InvoiceItems.RemoveRange(invItems);
+
+            var invHistories = await db.InvoiceStatusHistories.Where(h => invoiceIds.Contains(h.InvoiceId)).ToListAsync();
+            if (invHistories.Count > 0) db.InvoiceStatusHistories.RemoveRange(invHistories);
+
+            var invAttach = await db.InvoiceAttachments.Where(a => invoiceIds.Contains(a.InvoiceId)).ToListAsync();
+            if (invAttach.Count > 0) db.InvoiceAttachments.RemoveRange(invAttach);
+
+            var creditNotes = await db.CreditNotes.Where(cn => invoiceIds.Contains(cn.InvoiceId)).ToListAsync();
+            if (creditNotes.Count > 0) db.CreditNotes.RemoveRange(creditNotes);
+
+            var debitNotes = await db.DebitNotes.Where(dn => invoiceIds.Contains(dn.InvoiceId)).ToListAsync();
+            if (debitNotes.Count > 0) db.DebitNotes.RemoveRange(debitNotes);
+
+            db.Invoices.RemoveRange(invoices);
+        }
+
+        // 5. Orders and child items
+        var orders = await db.Orders.Where(o => o.CompanyId == compId).ToListAsync();
+        var orderIds = orders.Select(o => o.Id).ToList();
+        if (orderIds.Count > 0)
+        {
+            var orderItems = await db.OrderItems.Where(oi => orderIds.Contains(oi.OrderId)).ToListAsync();
+            if (orderItems.Count > 0) db.OrderItems.RemoveRange(orderItems);
+
+            var milestones = await db.OrderMilestones.Where(m => orderIds.Contains(m.OrderId)).ToListAsync();
+            if (milestones.Count > 0) db.OrderMilestones.RemoveRange(milestones);
+
+            var orderComments = await db.OrderComments.Where(c => orderIds.Contains(c.OrderId)).ToListAsync();
+            if (orderComments.Count > 0) db.OrderComments.RemoveRange(orderComments);
+
+            var orderAssigns = await db.OrderAssignments.Where(a => orderIds.Contains(a.OrderId)).ToListAsync();
+            if (orderAssigns.Count > 0) db.OrderAssignments.RemoveRange(orderAssigns);
+
+            var orderHistories = await db.OrderStatusHistories.Where(h => orderIds.Contains(h.OrderId)).ToListAsync();
+            if (orderHistories.Count > 0) db.OrderStatusHistories.RemoveRange(orderHistories);
+
+            var shipments = await db.Shipments.Where(s => orderIds.Contains(s.OrderId)).ToListAsync();
+            var shipmentIds = shipments.Select(s => s.Id).ToList();
+            if (shipmentIds.Count > 0)
+            {
+                var trackingEvents = await db.ShipmentTrackingEvents.Where(te => shipmentIds.Contains(te.ShipmentId)).ToListAsync();
+                if (trackingEvents.Count > 0) db.ShipmentTrackingEvents.RemoveRange(trackingEvents);
+                db.Shipments.RemoveRange(shipments);
+            }
+
+            var prodJobs = await db.ProductionJobs
+                .Where(pj => pj.CompanyId == compId || (pj.OrderId != null && orderIds.Contains(pj.OrderId.Value)))
+                .ToListAsync();
+            var jobIds = prodJobs.Select(j => j.Id).ToList();
+            if (jobIds.Count > 0)
+            {
+                var jobQualities = await db.ProductionQualities.Where(pq => jobIds.Contains(pq.JobId)).ToListAsync();
+                if (jobQualities.Count > 0) db.ProductionQualities.RemoveRange(jobQualities);
+
+                var jobComments = await db.ProductionComments.Where(pc => jobIds.Contains(pc.JobId)).ToListAsync();
+                if (jobComments.Count > 0) db.ProductionComments.RemoveRange(jobComments);
+
+                var jobHistories = await db.ProductionStageHistories.Where(ph => jobIds.Contains(ph.JobId)).ToListAsync();
+                if (jobHistories.Count > 0) db.ProductionStageHistories.RemoveRange(jobHistories);
+
+                var jobTimelines = await db.ProductionTimelines.Where(pt => jobIds.Contains(pt.JobId)).ToListAsync();
+                if (jobTimelines.Count > 0) db.ProductionTimelines.RemoveRange(jobTimelines);
+
+                db.ProductionJobs.RemoveRange(prodJobs);
+            }
+
+            db.Orders.RemoveRange(orders);
+        }
+
+        // 6. Quotations and child items
+        var quotes = await db.Quotations.Where(q => q.CompanyId == compId).ToListAsync();
+        var quoteIds = quotes.Select(q => q.Id).ToList();
+        if (quoteIds.Count > 0)
+        {
+            var qApprovals = await db.QuotationApprovals.Where(qa => quoteIds.Contains(qa.QuotationId)).ToListAsync();
+            if (qApprovals.Count > 0) db.QuotationApprovals.RemoveRange(qApprovals);
+
+            var qAttach = await db.QuotationAttachments.Where(qa => quoteIds.Contains(qa.QuotationId)).ToListAsync();
+            if (qAttach.Count > 0) db.QuotationAttachments.RemoveRange(qAttach);
+
+            var qComments = await db.QuotationComments.Where(qc => quoteIds.Contains(qc.QuotationId)).ToListAsync();
+            if (qComments.Count > 0) db.QuotationComments.RemoveRange(qComments);
+
+            var qItems = await db.QuotationItems.Where(qi => quoteIds.Contains(qi.QuotationId)).ToListAsync();
+            if (qItems.Count > 0) db.QuotationItems.RemoveRange(qItems);
+
+            var qRevisions = await db.QuotationRevisions.Where(qr => quoteIds.Contains(qr.QuotationId)).ToListAsync();
+            if (qRevisions.Count > 0) db.QuotationRevisions.RemoveRange(qRevisions);
+
+            var qHistories = await db.QuotationStatusHistories.Where(qh => quoteIds.Contains(qh.QuotationId)).ToListAsync();
+            if (qHistories.Count > 0) db.QuotationStatusHistories.RemoveRange(qHistories);
+
+            db.Quotations.RemoveRange(quotes);
+        }
+
+        // 7. Enquiries and child items
+        var enquiries = await db.Enquiries.Where(e => e.CompanyId == compId).ToListAsync();
+        var enqIds = enquiries.Select(e => e.Id).ToList();
+        if (enqIds.Count > 0)
+        {
+            var enqAssigns = await db.EnquiryAssignments.Where(ea => enqIds.Contains(ea.EnquiryId)).ToListAsync();
+            if (enqAssigns.Count > 0) db.EnquiryAssignments.RemoveRange(enqAssigns);
+
+            var enqComments = await db.EnquiryComments.Where(ec => enqIds.Contains(ec.EnquiryId)).ToListAsync();
+            if (enqComments.Count > 0) db.EnquiryComments.RemoveRange(enqComments);
+
+            var enqFiles = await db.EnquiryFiles.Where(ef => enqIds.Contains(ef.EnquiryId)).ToListAsync();
+            if (enqFiles.Count > 0) db.EnquiryFiles.RemoveRange(enqFiles);
+
+            var enqItems = await db.EnquiryItems.Where(ei => enqIds.Contains(ei.EnquiryId)).ToListAsync();
+            if (enqItems.Count > 0) db.EnquiryItems.RemoveRange(enqItems);
+
+            var enqHistories = await db.EnquiryStatusHistories.Where(eh => enqIds.Contains(eh.EnquiryId)).ToListAsync();
+            if (enqHistories.Count > 0) db.EnquiryStatusHistories.RemoveRange(enqHistories);
+
+            db.Enquiries.RemoveRange(enquiries);
+        }
+
+        // 8. Company metadata (contacts, addresses, documents, user-companies)
+        var contacts = await db.ContactPersons.Where(cp => cp.CompanyId == compId).ToListAsync();
+        if (contacts.Count > 0) db.ContactPersons.RemoveRange(contacts);
+
+        var addrs = await db.CompanyAddresses.Where(ca => ca.CompanyId == compId).ToListAsync();
+        if (addrs.Count > 0) db.CompanyAddresses.RemoveRange(addrs);
+
+        var cDocs = await db.CompanyDocuments.Where(cd => cd.CompanyId == compId).ToListAsync();
+        if (cDocs.Count > 0) db.CompanyDocuments.RemoveRange(cDocs);
+
+        var ucs = await db.UserCompanies.Where(uc => uc.CompanyId == compId).ToListAsync();
+        if (ucs.Count > 0) db.UserCompanies.RemoveRange(ucs);
+
+        db.Companies.Remove(comp);
     }
 
     // ---- Pending Approvals (users needing company access) --------------------
@@ -644,32 +771,45 @@ public class AdminController(IAdminService adminService, IOrderAdminService orde
         var ordersByStatus = await db.Orders.GroupBy(o => o.Status).Select(g => new { name = g.Key, value = g.Count() }).ToListAsync();
         var invoicesByStatus = await db.Invoices.GroupBy(i => i.Status).Select(g => new { name = g.Key, value = g.Count() }).ToListAsync();
         
-        var start = new DateTimeOffset(new DateTime(now.Year, now.Month, 1), now.Offset);
+        var start = new DateTimeOffset(new DateTime(now.Year, now.Month, 1), TimeSpan.Zero);
+        var cutoff = start.AddMonths(-(monthSpan - 1));
         var months = Enumerable.Range(0, monthSpan).Select(i => start.AddMonths(i - (monthSpan - 1))).ToList();
 
-        var enquiriesByMonth = await db.Enquiries
-            .Where(r => r.CreatedAtUtc >= start.AddMonths(-(monthSpan - 1)))
-            .GroupBy(r => new { r.CreatedAtUtc.Year, r.CreatedAtUtc.Month })
-            .Select(g => new { g.Key.Year, g.Key.Month, count = g.Count() })
+        var enquiryDates = await db.Enquiries
+            .Where(r => r.CreatedAtUtc >= cutoff)
+            .Select(r => r.CreatedAtUtc)
             .ToListAsync();
-
-        var quotesByMonth = await db.Quotations
-            .Where(q => q.CreatedAtUtc >= start.AddMonths(-(monthSpan - 1)))
-            .GroupBy(q => new { q.CreatedAtUtc.Year, q.CreatedAtUtc.Month })
+        var enquiriesByMonth = enquiryDates
+            .GroupBy(d => new { d.Year, d.Month })
             .Select(g => new { g.Key.Year, g.Key.Month, count = g.Count() })
-            .ToListAsync();
+            .ToList();
 
-        var ordersByMonth = await db.Orders
-            .Where(o => o.PlacedAtUtc >= start.AddMonths(-(monthSpan - 1)))
-            .GroupBy(o => new { o.PlacedAtUtc.Year, o.PlacedAtUtc.Month })
+        var quoteDates = await db.Quotations
+            .Where(q => q.CreatedAtUtc >= cutoff)
+            .Select(q => q.CreatedAtUtc)
+            .ToListAsync();
+        var quotesByMonth = quoteDates
+            .GroupBy(d => new { d.Year, d.Month })
             .Select(g => new { g.Key.Year, g.Key.Month, count = g.Count() })
-            .ToListAsync();
+            .ToList();
 
-        var revenueByMonth = await db.Invoices
-            .Where(i => i.Status != InvoiceStatuses.Draft && i.IssueDateUtc >= start.AddMonths(-(monthSpan - 1)))
+        var orderDates = await db.Orders
+            .Where(o => o.PlacedAtUtc >= cutoff)
+            .Select(o => o.PlacedAtUtc)
+            .ToListAsync();
+        var ordersByMonth = orderDates
+            .GroupBy(d => new { d.Year, d.Month })
+            .Select(g => new { g.Key.Year, g.Key.Month, count = g.Count() })
+            .ToList();
+
+        var invoiceRows = await db.Invoices
+            .Where(i => i.Status != InvoiceStatuses.Draft && i.IssueDateUtc >= cutoff)
+            .Select(i => new { i.IssueDateUtc, i.Total, i.AmountPaid })
+            .ToListAsync();
+        var revenueByMonth = invoiceRows
             .GroupBy(i => new { i.IssueDateUtc.Year, i.IssueDateUtc.Month })
             .Select(g => new { g.Key.Year, g.Key.Month, revenue = g.Sum(x => x.Total), collected = g.Sum(x => x.AmountPaid) })
-            .ToListAsync();
+            .ToList();
 
         var monthlyEnquiries = months.Select(m => new
         {
@@ -732,7 +872,9 @@ public class AdminController(IAdminService adminService, IOrderAdminService orde
         }).ToList();
 
         // Metallurgy Breakdown
-        var products = await db.ProductMasters.ToListAsync();
+        var products = await db.ProductMasters
+            .Select(p => new { p.Material, p.MaterialGrade, p.CategoryId, p.Weight })
+            .ToListAsync();
         var greyCount = products.Count(p => p.Material == "Grey Iron" || (p.MaterialGrade != null && p.MaterialGrade.StartsWith("FG", StringComparison.OrdinalIgnoreCase)));
         var ductileCount = products.Count(p => p.Material == "Ductile Iron" || (p.MaterialGrade != null && p.MaterialGrade.StartsWith("SG", StringComparison.OrdinalIgnoreCase)));
         var totalMet = Math.Max(1, greyCount + ductileCount);
