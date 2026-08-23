@@ -139,9 +139,8 @@ function AdminProductCard({
     return () => { cancelled = true; if (blobUrl) URL.revokeObjectURL(blobUrl); };
   }, [product.id, product.firstAttachmentId, product.imageUrl, product.lightImageUrl]);
 
-  const rawImage = isLightMode
-    ? (product.lightImageUrl || (product.imageUrl ? getThemedImage(product.imageUrl, true) : null))
-    : (product.imageUrl || (product.lightImageUrl ? getThemedImage(product.lightImageUrl, false) : null));
+  const sourceImage = product.imageUrl || product.lightImageUrl;
+  const rawImage = sourceImage ? getThemedImage(sourceImage, isLightMode) : null;
 
   const displayImg = rawImage || blobUrl;
   const isMenuOpen = openMenuId === product.id;

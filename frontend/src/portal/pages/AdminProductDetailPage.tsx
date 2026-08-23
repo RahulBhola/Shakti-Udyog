@@ -191,8 +191,9 @@ export default function AdminProductDetailPage() {
   const p = product;
   const usage = p.usage;
 
-  const darkImage = p.imageUrl || (p.lightImageUrl ? getThemedImage(p.lightImageUrl, false) : "/images/Industrial Iron Casting.png");
-  const lightImage = p.lightImageUrl || (p.imageUrl ? getThemedImage(p.imageUrl, true) : "/images/Industrial Iron Casting light mode.png");
+  const sourceImg = p.imageUrl || p.lightImageUrl || "/images/products_transparent/Industrial Iron Casting.png";
+  const darkImage = getThemedImage(sourceImg, false);
+  const lightImage = getThemedImage(sourceImg, true);
 
   return (
     <div className="space-y-6">
