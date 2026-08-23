@@ -1,0 +1,142 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 780" width="100%" height="100%" style="background-color: #121316; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <filter id="card-shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+
+  <!-- Title -->
+  <text x="50" y="45" fill="#f3f4f6" font-size="20" font-weight="800">Shakti Udyog — 25-Stage Foundry MES Kanban Manufacturing Lifecycle</text>
+  <text x="50" y="70" fill="#9ca3af" font-size="13">End-to-End Traceability • Quality Checkpoints • SignalR Real-Time Progression</text>
+
+  <!-- Phase 1 -->
+  <rect x="50" y="95" width="265" height="640" rx="10" fill="#222429" stroke="#3b82f6" stroke-width="1.5"/>
+  <rect x="50" y="95" width="265" height="40" rx="10" fill="#1e293b"/>
+  <text x="70" y="120" fill="#60a5fa" font-size="12.5" font-weight="700">Phase 1: Pre-Production</text>
+
+  <g filter="url(#card-shadow)">
+    <rect x="65" y="150" width="235" height="95" rx="6" fill="#18191c" stroke="#4b5563" stroke-width="1.2"/>
+    <text x="75" y="172" fill="#f3f4f6" font-size="11.5" font-weight="700">1. PO &amp; Advance Confirmed</text>
+    <text x="75" y="192" fill="#9ca3af" font-size="10.5">30% Advance UTR Verified</text>
+    <text x="75" y="210" fill="#f3f4f6" font-size="11.5" font-weight="700">2. CAD &amp; Drawing Review</text>
+    <text x="75" y="230" fill="#9ca3af" font-size="10.5">3D Model &amp; Tolerances</text>
+  </g>
+
+  <g filter="url(#card-shadow)">
+    <rect x="65" y="260" width="235" height="95" rx="6" fill="#18191c" stroke="#4b5563" stroke-width="1.2"/>
+    <text x="75" y="282" fill="#f3f4f6" font-size="11.5" font-weight="700">3. Pattern / Tooling Dev</text>
+    <text x="75" y="302" fill="#9ca3af" font-size="10.5">Wooden / Metallic Die</text>
+    <text x="75" y="320" fill="#f3f4f6" font-size="11.5" font-weight="700">4. Methoding Simulation</text>
+    <text x="75" y="338" fill="#9ca3af" font-size="10.5">Gating, Riser &amp; Shrinkage</text>
+  </g>
+
+  <g filter="url(#card-shadow)">
+    <rect x="65" y="370" width="235" height="60" rx="6" fill="#18191c" stroke="#4b5563" stroke-width="1.2"/>
+    <text x="75" y="392" fill="#f3f4f6" font-size="11.5" font-weight="700">5. Raw Material Testing</text>
+    <text x="75" y="412" fill="#9ca3af" font-size="10.5">Sand &amp; Scrap Pig Iron QC</text>
+  </g>
+
+  <!-- Phase 2 -->
+  <rect x="340" y="95" width="265" height="640" rx="10" fill="#222429" stroke="#8b5cf6" stroke-width="1.5"/>
+  <rect x="340" y="95" width="265" height="40" rx="10" fill="#4c1d95"/>
+  <text x="360" y="120" fill="#c084fc" font-size="12.5" font-weight="700">Phase 2: Moulding &amp; Pouring</text>
+
+  <g filter="url(#card-shadow)">
+    <rect x="355" y="150" width="235" height="95" rx="6" fill="#18191c" stroke="#4b5563" stroke-width="1.2"/>
+    <text x="365" y="172" fill="#f3f4f6" font-size="11.5" font-weight="700">6. Mould &amp; Core Making</text>
+    <text x="365" y="192" fill="#9ca3af" font-size="10.5">Green Sand / No-Bake Resin</text>
+    <text x="365" y="210" fill="#f3f4f6" font-size="11.5" font-weight="700">7. Mould Assembly</text>
+    <text x="365" y="230" fill="#9ca3af" font-size="10.5">Cope &amp; Drag Box Clamping</text>
+  </g>
+
+  <g filter="url(#card-shadow)">
+    <rect x="355" y="260" width="235" height="95" rx="6" fill="#18191c" stroke="#4b5563" stroke-width="1.2"/>
+    <text x="365" y="282" fill="#f3f4f6" font-size="11.5" font-weight="700">8. Furnace Charge &amp; Melt</text>
+    <text x="365" y="302" fill="#9ca3af" font-size="10.5">Medium Frequency Induction</text>
+    <text x="365" y="320" fill="#f3f4f6" font-size="11.5" font-weight="700">9. Spectro Chemical Test</text>
+    <text x="365" y="338" fill="#9ca3af" font-size="10.5">C, Si, Mn, Mg Inoculation</text>
+  </g>
+
+  <g filter="url(#card-shadow)">
+    <rect x="355" y="370" width="235" height="95" rx="6" fill="#18191c" stroke="#4b5563" stroke-width="1.2"/>
+    <text x="365" y="392" fill="#f3f4f6" font-size="11.5" font-weight="700">10. Molten Pouring</text>
+    <text x="365" y="412" fill="#9ca3af" font-size="10.5">Pyrometer Temp Controlled</text>
+    <text x="365" y="430" fill="#f3f4f6" font-size="11.5" font-weight="700">11. Solidification Cooling</text>
+    <text x="365" y="448" fill="#9ca3af" font-size="10.5">Controlled In-Mould Cooling</text>
+  </g>
+
+  <!-- Phase 3 -->
+  <rect x="630" y="95" width="265" height="640" rx="10" fill="#222429" stroke="#f97316" stroke-width="1.5"/>
+  <rect x="630" y="95" width="265" height="40" rx="10" fill="#7c2d12"/>
+  <text x="650" y="120" fill="#fb923c" font-size="12.5" font-weight="700">Phase 3: Fettling &amp; Heat Treat</text>
+
+  <g filter="url(#card-shadow)">
+    <rect x="645" y="150" width="235" height="95" rx="6" fill="#18191c" stroke="#4b5563" stroke-width="1.2"/>
+    <text x="655" y="172" fill="#f3f4f6" font-size="11.5" font-weight="700">12. Knockout / Shakeout</text>
+    <text x="655" y="192" fill="#9ca3af" font-size="10.5">Sand Demoulding Separation</text>
+    <text x="655" y="210" fill="#f3f4f6" font-size="11.5" font-weight="700">13. Riser / Runner Cutting</text>
+    <text x="655" y="230" fill="#9ca3af" font-size="10.5">Abrasive Ingate Removal</text>
+  </g>
+
+  <g filter="url(#card-shadow)">
+    <rect x="645" y="260" width="235" height="95" rx="6" fill="#18191c" stroke="#4b5563" stroke-width="1.2"/>
+    <text x="655" y="282" fill="#f3f4f6" font-size="11.5" font-weight="700">14. Shot Blasting</text>
+    <text x="655" y="302" fill="#9ca3af" font-size="10.5">Steel Grit Surface Descaling</text>
+    <text x="655" y="320" fill="#f3f4f6" font-size="11.5" font-weight="700">15. Grinding &amp; Fettling</text>
+    <text x="655" y="338" fill="#9ca3af" font-size="10.5">Parting Line Finishing</text>
+  </g>
+
+  <g filter="url(#card-shadow)">
+    <rect x="645" y="370" width="235" height="60" rx="6" fill="#18191c" stroke="#4b5563" stroke-width="1.2"/>
+    <text x="655" y="392" fill="#f3f4f6" font-size="11.5" font-weight="700">16. Heat Treatment</text>
+    <text x="655" y="412" fill="#9ca3af" font-size="10.5">Normalizing &amp; Stress Relief</text>
+  </g>
+
+  <!-- Phase 4 -->
+  <rect x="920" y="95" width="265" height="640" rx="10" fill="#222429" stroke="#10b981" stroke-width="1.5"/>
+  <rect x="920" y="95" width="265" height="40" rx="10" fill="#064e3b"/>
+  <text x="940" y="120" fill="#34d399" font-size="12.5" font-weight="700">Phase 4: CNC Machining</text>
+
+  <g filter="url(#card-shadow)">
+    <rect x="935" y="150" width="235" height="95" rx="6" fill="#18191c" stroke="#4b5563" stroke-width="1.2"/>
+    <text x="945" y="172" fill="#f3f4f6" font-size="11.5" font-weight="700">17. Rough CNC Turning</text>
+    <text x="945" y="192" fill="#9ca3af" font-size="10.5">Facing, Turning &amp; Boring</text>
+    <text x="945" y="210" fill="#f3f4f6" font-size="11.5" font-weight="700">18. Intermediate QC</text>
+    <text x="945" y="230" fill="#9ca3af" font-size="10.5">Machining Allowance Check</text>
+  </g>
+
+  <g filter="url(#card-shadow)">
+    <rect x="935" y="260" width="235" height="95" rx="6" fill="#18191c" stroke="#4b5563" stroke-width="1.2"/>
+    <text x="945" y="282" fill="#f3f4f6" font-size="11.5" font-weight="700">19. Finish CNC Machining</text>
+    <text x="945" y="302" fill="#9ca3af" font-size="10.5">VMC Milling &amp; PCD Drilling</text>
+    <text x="945" y="320" fill="#f3f4f6" font-size="11.5" font-weight="700">20. Surface Coating</text>
+    <text x="945" y="338" fill="#9ca3af" font-size="10.5">Phosphating &amp; Anti-Rust Primer</text>
+  </g>
+
+  <!-- Phase 5 -->
+  <rect x="1210" y="95" width="265" height="640" rx="10" fill="#222429" stroke="#06b6d4" stroke-width="1.5"/>
+  <rect x="1210" y="95" width="265" height="40" rx="10" fill="#164e63"/>
+  <text x="1230" y="120" fill="#67e8f9" font-size="12.5" font-weight="700">Phase 5: QA &amp; Fulfillment</text>
+
+  <g filter="url(#card-shadow)">
+    <rect x="1225" y="150" width="235" height="95" rx="6" fill="#18191c" stroke="#4b5563" stroke-width="1.2"/>
+    <text x="1235" y="172" fill="#f3f4f6" font-size="11.5" font-weight="700">21. NDT Inspection</text>
+    <text x="1235" y="192" fill="#9ca3af" font-size="10.5">Ultrasonic / Magnetic Particle</text>
+    <text x="1235" y="210" fill="#f3f4f6" font-size="11.5" font-weight="700">22. CMM Inspection</text>
+    <text x="1235" y="230" fill="#9ca3af" font-size="10.5">Coordinate Measuring Machine</text>
+  </g>
+
+  <g filter="url(#card-shadow)">
+    <rect x="1225" y="260" width="235" height="95" rx="6" fill="#18191c" stroke="#4b5563" stroke-width="1.2"/>
+    <text x="1235" y="282" fill="#f3f4f6" font-size="11.5" font-weight="700">23. Test Certificate (TC)</text>
+    <text x="1235" y="302" fill="#9ca3af" font-size="10.5">Quality Dossier Release</text>
+    <text x="1235" y="320" fill="#f3f4f6" font-size="11.5" font-weight="700">24. Export Crating</text>
+    <text x="1235" y="338" fill="#9ca3af" font-size="10.5">VCI Bags &amp; Wooden Pallets</text>
+  </g>
+
+  <g filter="url(#card-shadow)">
+    <rect x="1225" y="370" width="235" height="60" rx="6" fill="#18191c" stroke="#4b5563" stroke-width="1.2"/>
+    <text x="1235" y="392" fill="#f3f4f6" font-size="11.5" font-weight="700">25. Dispatch &amp; Delivery</text>
+    <text x="1235" y="412" fill="#9ca3af" font-size="10.5">Transporter LR &amp; POD Tracking</text>
+  </g>
+</svg>

@@ -1,0 +1,188 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 950" width="100%" height="100%" style="background-color: #121316; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <filter id="card-shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+
+  <!-- Title -->
+  <text x="50" y="45" fill="#f3f4f6" font-size="20" font-weight="800">Shakti Udyog — Relational Database Schema &amp; Table Structures (AppDbContext)</text>
+  <text x="50" y="70" fill="#9ca3af" font-size="13">24 Domain Tables • Foreign Key Integrity • Strongly-Typed EF Core 9 Code-First Mapping</text>
+
+  <!-- Column 1: Identity, Auth & Sessions -->
+  <g filter="url(#card-shadow)">
+    <!-- ApplicationUsers -->
+    <rect x="50" y="95" width="310" height="210" rx="8" fill="#18191c" stroke="#3b82f6" stroke-width="1.5"/>
+    <rect x="50" y="95" width="310" height="35" rx="8" fill="#1e293b"/>
+    <text x="70" y="118" fill="#60a5fa" font-size="13" font-weight="700">ApplicationUsers</text>
+    <text x="70" y="148" fill="#e2e8f0" font-size="11.5"><tspan fill="#f59e0b">PK</tspan> Id : Guid</text>
+    <text x="70" y="168" fill="#9ca3af" font-size="11.5">Email / UserName : string</text>
+    <text x="70" y="188" fill="#9ca3af" font-size="11.5">FullName / PhoneNumber : string</text>
+    <text x="70" y="208" fill="#9ca3af" font-size="11.5"><tspan fill="#06b6d4">FK</tspan> CompanyId : Guid?</text>
+    <text x="70" y="228" fill="#9ca3af" font-size="11.5">IsActive : bool (true)</text>
+    <text x="70" y="248" fill="#9ca3af" font-size="11.5">LastLoginAtUtc / LastLoginIp : datetime</text>
+    <text x="70" y="268" fill="#9ca3af" font-size="11.5">SecurityStamp / ConcurrencyStamp</text>
+  </g>
+
+  <g filter="url(#card-shadow)">
+    <!-- UserSessions -->
+    <rect x="50" y="325" width="310" height="190" rx="8" fill="#18191c" stroke="#4b5563" stroke-width="1.2"/>
+    <rect x="50" y="325" width="310" height="35" rx="8" fill="#222429"/>
+    <text x="70" y="348" fill="#f3f4f6" font-size="13" font-weight="700">UserSessions (Physical Devices)</text>
+    <text x="70" y="378" fill="#e2e8f0" font-size="11.5"><tspan fill="#f59e0b">PK</tspan> Id : Guid</text>
+    <text x="70" y="398" fill="#9ca3af" font-size="11.5"><tspan fill="#06b6d4">FK</tspan> UserId : Guid -&gt; ApplicationUsers</text>
+    <text x="70" y="418" fill="#9ca3af" font-size="11.5">DeviceName / DeviceType / OS : string</text>
+    <text x="70" y="438" fill="#9ca3af" font-size="11.5">Browser / IpAddress / Location : string</text>
+    <text x="70" y="458" fill="#9ca3af" font-size="11.5">CreatedAtUtc / LastActiveAtUtc : datetime</text>
+    <text x="70" y="478" fill="#9ca3af" font-size="11.5">ExpiresAtUtc (90 Days) : datetime</text>
+    <text x="70" y="498" fill="#9ca3af" font-size="11.5">RevokedAtUtc / RevocationReason</text>
+  </g>
+
+  <g filter="url(#card-shadow)">
+    <!-- RefreshTokens -->
+    <rect x="50" y="535" width="310" height="175" rx="8" fill="#18191c" stroke="#4b5563" stroke-width="1.2"/>
+    <rect x="50" y="535" width="310" height="35" rx="8" fill="#222429"/>
+    <text x="70" y="558" fill="#f3f4f6" font-size="13" font-weight="700">RefreshTokens (Single-Use)</text>
+    <text x="70" y="588" fill="#e2e8f0" font-size="11.5"><tspan fill="#f59e0b">PK</tspan> Id : Guid</text>
+    <text x="70" y="608" fill="#9ca3af" font-size="11.5"><tspan fill="#06b6d4">FK</tspan> SessionId : Guid -&gt; UserSessions</text>
+    <text x="70" y="628" fill="#9ca3af" font-size="11.5"><tspan fill="#06b6d4">FK</tspan> UserId : Guid -&gt; ApplicationUsers</text>
+    <text x="70" y="648" fill="#9ca3af" font-size="11.5">TokenHash : string (SHA-256)</text>
+    <text x="70" y="668" fill="#9ca3af" font-size="11.5">ExpiresAtUtc (7 Days) / RevokedAtUtc</text>
+    <text x="70" y="688" fill="#9ca3af" font-size="11.5">ReplacedByTokenHash (Theft Lineage)</text>
+  </g>
+
+  <g filter="url(#card-shadow)">
+    <!-- AuditLogEntries -->
+    <rect x="50" y="730" width="310" height="160" rx="8" fill="#18191c" stroke="#4b5563" stroke-width="1.2"/>
+    <rect x="50" y="730" width="310" height="35" rx="8" fill="#222429"/>
+    <text x="70" y="753" fill="#f3f4f6" font-size="13" font-weight="700">AuditLogEntries (Immutable)</text>
+    <text x="70" y="783" fill="#e2e8f0" font-size="11.5"><tspan fill="#f59e0b">PK</tspan> Id : Guid</text>
+    <text x="70" y="803" fill="#9ca3af" font-size="11.5">EventType : string (auth, order, etc.)</text>
+    <text x="70" y="823" fill="#9ca3af" font-size="11.5">UserId / TargetEntity / TargetId</text>
+    <text x="70" y="843" fill="#9ca3af" font-size="11.5">IpAddress / UserAgent : string</text>
+    <text x="70" y="863" fill="#9ca3af" font-size="11.5">DetailsJson : nvarchar(max)</text>
+  </g>
+
+  <!-- Column 2: Corporate Accounts & Master Catalog -->
+  <g filter="url(#card-shadow)">
+    <!-- Companies -->
+    <rect x="400" y="95" width="330" height="230" rx="8" fill="#18191c" stroke="#10b981" stroke-width="1.5"/>
+    <rect x="400" y="95" width="330" height="35" rx="8" fill="#064e3b"/>
+    <text x="420" y="118" fill="#34d399" font-size="13" font-weight="700">Companies (Corporate Accounts)</text>
+    <text x="420" y="148" fill="#e2e8f0" font-size="11.5"><tspan fill="#f59e0b">PK</tspan> Id : Guid</text>
+    <text x="420" y="168" fill="#9ca3af" font-size="11.5">Name / LegalBusinessName : string</text>
+    <text x="420" y="188" fill="#9ca3af" font-size="11.5">GstNumber / PanNumber / CinNumber</text>
+    <text x="420" y="208" fill="#9ca3af" font-size="11.5">Industry / BusinessType : string</text>
+    <text x="420" y="228" fill="#9ca3af" font-size="11.5">RegisteredAddress / FactoryAddress</text>
+    <text x="420" y="248" fill="#9ca3af" font-size="11.5">IsApproved : bool | CreditLimit : decimal?</text>
+    <text x="420" y="268" fill="#9ca3af" font-size="11.5">PaymentTermsDays : int? (30/45/60)</text>
+    <text x="420" y="288" fill="#9ca3af" font-size="11.5">BankName / AccountNumber / IFSC</text>
+  </g>
+
+  <g filter="url(#card-shadow)">
+    <!-- ProductMasters -->
+    <rect x="400" y="345" width="330" height="230" rx="8" fill="#18191c" stroke="#f97316" stroke-width="1.5"/>
+    <rect x="400" y="345" width="330" height="35" rx="8" fill="#7c2d12"/>
+    <text x="420" y="368" fill="#fb923c" font-size="13" font-weight="700">ProductMasters (Master Catalog)</text>
+    <text x="420" y="398" fill="#e2e8f0" font-size="11.5"><tspan fill="#f59e0b">PK</tspan> Id : Guid</text>
+    <text x="420" y="418" fill="#9ca3af" font-size="11.5">ProductCode / ProductName : string</text>
+    <text x="420" y="438" fill="#9ca3af" font-size="11.5"><tspan fill="#06b6d4">FK</tspan> CategoryId : Guid -&gt; Categories</text>
+    <text x="420" y="458" fill="#9ca3af" font-size="11.5">MaterialGrade : string (SG 500/7, FG 200)</text>
+    <text x="420" y="478" fill="#9ca3af" font-size="11.5">CastingProcess : string (Sand, Centrifugal)</text>
+    <text x="420" y="498" fill="#9ca3af" font-size="11.5">WeightKg / StandardCost / LeadTimeDays</text>
+    <text x="420" y="518" fill="#9ca3af" font-size="11.5">ImageUrl : string (Real 3D studio image)</text>
+    <text x="420" y="538" fill="#9ca3af" font-size="11.5">IsActive : bool (Public Catalog Sync)</text>
+  </g>
+
+  <g filter="url(#card-shadow)">
+    <!-- Categories & Attachments -->
+    <rect x="400" y="595" width="330" height="145" rx="8" fill="#18191c" stroke="#4b5563" stroke-width="1.2"/>
+    <rect x="400" y="595" width="330" height="35" rx="8" fill="#222429"/>
+    <text x="420" y="618" fill="#f3f4f6" font-size="13" font-weight="700">Categories &amp; Attachments</text>
+    <text x="420" y="648" fill="#e2e8f0" font-size="11.5"><tspan fill="#f59e0b">PK</tspan> Id : Guid | Name / Slug / Icon : string</text>
+    <text x="420" y="668" fill="#9ca3af" font-size="11.5">ProductMasterAttachments (Drawings, CAD)</text>
+    <text x="420" y="688" fill="#9ca3af" font-size="11.5">CompanyAddresses &amp; ContactPersons</text>
+  </g>
+
+  <!-- Column 3: Commercial Enquiries & Quotations -->
+  <g filter="url(#card-shadow)">
+    <!-- Enquiries -->
+    <rect x="770" y="95" width="330" height="230" rx="8" fill="#18191c" stroke="#8b5cf6" stroke-width="1.5"/>
+    <rect x="770" y="95" width="330" height="35" rx="8" fill="#4c1d95"/>
+    <text x="790" y="118" fill="#c084fc" font-size="13" font-weight="700">Enquiries (Customer RFQs)</text>
+    <text x="790" y="148" fill="#e2e8f0" font-size="11.5"><tspan fill="#f59e0b">PK</tspan> Id : Guid</text>
+    <text x="790" y="168" fill="#9ca3af" font-size="11.5"><tspan fill="#06b6d4">FK</tspan> CompanyId : Guid -&gt; Companies</text>
+    <text x="790" y="188" fill="#9ca3af" font-size="11.5"><tspan fill="#06b6d4">FK</tspan> UserId : Guid -&gt; ApplicationUsers</text>
+    <text x="790" y="208" fill="#9ca3af" font-size="11.5">ProductType / MaterialGrade / Quantity</text>
+    <text x="790" y="228" fill="#9ca3af" font-size="11.5">Status (Draft, Submitted, Under Review)</text>
+    <text x="790" y="248" fill="#9ca3af" font-size="11.5">MachiningRequired / PatternAvailability</text>
+    <text x="790" y="268" fill="#9ca3af" font-size="11.5">ApproxWeight / ExpectedDeliveryDate</text>
+    <text x="790" y="288" fill="#9ca3af" font-size="11.5"><tspan fill="#06b6d4">FK</tspan> AssignedToUserId : Operations Engineer</text>
+  </g>
+
+  <g filter="url(#card-shadow)">
+    <!-- Quotations -->
+    <rect x="770" y="345" width="330" height="230" rx="8" fill="#18191c" stroke="#8b5cf6" stroke-width="1.5"/>
+    <rect x="770" y="345" width="330" height="35" rx="8" fill="#4c1d95"/>
+    <text x="790" y="368" fill="#c084fc" font-size="13" font-weight="700">Quotations (Formal Proposals)</text>
+    <text x="790" y="398" fill="#e2e8f0" font-size="11.5"><tspan fill="#f59e0b">PK</tspan> Id : Guid | QuotationNumber : string</text>
+    <text x="790" y="418" fill="#9ca3af" font-size="11.5"><tspan fill="#06b6d4">FK</tspan> EnquiryId : Guid -&gt; Enquiries</text>
+    <text x="790" y="438" fill="#9ca3af" font-size="11.5"><tspan fill="#06b6d4">FK</tspan> CompanyId : Guid -&gt; Companies</text>
+    <text x="790" y="458" fill="#9ca3af" font-size="11.5">Status (Draft, Issued, Accepted, Expired)</text>
+    <text x="790" y="478" fill="#9ca3af" font-size="11.5">Subtotal / Tax / Discount / Total : decimal</text>
+    <text x="790" y="498" fill="#9ca3af" font-size="11.5">PaymentTerms / DeliveryTerms / LeadTime</text>
+    <text x="790" y="518" fill="#9ca3af" font-size="11.5">RevisionNumber : int (Lineage tracking)</text>
+    <text x="790" y="538" fill="#9ca3af" font-size="11.5">CustomerResponseComment / RespondedAt</text>
+  </g>
+
+  <g filter="url(#card-shadow)">
+    <!-- QuotationItems & EnquiryFiles -->
+    <rect x="770" y="595" width="330" height="145" rx="8" fill="#18191c" stroke="#4b5563" stroke-width="1.2"/>
+    <rect x="770" y="595" width="330" height="35" rx="8" fill="#222429"/>
+    <text x="790" y="618" fill="#f3f4f6" font-size="13" font-weight="700">QuotationItems &amp; EnquiryFiles</text>
+    <text x="790" y="648" fill="#e2e8f0" font-size="11.5">QuotationItems (Part, Rate, Tax, Total)</text>
+    <text x="790" y="668" fill="#9ca3af" font-size="11.5">EnquiryFiles (2D/3D Drawings, Specs)</text>
+    <text x="790" y="688" fill="#9ca3af" font-size="11.5">QuotationAttachments (Signed PDFs)</text>
+  </g>
+
+  <!-- Column 4: Manufacturing Orders, MES & Invoicing -->
+  <g filter="url(#card-shadow)">
+    <!-- Orders -->
+    <rect x="1140" y="95" width="320" height="230" rx="8" fill="#18191c" stroke="#06b6d4" stroke-width="1.5"/>
+    <rect x="1140" y="95" width="320" height="35" rx="8" fill="#164e63"/>
+    <text x="1160" y="118" fill="#67e8f9" font-size="13" font-weight="700">Orders (Purchase Work Orders)</text>
+    <text x="1160" y="148" fill="#e2e8f0" font-size="11.5"><tspan fill="#f59e0b">PK</tspan> Id : Guid | OrderNumber : string</text>
+    <text x="1160" y="168" fill="#9ca3af" font-size="11.5"><tspan fill="#06b6d4">FK</tspan> CompanyId : Guid -&gt; Companies</text>
+    <text x="1160" y="188" fill="#9ca3af" font-size="11.5"><tspan fill="#06b6d4">FK</tspan> QuotationId : Guid? -&gt; Quotations</text>
+    <text x="1160" y="208" fill="#9ca3af" font-size="11.5">PurchaseOrderReference : string</text>
+    <text x="1160" y="228" fill="#9ca3af" font-size="11.5">Status (Confirmed, Production, Delivered)</text>
+    <text x="1160" y="248" fill="#9ca3af" font-size="11.5">ManufacturingStage (25 Kanban Stages)</text>
+    <text x="1160" y="268" fill="#9ca3af" font-size="11.5">AdvancePercent / AdvanceAmount / AdvancePaid</text>
+    <text x="1160" y="288" fill="#9ca3af" font-size="11.5">PromisedDispatchDateUtc / PlacedAtUtc</text>
+  </g>
+
+  <g filter="url(#card-shadow)">
+    <!-- Invoices & Payments -->
+    <rect x="1140" y="345" width="320" height="230" rx="8" fill="#18191c" stroke="#f59e0b" stroke-width="1.5"/>
+    <rect x="1140" y="345" width="320" height="35" rx="8" fill="#78350f"/>
+    <text x="1160" y="368" fill="#fcd34d" font-size="13" font-weight="700">Invoices &amp; Payments</text>
+    <text x="1160" y="398" fill="#e2e8f0" font-size="11.5"><tspan fill="#f59e0b">PK</tspan> Id : Guid | InvoiceNumber : string</text>
+    <text x="1160" y="418" fill="#9ca3af" font-size="11.5"><tspan fill="#06b6d4">FK</tspan> OrderId : Guid -&gt; Orders</text>
+    <text x="1160" y="438" fill="#9ca3af" font-size="11.5"><tspan fill="#06b6d4">FK</tspan> CompanyId : Guid -&gt; Companies</text>
+    <text x="1160" y="458" fill="#9ca3af" font-size="11.5">Status (Draft, Issued, Paid, PartiallyPaid)</text>
+    <text x="1160" y="478" fill="#9ca3af" font-size="11.5">Subtotal / Tax / Total / AmountPaid : decimal</text>
+    <text x="1160" y="498" fill="#9ca3af" font-size="11.5">IssueDateUtc / DueDateUtc : datetime</text>
+    <text x="1160" y="518" fill="#9ca3af" font-size="11.5">Payments (UTR, Bank Slip, Method, Status)</text>
+    <text x="1160" y="538" fill="#9ca3af" font-size="11.5">Shipments (Transporter, LR No, Vehicle)</text>
+  </g>
+
+  <g filter="url(#card-shadow)">
+    <!-- OrderItems & Milestones -->
+    <rect x="1140" y="595" width="320" height="145" rx="8" fill="#18191c" stroke="#4b5563" stroke-width="1.2"/>
+    <rect x="1140" y="595" width="320" height="35" rx="8" fill="#222429"/>
+    <text x="1160" y="618" fill="#f3f4f6" font-size="13" font-weight="700">OrderItems &amp; Milestones</text>
+    <text x="1160" y="648" fill="#e2e8f0" font-size="11.5">OrderItems (PartNo, QtyOrdered, Produced)</text>
+    <text x="1160" y="668" fill="#9ca3af" font-size="11.5">OrderMilestones (Customer vs Internal Notes)</text>
+    <text x="1160" y="688" fill="#9ca3af" font-size="11.5">OrderAssignments (Plant Technicians)</text>
+  </g>
+</svg>
