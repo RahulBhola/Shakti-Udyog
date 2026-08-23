@@ -36,7 +36,6 @@ const adminSections: NavSection[] = [
       { label: "Engineers", href: "/admin/engineers" },
       { label: "Companies", href: "/admin/companies" },
       { label: "Products", href: "/admin/products" },
-      { label: "Categories", href: "/admin/categories" },
       { label: "Settings", href: "/admin/settings" },
       { label: "Activity Log", href: "/admin/audit-logs" },
     ],

@@ -6,12 +6,13 @@ import { Loading } from "../../components/ui";
 import { tokenStorage } from "../../auth/tokenStorage";
 import { config } from "../../config";
 import ProductDrawer from "./products/ProductDrawer";
+import { CategoryManagerModal } from "./products/CategoryManagerModal";
 import { ConfirmDialog } from "./ConfirmDialog";
 import {
   Package, Plus, Download, Search, RefreshCw, Eye, MoreVertical,
   ChevronLeft, ChevronRight, X, Copy, Archive, Trash2, FileEdit,
   Boxes, CheckCircle2, Clock, Tag, TrendingDown, LayoutGrid, Table as TableIcon,
-  Scale,
+  Scale, FolderTree,
 } from "lucide-react";
 import "./erpListView.css";
 
@@ -312,6 +313,7 @@ export default function AdminProductPage() {
   const [categoryFilter, setCategoryFilter] = useState("");
   const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [categoriesModalOpen, setCategoriesModalOpen] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<ProductMasterListItem | null>(null);
 
@@ -464,6 +466,9 @@ export default function AdminProductPage() {
             </button>
           </div>
 
+          <button className="inv-btn" onClick={() => setCategoriesModalOpen(true)} title="Manage product categories">
+            <FolderTree size={16} /> Categories
+          </button>
           <button className="inv-btn" onClick={handleExport} title="Export visible products to Excel/CSV">
             <Download size={16} /> Export Excel
           </button>
@@ -476,8 +481,13 @@ export default function AdminProductPage() {
       {/* KPI cards */}
       <div className="inv-kpi-grid">
         {kpis.map((k) => (
-          <div key={k.label} className="inv-kpi"
-            style={{ "--inv-kpi-color": k.color, "--inv-kpi-bg": k.bg, "--inv-kpi-glow": k.glow } as CSSProperties}>
+          <div
+            key={k.label}
+            className={`inv-kpi ${k.label === "Categories" ? "cursor-pointer hover:scale-[1.02] transition-transform" : ""}`}
+            onClick={k.label === "Categories" ? () => setCategoriesModalOpen(true) : undefined}
+            title={k.label === "Categories" ? "Click to manage categories" : undefined}
+            style={{ "--inv-kpi-color": k.color, "--inv-kpi-bg": k.bg, "--inv-kpi-glow": k.glow } as CSSProperties}
+          >
             <span className="inv-kpi__icon"><k.icon size={20} /></span>
             <span className="inv-kpi__value">{k.value.toLocaleString()}</span>
             <span className="inv-kpi__label">{k.label}</span>
@@ -627,6 +637,17 @@ export default function AdminProductPage() {
 
       {/* Add product drawer */}
       <ProductDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} onSave={handleCreateProduct} categories={categories} />
+
+      {/* Category Manager Modal */}
+      <CategoryManagerModal
+        open={categoriesModalOpen}
+        onClose={() => setCategoriesModalOpen(false)}
+        onCategoriesChanged={() => {
+          loadCategories();
+          load();
+          loadStats();
+        }}
+      />
 
       {/* Delete confirmation */}
       <ConfirmDialog
