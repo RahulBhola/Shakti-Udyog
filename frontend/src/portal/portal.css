@@ -323,6 +323,43 @@
 .list-row__title { font-weight: 700; color: var(--text-primary); }
 .list-row__meta { font-size: 12px; color: var(--text-secondary); }
 
-.notification--unread { border-left: 3px solid var(--color-primary); }
-
 .quick-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+
+/* ── Sleek Portal Sidebar Scrollbar ── */
+.sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+}
+.sidebar-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sidebar-scroll::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 9999px;
+  border: none;
+}
+.sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.32);
+}
+
+/* Light Theme */
+[data-theme="light"] .sidebar-scroll,
+.light .sidebar-scroll {
+  scrollbar-color: rgba(0, 0, 0, 0.12) transparent;
+}
+[data-theme="light"] .sidebar-scroll::-webkit-scrollbar-thumb,
+.light .sidebar-scroll::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.12);
+}
+[data-theme="light"] .sidebar-scroll::-webkit-scrollbar-thumb:hover,
+.light .sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.28);
+}

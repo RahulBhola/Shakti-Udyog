@@ -146,18 +146,11 @@ export function Sidebar({ sections, onLogout }: SidebarProps) {
       {/* Scrollable nav area */}
       <nav
         className={cn(
-          "flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin",
+          "flex-1 overflow-y-auto overflow-x-hidden sidebar-scroll",
           collapsed ? "px-3 py-4" : "px-4 pb-4",
         )}
         aria-label="Primary navigation"
       >
-        <style>{`
-          .scrollbar-thin::-webkit-scrollbar { width: 4px; }
-          .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
-          .scrollbar-thin::-webkit-scrollbar-thumb { background: #334155; border-radius: 999px; }
-          .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: #475569; }
-          .scrollbar-thin { scrollbar-width: thin; scrollbar-color: #334155 transparent; }
-        `}</style>
 
         {sections.map((section) => (
           <div key={section.label ?? "__root__"} className="flex flex-col gap-1">
