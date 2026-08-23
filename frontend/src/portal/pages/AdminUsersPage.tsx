@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode, type CSSProperties } from "react";
-import { Link } from "react-router-dom";
 import { apiGet, apiPatch, apiDelete } from "../../api/client";
 import { EmptyState, Loading } from "../../components/ui";
 import { useAuth } from "../../auth/AuthContext";
@@ -7,7 +6,7 @@ import { formatDate } from "../shared";
 import {
   RefreshCw, ChevronLeft, ChevronRight, X, Eye, MoreVertical,
   Mail, Phone, Copy, Ban, CheckCircle2, Filter, X as CloseIcon,
-  User as UserIcon, Users, UserCheck, UserX, Crown, TrendingUp, UserPlus,
+  User as UserIcon, Users, UserCheck, UserX, Crown, TrendingUp,
   Trash2, AlertTriangle,
 } from "lucide-react";
 import "./erpListView.css";
@@ -604,15 +603,6 @@ export default function AdminUsersPage() {
           <h1 className="inv-header__title">Users</h1>
           <p className="inv-header__subtitle">Manage all registered users and monitor their platform access.</p>
         </div>
-        {currentUser?.roles.includes("Admin") && (
-          <Link
-            to="/admin/engineers"
-            className="inv-btn inv-btn--primary"
-            style={{ display: "inline-flex", alignItems: "center", gap: 6, textDecoration: "none" }}
-          >
-            <UserPlus size={16} /> Add Engineer Profile
-          </Link>
-        )}
       </div>
 
       {/* KPI cards */}
