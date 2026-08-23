@@ -21,8 +21,13 @@ public class ProductMaster
     public string? Tolerance { get; set; }
     public string? Density { get; set; }
     public string? Hardness { get; set; }
+    public string? TensileStrength { get; set; }
     public string? HeatTreatment { get; set; }
     public string? SurfaceFinish { get; set; }
+
+    // ── Catalog & Marketing ───────────────────────────────────────────────
+    public string? Application { get; set; }
+    public string? ImageUrl { get; set; }
 
     // ── Dimensions ───────────────────────────────────────────────────────
     public decimal? Length { get; set; }

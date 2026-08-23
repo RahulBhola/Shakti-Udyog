@@ -33,6 +33,12 @@ export default function BasicInfoStep({ data, onChange, categories }: BasicInfoS
             { id: "Continuous Casting", name: "Continuous Casting" },
           ]} placeholder="Select type" />
       </div>
+      <div>
+        <Field label="Application / Industrial Use" value={data.application ?? ""} onChange={(v) => onChange("application", v)} placeholder="e.g. Industrial garment machinery, Tractor axle support" />
+      </div>
+      <div>
+        <Field label="Direct Image URL (Optional)" value={data.imageUrl ?? ""} onChange={(v) => onChange("imageUrl", v)} placeholder="e.g. /images/... or https://..." />
+      </div>
       <div className="grid grid-cols-2 gap-4">
         <Field label="Unit" value={data.unit ?? ""} onChange={(v) => onChange("unit", v)} placeholder="e.g. Pcs, Kg, Set" />
         <SelectField label="Status" value={data.status ?? "Draft"} onChange={(v) => onChange("status", v)}

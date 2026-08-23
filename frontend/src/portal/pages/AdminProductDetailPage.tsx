@@ -216,12 +216,14 @@ export default function AdminProductDetailPage() {
               <Field label="Product Code" value={p.productCode} />
               <Field label="Category" value={p.categoryName} />
               <Field label="Casting Type" value={p.castingType} />
+              <Field label="Application" value={p.application} />
               <Field label="Unit" value={p.unit} />
               <Field label="Status" value={p.status} />
+              <Field label="Image URL" value={p.imageUrl} />
             </div>
             {p.description && (
               <div className="mt-3 pt-3 border-t border-[var(--border-default)]">
-                <span className="text-[11px] text-[var(--text-muted)] block mb-1">Description</span>
+                <span className="text-[11px] text-[var(--text-muted)] block mb-1">Description / Specs</span>
                 <p className="text-[13px] text-[var(--text-primary)] m-0">{p.description}</p>
               </div>
             )}
@@ -232,6 +234,7 @@ export default function AdminProductDetailPage() {
             <div className="grid grid-cols-2 gap-x-6">
               <Field label="Material" value={p.material} />
               <Field label="Grade" value={p.materialGrade} />
+              <Field label="Tensile Strength" value={p.tensileStrength} />
               <Field label="Weight" value={p.weight ? `${p.weight} kg` : null} />
               <Field label="Tolerance" value={p.tolerance} />
               <Field label="Density" value={p.density} />

@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shakti Udyog — Complete Application Architecture & Interactive Flow</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    :root {
+      --bg-body: #08090d;
+      --bg-surface: #0f121a;
+      --bg-card: #151924;
+      --bg-hover: #1c2232;
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-accent: rgba(249, 115, 22, 0.4);
+      --text-primary: #f3f4f6;
+      --text-secondary: #9ca3af;
+      --text-muted: #6b7280;
+      --color-primary: #f97316;
+      --color-primary-hover: #ea580c;
+      --color-primary-glow: rgba(249, 115, 22, 0.25);
+      --color-cyan: #06b6d4;
+      --color-blue: #3b82f6;
+      --color-emerald: #10b981;
+      --color-purple: #a855f7;
+      --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    [data-theme="light"] {
+      --bg-body: #f8fafc;
+      --bg-surface: #ffffff;
+      --bg-card: #f1f5f9;
+      --bg-hover: #e2e8f0;
+      --border-color: rgba(0, 0, 0, 0.08);
+      --border-accent: rgba(249, 115, 22, 0.5);
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #94a3b8;
+      --color-primary-glow: rgba(249, 115, 22, 0.15);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-body);
+      color: var(--text-primary);
+      line-height: 1.6;
+      overflow-x: hidden;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    /* Top Navigation Bar */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(16px);
+      background: rgba(15, 18, 26, 0.85);
+      border-bottom: 1px solid var(--border-color);
+      padding: 0.85rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    [data-theme="light"] header {
+      background: rgba(255, 255, 255, 0.88);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-weight: 700;
+      font-size: 1.15rem;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-badge {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 9999px;
+      background: var(--color-primary-glow);
+      color: var(--color-primary);
+      border: 1px solid var(--border-accent);
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .theme-toggle, .btn-action {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      padding: 0.45rem 0.85rem;
+      border-radius: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.2s ease;
+    }
+
+    .theme-toggle:hover, .btn-action:hover {
+      background: var(--bg-hover);
+      border-color: var(--color-primary);
+    }
+
+    /* Layout */
+    .container {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 2.5rem 2rem 5rem 2rem;
+    }
+
+    .hero-title {
+      font-size: 2.5rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, var(--text-primary) 30%, var(--color-primary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+      max-width: 900px;
+      margin-bottom: 2rem;
+    }
+
+    /* Navigation Tabs */
+    .tab-bar {
+      display: flex;
+      gap: 0.5rem;
+      overflow-x: auto;
+      padding-bottom: 0.5rem;
+      margin-bottom: 2rem;
+      border-bottom: 1px solid var(--border-color);
+      scrollbar-width: none;
+    }
+
+    .tab-bar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .tab-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      padding: 0.65rem 1.25rem;
+      border-radius: 10px;
+      font-family: var(--font-sans);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    .tab-btn.active {
+      background: var(--color-primary);
+      color: #ffffff;
+      border-color: var(--color-primary);
+      box-shadow: 0 4px 14px var(--color-primary-glow);
+    }
+
+    /* Tab Content Panels */
+    .tab-panel {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Diagram Card */
+    .diagram-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1.75rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    }
+
+    .diagram-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .diagram-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .diagram-desc {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      margin-top: 0.25rem;
+    }
+
+    .diagram-viewport {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+      overflow-x: auto;
+      min-height: 480px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .diagram-viewport svg {
+      max-width: 100%;
+      height: auto;
+    }
+
+    /* Metrics Grid */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 2rem;
+    }
+
+    .metric-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.25rem;
+    }
+
+    .metric-card h4 {
+      font-size: 0.85rem;
+      font-family: var(--font-mono);
+      color: var(--color-primary);
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+
+    .metric-card p {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+
+    /* Custom Flow Canvas (Exact Visual Match to Screenshot) */
+    .flow-canvas {
+      width: 100%;
+      min-height: 600px;
+      position: relative;
+      background: radial-gradient(circle at 50% 50%, #151924 0%, #0a0d14 100%);
+      border-radius: 12px;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2rem;
+    }
+
+    .flow-grid-container {
+      display: grid;
+      grid-template-columns: 1fr 1.3fr 1fr;
+      gap: 2rem;
+      width: 100%;
+      align-items: start;
+    }
+
+    .flow-node-box {
+      background: rgba(22, 27, 39, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      padding: 1.25rem;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      position: relative;
+    }
+
+    .flow-node-box.accent-orange { border-color: rgba(249, 115, 22, 0.5); }
+    .flow-node-box.accent-blue { border-color: rgba(59, 130, 246, 0.5); }
+    .flow-node-box.accent-cyan { border-color: rgba(6, 182, 212, 0.5); }
+    .flow-node-box.accent-emerald { border-color: rgba(16, 185, 129, 0.5); }
+
+    .node-header {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.75rem;
+      color: var(--color-primary);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .node-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .node-body {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .node-tag-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.75rem;
+    }
+
+    .node-tag {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-primary);
+    }
+
+    .connector-arrow {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--color-primary);
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin: 0.5rem 0;
+    }
+
+    .arrow-line {
+      width: 2px;
+      height: 30px;
+      background: linear-gradient(to bottom, var(--color-primary), var(--color-cyan));
+    }
+
+    /* Table Styles */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      font-size: 0.88rem;
+    }
+
+    th, td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border-color);
+      text-align: left;
+    }
+
+    th {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      background: var(--bg-card);
+    }
+
+    tr:hover td {
+      background: var(--bg-hover);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <header>
+    <div class="brand">
+      <span>SHAKTI UDYOG</span>
+      <span class="brand-badge">Architecture &amp; Flow Visualizer</span>
+    </div>
+    <div class="nav-actions">
+      <button class="theme-toggle" onclick="toggleTheme()">🌓 Theme</button>
+      <button class="btn-action" onclick="window.print()">🖨️ Export PDF</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <h1 class="hero-title">Platform Architecture &amp; Interactive Flow</h1>
+    <p class="hero-subtitle">
+      Comprehensive architectural blueprints, database state topologies, Product Master single source of truth sync flow, and the 25-stage manufacturing Kanban execution system.
+    </p>
+
+    <!-- Tab Selection -->
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab(0)">1. Product Master &amp; Public Sync</button>
+      <button class="tab-btn" onclick="switchTab(1)">2. Executive System Topology</button>
+      <button class="tab-btn" onclick="switchTab(2)">3. End-to-End Enterprise Flow</button>
+      <button class="tab-btn" onclick="switchTab(3)">4. 25-Stage MES Kanban</button>
+      <button class="tab-btn" onclick="switchTab(4)">5. Dual-Token &amp; Multi-Device Auth</button>
+      <button class="tab-btn" onclick="switchTab(5)">6. API &amp; SignalR Directory</button>
+    </div>
+
+    <!-- TAB 1: Product Master & Public Sync (Exact Visual Layout from Screenshot) -->
+    <div class="tab-panel active" id="tab-0">
+      <div class="diagram-card">
+        <div class="diagram-header">
+          <div>
+            <div class="diagram-title">📦 Product Master Single Source of Truth &amp; Public Sync Architecture</div>
+            <div class="diagram-desc">Live synchronization graph between Admin ERP Product Drawer, ASP.NET Core 9 Web API, SQL Server Database, and Public Website (/products).</div>
+          </div>
+        </div>
+
+        <!-- Rendered Visual Interactive Canvas Matching Screenshot -->
+        <div class="diagram-viewport">
+          <div class="mermaid" style="width: 100%;">
+flowchart TD
+    subgraph AdminPlane ["Admin Portal (http://localhost:5173/admin/products)"]
+        AdminUI["Admin Product List &amp; Drawer<br/><b>(Create / Edit / Upload Images)</b><br/>• Full Metallurgy &amp; Specs<br/>• Tensile Strength &amp; Application<br/>• Direct Image URL / File Uploads"]
+    end
+
+    subgraph ApiPlane ["ASP.NET Core 9 Web API Layer"]
+        AdminEndpoint["<b>/api/v1/admin/product-master</b><br/>(Admin CRUD &amp; File Uploads)"]
+        PublicCatalogEndpoint["<b>/api/v1/public/products</b><br/>(Cached &amp; Live Fast Product Catalog)"]
+        PublicImageEndpoint["<b>/api/v1/public/products/{id}/image</b><br/>(Public Image Streaming)"]
+    end
+
+    subgraph SqlPlane ["Microsoft SQL Server (Single Source of Truth)"]
+        CatTable[("<b>Categories Table</b><br/>(9 Product Categories)")]
+        ProductMastersTable[("<b>ProductMasters Table</b><br/>(Seeded 20 Products +<br/>Admin-Added Products)<br/>• ProductCode &amp; Title<br/>• Material &amp; Grade<br/>• TensileStrength &amp; Application<br/>• Weight &amp; Tolerances<br/>• ImageUrl &amp; Status")]
+        AttachmentsTable[("<b>ProductMasterAttachments</b><br/>Table (Drawings, CAD, Photos)")]
+    end
+
+    subgraph PublicPlane ["Public Website (http://localhost:5173/products)"]
+        PublicCatalog["<b>Public ProductsPage.tsx</b><br/>(Dynamic Live Fetch + Search + Category Filter)"]
+        SpecsModal["<b>Quick Specs Modal &amp; Detail View</b><br/>(Specifications, Tolerances, Tensile)"]
+        EnquiryModal["<b>Submit Enquiry Modal</b><br/>(Pre-fills Product Name &amp; Code)"]
+    end
+
+    AdminUI -->|POST / PUT with Auth| AdminEndpoint
+    AdminEndpoint -->|Writes Master Data| ProductMastersTable
+    AdminEndpoint -->|Uploads Media| AttachmentsTable
+
+    CatTable -.linked to.-> ProductMastersTable
+    AttachmentsTable -.linked to.-> ProductMastersTable
+
+    ProductMastersTable -->|Queries Active Products| PublicCatalogEndpoint
+    CatTable -->|Provides Category Names| PublicCatalogEndpoint
+    AttachmentsTable -->|Streams Attachment Bytes| PublicImageEndpoint
+
+    PublicCatalogEndpoint -->|GET /api/v1/public/products| PublicCatalog
+    PublicImageEndpoint -->|GET Image Stream| PublicCatalog
+
+    PublicCatalog -->|Select Component| SpecsModal
+    SpecsModal -->|Click Request Quote| EnquiryModal
+          </div>
+        </div>
+      </div>
+
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <h4>Single Source of Truth</h4>
+          <p>The <code>ProductMasters</code> database table is the absolute source of truth. Any product created or edited in the Admin Drawer is immediately visible on the public website with complete specs.</p>
+        </div>
+        <div class="metric-card">
+          <h4>Admin Provided Images Only</h4>
+          <p>Product imagery displays either the admin-specified <code>ImageUrl</code> or streams directly from uploaded image attachments via <code>/api/v1/public/products/{id}/image</code>.</p>
+        </div>
+        <div class="metric-card">
+          <h4>Zero Flicker Public Experience</h4>
+          <p>The public catalog initializes immediately with the 20 core components and seamlessly merges live updates from the backend without UI disruption.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: Executive System Topology -->
+    <div class="tab-panel" id="tab-1">
+      <div class="diagram-card">
+        <div class="diagram-header">
+          <div>
+            <div class="diagram-title">🏛️ Executive Multi-Plane Platform Topology</div>
+            <div class="diagram-desc">Hierarchical architectural overview spanning Client Planes, Security Gateway, Application API, Domain Engines, and Data Storage.</div>
+          </div>
+        </div>
+        <div class="diagram-viewport">
+          <div class="mermaid" style="width: 100%;">
+flowchart TD
+    subgraph ClientLayers ["Client Presentation Layer (React 19 + TypeScript + Vite 8)"]
+        PublicApp["Public Website<br/>(Dynamic Catalog, RFQ Flow, Knowledge Base)"]
+        CustomerPortal["Customer Portal<br/>(Order Tracking, Quotes, Invoices, Docs)"]
+        AdminERP["Admin &amp; Engineer ERP Portal<br/>(25-Stage Kanban, CRM, Master Catalog, Audit)"]
+    end
+
+    subgraph SecurityGateway ["Security &amp; Access Gateway"]
+        AuthMiddleware["JWT Dual-Token Auth + Refresh Cookie"]
+        SessionManager["Multi-Device Session Controller<br/>(UserSessions Table, Device Fingerprinting)"]
+        RBAC["Role-Based Access Control<br/>(Admin, Engineer, Customer)"]
+    end
+
+    subgraph BackendAPI ["Application Layer (ASP.NET Core 9 Web API)"]
+        PublicCtrl["Public Controllers<br/>(/api/v1/public/*)"]
+        CustomerCtrl["Customer Controllers<br/>(/api/v1/customer/*)"]
+        AdminCtrl["Admin &amp; ERP Controllers<br/>(/api/v1/admin/*)"]
+        SignalRHub["SignalR Real-Time Hub<br/>(/hubs/notifications, Order Progress)"]
+    end
+
+    subgraph DomainCore ["Domain &amp; Business Logic Layer"]
+        ProductService["ProductMaster &amp; Sync Service"]
+        OrderWorkflow["25-Stage Manufacturing Engine"]
+        QuotationEngine["Cost Estimation &amp; Margin Calculator"]
+        InvoiceEngine["GST &amp; Financial Ledger Engine"]
+        AuditService["Immutable Audit Trail Writer"]
+    end
+
+    subgraph DataStorage ["Data &amp; Persistence Layer (SQL Server + File Storage)"]
+        SQLDB[("Microsoft SQL Server<br/>(60+ POCO Relational Entities)")]
+        FileStore[("Binary / Document Storage<br/>(Drawings, CAD, Inspection PDFs, Images)")]
+    end
+
+    ClientLayers --> SecurityGateway
+    SecurityGateway --> BackendAPI
+    BackendAPI --> DomainCore
+    DomainCore --> DataStorage
+    DomainCore -.-> SignalRHub
+    SignalRHub -.Real-time Updates.-> ClientLayers
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: End-to-End Enterprise Flow -->
+    <div class="tab-panel" id="tab-2">
+      <div class="diagram-card">
+        <div class="diagram-header">
+          <div>
+            <div class="diagram-title">🔄 End-to-End Enterprise Lifecycle Sequence</div>
+            <div class="diagram-desc">Sequential flow from Public RFQ $\to$ Engineering Feasibility $\to$ Quotation Approval $\to$ MES Production $\to$ QA MTC $\to$ GST Invoice $\to$ Logistics Dispatch.</div>
+          </div>
+        </div>
+        <div class="diagram-viewport">
+          <div class="mermaid" style="width: 100%;">
+sequenceDiagram
+    autonumber
+    actor Cust as Customer / Buyer
+    participant Pub as Public Web / Portal
+    participant API as ASP.NET Core API
+    participant Eng as Foundry Engineer
+    participant MES as 25-Stage MES Kanban
+    participant QA as Quality Inspector
+    participant Fin as Finance / Admin
+
+    Cust->>Pub: Submits RFQ with 2D/3D CAD & Specs
+    Pub->>API: POST /api/v1/public/enquiries (or Customer RFQ)
+    API-->>Eng: SignalR Notification & Lead Assigned
+    Eng->>API: Cost Estimation & Feasibility Analysis
+    Eng->>API: POST /api/v1/admin/quotations (Generates Formal Quote)
+    API-->>Cust: Quotation Delivered (Email + Portal Alert)
+    Cust->>Pub: Reviews & Formally Accepts Quote (Issues PO)
+    Pub->>API: POST /api/v1/customer/quotations/{id}/accept
+    API->>MES: Production Order Created (Stages 1–25 Initialized)
+    
+    loop 25-Stage Manufacturing Execution
+        MES->>API: Stage Progression (Moulding -> Pouring -> Fettling -> CNC)
+        API-->>Cust: Live Portal Milestone Updates & Timeline
+    end
+
+    QA->>API: Spectro & CMM Inspection -> MTC Certificate Generated
+    Fin->>API: Generate GST Compliant Tax Invoice
+    API-->>Cust: Automated Invoice & Dispatch Notification with Tracking
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: 25-Stage MES Kanban -->
+    <div class="tab-panel" id="tab-3">
+      <div class="diagram-card">
+        <div class="diagram-header">
+          <div>
+            <div class="diagram-title">⚙️ 25-Stage Foundry Kanban Manufacturing State Machine</div>
+            <div class="diagram-desc">6 structured phases ensuring 100% metallurgical traceability from Pattern Development to Logistics Dispatch.</div>
+          </div>
+        </div>
+        <div class="diagram-viewport">
+          <div class="mermaid" style="width: 100%;">
+stateDiagram-v2
+    state "Phase 1: Tooling & Methoding" as P1 {
+        [*] --> DrawingReview
+        DrawingReview --> MethodingSimulation
+        MethodingSimulation --> PatternDevelopment
+        PatternDevelopment --> CoreBoxInspection
+        CoreBoxInspection --> SampleTrial
+    }
+
+    state "Phase 2: Moulding & Core Making" as P2 {
+        SampleTrial --> SandPreparation
+        SandPreparation --> CoreMaking
+        CoreMaking --> MouldAssembly
+        MouldAssembly --> PrePourInspection
+    }
+
+    state "Phase 3: Melting & Pouring" as P3 {
+        PrePourInspection --> ChargeCalculation
+        ChargeCalculation --> InductionMelting
+        InductionMelting --> SpectroAnalysis
+        SpectroAnalysis --> InoculationNodulization
+        InoculationNodulization --> LadlePouring
+    }
+
+    state "Phase 4: Shakeout & Fettling" as P4 {
+        LadlePouring --> CoolingShakeout
+        CoolingShakeout --> DegatingRiserRemoval
+        DegatingRiserRemoval --> ShotBlasting
+        ShotBlasting --> VisualInspection
+    }
+
+    state "Phase 5: Heat Treatment & CNC" as P5 {
+        VisualInspection --> HeatTreatment
+        HeatTreatment --> RoughMachining
+        RoughMachining --> CNCPrecisionFinishing
+    }
+
+    state "Phase 6: Quality, MTC & Dispatch" as P6 {
+        CNCPrecisionFinishing --> FinalCMMInspection
+        FinalCMMInspection --> HydrostaticNDT
+        HydrostaticNDT --> MTCGeneration
+        MTCGeneration --> AntiRustPacking
+        AntiRustPacking --> LogisticsDispatch
+        LogisticsDispatch --> [*]
+    }
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 5: Dual-Token & Multi-Device Security Architecture -->
+    <div class="tab-panel" id="tab-4">
+      <div class="diagram-card">
+        <div class="diagram-header">
+          <div>
+            <div class="diagram-title">🛡️ Dual-Token JWT &amp; Multi-Device Session Security</div>
+            <div class="diagram-desc">Stateful device tracking with instant session revocation and encrypted token rotation.</div>
+          </div>
+        </div>
+        <div class="diagram-viewport">
+          <div class="mermaid" style="width: 100%;">
+flowchart LR
+    subgraph Client ["Client Device (Browser)"]
+        Mem["In-Memory State<br/>(Short-Lived Access Token: 15m)"]
+        Cookie["HttpOnly Secure Cookie<br/>(Refresh Token: 7 Days)"]
+        Headers["Fingerprint Headers<br/>(User-Agent, IP, Device Name)"]
+    end
+
+    subgraph Gateway ["Security &amp; Token Validator"]
+        AuthFilter["JWT Authentication Filter"]
+        SessionCheck["Session Active &amp; Not Revoked Check"]
+    end
+
+    subgraph DB ["SQL Server Session Registry"]
+        SessionsTable[("UserSessions Table<br/>(Id, Device, Browser, LastActive)")]
+        RefreshTable[("RefreshTokens Table<br/>(TokenHash, SessionId, Revoked)")]
+    end
+
+    Headers --> Gateway
+    Mem -->|Authorization: Bearer <token>| AuthFilter
+    Cookie -->|POST /api/v1/auth/refresh| SessionCheck
+
+    AuthFilter --> SessionCheck
+    SessionCheck --> SessionsTable
+    SessionCheck --> RefreshTable
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 6: API & SignalR Directory -->
+    <div class="tab-panel" id="tab-5">
+      <div class="diagram-card">
+        <div class="diagram-header">
+          <div>
+            <div class="diagram-title">📡 Core API &amp; SignalR Real-Time Directory</div>
+            <div class="diagram-desc">Summary of foundational platform endpoints and WebSocket hubs.</div>
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Method</th>
+              <th>Endpoint</th>
+              <th>Access</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>GET</code></td>
+              <td><code>/api/v1/public/products</code></td>
+              <td>Public / Anonymous</td>
+              <td>Returns active Product Master catalog items with categories and images.</td>
+            </tr>
+            <tr>
+              <td><code>GET</code></td>
+              <td><code>/api/v1/public/products/{id}/image</code></td>
+              <td>Public / Anonymous</td>
+              <td>Streams uploaded product attachment image binary with caching.</td>
+            </tr>
+            <tr>
+              <td><code>POST</code></td>
+              <td><code>/api/v1/public/enquiries</code></td>
+              <td>Public (Rate-Limited)</td>
+              <td>Submits RFQ inquiry with honeypot bot defense.</td>
+            </tr>
+            <tr>
+              <td><code>GET / POST</code></td>
+              <td><code>/api/v1/admin/product-master</code></td>
+              <td>Admin / Engineer</td>
+              <td>Full CRUD, duplicate, archive, and CAD attachment management for products.</td>
+            </tr>
+            <tr>
+              <td><code>GET / PUT</code></td>
+              <td><code>/api/v1/admin/orders/{id}/stage</code></td>
+              <td>Admin / Engineer</td>
+              <td>Advances order across the 25-stage manufacturing Kanban state machine.</td>
+            </tr>
+            <tr>
+              <td><code>WSS</code></td>
+              <td><code>/hubs/notifications</code></td>
+              <td>Authenticated</td>
+              <td>Real-time SignalR WebSocket hub for order milestones, quotes, and alerts.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Initialize Mermaid
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'dark',
+      themeVariables: {
+        darkMode: true,
+        background: '#0f121a',
+        primaryColor: '#1e2538',
+        primaryTextColor: '#f3f4f6',
+        primaryBorderColor: '#f97316',
+        lineColor: '#f97316',
+        secondaryColor: '#151924',
+        tertiaryColor: '#0a0d14'
+      }
+    });
+
+    function switchTab(index) {
+      document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+        btn.classList.toggle('active', i === index);
+      });
+      document.querySelectorAll('.tab-panel').forEach((panel, i) => {
+        panel.classList.toggle('active', i === index);
+      });
+    }
+
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme');
+      const target = current === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', target);
+    }
+  </script>
+</body>
+</html>

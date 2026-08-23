@@ -13,7 +13,8 @@ export default function MaterialStep({ data, onChange }: MaterialStepProps) {
         <Field label="Weight (kg)" value={data.weight ?? ""} onChange={(v) => onChange("weight", v === "" ? null : Number(v))} placeholder="e.g. 45.5" type="number" />
         <Field label="Tolerance" value={data.tolerance ?? ""} onChange={(v) => onChange("tolerance", v)} placeholder="e.g. ±0.5 mm" />
         <Field label="Density" value={data.density ?? ""} onChange={(v) => onChange("density", v)} placeholder="e.g. 7.2 g/cm³" />
-        <Field label="Hardness" value={data.hardness ?? ""} onChange={(v) => onChange("hardness", v)} placeholder="e.g. HB 180-220" />
+        <Field label="Hardness" value={data.hardness ?? ""} onChange={(v) => onChange("hardness", v)} placeholder="e.g. HB 180-220, 170–230 HBW" />
+        <Field label="Tensile Strength" value={data.tensileStrength ?? ""} onChange={(v) => onChange("tensileStrength", v)} placeholder="e.g. 500 MPa min, 260 MPa" />
         <Field label="Heat Treatment" value={data.heatTreatment ?? ""} onChange={(v) => onChange("heatTreatment", v)} placeholder="e.g. Annealing, Normalizing" />
         <Field label="Surface Finish" value={data.surfaceFinish ?? ""} onChange={(v) => onChange("surfaceFinish", v)} placeholder="e.g. Shot Blasted, Machined" />
       </div>

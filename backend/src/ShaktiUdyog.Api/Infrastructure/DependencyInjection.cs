@@ -53,7 +53,7 @@ public static class DependencyInjection
         services.AddHttpContextAccessor();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IExternalAuthService, ExternalAuthService>();
-        services.AddSingleton<IPublicContentService, PublicContentService>();
+        services.AddScoped<IPublicContentService, PublicContentService>();
         services.AddScoped<IPublicSubmissionService, PublicSubmissionService>();
         services.AddScoped<ICustomerContextService, CustomerContextService>();
         services.AddScoped<ICustomerService, CustomerService>();

@@ -13,6 +13,23 @@ export interface Product {
   availableFinish: string;
 }
 
+export interface PublicProductItem {
+  id: string;
+  productCode: string;
+  title: string;
+  category: string;
+  materialType: 'Grey Iron' | 'Ductile Iron' | string;
+  grade: string;
+  weight: string;
+  image: string | null;
+  application: string;
+  specs: string;
+  tolerances: string;
+  hardness: string;
+  tensileStrength: string;
+  dimensions?: string | null;
+}
+
 export interface Resource {
   slug: string;
   title: string;
@@ -20,7 +37,9 @@ export interface Resource {
   body: string[];
 }
 
-export const getProducts = () => apiGet<Product[]>("/api/v1/public/products");
+export const getPublicProducts = () => apiGet<PublicProductItem[]>("/api/v1/public/products");
+export const getPublicProductById = (id: string) => apiGet<PublicProductItem>(`/api/v1/public/products/${id}`);
+export const getProducts = () => apiGet<PublicProductItem[]>("/api/v1/public/products");
 export const getProduct = (slug: string) => apiGet<Product>(`/api/v1/public/products/${slug}`);
 export const getResources = () => apiGet<Resource[]>("/api/v1/public/resources");
 export const getResource = (slug: string) => apiGet<Resource>(`/api/v1/public/resources/${slug}`);

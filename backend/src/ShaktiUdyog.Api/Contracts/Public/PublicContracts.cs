@@ -14,6 +14,22 @@ public record ProductDto(
     string CastingWeightRange,
     string AvailableFinish);
 
+public record PublicProductItemDto(
+    Guid Id,
+    string ProductCode,
+    string Title,
+    string? Category,
+    string MaterialType,
+    string Grade,
+    string Weight,
+    string? Image,
+    string Application,
+    string Specs,
+    string Tolerances,
+    string Hardness,
+    string TensileStrength,
+    string? Dimensions);
+
 public record ResourceDto(
     string Slug,
     string Title,

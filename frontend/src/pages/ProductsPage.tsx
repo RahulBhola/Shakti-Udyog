@@ -1,10 +1,11 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Seo } from '../components/Seo';
 import { seoPages } from '../content/seo';
 import { useTheme } from '../auth/ThemeContext';
 import { useEnquiryModal } from '../context/EnquiryModalContext';
 import { getThemedImage } from '../utils/themeImage';
+import { getPublicProducts } from '../api/publicApi';
 import {
   Search,
   SlidersHorizontal,
@@ -336,19 +337,6 @@ export const ALL_PRODUCTS: CatalogProduct[] = [
   },
 ];
 
-const CATEGORIES = [
-  'All Categories',
-  'Automotive & Powertrain',
-  'Agricultural Machinery',
-  'Fluid & Pumps',
-  'Power Transmission',
-  'Precision Mechanism',
-  'Industrial Machinery',
-  'Industrial & Structural',
-  'Fasteners & Hardware',
-  'Commercial Hospitality',
-];
-
 const MATERIALS = ['All Materials', 'Grey Iron', 'Ductile Iron'];
 
 export default function ProductsPage() {
@@ -356,14 +344,53 @@ export default function ProductsPage() {
   const { openQuoteModal, openEnquiryModal } = useEnquiryModal();
   const isLight = theme === 'light';
 
+  const [products, setProducts] = useState<CatalogProduct[]>(ALL_PRODUCTS);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
   const [selectedMaterial, setSelectedMaterial] = useState('All Materials');
   const [activeModalProduct, setActiveModalProduct] = useState<CatalogProduct | null>(null);
 
+  useEffect(() => {
+    let mounted = true;
+    getPublicProducts()
+      .then((items) => {
+        if (!mounted || !items || items.length === 0) return;
+        const mapped: CatalogProduct[] = items.map((item) => ({
+          id: item.id,
+          title: item.title,
+          category: item.category || 'Precision Mechanism',
+          materialType: (item.materialType === 'Ductile Iron' ? 'Ductile Iron' : 'Grey Iron') as 'Grey Iron' | 'Ductile Iron',
+          grade: item.grade || 'FG 200',
+          standard: item.materialType === 'Ductile Iron' ? 'IS 1865 / EN-GJS' : 'IS 210 / EN-GJL',
+          weight: item.weight || '—',
+          image: item.image || '/images/Industrial Iron Casting.png',
+          application: item.application || 'Industrial casting applications',
+          specs: item.specs || 'High precision engineered casting component',
+          tolerances: item.tolerances || '±0.05 mm',
+          hardness: item.hardness || '180–220 HBW',
+          tensileStrength: item.tensileStrength || '200 MPa min',
+        }));
+        setProducts(mapped);
+      })
+      .catch((err) => {
+        console.warn('Could not fetch dynamic products from backend API, using initial catalog:', err);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const dynamicCategories = useMemo(() => {
+    const set = new Set<string>();
+    products.forEach((p) => {
+      if (p.category) set.add(p.category);
+    });
+    return ['All Categories', ...Array.from(set)];
+  }, [products]);
+
   // Filtered Products
   const filteredProducts = useMemo(() => {
-    return ALL_PRODUCTS.filter((product) => {
+    return products.filter((product) => {
       const matchesSearch =
         product.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         product.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -379,7 +406,7 @@ export default function ProductsPage() {
 
       return matchesSearch && matchesCategory && matchesMaterial;
     });
-  }, [searchQuery, selectedCategory, selectedMaterial]);
+  }, [products, searchQuery, selectedCategory, selectedMaterial]);
 
   return (
     <div
@@ -496,11 +523,11 @@ export default function ProductsPage() {
               <span>Category:</span>
             </div>
 
-            {CATEGORIES.map((cat) => {
+            {dynamicCategories.map((cat) => {
               const count =
                 cat === 'All Categories'
-                  ? ALL_PRODUCTS.length
-                  : ALL_PRODUCTS.filter((p) => p.category === cat).length;
+                  ? products.length
+                  : products.filter((p) => p.category === cat).length;
 
               return (
                 <button
@@ -526,7 +553,7 @@ export default function ProductsPage() {
           <div className="flex items-center justify-between text-xs font-mono text-neutral-500 dark:text-neutral-400 pt-4 mt-4 border-t border-neutral-100 dark:border-white/[0.04]">
             <span>
               Showing <strong className="text-orange-500 font-bold">{filteredProducts.length}</strong> of{' '}
-              {ALL_PRODUCTS.length} precision components
+              {products.length} precision components
             </span>
 
             {(searchQuery || selectedCategory !== 'All Categories' || selectedMaterial !== 'All Materials') && (

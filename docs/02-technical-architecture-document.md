@@ -1653,8 +1653,10 @@ The API exposes versioned RESTful endpoints rooted at `/api/v1/`.
 ### 5.2 Exhaustive Endpoint Catalog by Controller
 
 #### 1. Public API (`PublicController` — `/api/v1/public`)
-* `GET /api/v1/public/products` $\to$ Returns list of published casting products and alloy specifications.
-* `GET /api/v1/public/products/{slug}` $\to$ Returns product details by URL slug (404 if not found).
+* `GET /api/v1/public/products` $\to$ Returns active Product Master catalog items (single source of truth) with category names, alloy specifications, tolerances, tensile strength, and admin-configured imagery.
+* `GET /api/v1/public/products/{id}` $\to$ Returns single active Product Master details by Guid identifier.
+* `GET /api/v1/public/products/{id}/image` $\to$ Streams uploaded product CAD/photo binary attachment directly with public anonymous access.
+* `GET /api/v1/public/products/{slug}` $\to$ Returns product category overview by URL slug.
 * `GET /api/v1/public/resources` $\to$ Returns list of published engineering articles and casting resources.
 * `GET /api/v1/public/resources/{slug}` $\to$ Returns resource details by slug.
 * `POST /api/v1/public/contact-requests` *(Rate limit: 20/min)* $\to$ Ingests contact message with honeypot validation.
@@ -1800,16 +1802,16 @@ The API exposes versioned RESTful endpoints rooted at `/api/v1/`.
 * `PUT /api/v1/production/preferences` $\to$ Saves operator's Kanban view settings.
 
 #### 12. Engineering Product Master API (`ProductMasterController` — `/api/v1/admin/product-master`, Policy: `AdminOnly`)
-* `GET /api/v1/admin/product-master` $\to$ Master casting pattern and tooling directory.
-* `GET /api/v1/admin/product-master/{id}` $\to$ Pattern specifications, standard weight, and alloy requirements.
+* `GET /api/v1/admin/product-master` $\to$ Master casting pattern and tooling directory with live public sync.
+* `GET /api/v1/admin/product-master/{id}` $\to$ Pattern specifications, standard weight, alloy requirements, tensile strength, and industrial applications.
 * `GET /api/v1/admin/product-master/{id}/usage` $\to$ Usage history across orders and quotes.
 * `GET /api/v1/admin/product-master/stats` $\to$ Master tooling statistics.
-* `POST /api/v1/admin/product-master` $\to$ Creates new master casting definition.
-* `PUT /api/v1/admin/product-master/{id}` $\to$ Updates master definition.
-* `DELETE /api/v1/admin/product-master/{id}` $\to$ Archives master record.
+* `POST /api/v1/admin/product-master` $\to$ Creates new master casting definition (instantly synchronized to public catalog if Status = Active).
+* `PUT /api/v1/admin/product-master/{id}` $\to$ Updates master definition and public specs.
+* `DELETE /api/v1/admin/product-master/{id}` $\to$ Archives master record and delists from public catalog.
 * `POST /api/v1/admin/product-master/{id}/duplicate` $\to$ Clones master casting definition.
-* `POST /api/v1/admin/product-master/{id}/attachments` $\to$ Attaches master 2D/3D CAD models.
-* `GET /api/v1/admin/product-master/{id}/attachments/{attachmentId}/download` $\to$ Downloads CAD drawing.
+* `POST /api/v1/admin/product-master/{id}/attachments` $\to$ Attaches master 2D/3D CAD models and product photo imagery.
+* `GET /api/v1/admin/product-master/{id}/attachments/{attachmentId}/download` $\to$ Downloads CAD drawing or attachment.
 
 #### 13. Content Management API (`AdminContentController` — `/api/v1/admin`, Policy: `AdminOnly`)
 * `GET /api/v1/admin/products`, `POST ...`, `PUT ...`, `DELETE ...` $\to$ Manages marketing catalogue products.

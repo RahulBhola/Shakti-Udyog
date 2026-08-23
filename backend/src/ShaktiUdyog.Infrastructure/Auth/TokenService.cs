@@ -35,6 +35,7 @@ public class TokenService(
         if (sessionId.HasValue && sessionId.Value != Guid.Empty)
         {
             claims.Add(new Claim("sid", sessionId.Value.ToString()));
+            claims.Add(new Claim(ClaimTypes.Sid, sessionId.Value.ToString()));
         }
 
         var roles = await userManager.GetRolesAsync(user);
@@ -208,10 +209,10 @@ public class TokenService(
             return null;
         }
 
-        Guid targetSessionId;
+        Guid targetSessionId = Guid.NewGuid();
 
         // Legacy token migration support: if legacy token has no SessionId, create one now
-        if (!stored.SessionId.HasValue)
+        if (!stored.SessionId.HasValue || stored.SessionId.Value == Guid.Empty)
         {
             var parsed = UserAgentParser.Parse(userAgent, ipAddress);
             var legacySession = new UserSession
@@ -236,17 +237,36 @@ public class TokenService(
         else
         {
             var session = stored.Session ?? await db.UserSessions.FindAsync(stored.SessionId.Value);
-            if (session is null || session.RevokedAtUtc is not null || session.ExpiresAtUtc <= DateTimeOffset.UtcNow)
+            if (session is not null && session.RevokedAtUtc == null && session.ExpiresAtUtc > DateTimeOffset.UtcNow)
             {
-                return null;
+                session.LastActiveAtUtc = DateTimeOffset.UtcNow;
+                if (!string.IsNullOrWhiteSpace(ipAddress))
+                {
+                    session.IpAddress = ipAddress;
+                }
+                targetSessionId = session.Id;
             }
-
-            session.LastActiveAtUtc = DateTimeOffset.UtcNow;
-            if (!string.IsNullOrWhiteSpace(ipAddress))
+            else
             {
-                session.IpAddress = ipAddress;
+                var parsed = UserAgentParser.Parse(userAgent, ipAddress);
+                var newSession = new UserSession
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = stored.UserId,
+                    DeviceName = parsed.DeviceName,
+                    DeviceType = parsed.DeviceType,
+                    OperatingSystem = parsed.OperatingSystem,
+                    Browser = parsed.Browser,
+                    UserAgent = userAgent?.Length > 500 ? userAgent[..500] : userAgent,
+                    IpAddress = ipAddress,
+                    Location = parsed.Location,
+                    CreatedAtUtc = DateTimeOffset.UtcNow,
+                    LastActiveAtUtc = DateTimeOffset.UtcNow,
+                    ExpiresAtUtc = DateTimeOffset.UtcNow.AddDays(_options.SessionDays),
+                };
+                db.UserSessions.Add(newSession);
+                targetSessionId = newSession.Id;
             }
-            targetSessionId = session.Id;
         }
 
         var rawReplacement = GenerateRawToken();

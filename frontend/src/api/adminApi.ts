@@ -275,6 +275,9 @@ export interface ProductMasterListItem {
   material: string | null;
   materialGrade: string | null;
   weight: number | null;
+  tensileStrength: string | null;
+  application: string | null;
+  imageUrl: string | null;
   status: string;
   attachmentCount: number;
   usedInCount: number;
@@ -299,6 +302,9 @@ export interface ProductMasterDetail {
   tolerance: string | null;
   density: string | null;
   hardness: string | null;
+  tensileStrength: string | null;
+  application: string | null;
+  imageUrl: string | null;
   heatTreatment: string | null;
   surfaceFinish: string | null;
   length: number | null;

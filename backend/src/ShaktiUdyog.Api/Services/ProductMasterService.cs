@@ -50,35 +50,43 @@ public class ProductMasterService(
         if (query.CategoryId.HasValue)
             q = q.Where(p => p.CategoryId == query.CategoryId);
 
-        if (!string.IsNullOrWhiteSpace(query.Status))
+        if (!string.IsNullOrWhiteSpace(query.Status) && !string.Equals(query.Status, "All", StringComparison.OrdinalIgnoreCase) && !showArchived)
             q = q.Where(p => p.Status == query.Status);
 
-        if (!string.IsNullOrWhiteSpace(query.CastingType))
+        if (!string.IsNullOrWhiteSpace(query.CastingType) && !string.Equals(query.CastingType, "All", StringComparison.OrdinalIgnoreCase))
             q = q.Where(p => p.CastingType == query.CastingType);
 
         var total = await q.CountAsync();
 
-        var items = await q
-            .OrderByDescending(p => p.UpdatedAtUtc ?? p.CreatedAtUtc)
+        var products = await q
+            .Include(p => p.Category)
+            .Include(p => p.Attachments)
+            .OrderByDescending(p => p.CreatedAtUtc)
             .Skip((query.Page - 1) * query.PageSize)
             .Take(query.PageSize)
-            .Select(p => new ProductMasterListItemDto(
+            .ToListAsync();
+
+        var items = products.Select(p =>
+        {
+            var firstAtt = p.Attachments.OrderBy(a => a.UploadedAtUtc).FirstOrDefault();
+            return new ProductMasterListItemDto(
                 p.Id,
                 p.ProductCode,
                 p.ProductName,
-                p.Category != null ? p.Category.Name : null,
+                p.Category?.Name,
                 p.CastingType,
                 p.Material,
                 p.MaterialGrade,
                 p.Weight,
                 p.Status,
                 p.Attachments.Count,
-                0, // UsedInCount — placeholder, computed separately if needed
-                p.Attachments.OrderBy(a => a.UploadedAtUtc).Select(a => (Guid?)a.Id).FirstOrDefault(),
-                p.Attachments.OrderBy(a => a.UploadedAtUtc).Select(a => a.ContentType).FirstOrDefault(),
+                0,
+                firstAtt?.Id,
+                firstAtt?.ContentType,
+                p.ImageUrl,
                 p.CreatedAtUtc,
-                p.UpdatedAtUtc))
-            .ToListAsync();
+                p.UpdatedAtUtc);
+        }).ToList();
 
         return new PagedResult<ProductMasterListItemDto>(items, query.Page, query.PageSize, total);
     }
@@ -165,8 +173,11 @@ public class ProductMasterService(
             Tolerance = request.Tolerance,
             Density = request.Density,
             Hardness = request.Hardness,
+            TensileStrength = request.TensileStrength,
             HeatTreatment = request.HeatTreatment,
             SurfaceFinish = request.SurfaceFinish,
+            Application = request.Application,
+            ImageUrl = request.ImageUrl,
             Length = request.Length,
             Width = request.Width,
             Height = request.Height,
@@ -217,8 +228,11 @@ public class ProductMasterService(
         if (request.Tolerance is not null) p.Tolerance = request.Tolerance;
         if (request.Density is not null) p.Density = request.Density;
         if (request.Hardness is not null) p.Hardness = request.Hardness;
+        if (request.TensileStrength is not null) p.TensileStrength = request.TensileStrength;
         if (request.HeatTreatment is not null) p.HeatTreatment = request.HeatTreatment;
         if (request.SurfaceFinish is not null) p.SurfaceFinish = request.SurfaceFinish;
+        if (request.Application is not null) p.Application = request.Application;
+        if (request.ImageUrl is not null) p.ImageUrl = request.ImageUrl;
         if (request.Length.HasValue) p.Length = request.Length;
         if (request.Width.HasValue) p.Width = request.Width;
         if (request.Height.HasValue) p.Height = request.Height;
@@ -287,8 +301,11 @@ public class ProductMasterService(
             Tolerance = original.Tolerance,
             Density = original.Density,
             Hardness = original.Hardness,
+            TensileStrength = original.TensileStrength,
             HeatTreatment = original.HeatTreatment,
             SurfaceFinish = original.SurfaceFinish,
+            Application = original.Application,
+            ImageUrl = original.ImageUrl,
             Length = original.Length,
             Width = original.Width,
             Height = original.Height,
@@ -368,7 +385,8 @@ public class ProductMasterService(
             p.CategoryId, p.Category?.Name,
             p.CastingType, p.Unit,
             p.Material, p.MaterialGrade, p.Weight,
-            p.Tolerance, p.Density, p.Hardness, p.HeatTreatment, p.SurfaceFinish,
+            p.Tolerance, p.Density, p.Hardness, p.TensileStrength, p.HeatTreatment, p.SurfaceFinish,
+            p.Application, p.ImageUrl,
             p.Length, p.Width, p.Height, p.Diameter,
             p.DrawingNumber, p.Revision, p.PatternNumber,
             p.CoreRequired, p.MachineRequired, p.InspectionRequired, p.MachiningRequired,

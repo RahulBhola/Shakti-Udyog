@@ -7,7 +7,7 @@ public class PublicApiTests(AuthApiFactory factory) : IClassFixture<AuthApiFacto
 {
     private readonly HttpClient _client = factory.CreateClient();
 
-    private record Product(string Slug, string Title, string CommonGrades);
+    private record Product(Guid Id, string ProductCode, string Title, string Category, string MaterialType, string Grade, string Weight);
     private record Resource(string Slug, string Title);
     private record Accepted(Guid? Id, string Message);
 
@@ -24,15 +24,15 @@ public class PublicApiTests(AuthApiFactory factory) : IClassFixture<AuthApiFacto
     };
 
     [Fact]
-    public async Task Products_endpoint_returns_all_four_families_with_placeholder_grades()
+    public async Task Products_endpoint_returns_active_catalog_products()
     {
         var products = await _client.GetFromJsonAsync<List<Product>>("/api/v1/public/products");
 
         Assert.NotNull(products);
-        Assert.Equal(4, products!.Count);
-        var grey = products.Single(p => p.Slug == "grey-iron-castings");
-        // Unverified data must remain a labelled placeholder, never invented.
-        Assert.Contains("to be confirmed", grey.CommonGrades);
+        Assert.NotEmpty(products!);
+        var first = products![0];
+        Assert.False(string.IsNullOrWhiteSpace(first.Title));
+        Assert.False(string.IsNullOrWhiteSpace(first.ProductCode));
     }
 
     [Fact]

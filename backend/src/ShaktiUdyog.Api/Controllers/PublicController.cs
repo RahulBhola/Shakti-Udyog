@@ -17,8 +17,27 @@ public class PublicController(
     IPublicSubmissionService submissions) : ControllerBase
 {
     [HttpGet("products")]
-    [ProducesResponseType<IReadOnlyList<ProductDto>>(StatusCodes.Status200OK)]
-    public IActionResult GetProducts() => Ok(content.GetProducts());
+    [ProducesResponseType<IReadOnlyList<PublicProductItemDto>>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetProducts() => Ok(await content.GetPublicProductsAsync());
+
+    [HttpGet("products/{id:guid}")]
+    [ProducesResponseType<PublicProductItemDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetProductById(Guid id)
+    {
+        var product = await content.GetPublicProductByIdAsync(id);
+        return product is null ? NotFound() : Ok(product);
+    }
+
+    [HttpGet("products/{id:guid}/image")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetProductImage(Guid id)
+    {
+        var result = await content.GetPublicProductImageAsync(id);
+        if (result is null) return NotFound();
+        return File(result.Value.Stream, result.Value.ContentType, result.Value.FileName);
+    }
 
     [HttpGet("products/{slug}")]
     [ProducesResponseType<ProductDto>(StatusCodes.Status200OK)]
