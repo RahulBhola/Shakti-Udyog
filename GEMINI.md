@@ -8,3 +8,4 @@ Read the following core documentation files in `docs/` to understand the project
 4. `docs/03-security-and-access-document.md` (Security & Access Control Document - SAD)
 5. `docs/04-frontend-specification-document.md` (Frontend Specification Document - FSD)
 6. `docs/05-feature-ticket-list.md` (Feature Ticket List - FTL)
+7. `docs/06-complete-application-architecture-and-flow.md` (Complete Application Architecture & Interactive Flow - AAF)

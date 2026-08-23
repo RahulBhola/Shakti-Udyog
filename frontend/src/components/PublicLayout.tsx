@@ -5,7 +5,7 @@ import { useTheme } from "../auth/ThemeContext";
 import { useEnquiryModal } from "../context/EnquiryModalContext";
 import { company } from "../content/company";
 import { cta, navItems } from "../content/navigation";
-import { Sun, Moon, Menu, X, ArrowRight, User } from "lucide-react";
+import { Sun, Moon, Menu, X, ArrowRight, User, LogOut } from "lucide-react";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -208,7 +208,7 @@ function Header() {
                 to={portalHref()}
                 className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-medium transition-all ${
                   isLight
-                    ? "text-neutral-700 bg-neutral-100 hover:bg-neutral-200 border border-neutral-200"
+                    ? "text-neutral-700 bg-neutral-100 hover:bg-neutral-200 border border-neutral-200 shadow-sm"
                     : "text-neutral-300 bg-neutral-900/80 hover:bg-neutral-800 border border-neutral-800 hover:border-neutral-700 hover:text-white"
                 }`}
               >
@@ -218,9 +218,14 @@ function Header() {
               <button
                 type="button"
                 onClick={() => void handleLogout()}
-                className="px-3 py-2 rounded-full text-xs font-medium text-neutral-400 hover:text-red-400 bg-neutral-900/60 border border-neutral-800 hover:border-red-500/30 transition-colors"
+                className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+                  isLight
+                    ? "text-neutral-700 bg-neutral-100 hover:bg-red-50 hover:text-red-600 border border-neutral-200 hover:border-red-200 shadow-sm"
+                    : "text-neutral-300 bg-neutral-900/80 hover:bg-red-500/10 hover:text-red-400 border border-neutral-800 hover:border-red-500/30"
+                }`}
               >
-                Logout
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Logout</span>
               </button>
             </div>
           ) : (
@@ -354,9 +359,14 @@ function Header() {
                   <button
                     type="button"
                     onClick={() => void handleLogout()}
-                    className="flex items-center justify-center w-full py-2 rounded-full text-xs font-medium text-red-500 bg-red-500/5 border border-red-500/20"
+                    className={`flex items-center justify-center gap-1.5 w-full py-2.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+                      isLight
+                        ? "text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 shadow-xs"
+                        : "text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20"
+                    }`}
                   >
-                    Logout
+                    <LogOut className="w-3.5 h-3.5" />
+                    <span>Logout</span>
                   </button>
                 </div>
               ) : (
