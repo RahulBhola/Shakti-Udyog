@@ -88,9 +88,17 @@ export default function ProductDrawer({ open, onClose, onSave, categories, initi
     }
   };
 
-  // Reset error state when drawer opens
+  // Reset error state and lock body scroll when drawer opens
   useEffect(() => {
-    if (open) setSaveError(null);
+    if (open) {
+      setSaveError(null);
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [open]);
 
   if (!open) return null;
