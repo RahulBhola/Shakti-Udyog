@@ -68,11 +68,11 @@ graph TD
 
 ---
 
-## 2. End-to-End Component Topology
+## 2. End-to-End Component Topology & Architecture
 
 ### 2.1 Backend Project Structure
-- **`ShaktiUdyog.Domain`**: Core domain entities, business models, and enums. Has zero external dependencies.
-- **`ShaktiUdyog.Infrastructure`**: EF Core database contexts, identity configuration, token services, User-Agent parser, file storage provider, and database migrations.
+- **`ShaktiUdyog.Domain`**: Core domain entities, business models, statuses, and validation constants. Has zero external dependencies.
+- **`ShaktiUdyog.Infrastructure`**: EF Core database contexts, identity configuration, token services, file storage providers, and database seeders.
 - **`ShaktiUdyog.Api`**: REST API controllers, SignalR hubs, authentication handlers, request/response contracts, background services, and middleware.
 - **`ShaktiUdyog.Api.Tests`**: Automated integration and unit test suite (xUnit, WebApplicationFactory, 66+ passing test cases).
 
@@ -80,11 +80,90 @@ graph TD
 - **`src/types/`**: Centralized Domain Type System (single source of truth for all domain entities, DTOs, enums, and API contracts).
 - **`src/api/`**: Strongly-typed HTTP client (`client.ts`) with automatic in-memory Bearer token injection, silent 401 retry, and endpoint clients.
 - **`src/auth/`**: Authentication state (`AuthContext`), token storage (in-memory closures), role definitions, and route guards (`ProtectedRoute`).
-- **`src/components/ui/`**: Glacier design system components (`Button`, `Badge`, `Card`, `Modal`, `EmptyState`, `Section`, `Breadcrumb`, `Loading`).
+- **`src/components/ui/`**: UI design system components (`Button`, `Badge`, `Card`, `Modal`, `EmptyState`, `Section`, `Breadcrumb`, `Loading`).
 - **`src/hooks/`**: Reusable custom hooks (`useDebounce`, `usePagination`, `useAsync`, `useRealtimeEvent`).
 - **`src/utils/`**: Shared formatters (`formatCurrency`, `formatDate`, `formatRelativeTime`, `formatFileSize`) and validators (`isValidEmail`, `isValidGst`, `isValidPan`).
 - **`src/realtime/`**: SignalR connection singleton, typed event handlers, and window event bridge.
 - **`src/portal/` & `src/pages/`**: Role-guarded customer, admin, and engineer portal pages and public marketing website.
+
+### 2.3 Operations & Financial Analytics Architecture
+
+```mermaid
+graph TD
+    subgraph "Backend API (AdminController & DbContext)"
+        GC["GET /api/v1/admin/charts?range=12m"]
+        AGG1["Orders by 25-Stage MES Kanban"]
+        AGG2["Material & Metallurgy Grade Mix (FG vs SG)"]
+        AGG3["12-Month Invoiced vs Collected Cashflow"]
+        AGG4["12-Month RFQ -> Quote -> Order Pipeline"]
+        AGG5["Industry Sector Distribution"]
+        AGG6["Executive KPIs (OTD %, Yield %, Lead Time)"]
+        GC --> AGG1 & AGG2 & AGG3 & AGG4 & AGG5 & AGG6
+    end
+
+    subgraph "Admin Analytics UI (AdminDashboardPage & AdminCharts)"
+        FILTER["Timeframe Selector: 30D | 90D | 12M | All Time"]
+        KPIS["Executive Metric Badges: OTD 97.2% | Yield 89.5% | Win Rate 44% | Lead Time 14.5d"]
+        C1["1. MES Manufacturing Kanban Stage Breakdown"]
+        C2["2. Metallurgy & Casting Grade Mix (Donut)"]
+        C3["3. Revenue vs Realized Cashflow Velocity (Dual Area)"]
+        C4["4. Monthly Commercial Pipeline (Grouped Bar)"]
+        C5["5. Industry Sector Revenue Distribution (Horizontal Bars)"]
+        C6["6. Order Fulfillment & Delivery Status (Donut)"]
+        FILTER --> KPIS & C1 & C2 & C3 & C4 & C5 & C6
+    end
+```
+
+### 2.4 Product Master Catalog & Dual-View Architecture
+
+```mermaid
+graph LR
+    subgraph "Admin Catalog Master (/admin/products)"
+        PM_API["POST/PUT /api/v1/admin/product-master"]
+        IMG_STORE["Product Images & Attachments"]
+        TOGGLE["View Mode Switcher: Cards | Table"]
+        CARDS["3D Studio Grid Cards (Badges, Specs, Image, Actions)"]
+        TABLE["Tabular Data List (Thumbnails, Grade, Weight, Actions)"]
+        TOGGLE --> CARDS & TABLE
+        PM_API --> IMG_STORE
+    end
+
+    subgraph "Public Catalog Sync (/products)"
+        PUB_API["GET /api/v1/public/products"]
+        PUB_UI["Public 3D Cards & Category Filter Grid"]
+        PUB_API --> PUB_UI
+    end
+
+    PM_API -.->|Dynamic DB Sync| PUB_API
+```
+
+### 2.5 3-Portal Data Flow & Visibility Matrix
+
+```mermaid
+graph TD
+    subgraph "Customer Portal (Role: Customer)"
+        C_RFQ["Submit RFQs & Upload 2D/3D Drawings"]
+        C_QT["Review & Accept Engineering Quotations"]
+        C_ORD["Track Orders Across 25 Kanban Stages"]
+        C_INV["View GST Invoices & Upload Payment Proofs"]
+        C_SESS["Manage Active Device Sessions"]
+    end
+
+    subgraph "Engineer Portal (Role: Engineer)"
+        E_ENQ["Review RFQs & Metallurgy Specs"]
+        E_QT["Generate Line-Item Costing & Quotations"]
+        E_KAN["25-Stage MES Foundry Kanban Board"]
+        E_QC["Log Chemical & Dimensional CMM QC Reports"]
+    end
+
+    subgraph "Admin Executive Portal (Role: Admin)"
+        A_ANL["8-Chart Operational & Cashflow Analytics"]
+        A_CAT["Product Master CRUD & Category Management"]
+        A_USR["User & Company Approvals & RBAC"]
+        A_INV["GST Invoicing, Dispatch & Payment Verification"]
+        A_AUD["Immutable Security & Audit Trail Logs"]
+    end
+```
 
 ---
 
