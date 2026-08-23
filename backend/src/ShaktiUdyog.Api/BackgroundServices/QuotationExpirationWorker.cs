@@ -23,6 +23,9 @@ public class QuotationExpirationWorker(
 
         try
         {
+            // Initial grace period delay to let migrations and seeders finish on startup
+            await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
+
             // Initial check on application startup
             await ProcessExpiredQuotationsAsync(stoppingToken);
 
@@ -76,8 +79,15 @@ public class QuotationExpirationWorker(
                 });
             }
 
-            await uow.SaveChangesAsync(ct);
-            logger.LogInformation("QuotationExpirationWorker: Marked {Count} quotation(s) as Expired.", expiredQuotes.Count);
+            try
+            {
+                await uow.SaveChangesAsync(ct);
+                logger.LogInformation("QuotationExpirationWorker: Marked {Count} quotation(s) as Expired.", expiredQuotes.Count);
+            }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                logger.LogWarning(ex, "QuotationExpirationWorker: Concurrency conflict detected while expiring quotations. Will re-evaluate on next cycle.");
+            }
         }
         catch (Exception ex)
         {

@@ -23,6 +23,9 @@ public class InvoiceOverdueWorker(
 
         try
         {
+            // Initial grace period delay to let migrations and seeders finish on startup
+            await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
+
             // Initial check on application startup
             await ProcessOverdueInvoicesAsync(stoppingToken);
 
@@ -78,8 +81,15 @@ public class InvoiceOverdueWorker(
                 });
             }
 
-            await uow.SaveChangesAsync(ct);
-            logger.LogInformation("InvoiceOverdueWorker: Marked {Count} invoice(s) as Overdue.", overdueInvoices.Count);
+            try
+            {
+                await uow.SaveChangesAsync(ct);
+                logger.LogInformation("InvoiceOverdueWorker: Marked {Count} invoice(s) as Overdue.", overdueInvoices.Count);
+            }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                logger.LogWarning(ex, "InvoiceOverdueWorker: Concurrency conflict detected while updating overdue invoices. Will re-evaluate on next cycle.");
+            }
         }
         catch (Exception ex)
         {
