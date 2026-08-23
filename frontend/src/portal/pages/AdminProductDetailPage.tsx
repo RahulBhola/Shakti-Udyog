@@ -296,16 +296,16 @@ export default function AdminProductDetailPage() {
           </div>
 
           {/* Light Mode Studio Stage */}
-          <div className="rounded-2xl border border-neutral-200 bg-white p-4 flex flex-col justify-between shadow-md">
+          <div className="rounded-2xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#090b10] p-4 flex flex-col justify-between shadow-md dark:shadow-xl">
             <div className="flex items-center justify-between mb-3">
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-700 font-mono text-[11px] font-bold">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-400 font-mono text-[11px] font-bold">
                 <Sun size={12} />
                 <span>Light Theme Render</span>
               </div>
-              <span className="text-[10px] font-mono text-neutral-500 truncate max-w-[200px]">{lightImage}</span>
+              <span className="text-[10px] font-mono text-neutral-500 dark:text-neutral-400 truncate max-w-[200px]">{lightImage}</span>
             </div>
 
-            <div className="w-full h-52 rounded-xl flex items-center justify-center p-4 bg-gradient-to-b from-neutral-50 to-neutral-100/90 border border-neutral-200/80 my-2">
+            <div className="w-full h-52 rounded-xl flex items-center justify-center p-4 bg-gradient-to-b from-neutral-50 to-neutral-100/90 dark:from-[#1e222d] dark:to-[#12151e] border border-neutral-200/80 dark:border-white/5 my-2">
               <img
                 src={lightImage}
                 alt={`${p.productName} Light Render`}
@@ -313,9 +313,9 @@ export default function AdminProductDetailPage() {
               />
             </div>
 
-            <div className="flex items-center justify-between text-[11px] font-mono text-neutral-500 mt-2 pt-2 border-t border-neutral-100">
+            <div className="flex items-center justify-between text-[11px] font-mono text-neutral-500 dark:text-neutral-400 mt-2 pt-2 border-t border-neutral-100 dark:border-white/5">
               <span>Resolution: High-Res 3D Studio</span>
-              <a href={lightImage} target="_blank" rel="noreferrer" className="text-orange-600 hover:underline">
+              <a href={lightImage} target="_blank" rel="noreferrer" className="text-orange-600 dark:text-orange-400 hover:underline">
                 View Full Size ↗
               </a>
             </div>

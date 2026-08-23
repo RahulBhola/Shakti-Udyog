@@ -55,16 +55,15 @@ export function AdminBreadcrumb() {
       <ol>
         {parts.map((part, i) => {
           const href = "/" + parts.slice(0, i + 1).join("/");
+          const isGuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(part)
+            || /^[0-9a-f]{32}$/i.test(part);
+          const label = isGuid ? "Product Details" : (part.charAt(0).toUpperCase() + part.slice(1).replaceAll("-", " "));
           return (
             <li key={href}>
               {i === parts.length - 1 ? (
-                <span aria-current="page">
-                  {part.charAt(0).toUpperCase() + part.slice(1).replaceAll("-", " ")}
-                </span>
+                <span aria-current="page">{label}</span>
               ) : (
-                <Link to={href}>
-                  {part.charAt(0).toUpperCase() + part.slice(1).replaceAll("-", " ")}
-                </Link>
+                <Link to={href}>{label}</Link>
               )}
             </li>
           );
