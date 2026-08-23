@@ -57,39 +57,44 @@ function InfoCard({ icon: Icon, label, value, color }: { icon: any; label: strin
 function Section({
   icon: Icon,
   title,
+  badge,
   children,
   defaultOpen = true,
   action,
 }: {
   icon: any;
   title: string;
+  badge?: React.ReactNode;
   children: React.ReactNode;
   defaultOpen?: boolean;
   action?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <section className="rounded-[16px] border border-neutral-200/90 dark:border-white/[0.08] bg-white dark:bg-[#0f121a] shadow-sm overflow-hidden">
-      <div className="flex items-center justify-between w-full px-5 py-4 bg-neutral-50/50 dark:bg-white/[0.02] border-b border-neutral-200/60 dark:border-white/[0.06]">
+    <section className="rounded-2xl border border-neutral-200/90 dark:border-white/[0.08] bg-white dark:bg-[#0f121a] shadow-sm overflow-hidden transition-all">
+      <div className="flex items-center justify-between w-full px-4 sm:px-5 py-3.5 bg-neutral-50/70 dark:bg-white/[0.02] border-b border-neutral-200/60 dark:border-white/[0.06] gap-2">
         <div
-          className="flex items-center gap-2.5 cursor-pointer flex-1"
+          className="flex items-center gap-2.5 cursor-pointer min-w-0 flex-1"
           onClick={() => setOpen(!open)}
         >
-          <Icon size={16} className="text-[var(--color-primary)]" />
-          <h2 className="text-sm font-bold text-neutral-900 dark:text-white m-0">{title}</h2>
+          <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-[var(--color-primary)]/10 text-[var(--color-primary)] shrink-0">
+            <Icon size={15} />
+          </div>
+          <h2 className="text-[13px] font-bold text-neutral-900 dark:text-white m-0 truncate">{title}</h2>
+          {badge}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 shrink-0">
           {action}
           <button
             type="button"
             onClick={() => setOpen(!open)}
-            className="p-1 rounded-md text-neutral-400 hover:text-neutral-700 dark:hover:text-white"
+            className="flex items-center justify-center w-7 h-7 rounded-lg text-neutral-400 hover:text-neutral-700 dark:hover:text-white hover:bg-neutral-200/50 dark:hover:bg-white/5 transition-colors"
           >
-            {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            {open ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
           </button>
         </div>
       </div>
-      {open && <div className="px-5 py-4">{children}</div>}
+      {open && <div className="p-4 sm:p-5">{children}</div>}
     </section>
   );
 }
@@ -356,17 +361,24 @@ export default function AdminProductDetailPage() {
           {/* Attachments Section */}
           <Section
             icon={Paperclip}
-            title="Attached Documents & Drawings"
+            title="Attached Documents"
+            badge={
+              p.attachments.length > 0 ? (
+                <span className="px-2 py-0.5 rounded-full font-mono text-[10px] font-bold bg-neutral-200/80 dark:bg-white/10 text-neutral-700 dark:text-neutral-300">
+                  {p.attachments.length}
+                </span>
+              ) : null
+            }
             defaultOpen
             action={
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[var(--color-primary)] text-white text-[11px] font-bold hover:brightness-110 shadow-sm"
+                className="inline-flex items-center gap-1.5 px-3 h-7 rounded-lg bg-[var(--color-primary)] text-white text-[11px] font-bold hover:brightness-110 shadow-sm transition-all"
               >
                 <Upload size={12} />
-                <span>{uploading ? "Uploading..." : "Attach File"}</span>
+                <span>{uploading ? "..." : "Upload"}</span>
               </button>
             }
           >
@@ -380,17 +392,23 @@ export default function AdminProductDetailPage() {
             />
 
             {p.attachments.length === 0 ? (
-              <div className="text-center py-8 text-neutral-400 text-xs">
-                <Paperclip size={28} className="mx-auto mb-2 opacity-40" />
-                <p className="font-medium text-neutral-500 dark:text-neutral-400">No attachments uploaded yet.</p>
-                <p className="text-[11px] text-neutral-400 mt-1">Upload CAD drawings, PDF test certificates, or 3D renders.</p>
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral-200 dark:border-white/10 text-xs font-semibold text-neutral-700 dark:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-white/5"
-                >
-                  <Plus size={13} /> Select Files
-                </button>
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="group relative flex flex-col items-center justify-center py-7 px-4 rounded-xl border-2 border-dashed border-neutral-200 dark:border-white/10 hover:border-[var(--color-primary)]/50 bg-neutral-50/50 dark:bg-white/[0.01] hover:bg-[var(--color-primary)]/[0.02] cursor-pointer transition-all text-center"
+              >
+                <div className="w-10 h-10 rounded-xl bg-neutral-100 dark:bg-white/5 text-neutral-400 group-hover:text-[var(--color-primary)] group-hover:bg-[var(--color-primary)]/10 flex items-center justify-center mb-2 transition-colors">
+                  <Paperclip size={18} />
+                </div>
+                <p className="text-[12px] font-bold text-neutral-800 dark:text-neutral-200 m-0">
+                  No attachments yet
+                </p>
+                <p className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-1 max-w-[220px] leading-relaxed">
+                  Upload CAD drawings, PDF test certificates, or datasheets.
+                </p>
+                <div className="mt-3 inline-flex items-center gap-1.5 px-3 h-7 rounded-lg bg-neutral-100 dark:bg-white/10 group-hover:bg-[var(--color-primary)] group-hover:text-white text-[11px] font-semibold text-neutral-700 dark:text-neutral-300 transition-colors">
+                  <Plus size={12} />
+                  <span>Select Files</span>
+                </div>
               </div>
             ) : (
               <div className="space-y-2.5">
