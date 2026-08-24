@@ -395,7 +395,16 @@ export default function AdminProductPage() {
   };
 
   const handleArchive = async (id: string) => { await adminApi.productMaster.archive(id); load(); loadStats(); };
-  const handleDuplicate = async (id: string) => { await adminApi.productMaster.duplicate(id); load(); loadStats(); };
+  const handleDuplicate = async (id: string) => {
+    try {
+      const dup = await adminApi.productMaster.duplicate(id);
+      await load();
+      await loadStats();
+      navigate(`/admin/products/${dup.id}`);
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Failed to duplicate product.");
+    }
+  };
   const handleDelete = async (id: string) => { await adminApi.productMaster.archive(id); load(); loadStats(); };
   const handleToggleStatus = async (product: ProductMasterListItem) => {
     const newStatus = product.status === "Active" ? "Inactive" : "Active";

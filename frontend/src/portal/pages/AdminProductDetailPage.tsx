@@ -255,7 +255,14 @@ export default function AdminProductDetailPage() {
             </button>
             <button
               type="button"
-              onClick={() => adminApi.productMaster.duplicate(p.id).then(() => navigate(0))}
+              onClick={async () => {
+                try {
+                  const dup = await adminApi.productMaster.duplicate(p.id);
+                  navigate(`/admin/products/${dup.id}`);
+                } catch (e) {
+                  alert(e instanceof Error ? e.message : "Failed to duplicate product.");
+                }
+              }}
               className="inline-flex items-center gap-1.5 px-3.5 h-9 rounded-xl border border-neutral-200 dark:border-white/10 bg-neutral-50 hover:bg-neutral-100 dark:bg-white/5 dark:hover:bg-white/10 text-xs font-semibold text-neutral-700 dark:text-neutral-300 transition-all"
             >
               <Copy size={13} />

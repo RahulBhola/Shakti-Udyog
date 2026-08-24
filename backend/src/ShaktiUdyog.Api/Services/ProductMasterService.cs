@@ -289,13 +289,34 @@ public class ProductMasterService(
             .Include(pm => pm.Category)
             .Include(pm => pm.Attachments)
             .AsNoTracking()
-            .SingleAsync(pm => pm.Id == id);
+            .FirstOrDefaultAsync(pm => pm.Id == id)
+            ?? throw new NotFoundException("ProductMaster", id);
+
+        // Generate a guaranteed unique ProductCode
+        var cleanBaseCode = System.Text.RegularExpressions.Regex.Replace(
+            original.ProductCode, @"-COPY(-\d+)?$", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        var newCode = $"{cleanBaseCode}-COPY";
+        var codeCounter = 1;
+        while (await db.ProductMasters.IgnoreQueryFilters().AnyAsync(p => p.ProductCode == newCode))
+        {
+            newCode = $"{cleanBaseCode}-COPY-{codeCounter++}";
+        }
+
+        // Generate a clean ProductName
+        var cleanBaseName = System.Text.RegularExpressions.Regex.Replace(
+            original.ProductName, @"\s*\(Copy(\s+\d+)?\)$", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        var newName = $"{cleanBaseName} (Copy)";
+        var nameCounter = 1;
+        while (await db.ProductMasters.IgnoreQueryFilters().AnyAsync(p => p.ProductName == newName))
+        {
+            newName = $"{cleanBaseName} (Copy {++nameCounter})";
+        }
 
         var duplicate = new ProductMaster
         {
             Id = Guid.NewGuid(),
-            ProductCode = $"{original.ProductCode}-COPY",
-            ProductName = $"{original.ProductName} (Copy)",
+            ProductCode = newCode,
+            ProductName = newName,
             Description = original.Description,
             CategoryId = original.CategoryId,
             CastingType = original.CastingType,
@@ -331,9 +352,31 @@ public class ProductMasterService(
             Currency = original.Currency,
             Status = "Draft",
             CreatedByUserId = userId,
+            CreatedAtUtc = DateTimeOffset.UtcNow,
         };
 
         db.ProductMasters.Add(duplicate);
+
+        // Duplicate attachments so drawings and images carry over
+        if (original.Attachments != null && original.Attachments.Count > 0)
+        {
+            foreach (var att in original.Attachments)
+            {
+                db.ProductMasterAttachments.Add(new ProductMasterAttachment
+                {
+                    Id = Guid.NewGuid(),
+                    ProductMasterId = duplicate.Id,
+                    FileName = att.FileName,
+                    ContentType = att.ContentType,
+                    SizeBytes = att.SizeBytes,
+                    StorageKey = att.StorageKey,
+                    Description = att.Description,
+                    UploadedByUserId = userId,
+                    UploadedAtUtc = DateTimeOffset.UtcNow,
+                });
+            }
+        }
+
         await db.SaveChangesAsync();
         await audit.WriteAsync("productmaster.duplicated", userId, "ProductMaster", duplicate.Id.ToString(), ip);
 
