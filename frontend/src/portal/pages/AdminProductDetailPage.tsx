@@ -14,7 +14,7 @@ import {
   Calendar, Hash, Activity, Ruler,
   Beaker, Cog, Paperclip, Building2,
   ChevronDown, ChevronUp, Upload, Plus,
-  FileSpreadsheet, Image as ImageIcon,
+  FileSpreadsheet, Image as ImageIcon, Power,
 } from "lucide-react";
 
 /* ------------------------------------------------------------------ */
@@ -23,6 +23,7 @@ import {
 
 const statusColors: Record<string, string> = {
   Active: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20",
+  Inactive: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20",
   Draft: "bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20",
   Archived: "bg-neutral-500/10 text-neutral-600 dark:text-neutral-400 border border-neutral-500/20",
 };
@@ -77,10 +78,12 @@ function Section({
           className="flex items-center gap-2.5 cursor-pointer min-w-0 flex-1"
           onClick={() => setOpen(!open)}
         >
-          <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-[var(--color-primary)]/10 text-[var(--color-primary)] shrink-0">
-            <Icon size={15} />
+          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-[var(--color-primary)]/10 text-[var(--color-primary)] shrink-0">
+            <Icon size={16} />
           </div>
-          <h2 className="text-[13px] font-bold text-neutral-900 dark:text-white m-0 truncate">{title}</h2>
+          <span className="font-bold text-neutral-900 dark:text-white tracking-tight" style={{ fontSize: "15px", lineHeight: "22px", fontWeight: 700 }}>
+            {title}
+          </span>
           {badge}
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
@@ -227,6 +230,23 @@ export default function AdminProductDetailPage() {
           <div className="flex items-center gap-2">
             <button
               type="button"
+              onClick={async () => {
+                const newStatus = p.status === "Active" ? "Inactive" : "Active";
+                await adminApi.productMaster.update(p.id, { status: newStatus });
+                loadProduct();
+              }}
+              className={`inline-flex items-center gap-1.5 px-3.5 h-9 rounded-xl border text-xs font-bold transition-all shadow-sm ${
+                p.status === "Active"
+                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20"
+                  : "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20"
+              }`}
+              title={p.status === "Active" ? "Product is published. Click to Deactivate (hide from public)." : "Product is hidden. Click to Activate (publish to public)."}
+            >
+              <Power size={13} />
+              {p.status === "Active" ? "Active (Live)" : "Inactive (Hidden)"}
+            </button>
+            <button
+              type="button"
               onClick={() => setDrawerOpen(true)}
               className="inline-flex items-center gap-1.5 px-4 h-9 rounded-xl bg-[var(--color-primary)] text-white text-xs font-bold hover:brightness-110 shadow-sm shadow-orange-500/20 transition-all"
             >
@@ -264,9 +284,13 @@ export default function AdminProductDetailPage() {
       {/* 3D PRODUCT VISUAL SHOWCASE */}
       <div className="rounded-2xl border border-neutral-200/90 dark:border-white/[0.08] bg-white dark:bg-[#0f121a] p-5 shadow-sm space-y-4">
         <div className="flex items-center justify-between border-b border-neutral-100 dark:border-white/[0.06] pb-3">
-          <div className="flex items-center gap-2">
-            <ImageIcon size={18} className="text-[var(--color-primary)]" />
-            <h2 className="text-sm font-bold text-neutral-900 dark:text-white m-0">3D Component Render</h2>
+          <div className="flex items-center gap-2.5">
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-[var(--color-primary)]/10 text-[var(--color-primary)] shrink-0">
+              <ImageIcon size={16} />
+            </div>
+            <span className="font-bold text-neutral-900 dark:text-white tracking-tight" style={{ fontSize: "15px", lineHeight: "22px", fontWeight: 700 }}>
+              3D Component Render
+            </span>
           </div>
           <span className="text-[11px] font-mono text-neutral-500 dark:text-neutral-400">
             Isolated Transparent Background Asset

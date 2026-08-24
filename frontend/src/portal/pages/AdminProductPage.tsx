@@ -12,11 +12,11 @@ import {
   Package, Plus, Download, Search, RefreshCw, Eye, MoreVertical,
   ChevronLeft, ChevronRight, X, Copy, Archive, Trash2, FileEdit,
   Boxes, CheckCircle2, Clock, Tag, TrendingDown, LayoutGrid, Table as TableIcon,
-  Scale, FolderTree,
+  Scale, FolderTree, Power,
 } from "lucide-react";
 import "./erpListView.css";
 
-const STATUS_FILTERS = ["All", "Active", "Draft", "Archived"];
+const STATUS_FILTERS = ["All", "Active", "Inactive", "Draft", "Archived"];
 const PAGE_SIZES = [8, 12, 24, 48];
 
 /* ------------------------------------------------------------------ */
@@ -40,6 +40,7 @@ function useIsLightMode() {
 function statusTone(status: string): string {
   switch (status) {
     case "Active": return "green";
+    case "Inactive": return "yellow";
     case "Draft": return "orange";
     case "Archived": return "gray";
     default: return "gray";
@@ -101,6 +102,7 @@ function AdminProductCard({
   onDuplicate,
   onArchive,
   onDelete,
+  onToggleStatus,
   openMenuId,
   setOpenMenuId,
 }: {
@@ -110,6 +112,7 @@ function AdminProductCard({
   onDuplicate: () => void;
   onArchive: () => void;
   onDelete: () => void;
+  onToggleStatus: () => void;
   openMenuId: string | null;
   setOpenMenuId: (id: string | null) => void;
 }) {
@@ -258,8 +261,19 @@ function AdminProductCard({
 
           {isMenuOpen && (
             <div
-              className="absolute right-0 bottom-full mb-1 w-36 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#161a24] shadow-2xl p-1 z-30 flex flex-col gap-0.5"
+              className="absolute right-0 bottom-full mb-1 w-40 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#161a24] shadow-2xl p-1 z-30 flex flex-col gap-0.5"
             >
+              <button
+                type="button"
+                onClick={() => { setOpenMenuId(null); onToggleStatus(); }}
+                className={`flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg text-left font-medium ${
+                  product.status === "Active"
+                    ? "text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-500/10"
+                    : "text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10"
+                }`}
+              >
+                <Power size={13} /> {product.status === "Active" ? "Deactivate" : "Activate"}
+              </button>
               <button
                 type="button"
                 onClick={() => { setOpenMenuId(null); onDuplicate(); }}
@@ -383,6 +397,12 @@ export default function AdminProductPage() {
   const handleArchive = async (id: string) => { await adminApi.productMaster.archive(id); load(); loadStats(); };
   const handleDuplicate = async (id: string) => { await adminApi.productMaster.duplicate(id); load(); loadStats(); };
   const handleDelete = async (id: string) => { await adminApi.productMaster.archive(id); load(); loadStats(); };
+  const handleToggleStatus = async (product: ProductMasterListItem) => {
+    const newStatus = product.status === "Active" ? "Inactive" : "Active";
+    await adminApi.productMaster.update(product.id, { status: newStatus });
+    load();
+    loadStats();
+  };
 
   const kpis = [
     { label: "Total Products", value: stats?.totalProducts ?? 0, hint: "All products in master", icon: Boxes, color: "var(--kpi-blue)", bg: "var(--kpi-blue-bg)", glow: "rgba(59,130,246,0.25)" },
@@ -412,6 +432,14 @@ export default function AdminProductPage() {
         <td><StatusBadge status={p.status} /></td>
         <td>
           <div className="inv-actions" onClick={(e) => e.stopPropagation()}>
+            <button
+              className="inv-icon-btn"
+              title={p.status === "Active" ? "Deactivate (hide from public catalog)" : "Activate (publish to public catalog)"}
+              aria-label={p.status === "Active" ? "Deactivate" : "Activate"}
+              onClick={() => void handleToggleStatus(p)}
+            >
+              <Power size={15} className={p.status === "Active" ? "text-emerald-500" : "text-neutral-400 hover:text-emerald-500"} />
+            </button>
             <button className="inv-icon-btn" title="View" aria-label="View" onClick={() => navigate(`/admin/products/${p.id}`)}>
               <Eye size={16} />
             </button>
@@ -557,6 +585,7 @@ export default function AdminProductPage() {
                 onDuplicate={() => void handleDuplicate(product.id)}
                 onArchive={() => void handleArchive(product.id)}
                 onDelete={() => setConfirmDelete(product)}
+                onToggleStatus={() => void handleToggleStatus(product)}
                 openMenuId={openMenuId}
                 setOpenMenuId={setOpenMenuId}
               />

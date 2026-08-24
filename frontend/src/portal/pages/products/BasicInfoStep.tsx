@@ -44,11 +44,12 @@ export default function BasicInfoStep({ data, onChange, categories }: BasicInfoS
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <Field label="Unit" value={data.unit ?? ""} onChange={(v) => onChange("unit", v)} placeholder="e.g. Nos, Pcs, Kg, Set" />
         <SelectField label="Status" value={data.status ?? "Draft"} onChange={(v) => onChange("status", v)}
           options={[
-            { id: "Draft", name: "Draft" },
-            { id: "Active", name: "Active" },
+            { id: "Active", name: "Active (Visible to public/customers)" },
+            { id: "Inactive", name: "Inactive (Hidden from public)" },
+            { id: "Draft", name: "Draft (Internal only)" },
+            { id: "Archived", name: "Archived (Discontinued)" },
           ]} />
       </div>
     </div>
