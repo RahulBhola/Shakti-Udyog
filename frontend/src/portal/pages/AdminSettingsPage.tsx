@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef, type ChangeEvent } from "react";
 import { adminApi } from "../../api/adminApi";
 import {
-  Building2,
   Percent,
   Package,
   Bell,
@@ -132,50 +131,6 @@ const DEFAULT_SETTINGS: Record<string, string> = {
 };
 
 const SECTIONS: SectionDef[] = [
-  {
-    id: "company",
-    title: "Company Identity & Tax Profile",
-    shortTitle: "Company",
-    description: "Official business identity, registration credentials, and plant locations used across invoices, quotations, and reports.",
-    icon: Building2,
-    badgeBg: "bg-blue-500/10",
-    badgeText: "text-blue-600 dark:text-blue-400",
-    badgeBorder: "border-blue-500/20",
-    groups: [
-      {
-        title: "Legal Identity & Contact",
-        description: "Primary enterprise identifiers and communication channels.",
-        fields: [
-          { key: "company.name", label: "Company Name", type: "text", placeholder: "Shakti Udyog", help: "Legal registered name of the enterprise", category: "company" },
-          { key: "company.website", label: "Official Website", type: "url", placeholder: "https://shaktiudyog.com", category: "company" },
-          { key: "company.email", label: "Primary Corporate Email", type: "email", placeholder: "info@shaktiudyog.com", category: "company" },
-          { key: "company.phone", label: "Corporate Contact Phone", type: "text", placeholder: "+91 98765 43210", category: "company" },
-          { key: "company.currency", label: "Operating Currency Code", type: "text", placeholder: "INR", help: "Standard ISO-4217 currency code", category: "company" },
-        ],
-      },
-      {
-        title: "Statutory & Tax Registrations",
-        description: "Government compliance credentials displayed on GST invoices.",
-        fields: [
-          { key: "company.gst", label: "GSTIN Number", type: "text", placeholder: "09AAAAA0000A1Z5", category: "company" },
-          { key: "company.pan", label: "Permanent Account Number (PAN)", type: "text", placeholder: "AAAAA0000A", category: "company" },
-          { key: "company.cin", label: "Corporate Identification Number (CIN)", type: "text", placeholder: "U27100UP...", category: "company" },
-          { key: "company.msme", label: "MSME / Udyam Registration No.", type: "text", placeholder: "UDYAM-UP-...", category: "company" },
-        ],
-      },
-      {
-        title: "Addresses & Operational Facilities",
-        description: "Registered office and manufacturing foundry plant locations.",
-        fields: [
-          { key: "company.registeredAddress", label: "Registered Head Office Address", type: "multiline", placeholder: "Plot No. 42, Industrial Area...", category: "company" },
-          { key: "company.factoryAddress", label: "Foundry Works & Plant Address", type: "multiline", placeholder: "Unit 1 & 2, Foundry Cluster...", category: "company" },
-          { key: "company.city", label: "City", type: "text", placeholder: "Agra", category: "company" },
-          { key: "company.state", label: "State / Province", type: "text", placeholder: "Uttar Pradesh", category: "company" },
-          { key: "company.pin", label: "Postal PIN Code", type: "text", placeholder: "282006", category: "company" },
-        ],
-      },
-    ],
-  },
   {
     id: "commercial",
     title: "Commercial & Quotation Policies",
@@ -773,7 +728,7 @@ export default function AdminSettingsPage() {
   }, [allKeys, values]);
 
   const sessionTimeout = values["security.sessionTimeoutMinutes"] || "60";
-  const currencyCode = values["company.currency"] || "INR";
+  const currencyCode = values["commercial.defaultCurrency"] || "INR";
 
   if (!loaded) {
     return (
