@@ -14,7 +14,7 @@ import {
   IndustrySectorBreakdownChart,
 } from "../../components/AdminCharts";
 import {
-  UserCheck, ClipboardList, ShoppingCart, Truck, Wallet, Users, Building2, FileSearch,
+  UserCheck, ClipboardList, FileText, ShoppingCart, Truck, Wallet, Users, Building2, FileSearch,
   BarChart3, ArrowRight, Activity, TrendingUp, Factory, Award, Calendar,
 } from "lucide-react";
 
@@ -65,7 +65,7 @@ const kpiMetrics: KpiDef[] = [
   { key: "activeCustomers", label: "Active Customers", icon: UserCheck, color: "green", href: "/admin/users", hint: "Verified & active" },
   { key: "pendingEnquiries", label: "Pending Enquiries", icon: ClipboardList, color: "purple", href: "/admin/enquiries", hint: "Awaiting review" },
   { key: "approvedEnquiries", label: "Approved Enquiries", icon: ClipboardList, color: "teal", href: "/admin/enquiries", hint: "Approved & ready" },
-  { key: "pendingQuotations", label: "Pending Quotes", icon: ClipboardList, color: "indigo", href: "/admin/quotations", hint: "Awaiting response" },
+  { key: "pendingQuotations", label: "Pending Quotes", icon: FileText, color: "indigo", href: "/admin/quotations", hint: "Awaiting response" },
   { key: "ordersInProduction", label: "Orders in Production", icon: ShoppingCart, color: "orange", href: "/admin/orders", hint: "Currently in the foundry" },
   { key: "ordersDispatched", label: "Orders Dispatched", icon: Truck, color: "pink", href: "/admin/orders", hint: "Shipped to customers" },
   { key: "pendingPayments", label: "Pending Payments", icon: Wallet, color: "yellow", href: "/admin/invoices", hint: "Awaiting approval" },

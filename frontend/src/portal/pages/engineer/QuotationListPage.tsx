@@ -6,7 +6,7 @@ import { EmptyState, Loading } from "../../../components/ui";
 import { formatDate } from "../../shared";
 import {
   FileText, Search, RefreshCw, ChevronLeft, ChevronRight, X,
-  ClipboardList, CheckCircle, Clock, XCircle,
+  CheckCircle, Clock, XCircle,
 } from "lucide-react";
 import "../erpListView.css";
 
@@ -93,7 +93,7 @@ export default function QuotationListPage() {
   const hasActiveFilter = search !== "" || statusFilter !== "All" || quickStatus !== "All";
 
   const kpis = [
-    { label: "Total Quotes", value: total, hint: "This Month view", icon: ClipboardList, color: "var(--kpi-blue)", bg: "var(--kpi-blue-bg)", glow: "rgba(59,130,246,0.25)" },
+    { label: "Total Quotes", value: total, hint: "This Month view", icon: FileText, color: "var(--kpi-blue)", bg: "var(--kpi-blue-bg)", glow: "rgba(59,130,246,0.25)" },
     { label: "Accepted", value: accepted, hint: "Accepted & converted", icon: CheckCircle, color: "var(--kpi-green)", bg: "var(--kpi-green-bg)", glow: "rgba(34,197,94,0.22)" },
     { label: "Pending", value: pending, hint: "Draft / issued / negotiating", icon: Clock, color: "var(--kpi-orange)", bg: "var(--kpi-orange-bg)", glow: "rgba(249,115,22,0.22)" },
     { label: "Cancelled", value: cancelled, hint: "Cancelled / declined / expired", icon: XCircle, color: "var(--color-danger)", bg: "rgba(239,68,68,0.10)", glow: "rgba(239,68,68,0.22)" },
