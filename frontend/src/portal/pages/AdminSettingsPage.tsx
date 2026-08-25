@@ -6,7 +6,6 @@ import {
   Package,
   Bell,
   ShieldCheck,
-  Plug,
   Flag,
   Save,
   CheckCircle2,
@@ -22,7 +21,6 @@ import {
   RotateCcw,
   Sliders,
   AlertTriangle,
-  Send,
   X,
   FileJson,
   Layers,
@@ -123,13 +121,6 @@ const DEFAULT_SETTINGS: Record<string, string> = {
   "security.loginRateLimitPerMinute": "10",
   "security.allowPublicRegistration": "true",
   "security.requireAdminApproval": "true",
-
-  // Integrations
-  "integration.smtpHost": "smtp.sendgrid.net",
-  "integration.smtpPort": "587",
-  "integration.smtpUser": "apikey",
-  "integration.smtpPassword": "",
-  "integration.paymentProvider": "Razorpay Enterprise Gateway",
 
   // Feature Flags
   "feature.enquiry": "true",
@@ -309,35 +300,6 @@ const SECTIONS: SectionDef[] = [
         fields: [
           { key: "security.allowPublicRegistration", label: "Allow Public Customer Self-Registration", type: "boolean", help: "Enables public sign-up form on website", category: "security" },
           { key: "security.requireAdminApproval", label: "Require Manual Admin Approval for New Companies", type: "boolean", help: "New accounts stay pending until verified by Administrator", category: "security" },
-        ],
-      },
-    ],
-  },
-  {
-    id: "integrations",
-    title: "Third-Party Integrations & Gateways",
-    shortTitle: "Integrations",
-    description: "SMTP mail relay servers, payment processing gateways, and external API credentials.",
-    icon: Plug,
-    badgeBg: "bg-cyan-500/10",
-    badgeText: "text-cyan-600 dark:text-cyan-400",
-    badgeBorder: "border-cyan-500/20",
-    groups: [
-      {
-        title: "SMTP Email Relay Gateway",
-        description: "Outgoing transactional mail server configuration.",
-        fields: [
-          { key: "integration.smtpHost", label: "SMTP Server Host", type: "text", placeholder: "smtp.sendgrid.net", category: "integrations" },
-          { key: "integration.smtpPort", label: "SMTP Port", type: "number", placeholder: "587", category: "integrations" },
-          { key: "integration.smtpUser", label: "SMTP Username / API Key", type: "text", placeholder: "apikey", category: "integrations" },
-          { key: "integration.smtpPassword", label: "SMTP Password / Secret Token", type: "password", placeholder: "••••••••••••", category: "integrations" },
-        ],
-      },
-      {
-        title: "Payment Gateway Provider",
-        description: "Merchant processing gateway for online settlement.",
-        fields: [
-          { key: "integration.paymentProvider", label: "Payment Gateway Provider Name", type: "text", placeholder: "Razorpay Enterprise Gateway", category: "integrations" },
         ],
       },
     ],
@@ -643,7 +605,6 @@ export default function AdminSettingsPage() {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [importJsonText, setImportJsonText] = useState("");
-  const [testEmailSending, setTestEmailSending] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -761,16 +722,6 @@ export default function AdminSettingsPage() {
     } catch {
       setToast({ message: "Could not parse JSON configuration.", type: "error" });
     }
-  };
-
-  const handleTestSmtp = async () => {
-    setTestEmailSending(true);
-    await new Promise((r) => setTimeout(r, 1200));
-    setTestEmailSending(false);
-    setToast({
-      message: `Test email dispatched to ${values["notify.supportEmail"] || "support mailbox"} via ${values["integration.smtpHost"] || "SMTP Host"}.`,
-      type: "success",
-    });
   };
 
   // Search filter results
@@ -1266,24 +1217,6 @@ export default function AdminSettingsPage() {
                           );
                         })}
                       </div>
-
-                      {/* Helper tool inside integrations */}
-                      {activeSection.id === "integrations" && group.title.includes("SMTP") && (
-                        <div className="pt-3 border-t border-neutral-200/80 dark:border-white/10 flex items-center justify-between flex-wrap gap-3">
-                          <p className="text-[11px] text-neutral-500 dark:text-neutral-400">
-                            Verify mail server handshake by dispatching a test transmission.
-                          </p>
-                          <button
-                            type="button"
-                            onClick={handleTestSmtp}
-                            disabled={testEmailSending}
-                            className="px-3.5 py-1.5 rounded-xl bg-neutral-100 dark:bg-white/5 hover:bg-neutral-200/70 dark:hover:bg-white/10 border border-neutral-200 dark:border-white/10 text-xs font-bold text-neutral-800 dark:text-neutral-200 flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
-                          >
-                            <Send size={13} className={testEmailSending ? "animate-spin" : ""} />
-                            <span>{testEmailSending ? "Testing SMTP..." : "Send Test Email"}</span>
-                          </button>
-                        </div>
-                      )}
                     </div>
                   )}
                 </div>
