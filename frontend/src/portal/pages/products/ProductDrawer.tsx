@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { X, ChevronLeft, ChevronRight, Check } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Check, FileText, Sparkles } from "lucide-react";
 import BasicInfoStep from "./BasicInfoStep";
 import MaterialStep from "./MaterialStep";
 import DimensionStep from "./DimensionStep";
@@ -73,19 +73,30 @@ export default function ProductDrawer({ open, onClose, onSave, categories, initi
 
   const handleNext = () => {
     if (step === 5 && !hasProductImage) {
-      setSaveError("Please attach a primary product image before proceeding.");
+      setSaveError("Please attach a primary product image before proceeding to review.");
       return;
     }
     setSaveError(null);
     setStep(Math.min(STEPS.length - 1, step + 1));
   };
 
-  const handleSave = async () => {
-    if (!hasProductImage) {
-      setSaveError("Please attach a primary product image before saving.");
+  const handleSave = async (targetStatus?: string) => {
+    const finalStatus = targetStatus || data.status || "Draft";
+
+    // Validate required fields
+    if (!data.productName?.trim()) {
+      setSaveError("Please enter a Product Name before saving.");
+      setStep(0);
+      return;
+    }
+
+    // For publishing as Active, require product image
+    if (finalStatus === "Active" && !hasProductImage) {
+      setSaveError("Please attach a primary product image before publishing as Active.");
       setStep(5);
       return;
     }
+
     setSaving(true);
     try {
       // Clean payload: convert empty strings to null for nullable server-side fields
@@ -113,6 +124,10 @@ export default function ProductDrawer({ open, onClose, onSave, categories, initi
           payload[key] = value;
         }
       }
+
+      // Explicitly set target status
+      payload.status = finalStatus;
+
       await onSave(payload, files);
       setStep(0);
     } catch (err: any) {
@@ -155,7 +170,7 @@ export default function ProductDrawer({ open, onClose, onSave, categories, initi
           onRemove={handleRemoveFile}
         />
       );
-      case 6: return <ReviewStep data={data} />;
+      case 6: return <ReviewStep data={data} onChange={handleChange} />;
       default: return null;
     }
   };
@@ -174,7 +189,7 @@ export default function ProductDrawer({ open, onClose, onSave, categories, initi
             <p className="text-[12px] text-[var(--text-muted)]">Step {step + 1} of {STEPS.length} — {STEPS[step].label}</p>
           </div>
           <button type="button" onClick={onClose}
-            className="flex items-center justify-center w-8 h-8 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)]">
+            className="flex items-center justify-center w-8 h-8 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] cursor-pointer">
             <X size={16} />
           </button>
         </div>
@@ -190,13 +205,13 @@ export default function ProductDrawer({ open, onClose, onSave, categories, initi
                   type="button"
                   onClick={() => {
                     if (step === 5 && i > 5 && !hasProductImage) {
-                      setSaveError("Please attach a primary product image before proceeding.");
+                      setSaveError("Please attach a primary product image before proceeding to review.");
                       return;
                     }
                     setSaveError(null);
                     setStep(i);
                   }}
-                  className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-left transition-all text-[12px] ${
+                  className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-left transition-all text-[12px] cursor-pointer ${
                     i === step
                       ? "bg-[var(--color-primary)]/10 text-[var(--color-primary)] font-semibold"
                       : i < step
@@ -231,36 +246,51 @@ export default function ProductDrawer({ open, onClose, onSave, categories, initi
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-[var(--border-default)] bg-[var(--bg-card)] shrink-0">
+        <div className="flex items-center justify-between px-6 py-4 border-t border-[var(--border-default)] bg-[var(--bg-card)] shrink-0 gap-3">
           <button
             type="button"
             onClick={() => setStep(Math.max(0, step - 1))}
             disabled={step === 0}
-            className="inline-flex items-center gap-1.5 px-3.5 h-9 rounded-lg border border-[var(--border-default)] text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] disabled:opacity-40 disabled:pointer-events-none transition-all"
+            className="inline-flex items-center gap-1.5 px-3.5 h-9 rounded-lg border border-[var(--border-default)] text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer"
           >
             <ChevronLeft size={14} />
             Back
           </button>
 
-          {step < STEPS.length - 1 ? (
+          <div className="flex items-center gap-2.5">
+            {/* Save as Draft Button */}
             <button
               type="button"
-              onClick={handleNext}
-              className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg bg-[var(--color-primary)] text-white text-[12px] font-semibold hover:bg-[var(--color-primary-hover)] transition-all"
-            >
-              Next
-              <ChevronRight size={14} />
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={handleSave}
+              onClick={() => handleSave("Draft")}
               disabled={saving}
-              className="inline-flex items-center gap-1.5 px-5 h-9 rounded-lg bg-[var(--color-success)] text-white text-[12px] font-semibold hover:opacity-90 disabled:opacity-60 transition-all"
+              className="inline-flex items-center gap-1.5 px-3.5 h-9 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400 text-[12px] font-semibold hover:bg-amber-500/20 disabled:opacity-60 transition-all cursor-pointer shadow-sm"
+              title="Save specifications as an internal Draft"
             >
-              {saving ? "Saving..." : isEditing ? "Update Product" : "Create Product"}
+              <FileText size={14} />
+              {saving ? "Saving..." : "Save as Draft"}
             </button>
-          )}
+
+            {step < STEPS.length - 1 ? (
+              <button
+                type="button"
+                onClick={handleNext}
+                className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg bg-[var(--color-primary)] text-white text-[12px] font-semibold hover:bg-[var(--color-primary-hover)] transition-all cursor-pointer shadow-sm"
+              >
+                Next
+                <ChevronRight size={14} />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => handleSave("Active")}
+                disabled={saving}
+                className="inline-flex items-center gap-1.5 px-5 h-9 rounded-lg bg-[var(--color-success)] text-white text-[12px] font-semibold hover:opacity-90 disabled:opacity-60 transition-all cursor-pointer shadow-sm shadow-emerald-500/20"
+              >
+                <Sparkles size={14} />
+                {saving ? "Saving..." : isEditing ? "Update & Publish" : "Create & Publish"}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </>

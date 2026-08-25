@@ -1,5 +1,6 @@
 interface ReviewStepProps {
   data: Record<string, any>;
+  onChange?: (field: string, value: any) => void;
 }
 
 function Row({ label, value }: { label: string; value: any }) {
@@ -23,11 +24,49 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-export default function ReviewStep({ data }: ReviewStepProps) {
+export default function ReviewStep({ data, onChange }: ReviewStepProps) {
   return (
     <div className="space-y-5">
       <h3 className="text-sm font-semibold text-[var(--text-primary)]">Review Product Details</h3>
       <p className="text-[12px] text-[var(--text-muted)]">Review all the information before submitting.</p>
+
+      {/* Publishing Status Toggle Card */}
+      {onChange && (
+        <div className="p-3.5 rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+          <div>
+            <div className="text-[12px] font-bold text-[var(--text-primary)]">Target Publishing Status</div>
+            <div className="text-[11px] text-[var(--text-muted)]">
+              {data.status === "Draft"
+                ? "Draft: Hidden from customer catalog while specs/drawings are being prepared."
+                : "Active: Published live in the public catalog and available for customer enquiries."}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => onChange("status", "Draft")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                data.status === "Draft"
+                  ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30 font-bold"
+                  : "bg-[var(--bg-card)] text-[var(--text-muted)] border-[var(--border-default)] hover:text-[var(--text-primary)]"
+              }`}
+            >
+              Draft
+            </button>
+            <button
+              type="button"
+              onClick={() => onChange("status", "Active")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                data.status === "Active"
+                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 font-bold"
+                  : "bg-[var(--bg-card)] text-[var(--text-muted)] border-[var(--border-default)] hover:text-[var(--text-primary)]"
+              }`}
+            >
+              Active (Live)
+            </button>
+          </div>
+        </div>
+      )}
 
       <Section title="Basic Information">
         <Row label="Product Name" value={data.productName} />
