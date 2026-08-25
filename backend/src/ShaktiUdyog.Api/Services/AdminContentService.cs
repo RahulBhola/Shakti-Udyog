@@ -18,6 +18,7 @@ public interface IAdminContentService
     Task<List<Category>> GetAllCategoriesAsync();
     Task<Category> CreateCategoryAsync(string name, string? slug, string? description, Guid? parentId);
     Task<bool> UpdateCategoryAsync(Guid id, string name, string? slug, string? description, Guid? parentId, int displayOrder, bool isVisible);
+    Task ReorderCategoriesAsync(List<Guid> orderedIds);
     Task<bool> DeleteCategoryAsync(Guid id);
 
     // Industries
@@ -121,6 +122,20 @@ public class AdminContentService(AppDbContext db, IAuditWriter audit) : IAdminCo
         c.IsVisible = isVisible;
         await db.SaveChangesAsync();
         return true;
+    }
+
+    public async Task ReorderCategoriesAsync(List<Guid> orderedIds)
+    {
+        var allCategories = await db.Categories.ToListAsync();
+        for (int i = 0; i < orderedIds.Count; i++)
+        {
+            var cat = allCategories.FirstOrDefault(c => c.Id == orderedIds[i]);
+            if (cat != null)
+            {
+                cat.DisplayOrder = i + 1; // Distinct sequential 1, 2, 3, 4...
+            }
+        }
+        await db.SaveChangesAsync();
     }
 
     public async Task<bool> DeleteCategoryAsync(Guid id)

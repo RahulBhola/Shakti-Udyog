@@ -4,7 +4,8 @@ import { ConfirmDialog } from "../ConfirmDialog";
 import {
   FolderTree, Plus, Search, Eye, EyeOff,
   Pencil, Trash2, X, AlertCircle,
-  RefreshCw, Boxes, Tag, Check, Hash, ArrowLeft,
+  RefreshCw, Boxes, Tag, Check, ArrowLeft,
+  ChevronUp, ChevronDown, Sparkles, Link2,
 } from "lucide-react";
 import "../erpListView.css";
 
@@ -51,7 +52,7 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
   const [formSlug, setFormSlug] = useState("");
   const [formDescription, setFormDescription] = useState("");
   const [formParentId, setFormParentId] = useState("");
-  const [formDisplayOrder, setFormDisplayOrder] = useState(0);
+  const [formDisplayOrder, setFormDisplayOrder] = useState(1);
   const [formIsVisible, setFormIsVisible] = useState(true);
   const [savingForm, setSavingForm] = useState(false);
   const [formErr, setFormErr] = useState<string | null>(null);
@@ -68,7 +69,12 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
       adminApi.productMaster.list({ pageSize: 1000 }).catch(() => null),
     ])
       .then(([cats, prodRes]) => {
-        setCategories(cats || []);
+        // Sort categories by displayOrder then by name
+        const sorted = (cats || []).slice().sort((a, b) => {
+          if (a.displayOrder !== b.displayOrder) return a.displayOrder - b.displayOrder;
+          return a.name.localeCompare(b.name);
+        });
+        setCategories(sorted);
         setProducts(prodRes?.items || []);
       })
       .catch((e: Error) => setActionErr(e.message))
@@ -82,6 +88,71 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
     }
   }, [open, loadData]);
 
+  // Auto-resequence all categories 1 to N so no duplicates exist
+  const handleAutoResequence = async () => {
+    if (categories.length === 0) return;
+    const sorted = categories.slice().sort((a, b) => {
+      if (a.displayOrder !== b.displayOrder) return a.displayOrder - b.displayOrder;
+      return a.name.localeCompare(b.name);
+    });
+
+    const orderedIds = sorted.map((c) => c.id);
+    const resequenced = sorted.map((c, idx) => ({ ...c, displayOrder: idx + 1 }));
+
+    // Optimistic UI update
+    setCategories(resequenced);
+
+    try {
+      await adminApi.reorderCategories(orderedIds);
+      setFeedbackNotice("Categories cleanly resequenced from #1 to #" + categories.length + ".");
+      setTimeout(() => setFeedbackNotice(null), 3000);
+      onCategoriesChanged?.();
+    } catch (e) {
+      loadData();
+      setActionErr(e instanceof Error ? e.message : "Failed to resequence categories.");
+    }
+  };
+
+  // Move Category Up in Priority
+  const handleMoveUp = async (index: number) => {
+    if (index <= 0) return;
+    const newCats = [...categories];
+    const temp = newCats[index];
+    newCats[index] = newCats[index - 1];
+    newCats[index - 1] = temp;
+
+    // Assign sequential numbers 1 to N
+    const resequenced = newCats.map((c, idx) => ({ ...c, displayOrder: idx + 1 }));
+    setCategories(resequenced);
+
+    try {
+      await adminApi.reorderCategories(resequenced.map((c) => c.id));
+      onCategoriesChanged?.();
+    } catch {
+      loadData();
+    }
+  };
+
+  // Move Category Down in Priority
+  const handleMoveDown = async (index: number) => {
+    if (index >= categories.length - 1) return;
+    const newCats = [...categories];
+    const temp = newCats[index];
+    newCats[index] = newCats[index + 1];
+    newCats[index + 1] = temp;
+
+    // Assign sequential numbers 1 to N
+    const resequenced = newCats.map((c, idx) => ({ ...c, displayOrder: idx + 1 }));
+    setCategories(resequenced);
+
+    try {
+      await adminApi.reorderCategories(resequenced.map((c) => c.id));
+      onCategoriesChanged?.();
+    } catch {
+      loadData();
+    }
+  };
+
   // Open Edit form in RHS panel
   const handleOpenEdit = (cat: AdminCategory) => {
     setEditingCategory(cat);
@@ -89,7 +160,7 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
     setFormSlug(cat.slug ?? "");
     setFormDescription(cat.description ?? "");
     setFormParentId(cat.parentId ?? "");
-    setFormDisplayOrder(cat.displayOrder ?? 0);
+    setFormDisplayOrder(cat.displayOrder ?? 1);
     setFormIsVisible(cat.isVisible ?? true);
     setFormErr(null);
     setActiveView("form");
@@ -134,7 +205,7 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
         slug: formSlug.trim() || undefined,
         description: formDescription.trim() || undefined,
         parentId: formParentId || undefined,
-        displayOrder: Number(formDisplayOrder) || 0,
+        displayOrder: Number(formDisplayOrder) || 1,
         isVisible: formIsVisible,
       };
 
@@ -253,40 +324,50 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
         onClick={onClose}
       />
 
-      {/* Right-Hand Side (RHS) Drawer */}
+      {/* Right-Hand Side (RHS) Drawer with Generous Width */}
       <div
-        className="fixed inset-y-0 right-0 z-50 w-full max-w-3xl bg-white dark:bg-[#0c0f17] border-l border-neutral-200 dark:border-white/10 shadow-2xl flex flex-col h-full animate-in slide-in-from-right duration-300"
+        className="fixed inset-y-0 right-0 z-50 w-full max-w-4xl lg:max-w-5xl bg-white dark:bg-[#0c0f17] border-l border-neutral-200 dark:border-white/10 shadow-2xl flex flex-col h-full animate-in slide-in-from-right duration-300"
         role="dialog"
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}
       >
         {/* ================================================================= */}
-        {/* VIEW 1: CATEGORY LIST (Full Height, Smooth Scrolling)            */}
+        {/* VIEW 1: CATEGORY LIST (Full Height, Spacious Structured Cards)    */}
         {/* ================================================================= */}
         {activeView === "list" && (
           <>
             {/* Header */}
-            <div className="shrink-0 bg-white/95 dark:bg-[#0f121a]/95 backdrop-blur-xl border-b border-neutral-200/80 dark:border-white/10 px-6 py-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-[var(--color-primary)]/10 text-[var(--color-primary)] shadow-sm">
-                  <FolderTree size={20} />
+            <div className="shrink-0 bg-white/95 dark:bg-[#0f121a]/95 backdrop-blur-xl border-b border-neutral-200/80 dark:border-white/10 px-6 sm:px-8 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-3.5">
+                <div className="flex items-center justify-center w-11 h-11 rounded-2xl bg-[var(--color-primary)]/10 text-[var(--color-primary)] shadow-sm">
+                  <FolderTree size={22} />
                 </div>
                 <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg font-bold text-neutral-900 dark:text-white">
-                      Category Manager
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-lg font-extrabold text-neutral-900 dark:text-white">
+                      Product Categories Manager
                     </span>
-                    <span className="px-2 py-0.5 rounded-full text-xs font-mono font-bold bg-neutral-100 dark:bg-white/10 text-neutral-600 dark:text-neutral-300">
-                      {categories.length}
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-neutral-100 dark:bg-white/10 text-neutral-600 dark:text-neutral-300 border border-neutral-200/60 dark:border-white/10">
+                      {categories.length} Categories
                     </span>
                   </div>
                   <p className="text-xs text-neutral-500 dark:text-neutral-400 m-0 mt-0.5">
-                    Configure casting product categories and website visibility.
+                    Manage casting categories, sequence priority on website, and public publication status.
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={handleAutoResequence}
+                  className="inline-flex items-center gap-1.5 px-3 h-9 rounded-xl border border-neutral-200 dark:border-white/10 bg-neutral-50 dark:bg-white/5 hover:bg-neutral-100 dark:hover:bg-white/10 text-neutral-700 dark:text-neutral-300 text-xs font-bold transition-all cursor-pointer"
+                  title="Resequence order numbers neatly from 1 to N"
+                >
+                  <Sparkles size={13} className="text-orange-500" />
+                  <span className="hidden sm:inline">Auto-Number (1–{categories.length})</span>
+                </button>
+
                 <button
                   type="button"
                   onClick={handleOpenCreate}
@@ -295,6 +376,7 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
                   <Plus size={14} />
                   <span>New Category</span>
                 </button>
+
                 <button
                   type="button"
                   onClick={onClose}
@@ -307,68 +389,69 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
             </div>
 
             {/* KPI Summary Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 px-6 py-3 border-b border-neutral-200/60 dark:border-white/[0.06] bg-neutral-50/60 dark:bg-white/[0.01] shrink-0">
-              <div className="p-2.5 rounded-xl border border-neutral-200/80 dark:border-white/[0.06] bg-white dark:bg-[#121520] flex items-center gap-2.5 shadow-xs">
-                <div className="w-7 h-7 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center shrink-0">
-                  <Tag size={13} />
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 px-6 sm:px-8 py-3.5 border-b border-neutral-200/60 dark:border-white/[0.06] bg-neutral-50/60 dark:bg-white/[0.01] shrink-0">
+              <div className="p-3 rounded-xl border border-neutral-200/80 dark:border-white/[0.06] bg-white dark:bg-[#121520] flex items-center gap-3 shadow-xs">
+                <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center shrink-0">
+                  <Tag size={15} />
                 </div>
                 <div>
-                  <div className="text-[10px] font-medium text-neutral-400">Total</div>
+                  <div className="text-[11px] font-medium text-neutral-400">Total Registered</div>
                   <div className="text-sm font-extrabold text-neutral-900 dark:text-white">{totalCategories}</div>
                 </div>
               </div>
 
-              <div className="p-2.5 rounded-xl border border-neutral-200/80 dark:border-white/[0.06] bg-white dark:bg-[#121520] flex items-center gap-2.5 shadow-xs">
-                <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0">
-                  <Eye size={13} />
+              <div className="p-3 rounded-xl border border-neutral-200/80 dark:border-white/[0.06] bg-white dark:bg-[#121520] flex items-center gap-3 shadow-xs">
+                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0">
+                  <Eye size={15} />
                 </div>
                 <div>
-                  <div className="text-[10px] font-medium text-neutral-400">Active Live</div>
+                  <div className="text-[11px] font-medium text-neutral-400">Active (Live on Web)</div>
                   <div className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400">{activeCategories}</div>
                 </div>
               </div>
 
-              <div className="p-2.5 rounded-xl border border-neutral-200/80 dark:border-white/[0.06] bg-white dark:bg-[#121520] flex items-center gap-2.5 shadow-xs">
-                <div className="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0">
-                  <EyeOff size={13} />
+              <div className="p-3 rounded-xl border border-neutral-200/80 dark:border-white/[0.06] bg-white dark:bg-[#121520] flex items-center gap-3 shadow-xs">
+                <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0">
+                  <EyeOff size={15} />
                 </div>
                 <div>
-                  <div className="text-[10px] font-medium text-neutral-400">Hidden</div>
+                  <div className="text-[11px] font-medium text-neutral-400">Hidden / Draft</div>
                   <div className="text-sm font-extrabold text-amber-600 dark:text-amber-400">{hiddenCategories}</div>
                 </div>
               </div>
 
-              <div className="p-2.5 rounded-xl border border-neutral-200/80 dark:border-white/[0.06] bg-white dark:bg-[#121520] flex items-center gap-2.5 shadow-xs">
-                <div className="w-7 h-7 rounded-lg bg-purple-500/10 text-purple-500 flex items-center justify-center shrink-0">
-                  <Boxes size={13} />
+              <div className="p-3 rounded-xl border border-neutral-200/80 dark:border-white/[0.06] bg-white dark:bg-[#121520] flex items-center gap-3 shadow-xs">
+                <div className="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-500 flex items-center justify-center shrink-0">
+                  <Boxes size={15} />
                 </div>
                 <div>
-                  <div className="text-[10px] font-medium text-neutral-400">Products</div>
+                  <div className="text-[11px] font-medium text-neutral-400">Mapped Products</div>
                   <div className="text-sm font-extrabold text-purple-600 dark:text-purple-400">{totalMappedProducts}</div>
                 </div>
               </div>
             </div>
 
             {/* Search & Filter Toolbar */}
-            <div className="px-6 py-3 border-b border-neutral-200/80 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0 bg-white dark:bg-[#0f121a]">
-              <div className="relative w-full sm:w-72">
+            <div className="px-6 sm:px-8 py-3 border-b border-neutral-200/80 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0 bg-white dark:bg-[#0f121a]">
+              <div className="relative w-full sm:w-80">
                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
                 <input
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search category or slug..."
-                  className="w-full pl-9 pr-3 h-8 text-xs rounded-xl border border-neutral-200 dark:border-white/10 bg-neutral-50 dark:bg-[#161a26] text-neutral-800 dark:text-white outline-none focus:border-orange-500"
+                  placeholder="Search category name or slug..."
+                  className="w-full pl-9 pr-3 h-9 text-xs rounded-xl border border-neutral-200 dark:border-white/10 bg-neutral-50 dark:bg-[#161a26] text-neutral-800 dark:text-white outline-none focus:border-orange-500"
                 />
               </div>
 
-              <div className="flex items-center gap-1.5 w-full sm:w-auto">
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <span className="text-xs font-bold text-neutral-400">Filter:</span>
                 {(["All", "Active", "Hidden"] as const).map((s) => (
                   <button
                     key={s}
                     type="button"
                     onClick={() => setStatusFilter(s)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                       statusFilter === s
                         ? "bg-[var(--color-primary)] text-white shadow-sm"
                         : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-white/5"
@@ -380,17 +463,17 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
               </div>
             </div>
 
-            {/* Toast Feedback */}
+            {/* Toast Feedback Notice */}
             {feedbackNotice && (
-              <div className="mx-6 mt-3 p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold flex items-center gap-2 shrink-0">
-                <Check size={14} />
+              <div className="mx-6 sm:mx-8 mt-3 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold flex items-center gap-2 shrink-0">
+                <Check size={15} />
                 <span>{feedbackNotice}</span>
               </div>
             )}
 
             {/* Error Notification */}
             {actionErr && (
-              <div className="mx-6 mt-3 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-medium flex items-center justify-between shrink-0">
+              <div className="mx-6 sm:mx-8 mt-3 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-medium flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-2">
                   <AlertCircle size={15} />
                   <span>{actionErr}</span>
@@ -401,17 +484,30 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
               </div>
             )}
 
-            {/* Scrollable Category Cards List */}
-            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-2.5">
+            {/* Category Cards List Header Indicator */}
+            <div className="px-6 sm:px-8 pt-4 pb-1 flex items-center justify-between text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 shrink-0">
+              <div className="flex items-center gap-4">
+                <span className="w-16 text-center">Priority</span>
+                <span>Category Details</span>
+              </div>
+              <div className="flex items-center gap-6">
+                <span className="hidden sm:inline">Products</span>
+                <span className="w-24 text-center">Web Status</span>
+                <span className="w-16 text-right">Actions</span>
+              </div>
+            </div>
+
+            {/* Scrollable Category Cards Stack */}
+            <div className="flex-1 overflow-y-auto px-6 sm:px-8 py-2 space-y-3">
               {loading ? (
-                <div className="py-24 text-center text-xs text-neutral-400 flex flex-col items-center justify-center gap-2">
-                  <RefreshCw size={22} className="animate-spin text-orange-500" />
-                  <span>Loading all categories...</span>
+                <div className="py-28 text-center text-xs text-neutral-400 flex flex-col items-center justify-center gap-2">
+                  <RefreshCw size={24} className="animate-spin text-orange-500" />
+                  <span>Loading categories...</span>
                 </div>
               ) : filtered.length === 0 ? (
-                <div className="py-24 text-center text-neutral-400 space-y-2">
-                  <FolderTree size={36} className="mx-auto opacity-30" />
-                  <p className="text-xs font-medium text-neutral-500">No categories found matching your filter.</p>
+                <div className="py-28 text-center text-neutral-400 space-y-2">
+                  <FolderTree size={40} className="mx-auto opacity-30" />
+                  <p className="text-sm font-medium text-neutral-500">No categories found matching your filter.</p>
                   <button
                     type="button"
                     onClick={() => { setSearch(""); setStatusFilter("All"); }}
@@ -421,81 +517,109 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
                   </button>
                 </div>
               ) : (
-                <div className="space-y-2.5">
+                <div className="space-y-3">
                   {filtered.map((cat) => {
                     const cColor = catColor(cat.name);
                     const stats = categoryProductStats.get(cat.name.trim().toLowerCase()) ?? { total: 0, active: 0 };
+                    const actualIndex = categories.findIndex((c) => c.id === cat.id);
 
                     return (
                       <div
                         key={cat.id}
-                        className="p-3.5 sm:p-4 rounded-2xl border border-neutral-200/80 dark:border-white/10 bg-white dark:bg-[#121520] hover:border-orange-500/30 dark:hover:border-orange-500/30 hover:shadow-md transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs"
+                        className="p-4 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#121520] hover:border-orange-500/40 dark:hover:border-orange-500/40 hover:shadow-md transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs"
                       >
-                        {/* Left: Category Icon & Metadata */}
-                        <div className="flex items-center gap-3 min-w-0 flex-1">
-                          <div
-                            className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 border shadow-xs"
-                            style={{ background: cColor.bg, color: cColor.fg, borderColor: cColor.border }}
-                          >
-                            <FolderTree size={18} />
+                        {/* Left Side: Priority Reordering + Category Identity */}
+                        <div className="flex items-center gap-4 min-w-0 flex-1">
+                          {/* Dedicated Priority Order Column with 1-Click Move Up/Down Controls */}
+                          <div className="flex flex-col items-center justify-center shrink-0 w-16 p-1.5 rounded-xl bg-neutral-50 dark:bg-white/[0.03] border border-neutral-200/70 dark:border-white/10">
+                            <button
+                              type="button"
+                              onClick={() => void handleMoveUp(actualIndex)}
+                              disabled={actualIndex <= 0}
+                              className="p-0.5 rounded text-neutral-400 hover:text-orange-500 disabled:opacity-20 disabled:pointer-events-none transition-colors cursor-pointer"
+                              title="Move Category Up in Priority"
+                            >
+                              <ChevronUp size={14} />
+                            </button>
+                            <span className="font-mono text-xs font-black text-neutral-900 dark:text-white">
+                              #{cat.displayOrder}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => void handleMoveDown(actualIndex)}
+                              disabled={actualIndex >= categories.length - 1}
+                              className="p-0.5 rounded text-neutral-400 hover:text-orange-500 disabled:opacity-20 disabled:pointer-events-none transition-colors cursor-pointer"
+                              title="Move Category Down in Priority"
+                            >
+                              <ChevronDown size={14} />
+                            </button>
                           </div>
 
+                          {/* Domain Color Badge */}
+                          <div
+                            className="w-11 h-11 rounded-xl flex items-center justify-center font-bold text-base shrink-0 border shadow-xs"
+                            style={{ background: cColor.bg, color: cColor.fg, borderColor: cColor.border }}
+                          >
+                            <FolderTree size={20} />
+                          </div>
+
+                          {/* Category Details */}
                           <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-bold text-sm text-neutral-900 dark:text-white truncate">
+                            <div className="flex items-center gap-2.5 flex-wrap">
+                              <span className="font-bold text-sm sm:text-base text-neutral-900 dark:text-white truncate">
                                 {cat.name}
                               </span>
-                              <span className="inline-flex items-center font-mono text-[11px] font-medium text-neutral-500 dark:text-neutral-400 px-2 py-0.5 rounded-md bg-neutral-100 dark:bg-white/5 border border-neutral-200/60 dark:border-white/5 shrink-0">
-                                <span className="opacity-50 mr-0.5">/</span>{cat.slug || "—"}
-                              </span>
-                              <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md bg-neutral-100 dark:bg-white/5 border border-neutral-200/60 dark:border-white/5 font-mono text-[11px] font-bold text-neutral-600 dark:text-neutral-400 shrink-0" title="Display Order Position">
-                                <Hash size={10} className="text-neutral-400" />
-                                <span>{cat.displayOrder}</span>
-                              </span>
+
+                              {/* Explicit URL Slug Route Chip */}
+                              <div className="inline-flex items-center gap-1 font-mono text-[11px] font-medium text-neutral-600 dark:text-neutral-300 px-2 py-0.5 rounded-md bg-neutral-100 dark:bg-white/5 border border-neutral-200/60 dark:border-white/5 shrink-0" title="Website URL Slug">
+                                <Link2 size={11} className="text-neutral-400" />
+                                <span>/{cat.slug || "—"}</span>
+                              </div>
                             </div>
 
-                            <div className="text-xs text-neutral-500 dark:text-neutral-400 truncate mt-0.5">
+                            {/* Description on its own spacious line */}
+                            <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 line-clamp-1 leading-relaxed">
                               {cat.description ? (
                                 <span>{cat.description}</span>
                               ) : (
-                                <span className="text-neutral-400/60 italic">No description provided</span>
+                                <span className="text-neutral-400/50 italic">No description provided</span>
                               )}
                             </div>
                           </div>
                         </div>
 
-                        {/* Right: Product Count, Status Switch & Action Buttons */}
-                        <div className="flex items-center gap-2.5 shrink-0 justify-between sm:justify-end pt-2 sm:pt-0 border-t sm:border-t-0 border-neutral-100 dark:border-white/5">
-                          {/* Product Count */}
-                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-neutral-100/90 dark:bg-white/5 border border-neutral-200/80 dark:border-white/10 text-xs font-bold text-neutral-800 dark:text-neutral-200 whitespace-nowrap">
-                            <Boxes size={13} className="text-orange-500 shrink-0" />
+                        {/* Right Side: Products Count, Status Switch & Actions */}
+                        <div className="flex items-center gap-3.5 shrink-0 justify-between sm:justify-end pt-3 sm:pt-0 border-t sm:border-t-0 border-neutral-100 dark:border-white/5">
+                          {/* Product Count Pill */}
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-neutral-100/90 dark:bg-white/5 border border-neutral-200/80 dark:border-white/10 text-xs font-bold text-neutral-800 dark:text-neutral-200 whitespace-nowrap">
+                            <Boxes size={14} className="text-orange-500 shrink-0" />
                             <span>{stats.total} {stats.total === 1 ? "Product" : "Products"}</span>
                           </div>
 
-                          {/* Status Toggle */}
+                          {/* Status Toggle Switch */}
                           <button
                             type="button"
                             onClick={() => void toggleCategoryStatus(cat)}
-                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold border transition-all cursor-pointer whitespace-nowrap ${
+                            className={`inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-extrabold border transition-all cursor-pointer whitespace-nowrap w-24 ${
                               cat.isVisible
                                 ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/25 shadow-xs"
                                 : "bg-neutral-500/10 text-neutral-500 dark:text-neutral-400 border-neutral-300 dark:border-white/10 hover:bg-neutral-500/20"
                             }`}
-                            title={`Click to switch between Active (Live) and Inactive (Hidden)`}
+                            title={`Click to switch between Active (Published) and Inactive (Hidden)`}
                           >
                             <span className={`w-2 h-2 rounded-full ${cat.isVisible ? "bg-emerald-500 animate-pulse" : "bg-neutral-400"}`} />
                             <span>{cat.isVisible ? "Active" : "Inactive"}</span>
                           </button>
 
-                          {/* Row Action Buttons */}
-                          <div className="flex items-center gap-1">
+                          {/* Action Buttons */}
+                          <div className="flex items-center gap-1.5">
                             <button
                               type="button"
                               onClick={() => handleOpenEdit(cat)}
                               className="w-8 h-8 rounded-lg flex items-center justify-center border border-neutral-200/80 dark:border-white/10 bg-neutral-50 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 hover:border-orange-500/50 hover:text-orange-600 dark:hover:text-orange-400 hover:shadow-xs transition-all cursor-pointer"
                               title="Edit Category"
                             >
-                              <Pencil size={13} />
+                              <Pencil size={14} />
                             </button>
                             <button
                               type="button"
@@ -503,7 +627,7 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
                               className="w-8 h-8 rounded-lg flex items-center justify-center border border-neutral-200/80 dark:border-white/10 bg-neutral-50 dark:bg-neutral-800 text-neutral-400 hover:border-red-500/40 hover:text-red-500 hover:bg-red-500/5 hover:shadow-xs transition-all cursor-pointer"
                               title="Delete Category"
                             >
-                              <Trash2 size={13} />
+                              <Trash2 size={14} />
                             </button>
                           </div>
                         </div>
@@ -515,12 +639,12 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
             </div>
 
             {/* Footer */}
-            <div className="shrink-0 flex items-center justify-between text-xs text-neutral-400 bg-white/95 dark:bg-[#0f121a]/95 backdrop-blur-xl border-t border-neutral-200/80 dark:border-white/10 px-6 py-3.5">
-              <span className="font-mono">{categories.length} total categories registered</span>
+            <div className="shrink-0 flex items-center justify-between text-xs text-neutral-400 bg-white/95 dark:bg-[#0f121a]/95 backdrop-blur-xl border-t border-neutral-200/80 dark:border-white/10 px-6 sm:px-8 py-4">
+              <span className="font-mono">{categories.length} total categories registered • Auto-synchronized with live catalog</span>
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 rounded-xl bg-neutral-100 dark:bg-white/5 hover:bg-neutral-200 dark:hover:bg-white/10 text-neutral-800 dark:text-neutral-200 font-bold text-xs transition-colors cursor-pointer"
+                className="px-5 py-2 rounded-xl bg-neutral-100 dark:bg-white/5 hover:bg-neutral-200 dark:hover:bg-white/10 text-neutral-800 dark:text-neutral-200 font-bold text-xs transition-colors cursor-pointer"
               >
                 Close
               </button>
@@ -534,8 +658,8 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
         {activeView === "form" && (
           <div className="flex flex-col h-full">
             {/* Header with Back Button */}
-            <div className="shrink-0 bg-white/95 dark:bg-[#0f121a]/95 backdrop-blur-xl border-b border-neutral-200/80 dark:border-white/10 px-6 py-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
+            <div className="shrink-0 bg-white/95 dark:bg-[#0f121a]/95 backdrop-blur-xl border-b border-neutral-200/80 dark:border-white/10 px-6 sm:px-8 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-3.5">
                 <button
                   type="button"
                   onClick={() => setActiveView("list")}
@@ -545,11 +669,11 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
                   <ArrowLeft size={16} />
                 </button>
                 <div>
-                  <h3 className="text-base font-bold text-neutral-900 dark:text-white m-0">
+                  <h3 className="text-base sm:text-lg font-extrabold text-neutral-900 dark:text-white m-0">
                     {editingCategory ? `Edit "${editingCategory.name}"` : "Create New Category"}
                   </h3>
                   <p className="text-xs text-neutral-500 dark:text-neutral-400 m-0 mt-0.5">
-                    {editingCategory ? "Update category details and publication status." : "Add a new product category to your casting catalogue."}
+                    {editingCategory ? "Update category specifications, priority position, and publication status." : "Add a new product category to your casting catalogue."}
                   </p>
                 </div>
               </div>
@@ -565,7 +689,7 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
             </div>
 
             {/* Form Body */}
-            <div className="flex-1 overflow-y-auto px-8 py-6 space-y-5">
+            <div className="flex-1 overflow-y-auto px-8 sm:px-12 py-7 space-y-6">
               {formErr && (
                 <div className="flex items-center gap-2.5 p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs font-medium">
                   <AlertCircle size={16} className="shrink-0" />
@@ -583,12 +707,12 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
                   value={formName}
                   onChange={(e) => handleNameChange(e.target.value)}
                   placeholder="e.g. Precision Mechanism"
-                  className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-neutral-300 dark:border-white/10 bg-white dark:bg-[#161a26] text-neutral-900 dark:text-white outline-none focus:border-orange-500 shadow-xs"
+                  className="w-full px-4 py-2.5 text-xs rounded-xl border border-neutral-300 dark:border-white/10 bg-white dark:bg-[#161a26] text-neutral-900 dark:text-white outline-none focus:border-orange-500 shadow-xs"
                   autoFocus
                 />
               </div>
 
-              {/* URL Slug */}
+              {/* URL Route Slug */}
               <div className="space-y-1.5">
                 <label className="block text-xs font-bold text-neutral-700 dark:text-neutral-300">
                   URL Route Slug
@@ -604,7 +728,7 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
                   />
                 </div>
                 <span className="block text-[11px] text-neutral-400 mt-1">
-                  Used in website navigation and public catalog filtering links.
+                  Used in website navigation URL path and public catalog filtering links.
                 </span>
               </div>
 
@@ -618,7 +742,7 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
                   value={formDescription}
                   onChange={(e) => setFormDescription(e.target.value)}
                   placeholder="Brief description of castings in this category..."
-                  className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-neutral-300 dark:border-white/10 bg-white dark:bg-[#161a26] text-neutral-900 dark:text-white outline-none focus:border-orange-500 resize-none shadow-xs"
+                  className="w-full px-4 py-2.5 text-xs rounded-xl border border-neutral-300 dark:border-white/10 bg-white dark:bg-[#161a26] text-neutral-900 dark:text-white outline-none focus:border-orange-500 resize-none shadow-xs leading-relaxed"
                 />
               </div>
 
@@ -631,7 +755,7 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
                   <select
                     value={formParentId}
                     onChange={(e) => setFormParentId(e.target.value)}
-                    className="w-full px-3 py-2.5 text-xs rounded-xl border border-neutral-300 dark:border-white/10 bg-white dark:bg-[#161a26] text-neutral-900 dark:text-white outline-none focus:border-orange-500 shadow-xs"
+                    className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-neutral-300 dark:border-white/10 bg-white dark:bg-[#161a26] text-neutral-900 dark:text-white outline-none focus:border-orange-500 shadow-xs"
                   >
                     <option value="">Root (Top Level)</option>
                     {categories
@@ -644,15 +768,16 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
 
                 <div className="space-y-1.5">
                   <label className="block text-xs font-bold text-neutral-700 dark:text-neutral-300">
-                    Display Order (Priority)
+                    Priority Display Order
                   </label>
                   <input
                     type="number"
+                    min={1}
                     value={formDisplayOrder}
                     onChange={(e) => setFormDisplayOrder(Number(e.target.value))}
-                    className="w-full px-3.5 py-2.5 text-xs font-mono rounded-xl border border-neutral-300 dark:border-white/10 bg-white dark:bg-[#161a26] text-neutral-900 dark:text-white outline-none focus:border-orange-500 shadow-xs"
+                    className="w-full px-4 py-2.5 text-xs font-mono rounded-xl border border-neutral-300 dark:border-white/10 bg-white dark:bg-[#161a26] text-neutral-900 dark:text-white outline-none focus:border-orange-500 shadow-xs"
                   />
-                  <span className="block text-[10px] text-neutral-400">1 = First position on website</span>
+                  <span className="block text-[11px] text-neutral-400">Position sequence on public catalog (1 = First position)</span>
                 </div>
               </div>
 
@@ -664,7 +789,7 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
                       Active Status (Live on Public Website)
                     </span>
                     <span className="text-[11px] text-neutral-500 dark:text-neutral-400 block mt-0.5">
-                      When active, this category and its products appear in the public catalog.
+                      When active, this category and its products are live in the public catalog and navigation.
                     </span>
                   </div>
                   <input
@@ -678,11 +803,11 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
             </div>
 
             {/* Form Footer */}
-            <div className="shrink-0 flex items-center justify-between border-t border-neutral-200/80 dark:border-white/10 bg-white/95 dark:bg-[#0f121a]/95 backdrop-blur-xl px-8 py-4">
+            <div className="shrink-0 flex items-center justify-between border-t border-neutral-200/80 dark:border-white/10 bg-white/95 dark:bg-[#0f121a]/95 backdrop-blur-xl px-8 sm:px-12 py-4">
               <button
                 type="button"
                 onClick={() => setActiveView("list")}
-                className="px-4 py-2.5 rounded-xl border border-neutral-200 dark:border-white/10 text-neutral-700 dark:text-neutral-300 font-bold text-xs hover:bg-neutral-100 dark:hover:bg-white/5 transition-all cursor-pointer"
+                className="px-5 py-2.5 rounded-xl border border-neutral-200 dark:border-white/10 text-neutral-700 dark:text-neutral-300 font-bold text-xs hover:bg-neutral-100 dark:hover:bg-white/5 transition-all cursor-pointer"
                 disabled={savingForm}
               >
                 Cancel & Return
@@ -692,7 +817,7 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
                 type="button"
                 onClick={() => void handleSaveForm()}
                 disabled={savingForm}
-                className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-[var(--color-primary)] text-white text-xs font-bold hover:brightness-110 shadow-sm shadow-orange-500/20 disabled:opacity-50 transition-all cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-6 py-2.5 rounded-xl bg-[var(--color-primary)] text-white text-xs font-bold hover:brightness-110 shadow-sm shadow-orange-500/20 disabled:opacity-50 transition-all cursor-pointer"
               >
                 {savingForm ? (
                   <>

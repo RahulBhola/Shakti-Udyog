@@ -204,6 +204,8 @@ export const adminApi = {
     apiPost<AdminCategory>(`${base}/categories`, payload),
   updateCategory: (id: string, payload: { name: string; slug?: string; description?: string; parentId?: string; displayOrder: number; isVisible: boolean }) =>
     apiPut<{ message: string }>(`${base}/categories/${id}`, payload),
+  reorderCategories: (orderedIds: string[]) =>
+    apiPost<{ message: string }>(`${base}/categories/reorder`, orderedIds),
   setCategoryProductsStatus: (categoryId: string, status: "Active" | "Inactive" | "Draft" | "Archived") =>
     apiPost<{ updatedCount: number; message: string }>(`${base}/categories/${categoryId}/status`, { status }),
   deleteCategory: (id: string) =>
