@@ -132,7 +132,13 @@ export default function AdminProductDetailPage() {
   const [uploading, setUploading] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
-  const [notice, setNotice] = useState<{ title: string; message: string; type?: "warning" | "error" | "info" } | null>(null);
+  const [notice, setNotice] = useState<{
+    title: string;
+    message: string;
+    type?: "warning" | "error" | "info";
+    actionLabel?: string;
+    onAction?: () => void;
+  } | null>(null);
 
   const loadProduct = () => {
     setLoading(true);
@@ -238,6 +244,70 @@ export default function AdminProductDetailPage() {
     );
   }
 
+  const handleToggleStatus = async () => {
+    if (!product) return;
+    try {
+      const newStatus = product.status === "Active" ? "Inactive" : "Active";
+      if (newStatus === "Active") {
+        const hasImage = Boolean(
+          product.imageUrl ||
+          product.lightImageUrl ||
+          product.attachments?.some((a) => a.contentType?.startsWith("image/") || /\.(png|jpe?g|webp|svg)$/i.test(a.fileName))
+        );
+        if (!hasImage) {
+          setNotice({
+            title: "Primary Image Required",
+            message: `"${product.productName}" cannot be published as Active because no primary product image or 3D render is attached.\n\nPlease upload an image before making the product live in the public catalogue.`,
+            type: "warning",
+            actionLabel: "Upload Image",
+            onAction: () => {
+              setNotice(null);
+              setDrawerOpen(true);
+            },
+          });
+          return;
+        }
+      }
+
+      await adminApi.productMaster.update(product.id, { status: newStatus });
+      loadProduct();
+    } catch (e: any) {
+      setNotice({
+        title: "Status Update Failed",
+        message: e?.message || "Failed to update product status.",
+        type: "error",
+      });
+    }
+  };
+
+  const handleDuplicate = async () => {
+    if (!product) return;
+    try {
+      const dup = await adminApi.productMaster.duplicate(product.id);
+      navigate(`/admin/products/${dup.id}`);
+    } catch (e: any) {
+      setNotice({
+        title: "Duplicate Failed",
+        message: e?.message || "Failed to duplicate product.",
+        type: "error",
+      });
+    }
+  };
+
+  const handleArchive = async () => {
+    if (!product) return;
+    try {
+      await adminApi.productMaster.archive(product.id);
+      navigate("/admin/products");
+    } catch (e: any) {
+      setNotice({
+        title: "Archive Failed",
+        message: e?.message || "Failed to archive product.",
+        type: "error",
+      });
+    }
+  };
+
   const p = product;
   const usage = p.usage;
 
@@ -253,7 +323,7 @@ export default function AdminProductDetailPage() {
             <button
               type="button"
               onClick={() => navigate("/admin/products")}
-              className="flex items-center justify-center w-9 h-9 rounded-xl border border-neutral-200 dark:border-white/10 bg-neutral-50 hover:bg-neutral-100 dark:bg-white/5 dark:hover:bg-white/10 text-neutral-600 dark:text-neutral-300 transition-all"
+              className="flex items-center justify-center w-9 h-9 rounded-xl border border-neutral-200 dark:border-white/10 bg-neutral-50 hover:bg-neutral-100 dark:bg-white/5 dark:hover:bg-white/10 text-neutral-600 dark:text-neutral-300 transition-all cursor-pointer"
             >
               <ArrowLeft size={16} />
             </button>
@@ -272,48 +342,47 @@ export default function AdminProductDetailPage() {
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={async () => {
-                const newStatus = p.status === "Active" ? "Inactive" : "Active";
-                await adminApi.productMaster.update(p.id, { status: newStatus });
-                loadProduct();
-              }}
-              className={`inline-flex items-center gap-1.5 px-3.5 h-9 rounded-xl border text-xs font-bold transition-all shadow-sm ${
+              onClick={handleToggleStatus}
+              className={`inline-flex items-center gap-1.5 px-3.5 h-9 rounded-xl border text-xs font-bold transition-all shadow-sm cursor-pointer ${
                 p.status === "Active"
                   ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20"
+                  : p.status === "Draft"
+                  ? "border-orange-500/30 bg-orange-500/10 text-orange-600 dark:text-orange-400 hover:bg-orange-500/20"
                   : "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20"
               }`}
-              title={p.status === "Active" ? "Product is published. Click to Deactivate (hide from public)." : "Product is hidden. Click to Activate (publish to public)."}
+              title={
+                p.status === "Active"
+                  ? "Product is published. Click to Deactivate (hide from public)."
+                  : "Product is unpublished. Click to Activate (publish to public)."
+              }
             >
               <Power size={13} />
-              {p.status === "Active" ? "Active (Live)" : "Inactive (Hidden)"}
+              {p.status === "Active"
+                ? "Active (Live)"
+                : p.status === "Draft"
+                ? "Draft (Click to Publish)"
+                : "Inactive (Hidden)"}
             </button>
             <button
               type="button"
               onClick={() => setDrawerOpen(true)}
-              className="inline-flex items-center gap-1.5 px-4 h-9 rounded-xl bg-[var(--color-primary)] text-white text-xs font-bold hover:brightness-110 shadow-sm shadow-orange-500/20 transition-all"
+              className="inline-flex items-center gap-1.5 px-4 h-9 rounded-xl bg-[var(--color-primary)] text-white text-xs font-bold hover:brightness-110 shadow-sm shadow-orange-500/20 transition-all cursor-pointer"
             >
               <Edit3 size={14} />
               Edit Specification
             </button>
             <button
               type="button"
-              onClick={async () => {
-                try {
-                  const dup = await adminApi.productMaster.duplicate(p.id);
-                  navigate(`/admin/products/${dup.id}`);
-                } catch (e) {
-                  alert(e instanceof Error ? e.message : "Failed to duplicate product.");
-                }
-              }}
-              className="inline-flex items-center gap-1.5 px-3.5 h-9 rounded-xl border border-neutral-200 dark:border-white/10 bg-neutral-50 hover:bg-neutral-100 dark:bg-white/5 dark:hover:bg-white/10 text-xs font-semibold text-neutral-700 dark:text-neutral-300 transition-all"
+              onClick={handleDuplicate}
+              className="inline-flex items-center gap-1.5 px-3.5 h-9 rounded-xl border border-neutral-200 dark:border-white/10 bg-neutral-50 hover:bg-neutral-100 dark:bg-white/5 dark:hover:bg-white/10 text-xs font-semibold text-neutral-700 dark:text-neutral-300 transition-all cursor-pointer"
             >
               <Copy size={13} />
               Duplicate
             </button>
             <button
               type="button"
-              onClick={() => { adminApi.productMaster.archive(p.id).then(() => navigate("/admin/products")); }}
-              className="inline-flex items-center gap-1.5 px-3.5 h-9 rounded-xl border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 transition-all"
+              onClick={handleArchive}
+              className="inline-flex items-center gap-1.5 px-3.5 h-9 rounded-xl border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 transition-all cursor-pointer"
             >
               <Archive size={13} />
               Archive
@@ -609,13 +678,25 @@ export default function AdminProductDetailPage() {
               </p>
             </div>
             <div className="inv-modal__foot" style={{ justifyContent: "center", gap: 10, padding: "16px 24px 24px" }}>
-              <button
-                className="inv-btn inv-btn--primary"
-                style={{ minWidth: 120 }}
-                onClick={() => setNotice(null)}
-              >
-                OK
-              </button>
+              {notice.actionLabel && notice.onAction ? (
+                <>
+                  <button className="inv-btn" onClick={() => setNotice(null)}>Cancel</button>
+                  <button
+                    className="inv-btn inv-btn--primary"
+                    onClick={notice.onAction}
+                  >
+                    {notice.actionLabel}
+                  </button>
+                </>
+              ) : (
+                <button
+                  className="inv-btn inv-btn--primary"
+                  style={{ minWidth: 120 }}
+                  onClick={() => setNotice(null)}
+                >
+                  OK
+                </button>
+              )}
             </div>
           </div>
         </div>
