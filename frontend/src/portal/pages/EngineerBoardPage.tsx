@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { apiGet, apiPatch } from "../../api/client";
+import { useAuth } from "../../auth/AuthContext";
 import { connectRealtime, getRealtimeConnection, type StageChangedPayload } from "../../realtime/signalR";
 import { formatDate } from "../shared";
 
@@ -36,6 +38,9 @@ const columnLabel = (code: string): string => COLUMNS[columnIndex(code)]?.label 
 /* ── Main board ───────────────────────────────────────────────────────────── */
 
 export default function EngineerBoardPage() {
+  const { user } = useAuth();
+  const isAdmin = user?.roles.includes("Admin") ?? false;
+
   const [orders, setOrders] = useState<EngineerOrder[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -116,13 +121,17 @@ export default function EngineerBoardPage() {
     <div className="prod-board">
       <div className="prod-board__header">
         <div className="prod-board__header-left">
-          <h1>My Manufacturing</h1>
-          <p>Orders assigned to you — move each one forward through the manufacturing stages.</p>
+          <h1>{isAdmin ? "Manufacturing Pipeline" : "My Manufacturing"}</h1>
+          <p>
+            {isAdmin
+              ? "All active factory orders across manufacturing stages. Track and advance orders through production."
+              : "Orders assigned to you — move each one forward through the manufacturing stages."}
+          </p>
         </div>
         <div className="prod-board__header-right">
           <div className="prod-board__kpi">
             <div className="prod-board__kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="M2 12h20"/><path d="M12 2v20"/></svg></div>
-            <div><div className="prod-board__kpi-value">{orders?.length ?? 0}</div><div className="prod-board__kpi-label">Assigned Orders</div></div>
+            <div><div className="prod-board__kpi-value">{orders?.length ?? 0}</div><div className="prod-board__kpi-label">{isAdmin ? "Active Orders" : "Assigned Orders"}</div></div>
           </div>
           <button className="prod-board__btn-ghost" onClick={load}>⟳ Refresh</button>
         </div>
@@ -131,7 +140,22 @@ export default function EngineerBoardPage() {
       {loading && <div className="prod-board__loading"><div className="spinner" /></div>}
       {error && <p className="placeholder-note">{error}</p>}
       {!loading && !error && (orders ?? []).length === 0 && (
-        <p className="placeholder-note">No orders are assigned to you yet.</p>
+        <div style={{ textAlign: "center", padding: "28px 16px" }}>
+          <p className="placeholder-note" style={{ margin: "0 0 12px" }}>
+            {isAdmin
+              ? "No active manufacturing orders found in the pipeline."
+              : "No orders are assigned to you yet."}
+          </p>
+          {isAdmin && (
+            <Link
+              to="/admin/orders"
+              className="prod-board__btn-ghost"
+              style={{ display: "inline-flex", textDecoration: "none" }}
+            >
+              View Orders Management →
+            </Link>
+          )}
+        </div>
       )}
 
       {notice && (

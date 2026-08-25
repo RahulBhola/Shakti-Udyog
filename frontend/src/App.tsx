@@ -74,6 +74,7 @@ const AdminInvoiceCreatePage = lazy(() => import("./portal/pages/AdminInvoicePag
 const AdminLayout = lazy(() => import("./portal/AdminLayout"));
 const AdminDashboardPage = lazy(() => import("./portal/pages/AdminDashboardPage"));
 const EngineerDashboardPage = lazy(() => import("./portal/pages/engineer/EngineerDashboardPage"));
+const AdminProductionPage = lazy(() => import("./portal/pages/AdminProductionPage"));
 const EngineerBoardPage = lazy(() => import("./portal/pages/EngineerBoardPage"));
 const AdminUsersPage = lazy(() => import("./portal/pages/AdminUsersPage"));
 const AdminEngineersPage = lazy(() => import("./portal/pages/AdminEngineersPage"));
@@ -98,6 +99,14 @@ function PortalDashboardSwitch() {
     return <AdminDashboardPage />;
   }
   return <EngineerDashboardPage />;
+}
+
+function PortalProductionSwitch() {
+  const { user } = useAuth();
+  if (user?.roles.includes("Admin")) {
+    return <AdminProductionPage />;
+  }
+  return <EngineerBoardPage />;
 }
 
 function App() {
@@ -186,8 +195,8 @@ function App() {
               <Route path="orders" element={<EngineerOrderListPage />} />
               <Route path="orders/:id" element={<AdminOrderDetailPage />} />
               {/* Production */}
-              <Route path="production" element={<EngineerBoardPage />} />
-              <Route path="manufacturing" element={<EngineerBoardPage />} />
+              <Route path="production" element={<PortalProductionSwitch />} />
+              <Route path="manufacturing" element={<PortalProductionSwitch />} />
               {/* Finance */}
               <Route path="invoices" element={<AdminInvoiceManagePage />} />
               <Route path="invoices/new" element={<AdminInvoiceCreatePage />} />
