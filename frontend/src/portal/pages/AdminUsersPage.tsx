@@ -125,6 +125,191 @@ function RoleBadge({ role }: { role: string }) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Modern Custom Status Confirmation Modal (Deactivate / Activate)    */
+/* ------------------------------------------------------------------ */
+
+function StatusConfirmModal({
+  user,
+  onClose,
+  onConfirm,
+  loading,
+}: {
+  user: AdminUser;
+  onClose: () => void;
+  onConfirm: () => void;
+  loading: boolean;
+}) {
+  const isDeactivating = user.isActive;
+  const palette = getAvatarStyle(user.fullName || user.email);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150" onClick={onClose}>
+      <div
+        className="w-full max-w-md bg-white dark:bg-[#121520] rounded-2xl border border-neutral-200 dark:border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+      >
+        <div className={`px-6 py-4 border-b border-neutral-100 dark:border-white/10 flex items-center justify-between ${
+          isDeactivating ? "bg-amber-500/5 text-amber-600 dark:text-amber-400" : "bg-emerald-500/5 text-emerald-600 dark:text-emerald-400"
+        }`}>
+          <div className="flex items-center gap-2.5">
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+              isDeactivating ? "bg-amber-500/10 text-amber-500" : "bg-emerald-500/10 text-emerald-500"
+            }`}>
+              <Power size={17} />
+            </div>
+            <h3 className="font-extrabold text-sm m-0">
+              {isDeactivating ? "Deactivate User Account" : "Activate User Account"}
+            </h3>
+          </div>
+          <button onClick={onClose} className="p-1 rounded-lg text-neutral-400 hover:text-neutral-700 dark:hover:text-white cursor-pointer">
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-4">
+          {/* User Preview Card */}
+          <div className="p-3.5 rounded-xl border border-neutral-200/80 dark:border-white/10 bg-neutral-50/70 dark:bg-white/[0.02] flex items-center gap-3">
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center font-extrabold text-sm border shadow-xs shrink-0"
+              style={{ background: palette.bg, color: palette.fg, borderColor: palette.border }}
+            >
+              {initials(user.fullName, user.email)}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="font-bold text-sm text-neutral-900 dark:text-white truncate">
+                {user.fullName || "Unnamed User"}
+              </div>
+              <div className="text-xs text-neutral-500 dark:text-neutral-400 font-mono truncate">
+                {user.email}
+              </div>
+            </div>
+            <RoleBadge role={user.role} />
+          </div>
+
+          <p className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed m-0">
+            {isDeactivating ? (
+              <>
+                Are you sure you want to deactivate <strong className="text-neutral-900 dark:text-white">{user.fullName || user.email}</strong>?
+                The user will be immediately blocked from signing in to the platform.
+              </>
+            ) : (
+              <>
+                Activate <strong className="text-neutral-900 dark:text-white">{user.fullName || user.email}</strong> to restore full access to their account.
+              </>
+            )}
+          </p>
+
+          <div className={`p-3 rounded-xl text-xs leading-relaxed font-medium border ${
+            isDeactivating
+              ? "bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-300"
+              : "bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-300"
+          }`}>
+            {isDeactivating ? (
+              <span><strong>Note:</strong> All existing orders, quotations, enquiries, and audit records will remain completely intact.</span>
+            ) : (
+              <span><strong>Note:</strong> The user can immediately sign in with their existing credentials.</span>
+            )}
+          </div>
+        </div>
+
+        <div className="px-6 py-4 bg-neutral-50 dark:bg-white/[0.02] border-t border-neutral-100 dark:border-white/10 flex items-center justify-end gap-2.5">
+          <button
+            type="button"
+            className="px-4 py-2 rounded-xl border border-neutral-200 dark:border-white/10 text-xs font-bold text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
+            onClick={onClose}
+            disabled={loading}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            disabled={loading}
+            onClick={onConfirm}
+            className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-white text-xs font-bold transition-all shadow-sm cursor-pointer ${
+              isDeactivating
+                ? "bg-amber-600 hover:bg-amber-700 shadow-amber-500/20"
+                : "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20"
+            }`}
+          >
+            <Power size={13} />
+            <span>{loading ? "Updating..." : isDeactivating ? "Deactivate Account" : "Activate Account"}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Clean Test Clutter Confirm Modal                                   */
+/* ------------------------------------------------------------------ */
+
+function CleanTestsConfirmModal({
+  count,
+  onClose,
+  onConfirm,
+  loading,
+}: {
+  count: number;
+  onClose: () => void;
+  onConfirm: () => void;
+  loading: boolean;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150" onClick={onClose}>
+      <div
+        className="w-full max-w-md bg-white dark:bg-[#121520] rounded-2xl border border-neutral-200 dark:border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+      >
+        <div className="px-6 py-4 border-b border-neutral-100 dark:border-white/10 flex items-center justify-between bg-amber-500/5 text-amber-600 dark:text-amber-400">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-500">
+              <Sparkles size={17} />
+            </div>
+            <h3 className="font-extrabold text-sm m-0">Clean Test Accounts</h3>
+          </div>
+          <button onClick={onClose} className="p-1 rounded-lg text-neutral-400 hover:text-neutral-700 dark:hover:text-white cursor-pointer">
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-4">
+          <p className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed m-0">
+            Found <strong className="text-amber-500 font-bold">{count} temporary test accounts</strong> generated during automated test runs (e.g. <span className="font-mono text-neutral-500">sessiontest_</span>, <span className="font-mono text-neutral-500">rotatetest_</span>).
+          </p>
+
+          <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-300 leading-relaxed font-medium">
+            <strong>Cleanup Action:</strong> This will purge these test user records, session tokens, and temporary company records to keep your database clean.
+          </div>
+        </div>
+
+        <div className="px-6 py-4 bg-neutral-50 dark:bg-white/[0.02] border-t border-neutral-100 dark:border-white/10 flex items-center justify-end gap-2.5">
+          <button
+            type="button"
+            className="px-4 py-2 rounded-xl border border-neutral-200 dark:border-white/10 text-xs font-bold text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
+            onClick={onClose}
+            disabled={loading}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            disabled={loading}
+            onClick={onConfirm}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white text-xs font-bold transition-all shadow-sm shadow-amber-500/20 cursor-pointer"
+          >
+            <Sparkles size={13} />
+            <span>{loading ? "Cleaning..." : "Purge Test Accounts"}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  Delete Confirm Modal                                               */
 /* ------------------------------------------------------------------ */
 
@@ -156,7 +341,7 @@ function DeleteConfirmModal({
             </div>
             <h3 className="font-extrabold text-sm m-0">Delete User Account</h3>
           </div>
-          <button onClick={onClose} className="p-1 rounded-lg text-neutral-400 hover:text-neutral-700 dark:hover:text-white">
+          <button onClick={onClose} className="p-1 rounded-lg text-neutral-400 hover:text-neutral-700 dark:hover:text-white cursor-pointer">
             <X size={16} />
           </button>
         </div>
@@ -218,13 +403,13 @@ function UserDetailsDrawer({
   user,
   isSelfUser,
   onClose,
-  onToggleActive,
+  onOpenStatusModal,
   onDeleteUser,
 }: {
   user: AdminUser;
   isSelfUser: boolean;
   onClose: () => void;
-  onToggleActive: (u: AdminUser) => void;
+  onOpenStatusModal: (u: AdminUser) => void;
   onDeleteUser?: (u: AdminUser) => void;
 }) {
   const [copied, setCopied] = useState(false);
@@ -264,7 +449,7 @@ function UserDetailsDrawer({
           </div>
           <button
             onClick={onClose}
-            className="w-9 h-9 rounded-xl border border-neutral-200 dark:border-white/10 flex items-center justify-center text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors"
+            className="w-9 h-9 rounded-xl border border-neutral-200 dark:border-white/10 flex items-center justify-center text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
           >
             <X size={16} />
           </button>
@@ -376,7 +561,7 @@ function UserDetailsDrawer({
             {!isSelfUser && (
               <button
                 type="button"
-                onClick={() => onToggleActive(user)}
+                onClick={() => onOpenStatusModal(user)}
                 className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
                   user.isActive
                     ? "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20"
@@ -429,6 +614,9 @@ export default function AdminUsersPage() {
   const [viewing, setViewing] = useState<AdminUser | null>(null);
   const [deletingUser, setDeletingUser] = useState<AdminUser | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [statusUser, setStatusUser] = useState<AdminUser | null>(null);
+  const [statusLoading, setStatusLoading] = useState(false);
+  const [showCleanTestsModal, setShowCleanTestsModal] = useState(false);
   const [cleaningTests, setCleaningTests] = useState(false);
   const [feedbackNotice, setFeedbackNotice] = useState<string | null>(null);
 
@@ -500,16 +688,14 @@ export default function AdminUsersPage() {
     };
   }, [users]);
 
-  // Clean Test Accounts
+  // Clean Test Accounts Execution
   const handleCleanTestAccounts = async () => {
-    if (!window.confirm(`Clean up ${testUsersCount} test accounts from test runs? This will remove sessiontest and rotatetest clutter.`)) {
-      return;
-    }
     setCleaningTests(true);
     try {
       const res = await adminApi.cleanTestUsers();
       setFeedbackNotice(res.message || "Test accounts cleaned up successfully.");
       setTimeout(() => setFeedbackNotice(null), 3000);
+      setShowCleanTestsModal(false);
       load();
     } catch (e: any) {
       window.alert(e instanceof Error ? e.message : "Failed to clean test accounts.");
@@ -518,22 +704,27 @@ export default function AdminUsersPage() {
     }
   };
 
-  // Toggle User Active Status
-  async function toggleActive(u: AdminUser) {
+  // Toggle User Active Status Execution
+  async function handleToggleStatusConfirm() {
+    if (!statusUser) return;
+    setStatusLoading(true);
     try {
-      await apiPatch(`/api/v1/admin/users/${u.id}/toggle-active`, {});
-      setFeedbackNotice(`"${u.fullName || u.email}" is now ${u.isActive ? "Deactivated" : "Active"}.`);
+      await apiPatch(`/api/v1/admin/users/${statusUser.id}/toggle-active`, {});
+      setFeedbackNotice(`"${statusUser.fullName || statusUser.email}" is now ${statusUser.isActive ? "Deactivated" : "Active"}.`);
       setTimeout(() => setFeedbackNotice(null), 3000);
-      load();
-      if (viewing?.id === u.id) {
+      if (viewing?.id === statusUser.id) {
         setViewing({ ...viewing, isActive: !viewing.isActive });
       }
+      setStatusUser(null);
+      load();
     } catch (e) {
       window.alert(e instanceof Error ? e.message : "Could not update user status");
+    } finally {
+      setStatusLoading(false);
     }
   }
 
-  // Delete User Confirmation
+  // Delete User Confirmation Execution
   async function handleDeleteConfirm() {
     if (!deletingUser) return;
     setDeleteLoading(true);
@@ -585,12 +776,11 @@ export default function AdminUsersPage() {
           {testUsersCount > 0 && (
             <button
               type="button"
-              onClick={handleCleanTestAccounts}
-              disabled={cleaningTests}
+              onClick={() => setShowCleanTestsModal(true)}
               className="inline-flex items-center gap-1.5 px-3.5 h-9 rounded-xl border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-bold transition-all cursor-pointer shadow-xs"
               title="Clean up test accounts generated during test runs"
             >
-              <Sparkles size={14} className={cleaningTests ? "animate-spin" : ""} />
+              <Sparkles size={14} />
               <span>Clean Test Clutter ({testUsersCount})</span>
             </button>
           )}
@@ -699,7 +889,7 @@ export default function AdminUsersPage() {
               <button
                 type="button"
                 onClick={() => setFilters((f) => ({ ...f, search: "" }))}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 dark:hover:text-white"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 dark:hover:text-white cursor-pointer"
               >
                 <X size={13} />
               </button>
@@ -811,7 +1001,7 @@ export default function AdminUsersPage() {
                 <button
                   type="button"
                   onClick={() => setFilters(EMPTY_FILTERS)}
-                  className="px-3 py-2 rounded-xl text-xs font-bold text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors"
+                  className="px-3 py-2 rounded-xl text-xs font-bold text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
                   title="Reset all filters"
                 >
                   Reset
@@ -954,7 +1144,7 @@ export default function AdminUsersPage() {
                         <button
                           type="button"
                           disabled={self}
-                          onClick={() => void toggleActive(u)}
+                          onClick={() => setStatusUser(u)}
                           className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold border transition-all whitespace-nowrap ${
                             self ? "opacity-60 cursor-default" : "cursor-pointer hover:shadow-xs"
                           } ${
@@ -1094,7 +1284,7 @@ export default function AdminUsersPage() {
           user={viewing}
           isSelfUser={isSelf(viewing)}
           onClose={() => setViewing(null)}
-          onToggleActive={(u) => void toggleActive(u)}
+          onOpenStatusModal={(u) => setStatusUser(u)}
           onDeleteUser={(u) => {
             setViewing(null);
             setDeletingUser(u);
@@ -1103,7 +1293,31 @@ export default function AdminUsersPage() {
       )}
 
       {/* ================================================================= */}
-      {/* 6. TYPE 'DELETE' CONFIRMATION MODAL                               */}
+      {/* 6. STATUS CHANGE CONFIRMATION MODAL (DEACTIVATE / ACTIVATE)       */}
+      {/* ================================================================= */}
+      {statusUser && (
+        <StatusConfirmModal
+          user={statusUser}
+          onClose={() => setStatusUser(null)}
+          onConfirm={() => void handleToggleStatusConfirm()}
+          loading={statusLoading}
+        />
+      )}
+
+      {/* ================================================================= */}
+      {/* 7. CLEAN TEST ACCOUNTS CONFIRMATION MODAL                         */}
+      {/* ================================================================= */}
+      {showCleanTestsModal && (
+        <CleanTestsConfirmModal
+          count={testUsersCount}
+          onClose={() => setShowCleanTestsModal(false)}
+          onConfirm={() => void handleCleanTestAccounts()}
+          loading={cleaningTests}
+        />
+      )}
+
+      {/* ================================================================= */}
+      {/* 8. TYPE 'DELETE' CONFIRMATION MODAL                               */}
       {/* ================================================================= */}
       {deletingUser && (
         <DeleteConfirmModal
