@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Seo } from '../components/Seo';
 import { seoPages } from '../content/seo';
@@ -9,13 +10,13 @@ import { getPublicProducts } from '../api/publicApi';
 import {
   Search,
   SlidersHorizontal,
-  Layers,
   Scale,
   Sparkles,
   ArrowRight,
   RotateCcw,
   Info,
   X,
+  Eye,
 } from 'lucide-react';
 
 export interface CatalogProduct {
@@ -37,6 +38,7 @@ export interface CatalogProduct {
 const MATERIALS = ['All Materials', 'Grey Iron', 'Ductile Iron'];
 
 export default function ProductsPage() {
+  const navigate = useNavigate();
   const { theme } = useTheme();
   const { openQuoteModal, openEnquiryModal } = useEnquiryModal();
   const isLight = theme === 'light';
@@ -376,7 +378,7 @@ export default function ProductsPage() {
 
                     {/* Product 3D Studio Visual Stage */}
                     <div
-                      onClick={() => setActiveModalProduct(product)}
+                      onClick={() => navigate(`/products/${product.id}`)}
                       className={`relative w-full h-44 sm:h-48 my-2 rounded-2xl flex items-center justify-center p-3 cursor-pointer overflow-hidden transition-all ${
                         isLight
                           ? 'bg-gradient-to-b from-neutral-50 to-neutral-100/60'
@@ -397,7 +399,7 @@ export default function ProductsPage() {
                       {/* Hover Quick View Chip */}
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 backdrop-blur-[2px] flex items-center justify-center transition-opacity duration-300">
                         <span className="px-3.5 py-1.5 rounded-full bg-white text-neutral-900 font-mono text-xs font-bold shadow-lg">
-                          Quick Specs
+                          View Full Details
                         </span>
                       </div>
                     </div>
@@ -409,7 +411,7 @@ export default function ProductsPage() {
                       </div>
 
                       <h3
-                        onClick={() => setActiveModalProduct(product)}
+                        onClick={() => navigate(`/products/${product.id}`)}
                         className={`text-base font-bold tracking-tight line-clamp-2 cursor-pointer transition-colors ${
                           isLight ? 'text-neutral-900 group-hover:text-orange-600' : 'text-white group-hover:text-orange-400'
                         }`}
@@ -462,15 +464,15 @@ export default function ProductsPage() {
                     </button>
 
                     <button
-                      onClick={() => setActiveModalProduct(product)}
-                      className={`p-2.5 rounded-xl border transition-colors ${
+                      onClick={() => navigate(`/products/${product.id}`)}
+                      className={`p-2.5 rounded-xl border transition-colors cursor-pointer ${
                         isLight
                           ? 'bg-neutral-100 hover:bg-neutral-200 border-neutral-300 text-neutral-700'
                           : 'bg-white/5 hover:bg-white/10 border-white/10 text-neutral-300'
                       }`}
-                      title="View Full Technical Details"
+                      title="View Full Specifications"
                     >
-                      <Info className="w-4 h-4" />
+                      <Eye className="w-4 h-4" />
                     </button>
                   </div>
 
@@ -481,104 +483,20 @@ export default function ProductsPage() {
         )}
 
         {/* ========================================================================= */}
-        {/* METALLURGICAL GRADE SPECIFICATIONS (GREY IRON VS DUCTILE IRON) */}
+        {/* METALLURGICAL COMPARISON MATRIX BANNER                                    */}
         {/* ========================================================================= */}
-        <section className={`py-14 sm:py-20 rounded-3xl p-6 sm:p-10 lg:p-12 border transition-colors ${
-          isLight ? 'bg-white border-neutral-200/90 shadow-sm' : 'bg-[#080a0f] border-white/[0.08]'
-        }`}>
-          <div className="text-center max-w-3xl mx-auto mb-12">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-bold tracking-wider uppercase text-blue-600 dark:text-sky-400 bg-blue-500/10 border border-blue-500/20 mb-4">
-              <Layers className="w-3.5 h-3.5" />
-              <span>METALLURGICAL SELECTION MATRIX</span>
-            </div>
-
-            <h2 className={`text-3xl sm:text-5xl font-extrabold tracking-tight mb-4 ${
-              isLight ? 'text-neutral-900' : 'text-white'
-            }`}>
-              Grey Iron vs. Ductile Iron Comparison
+        <section className="space-y-6 pt-6">
+          <div className="space-y-2 max-w-3xl">
+            <span className="text-xs font-mono font-bold tracking-wider uppercase text-orange-500">
+              ENGINEERING SELECTION GUIDE
+            </span>
+            <h2 className={`text-2xl sm:text-4xl font-black tracking-tight ${isLight ? 'text-neutral-900' : 'text-white'}`}>
+              Grey Iron vs. Ductile Iron Selection Matrix
             </h2>
 
             <p className={`text-sm sm:text-base ${isLight ? 'text-neutral-600' : 'text-neutral-300'}`}>
               Compare mechanical properties, microstructure characteristics, and international standards to select the optimal casting grade for your engineering application.
             </p>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            
-            {/* Grey Iron Card */}
-            <div className={`rounded-3xl p-6 sm:p-8 border transition-all ${
-              isLight ? 'bg-neutral-50/70 border-neutral-200' : 'bg-[#0d1017] border-white/10'
-            }`}>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="px-3 py-1 rounded-full text-xs font-mono font-bold uppercase bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/30">
-                    Flake Graphite (Cast Iron)
-                  </span>
-                  <span className="text-xs font-mono text-neutral-500 dark:text-neutral-400">IS 210 / EN-GJL</span>
-                </div>
-
-                <h3 className={`text-2xl sm:text-3xl font-bold tracking-tight ${isLight ? 'text-neutral-900' : 'text-white'}`}>
-                  Grey Iron Castings
-                </h3>
-
-                <p className={`text-sm leading-relaxed ${isLight ? 'text-neutral-600' : 'text-neutral-300'}`}>
-                  Renowned for exceptional damping capacity, high thermal conductivity, and effortless CNC machinability. The international benchmark for machine beds, vibration dampeners, and hydraulic casings.
-                </p>
-
-                <div className="grid grid-cols-3 gap-3 pt-2">
-                  <div className={`p-3 rounded-2xl border ${isLight ? 'bg-white border-neutral-200' : 'bg-white/5 border-white/5'}`}>
-                    <span className="text-[10px] font-mono text-neutral-500 block uppercase">Tensile</span>
-                    <span className="text-sm font-bold text-orange-600 dark:text-orange-400 font-mono">150–350 MPa</span>
-                  </div>
-                  <div className={`p-3 rounded-2xl border ${isLight ? 'bg-white border-neutral-200' : 'bg-white/5 border-white/5'}`}>
-                    <span className="text-[10px] font-mono text-neutral-500 block uppercase">Hardness</span>
-                    <span className="text-sm font-bold font-mono">160–260 HBW</span>
-                  </div>
-                  <div className={`p-3 rounded-2xl border ${isLight ? 'bg-white border-neutral-200' : 'bg-white/5 border-white/5'}`}>
-                    <span className="text-[10px] font-mono text-neutral-500 block uppercase">Damping</span>
-                    <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 font-mono">Superior</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Ductile Iron Card */}
-            <div className={`rounded-3xl p-6 sm:p-8 border transition-all ${
-              isLight ? 'bg-neutral-50/70 border-neutral-200' : 'bg-[#0d1017] border-white/10'
-            }`}>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="px-3 py-1 rounded-full text-xs font-mono font-bold uppercase bg-blue-500/10 text-blue-600 dark:text-sky-400 border border-blue-500/30">
-                    Nodular S.G. Iron
-                  </span>
-                  <span className="text-xs font-mono text-neutral-500 dark:text-neutral-400">IS 1865 / EN-GJS</span>
-                </div>
-
-                <h3 className={`text-2xl sm:text-3xl font-bold tracking-tight ${isLight ? 'text-neutral-900' : 'text-white'}`}>
-                  Ductile (SG) Castings
-                </h3>
-
-                <p className={`text-sm leading-relaxed ${isLight ? 'text-neutral-600' : 'text-neutral-300'}`}>
-                  Combines the high tensile strength and toughness of cast steel with the economical fluidity of cast iron. The optimal choice for automotive knuckles, high-load gears, and railway components.
-                </p>
-
-                <div className="grid grid-cols-3 gap-3 pt-2">
-                  <div className={`p-3 rounded-2xl border ${isLight ? 'bg-white border-neutral-200' : 'bg-white/5 border-white/5'}`}>
-                    <span className="text-[10px] font-mono text-neutral-500 block uppercase">Tensile</span>
-                    <span className="text-sm font-bold text-sky-500 font-mono">400–700 MPa</span>
-                  </div>
-                  <div className={`p-3 rounded-2xl border ${isLight ? 'bg-white border-neutral-200' : 'bg-white/5 border-white/5'}`}>
-                    <span className="text-[10px] font-mono text-neutral-500 block uppercase">Elongation</span>
-                    <span className="text-sm font-bold font-mono">2% – 18%</span>
-                  </div>
-                  <div className={`p-3 rounded-2xl border ${isLight ? 'bg-white border-neutral-200' : 'bg-white/5 border-white/5'}`}>
-                    <span className="text-[10px] font-mono text-neutral-500 block uppercase">Impact</span>
-                    <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 font-mono">High Toughness</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
           </div>
         </section>
 
@@ -667,7 +585,7 @@ export default function ProductsPage() {
             >
               <button
                 onClick={() => setActiveModalProduct(null)}
-                className="absolute top-5 right-5 p-2 rounded-full hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors"
+                className="absolute top-5 right-5 p-2 rounded-full hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -710,17 +628,17 @@ export default function ProductsPage() {
                 </div>
               </div>
 
-              <div className="mt-8 flex gap-3">
+              <div className="mt-8 flex flex-col sm:flex-row gap-3">
                 <button
                   type="button"
                   onClick={() => {
-                    const title = activeModalProduct.title;
+                    const id = activeModalProduct.id;
                     setActiveModalProduct(null);
-                    openQuoteModal(title);
+                    navigate(`/products/${id}`);
                   }}
                   className="flex-1 py-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-center text-sm font-mono transition-all cursor-pointer shadow-md shadow-orange-500/25"
                 >
-                  Request a Quote for this Component
+                  View Full Product Details →
                 </button>
                 <button
                   onClick={() => setActiveModalProduct(null)}

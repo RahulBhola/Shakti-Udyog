@@ -13,6 +13,15 @@ export interface Product {
   availableFinish: string;
 }
 
+export interface PublicProductAttachment {
+  id: string;
+  fileName: string;
+  contentType: string;
+  sizeBytes: number;
+  description: string | null;
+  downloadUrl: string;
+}
+
 export interface PublicProductItem {
   id: string;
   productCode: string;
@@ -22,12 +31,37 @@ export interface PublicProductItem {
   grade: string;
   weight: string;
   image: string | null;
+  lightImage?: string | null;
   application: string;
   specs: string;
   tolerances: string;
   hardness: string;
   tensileStrength: string;
   dimensions?: string | null;
+  castingType?: string | null;
+  unit?: string | null;
+  heatTreatment?: string | null;
+  surfaceFinish?: string | null;
+  density?: string | null;
+  length?: number | null;
+  width?: number | null;
+  height?: number | null;
+  diameter?: number | null;
+  drawingNumber?: string | null;
+  revision?: string | null;
+  patternNumber?: string | null;
+  coreRequired?: boolean;
+  machineRequired?: boolean;
+  inspectionRequired?: boolean;
+  machiningRequired?: boolean;
+  cycleTimeMinutes?: number | null;
+  standardCost?: number | null;
+  sellingPrice?: number | null;
+  gstPercent?: number | null;
+  hsnCode?: string | null;
+  currency?: string | null;
+  detailedDescription?: string | null;
+  attachments?: PublicProductAttachment[];
 }
 
 export interface Resource {
@@ -40,7 +74,7 @@ export interface Resource {
 export const getPublicProducts = () => apiGet<PublicProductItem[]>("/api/v1/public/products");
 export const getPublicProductById = (id: string) => apiGet<PublicProductItem>(`/api/v1/public/products/${id}`);
 export const getProducts = () => apiGet<PublicProductItem[]>("/api/v1/public/products");
-export const getProduct = (slug: string) => apiGet<Product>(`/api/v1/public/products/${slug}`);
+export const getProduct = (slug: string) => apiGet<any>(`/api/v1/public/products/${slug}`);
 export const getResources = () => apiGet<Resource[]>("/api/v1/public/resources");
 export const getResource = (slug: string) => apiGet<Resource>(`/api/v1/public/resources/${slug}`);
 

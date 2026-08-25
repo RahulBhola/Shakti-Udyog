@@ -39,13 +39,26 @@ public class PublicController(
         return File(result.Value.Stream, result.Value.ContentType, result.Value.FileName);
     }
 
-    [HttpGet("products/{slug}")]
-    [ProducesResponseType<ProductDto>(StatusCodes.Status200OK)]
+    [HttpGet("products/{productId:guid}/attachments/{attachmentId:guid}/download")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public IActionResult GetProduct(string slug)
+    public async Task<IActionResult> DownloadProductAttachment(Guid productId, Guid attachmentId)
     {
-        var product = content.GetProduct(slug);
-        return product is null ? NotFound() : Ok(product);
+        var result = await content.GetPublicProductAttachmentAsync(productId, attachmentId);
+        if (result is null) return NotFound();
+        return File(result.Value.Stream, result.Value.ContentType, result.Value.FileName);
+    }
+
+    [HttpGet("products/{slug}")]
+    [ProducesResponseType<PublicProductItemDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetProduct(string slug)
+    {
+        var product = await content.GetPublicProductBySlugOrIdAsync(slug);
+        if (product is not null) return Ok(product);
+
+        var legacy = content.GetProduct(slug);
+        return legacy is null ? NotFound() : Ok(legacy);
     }
 
     [HttpGet("resources")]

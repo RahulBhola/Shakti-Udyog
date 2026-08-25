@@ -9,7 +9,9 @@ public interface IPublicContentService
 {
     Task<IReadOnlyList<PublicProductItemDto>> GetPublicProductsAsync();
     Task<PublicProductItemDto?> GetPublicProductByIdAsync(Guid id);
+    Task<PublicProductItemDto?> GetPublicProductBySlugOrIdAsync(string slugOrId);
     Task<(Stream Stream, string ContentType, string FileName)?> GetPublicProductImageAsync(Guid id);
+    Task<(Stream Stream, string ContentType, string FileName)?> GetPublicProductAttachmentAsync(Guid productId, Guid attachmentId);
     IReadOnlyList<ProductDto> GetProducts();
     ProductDto? GetProduct(string slug);
     IReadOnlyList<ResourceDto> GetResources();
@@ -130,39 +132,7 @@ public class PublicContentService(
 
             if (activeProducts.Count > 0)
             {
-                return activeProducts.Select(p =>
-                {
-                    var firstImageAttachment = p.Attachments
-                        .Where(a => a.ContentType.StartsWith("image/"))
-                        .OrderBy(a => a.UploadedAtUtc)
-                        .FirstOrDefault();
-
-                    var imageUrl = !string.IsNullOrWhiteSpace(p.ImageUrl)
-                        ? p.ImageUrl
-                        : firstImageAttachment != null
-                            ? $"/api/v1/public/products/{p.Id}/image"
-                            : null;
-
-                    var dims = (p.Length.HasValue || p.Width.HasValue || p.Height.HasValue)
-                        ? $"{p.Length ?? 0} × {p.Width ?? 0} × {p.Height ?? 0} mm"
-                        : null;
-
-                    return new PublicProductItemDto(
-                        p.Id,
-                        p.ProductCode,
-                        p.ProductName,
-                        p.Category?.Name ?? "General Castings",
-                        p.Material ?? "Grey Iron",
-                        p.MaterialGrade ?? "FG 200",
-                        p.Weight.HasValue ? $"{p.Weight.Value} kg" : "—",
-                        imageUrl,
-                        p.Application ?? p.Description ?? "Industrial and machinery applications",
-                        p.Description ?? "High precision engineered casting component",
-                        p.Tolerance ?? "±0.05 mm",
-                        p.Hardness ?? "180–220 HBW",
-                        p.TensileStrength ?? "200 MPa min",
-                        dims);
-                }).ToList();
+                return activeProducts.Select(MapToPublicDto).ToList();
             }
         }
         catch
@@ -217,41 +187,45 @@ public class PublicContentService(
 
             if (p is not null)
             {
-                var firstImageAttachment = p.Attachments
-                    .Where(a => a.ContentType.StartsWith("image/"))
-                    .OrderBy(a => a.UploadedAtUtc)
-                    .FirstOrDefault();
-
-                var imageUrl = !string.IsNullOrWhiteSpace(p.ImageUrl)
-                    ? p.ImageUrl
-                    : firstImageAttachment != null
-                        ? $"/api/v1/public/products/{p.Id}/image"
-                        : null;
-
-                var dims = (p.Length.HasValue || p.Width.HasValue || p.Height.HasValue)
-                    ? $"{p.Length ?? 0} × {p.Width ?? 0} × {p.Height ?? 0} mm"
-                    : null;
-
-                return new PublicProductItemDto(
-                    p.Id,
-                    p.ProductCode,
-                    p.ProductName,
-                    p.Category?.Name ?? "General Castings",
-                    p.Material ?? "Grey Iron",
-                    p.MaterialGrade ?? "FG 200",
-                    p.Weight.HasValue ? $"{p.Weight.Value} kg" : "—",
-                    imageUrl,
-                    p.Application ?? p.Description ?? "Industrial and machinery applications",
-                    p.Description ?? "High precision engineered casting component",
-                    p.Tolerance ?? "±0.05 mm",
-                    p.Hardness ?? "180–220 HBW",
-                    p.TensileStrength ?? "200 MPa min",
-                    dims);
+                return MapToPublicDto(p);
             }
         }
         catch
         {
-            // Fallback for offline test environments
+            // Fallback
+        }
+
+        return null;
+    }
+
+    public async Task<PublicProductItemDto?> GetPublicProductBySlugOrIdAsync(string slugOrId)
+    {
+        try
+        {
+            if (Guid.TryParse(slugOrId, out var id))
+            {
+                return await GetPublicProductByIdAsync(id);
+            }
+
+            var clean = slugOrId.Trim().ToLowerInvariant();
+            var p = await db.ProductMasters
+                .IgnoreQueryFilters()
+                .Include(pm => pm.Category)
+                .Include(pm => pm.Attachments)
+                .FirstOrDefaultAsync(pm =>
+                    pm.Status == "Active" && !pm.IsArchived &&
+                    (pm.ProductCode.ToLower() == clean ||
+                     pm.ProductName.ToLower().Replace(" ", "-") == clean ||
+                     pm.ProductName.ToLower() == clean.Replace("-", " ")));
+
+            if (p is not null)
+            {
+                return MapToPublicDto(p);
+            }
+        }
+        catch
+        {
+            // Fallback
         }
 
         return null;
@@ -272,6 +246,20 @@ public class PublicContentService(
         return (stream, attachment.ContentType, attachment.FileName);
     }
 
+    public async Task<(Stream Stream, string ContentType, string FileName)?> GetPublicProductAttachmentAsync(Guid productId, Guid attachmentId)
+    {
+        var attachment = await db.ProductMasterAttachments
+            .Where(a => a.ProductMasterId == productId && a.Id == attachmentId)
+            .FirstOrDefaultAsync();
+
+        if (attachment is null) return null;
+
+        var stream = await storage.OpenReadAsync(attachment.StorageKey);
+        if (stream is null) return null;
+
+        return (stream, attachment.ContentType, attachment.FileName);
+    }
+
     public IReadOnlyList<ProductDto> GetProducts() => Products;
 
     public ProductDto? GetProduct(string slug) =>
@@ -281,4 +269,76 @@ public class PublicContentService(
 
     public ResourceDto? GetResource(string slug) =>
         Resources.FirstOrDefault(r => string.Equals(r.Slug, slug, StringComparison.OrdinalIgnoreCase));
+
+    private static PublicProductItemDto MapToPublicDto(ShaktiUdyog.Domain.Entities.ProductMaster p)
+    {
+        var firstImageAttachment = p.Attachments
+            .Where(a => a.ContentType.StartsWith("image/"))
+            .OrderBy(a => a.UploadedAtUtc)
+            .FirstOrDefault();
+
+        var imageUrl = !string.IsNullOrWhiteSpace(p.ImageUrl)
+            ? p.ImageUrl
+            : firstImageAttachment != null
+                ? $"/api/v1/public/products/{p.Id}/image"
+                : null;
+
+        var dims = (p.Length.HasValue || p.Width.HasValue || p.Height.HasValue || p.Diameter.HasValue)
+            ? p.Diameter.HasValue
+                ? $"Ø{p.Diameter} × {p.Length ?? p.Height ?? 0} mm"
+                : $"{p.Length ?? 0} × {p.Width ?? 0} × {p.Height ?? 0} mm"
+            : null;
+
+        var attachments = p.Attachments
+            .OrderBy(a => a.UploadedAtUtc)
+            .Select(a => new PublicProductAttachmentDto(
+                a.Id,
+                a.FileName,
+                a.ContentType,
+                a.SizeBytes,
+                a.Description,
+                $"/api/v1/public/products/{p.Id}/attachments/{a.Id}/download"))
+            .ToList();
+
+        return new PublicProductItemDto(
+            p.Id,
+            p.ProductCode,
+            p.ProductName,
+            p.Category?.Name ?? "General Castings",
+            p.Material ?? "Grey Iron",
+            p.MaterialGrade ?? "FG 200",
+            p.Weight.HasValue ? $"{p.Weight.Value} kg" : "—",
+            imageUrl,
+            p.Application ?? p.Description ?? "Industrial and machinery applications",
+            p.Description ?? "High precision engineered casting component",
+            p.Tolerance ?? "±0.05 mm",
+            p.Hardness ?? "180–220 HBW",
+            p.TensileStrength ?? "200 MPa min",
+            dims,
+            LightImage: p.LightImageUrl,
+            CastingType: p.CastingType,
+            Unit: p.Unit,
+            HeatTreatment: p.HeatTreatment,
+            SurfaceFinish: p.SurfaceFinish,
+            Density: p.Density,
+            Length: p.Length,
+            Width: p.Width,
+            Height: p.Height,
+            Diameter: p.Diameter,
+            DrawingNumber: p.DrawingNumber,
+            Revision: p.Revision,
+            PatternNumber: p.PatternNumber,
+            CoreRequired: p.CoreRequired,
+            MachineRequired: p.MachineRequired,
+            InspectionRequired: p.InspectionRequired,
+            MachiningRequired: p.MachiningRequired,
+            CycleTimeMinutes: p.CycleTimeMinutes,
+            StandardCost: p.StandardCost,
+            SellingPrice: p.SellingPrice,
+            GstPercent: p.GstPercent,
+            HsnCode: p.HsnCode,
+            Currency: p.Currency ?? "INR",
+            DetailedDescription: p.Description,
+            Attachments: attachments);
+    }
 }

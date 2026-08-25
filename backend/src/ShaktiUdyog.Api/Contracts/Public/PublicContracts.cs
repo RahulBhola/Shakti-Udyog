@@ -14,6 +14,14 @@ public record ProductDto(
     string CastingWeightRange,
     string AvailableFinish);
 
+public record PublicProductAttachmentDto(
+    Guid Id,
+    string FileName,
+    string ContentType,
+    long SizeBytes,
+    string? Description,
+    string DownloadUrl);
+
 public record PublicProductItemDto(
     Guid Id,
     string ProductCode,
@@ -28,7 +36,32 @@ public record PublicProductItemDto(
     string Tolerances,
     string Hardness,
     string TensileStrength,
-    string? Dimensions);
+    string? Dimensions,
+    string? LightImage = null,
+    string? CastingType = null,
+    string? Unit = null,
+    string? HeatTreatment = null,
+    string? SurfaceFinish = null,
+    string? Density = null,
+    decimal? Length = null,
+    decimal? Width = null,
+    decimal? Height = null,
+    decimal? Diameter = null,
+    string? DrawingNumber = null,
+    string? Revision = null,
+    string? PatternNumber = null,
+    bool CoreRequired = false,
+    bool MachineRequired = false,
+    bool InspectionRequired = false,
+    bool MachiningRequired = false,
+    int? CycleTimeMinutes = null,
+    decimal? StandardCost = null,
+    decimal? SellingPrice = null,
+    decimal? GstPercent = null,
+    string? HsnCode = null,
+    string? Currency = "INR",
+    string? DetailedDescription = null,
+    IReadOnlyList<PublicProductAttachmentDto>? Attachments = null);
 
 public record ResourceDto(
     string Slug,
