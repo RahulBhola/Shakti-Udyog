@@ -4,7 +4,7 @@ import { ConfirmDialog } from "../ConfirmDialog";
 import {
   Folder, FolderTree, Plus, Search, Eye, EyeOff,
   Pencil, Trash2, X, AlertCircle,
-  Power, Layers, RefreshCw, Boxes, Tag,
+  RefreshCw, Boxes, Tag, Check,
 } from "lucide-react";
 import "../erpListView.css";
 
@@ -98,7 +98,7 @@ function CategoryFormModal({ category, parents, onClose, onSaved }: CategoryForm
             </div>
             <div>
               <span className="inv-modal__title text-base">{isEdit ? "Edit Category" : "New Category"}</span>
-              <p className="text-[11px] text-neutral-500 m-0">Set category name, slug, order, and public visibility.</p>
+              <p className="text-[11px] text-neutral-500 m-0">Set category name, slug, display order, and status.</p>
             </div>
           </div>
           <button className="inv-icon-btn" onClick={onClose} aria-label="Close">
@@ -171,9 +171,9 @@ function CategoryFormModal({ category, parents, onClose, onSaved }: CategoryForm
           <div className="p-3 rounded-xl border border-neutral-200/80 dark:border-white/10 bg-neutral-50/50 dark:bg-white/[0.02]">
             <label className="flex items-center justify-between cursor-pointer select-none">
               <div>
-                <span className="text-xs font-bold text-neutral-900 dark:text-white block">Public Website Visibility</span>
+                <span className="text-xs font-bold text-neutral-900 dark:text-white block">Category Status (Public Website)</span>
                 <span className="text-[11px] text-neutral-500 dark:text-neutral-400 block mt-0.5">
-                  When enabled, this category and its active products appear in the public catalog.
+                  When active, this category and its products appear in the public catalog.
                 </span>
               </div>
               <input
@@ -215,28 +215,14 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
   const [products, setProducts] = useState<ProductMasterListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"All" | "Visible" | "Hidden">("All");
+  const [statusFilter, setStatusFilter] = useState<"All" | "Active" | "Hidden">("All");
   const [formModal, setFormModal] = useState<{ open: boolean; category: AdminCategory | null }>({
     open: false,
     category: null,
   });
   const [confirmDelete, setConfirmDelete] = useState<AdminCategory | null>(null);
   const [actionErr, setActionErr] = useState<string | null>(null);
-  const [openActionMenuId, setOpenActionMenuId] = useState<string | null>(null);
-
-  // Category bulk status confirmation dialog state
-  const [bulkStatusPrompt, setBulkStatusPrompt] = useState<{
-    open: boolean;
-    category: AdminCategory | null;
-    targetStatus: "Active" | "Inactive" | "Draft";
-    productCount: number;
-  }>({
-    open: false,
-    category: null,
-    targetStatus: "Active",
-    productCount: 0,
-  });
-  const [bulkProcessing, setBulkProcessing] = useState(false);
+  const [feedbackNotice, setFeedbackNotice] = useState<string | null>(null);
 
   const loadData = useCallback(() => {
     setLoading(true);
@@ -261,17 +247,14 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
 
   // Map category product counts by categoryName
   const categoryProductStats = useMemo(() => {
-    const map = new Map<string, { total: number; active: number; draft: number; inactive: number; archived: number }>();
+    const map = new Map<string, { total: number; active: number }>();
     for (const p of products) {
       if (p.categoryName) {
         const key = p.categoryName.trim().toLowerCase();
-        const cur = map.get(key) ?? { total: 0, active: 0, draft: 0, inactive: 0, archived: 0 };
+        const cur = map.get(key) ?? { total: 0, active: 0 };
         cur.total += 1;
         const st = p.status?.toLowerCase();
-        if (p.isArchived || st === "archived") cur.archived += 1;
-        else if (st === "active") cur.active += 1;
-        else if (st === "draft") cur.draft += 1;
-        else cur.inactive += 1;
+        if (!p.isArchived && st === "active") cur.active += 1;
         map.set(key, cur);
       }
     }
@@ -280,14 +263,14 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
 
   // Overall category KPIs
   const totalCategories = categories.length;
-  const visibleCategories = categories.filter((c) => c.isVisible).length;
+  const activeCategories = categories.filter((c) => c.isVisible).length;
   const hiddenCategories = categories.filter((c) => !c.isVisible).length;
   const totalMappedProducts = products.length;
 
   // Filtered categories
   const filtered = useMemo(() => {
     return categories.filter((c) => {
-      if (statusFilter === "Visible" && !c.isVisible) return false;
+      if (statusFilter === "Active" && !c.isVisible) return false;
       if (statusFilter === "Hidden" && c.isVisible) return false;
       if (search.trim()) {
         const q = search.toLowerCase();
@@ -297,14 +280,18 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
     });
   }, [categories, statusFilter, search]);
 
-  const toggleVisibility = async (cat: AdminCategory) => {
+  // Single Unified Status Toggle: Synchronizes Category Visibility & Product Statuses
+  const toggleCategoryStatus = async (cat: AdminCategory) => {
     const newVisibility = !cat.isVisible;
-    // Optimistic update in UI
+    const targetStatus = newVisibility ? "Active" : "Inactive";
+
+    // Optimistic UI update
     setCategories((prev) =>
       prev.map((c) => (c.id === cat.id ? { ...c, isVisible: newVisibility } : c))
     );
 
     try {
+      // 1. Update Category Visibility in database
       await adminApi.updateCategory(cat.id, {
         name: cat.name,
         slug: cat.slug ?? undefined,
@@ -313,28 +300,21 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
         displayOrder: cat.displayOrder,
         isVisible: newVisibility,
       });
-      onCategoriesChanged?.();
-    } catch (e) {
-      // Revert optimistic update
-      setCategories((prev) =>
-        prev.map((c) => (c.id === cat.id ? { ...c, isVisible: cat.isVisible } : c))
-      );
-      setActionErr(e instanceof Error ? e.message : "Failed to update category visibility.");
-    }
-  };
 
-  const handleBulkStatusConfirm = async () => {
-    if (!bulkStatusPrompt.category) return;
-    setBulkProcessing(true);
-    try {
-      await adminApi.setCategoryProductsStatus(bulkStatusPrompt.category.id, bulkStatusPrompt.targetStatus);
-      setBulkStatusPrompt({ open: false, category: null, targetStatus: "Active", productCount: 0 });
+      // 2. Synchronize all products under this category (Active when visible, Inactive when hidden)
+      await adminApi.setCategoryProductsStatus(cat.id, targetStatus).catch(() => null);
+
+      setFeedbackNotice(`"${cat.name}" is now ${newVisibility ? "Active & Published" : "Hidden & Deactivated"}.`);
+      setTimeout(() => setFeedbackNotice(null), 3000);
+
       loadData();
       onCategoriesChanged?.();
     } catch (e) {
-      setActionErr(e instanceof Error ? e.message : "Failed to update category products status.");
-    } finally {
-      setBulkProcessing(false);
+      // Revert optimistic update on failure
+      setCategories((prev) =>
+        prev.map((c) => (c.id === cat.id ? { ...c, isVisible: cat.isVisible } : c))
+      );
+      setActionErr(e instanceof Error ? e.message : "Failed to update category status.");
     }
   };
 
@@ -357,13 +337,10 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
     <div className="inv-modal-backdrop" onClick={onClose} style={{ zIndex: 1050 }}>
       <div
         className="inv-modal"
-        onClick={(e) => {
-          e.stopPropagation();
-          setOpenActionMenuId(null);
-        }}
+        onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
-        style={{ maxWidth: 960, width: "95vw", maxHeight: "90vh", display: "flex", flexDirection: "column" }}
+        style={{ maxWidth: 880, width: "95vw", maxHeight: "90vh", display: "flex", flexDirection: "column" }}
       >
         {/* Header */}
         <div className="inv-modal__head shrink-0 bg-white/80 dark:bg-[#0f121a]/80 backdrop-blur-xl border-b border-neutral-200/80 dark:border-white/10">
@@ -376,7 +353,7 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
                 Manage Product Categories
               </span>
               <p className="text-xs text-neutral-500 dark:text-neutral-400 m-0 mt-0.5">
-                Organize casting categories, toggle public catalog visibility, and bulk manage product statuses.
+                Organize casting categories and toggle active public status across your website catalog.
               </p>
             </div>
           </div>
@@ -412,8 +389,8 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
               <Eye size={15} />
             </div>
             <div>
-              <div className="text-[11px] font-medium text-neutral-400">Publicly Visible</div>
-              <div className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400">{visibleCategories}</div>
+              <div className="text-[11px] font-medium text-neutral-400">Active on Website</div>
+              <div className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400">{activeCategories}</div>
             </div>
           </div>
 
@@ -422,7 +399,7 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
               <EyeOff size={15} />
             </div>
             <div>
-              <div className="text-[11px] font-medium text-neutral-400">Hidden / Draft</div>
+              <div className="text-[11px] font-medium text-neutral-400">Hidden / Inactive</div>
               <div className="text-sm font-extrabold text-amber-600 dark:text-amber-400">{hiddenCategories}</div>
             </div>
           </div>
@@ -432,7 +409,7 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
               <Boxes size={15} />
             </div>
             <div>
-              <div className="text-[11px] font-medium text-neutral-400">Total Products Mapped</div>
+              <div className="text-[11px] font-medium text-neutral-400">Products Mapped</div>
               <div className="text-sm font-extrabold text-purple-600 dark:text-purple-400">{totalMappedProducts}</div>
             </div>
           </div>
@@ -452,7 +429,7 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
           </div>
 
           <div className="flex items-center gap-1.5 w-full sm:w-auto">
-            {(["All", "Visible", "Hidden"] as const).map((s) => (
+            {(["All", "Active", "Hidden"] as const).map((s) => (
               <button
                 key={s}
                 type="button"
@@ -468,6 +445,14 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
             ))}
           </div>
         </div>
+
+        {/* Feedback Success Notification */}
+        {feedbackNotice && (
+          <div className="mx-6 mt-3 p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold flex items-center gap-2">
+            <Check size={14} />
+            <span>{feedbackNotice}</span>
+          </div>
+        )}
 
         {/* Error Alert */}
         {actionErr && (
@@ -504,31 +489,31 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
           ) : (
             <table className="inv-table w-full" style={{ tableLayout: "fixed" }}>
               <colgroup>
-                <col style={{ width: "32%" }} />
-                <col style={{ width: "20%" }} />
-                <col style={{ width: "20%" }} />
-                <col style={{ width: "7%" }} />
-                <col style={{ width: "13%" }} />
+                <col style={{ width: "38%" }} />
+                <col style={{ width: "24%" }} />
+                <col style={{ width: "14%" }} />
+                <col style={{ width: "8%" }} />
+                <col style={{ width: "16%" }} />
                 <col style={{ width: "8%" }} />
               </colgroup>
               <thead>
                 <tr>
-                  <th style={{ width: "32%" }}>Category</th>
-                  <th style={{ width: "20%" }}>Slug</th>
-                  <th style={{ width: "20%" }}>Category Products</th>
-                  <th style={{ width: "7%" }}>Order</th>
-                  <th style={{ width: "13%" }}>Web Visibility</th>
+                  <th style={{ width: "38%" }}>Category</th>
+                  <th style={{ width: "24%" }}>Slug</th>
+                  <th style={{ width: "14%" }}>Products</th>
+                  <th style={{ width: "8%" }}>Order</th>
+                  <th style={{ width: "16%" }}>Status</th>
                   <th style={{ width: "8%", textAlign: "right" }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((cat) => {
                   const cColor = catColor(cat.name);
-                  const stats = categoryProductStats.get(cat.name.trim().toLowerCase()) ?? { total: 0, active: 0, draft: 0, inactive: 0, archived: 0 };
-                  const isActionMenuOpen = openActionMenuId === cat.id;
+                  const stats = categoryProductStats.get(cat.name.trim().toLowerCase()) ?? { total: 0, active: 0 };
 
                   return (
                     <tr key={cat.id}>
+                      {/* Category Info */}
                       <td style={{ overflow: "hidden", maxWidth: 0 }}>
                         <div className="flex items-center gap-3 min-w-0">
                           <span
@@ -548,129 +533,39 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
                         </div>
                       </td>
 
+                      {/* Slug */}
                       <td style={{ overflow: "hidden", maxWidth: 0 }}>
                         <span className="font-mono text-[11px] text-neutral-500 dark:text-neutral-400 block truncate px-2 py-0.5 rounded bg-neutral-100 dark:bg-white/5 w-fit max-w-full">
                           {cat.slug || "—"}
                         </span>
                       </td>
 
-                      {/* Category-wise Product Activation / Deactivation Column */}
+                      {/* Products Count */}
                       <td>
-                        <div className="relative inline-block" onClick={(e) => e.stopPropagation()}>
-                          <div className="flex items-center gap-1.5">
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setOpenActionMenuId(isActionMenuOpen ? null : cat.id);
-                              }}
-                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-bold border transition-all cursor-pointer ${
-                                stats.total === 0
-                                  ? "bg-neutral-100 dark:bg-white/5 text-neutral-400 border-neutral-200/60 dark:border-white/5"
-                                  : stats.active === stats.total
-                                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20"
-                                  : stats.active > 0
-                                  ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30 hover:bg-blue-500/20"
-                                  : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/20"
-                              }`}
-                              title="Click to manage product statuses in this category"
-                            >
-                              <Layers size={12} />
-                              <span>{stats.total} {stats.total === 1 ? "Product" : "Products"}</span>
-                              {stats.total > 0 && (
-                                <span className={`text-[10px] px-1 py-0.2 rounded font-mono ${stats.active > 0 ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-300" : "bg-neutral-500/20 text-neutral-500"}`}>
-                                  {stats.active} Active
-                                </span>
-                              )}
-                            </button>
-                          </div>
-
-                          {/* Quick Category-wise Product Status Menu */}
-                          {isActionMenuOpen && (
-                            <div
-                              className="absolute left-0 top-full mt-1.5 w-52 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#161a26] shadow-2xl p-1.5 z-40 flex flex-col gap-1"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <div className="px-2 py-1 text-[10px] font-mono uppercase tracking-wider text-neutral-400 border-b border-neutral-100 dark:border-white/5">
-                                Category Products ({stats.total})
-                              </div>
-
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setOpenActionMenuId(null);
-                                  setBulkStatusPrompt({
-                                    open: true,
-                                    category: cat,
-                                    targetStatus: "Active",
-                                    productCount: stats.total,
-                                  });
-                                }}
-                                disabled={stats.total === 0}
-                                className="flex items-center gap-2 px-2.5 py-1.5 text-xs rounded-lg text-left font-bold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-                              >
-                                <Power size={13} className="text-emerald-500" />
-                                <span>Activate All Products</span>
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setOpenActionMenuId(null);
-                                  setBulkStatusPrompt({
-                                    open: true,
-                                    category: cat,
-                                    targetStatus: "Inactive",
-                                    productCount: stats.total,
-                                  });
-                                }}
-                                disabled={stats.total === 0}
-                                className="flex items-center gap-2 px-2.5 py-1.5 text-xs rounded-lg text-left font-bold text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-                              >
-                                <EyeOff size={13} className="text-amber-500" />
-                                <span>Deactivate All Products</span>
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setOpenActionMenuId(null);
-                                  setBulkStatusPrompt({
-                                    open: true,
-                                    category: cat,
-                                    targetStatus: "Draft",
-                                    productCount: stats.total,
-                                  });
-                                }}
-                                disabled={stats.total === 0}
-                                className="flex items-center gap-2 px-2.5 py-1.5 text-xs rounded-lg text-left font-semibold text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/5 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-                              >
-                                <Tag size={13} />
-                                <span>Set All to Draft</span>
-                              </button>
-                            </div>
-                          )}
-                        </div>
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-neutral-100 dark:bg-white/5 border border-neutral-200/80 dark:border-white/10 text-neutral-700 dark:text-neutral-300 whitespace-nowrap">
+                          {stats.total} {stats.total === 1 ? "Product" : "Products"}
+                        </span>
                       </td>
 
+                      {/* Display Order */}
                       <td>
                         <span className="font-mono text-xs text-neutral-500">{cat.displayOrder}</span>
                       </td>
 
-                      {/* Interactive Website Visibility Toggle */}
+                      {/* Single Unified Category Status Switch */}
                       <td>
                         <button
                           type="button"
-                          onClick={() => void toggleVisibility(cat)}
+                          onClick={() => void toggleCategoryStatus(cat)}
                           className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold border transition-all cursor-pointer ${
                             cat.isVisible
                               ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/25 shadow-sm shadow-emerald-500/10"
                               : "bg-neutral-500/15 text-neutral-500 dark:text-neutral-400 border-neutral-400/30 hover:bg-neutral-500/25"
                           }`}
-                          title={`Click to ${cat.isVisible ? "Hide from" : "Show on"} public website`}
+                          title={`Click to switch between Active (Live) and Inactive (Hidden)`}
                         >
                           <span className={`w-2 h-2 rounded-full ${cat.isVisible ? "bg-emerald-500 animate-pulse" : "bg-neutral-400"}`} />
-                          <span>{cat.isVisible ? "Visible" : "Hidden"}</span>
+                          <span>{cat.isVisible ? "Active (Live)" : "Inactive"}</span>
                         </button>
                       </td>
 
@@ -721,65 +616,6 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
             onCategoriesChanged?.();
           }}
         />
-      )}
-
-      {/* Category-wise Products Status Bulk Confirmation Modal */}
-      {bulkStatusPrompt.open && bulkStatusPrompt.category && (
-        <div className="inv-modal-backdrop" onClick={() => setBulkStatusPrompt({ open: false, category: null, targetStatus: "Active", productCount: 0 })} style={{ zIndex: 1200 }}>
-          <div
-            className="inv-modal"
-            style={{ maxWidth: 440 }}
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-          >
-            <div className="inv-modal__body" style={{ alignItems: "center", textAlign: "center", padding: "28px 24px 16px" }}>
-              <span
-                className="inv-avatar"
-                style={{
-                  background: bulkStatusPrompt.targetStatus === "Active" ? "rgba(34,197,94,0.15)" : "rgba(245,158,11,0.15)",
-                  color: bulkStatusPrompt.targetStatus === "Active" ? "var(--color-success, #22c55e)" : "var(--color-warning, #f59e0b)",
-                  width: 52,
-                  height: 52,
-                  borderRadius: 16,
-                  marginBottom: 10,
-                }}
-              >
-                <Power size={24} />
-              </span>
-
-              <div className="inv-modal__title" style={{ fontSize: 18, fontWeight: 700 }}>
-                {bulkStatusPrompt.targetStatus === "Active" ? "Activate All Products?" : "Deactivate All Products?"}
-              </div>
-
-              <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: "8px 0 0", lineHeight: 1.55 }}>
-                You are about to set <strong>{bulkStatusPrompt.productCount} product(s)</strong> in{" "}
-                <strong>"{bulkStatusPrompt.category.name}"</strong> to <strong>{bulkStatusPrompt.targetStatus}</strong>.
-                {bulkStatusPrompt.targetStatus === "Active"
-                  ? " These products will immediately become visible to public website visitors if this category is visible."
-                  : " These products will be hidden from the public catalogue."}
-              </p>
-            </div>
-
-            <div className="inv-modal__foot" style={{ justifyContent: "center", gap: 10, padding: "16px 24px 24px" }}>
-              <button
-                className="inv-btn"
-                disabled={bulkProcessing}
-                onClick={() => setBulkStatusPrompt({ open: false, category: null, targetStatus: "Active", productCount: 0 })}
-              >
-                Cancel
-              </button>
-              <button
-                className={`inv-btn ${bulkStatusPrompt.targetStatus === "Active" ? "inv-btn--primary" : "inv-btn--warning"}`}
-                style={{ minWidth: 140 }}
-                disabled={bulkProcessing}
-                onClick={() => void handleBulkStatusConfirm()}
-              >
-                {bulkProcessing ? "Updating..." : `Yes, ${bulkStatusPrompt.targetStatus === "Active" ? "Activate All" : "Deactivate All"}`}
-              </button>
-            </div>
-          </div>
-        </div>
       )}
 
       {/* Delete Confirmation */}
