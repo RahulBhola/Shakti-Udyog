@@ -126,6 +126,7 @@ export default function AdminProductDetailPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [product, setProduct] = useState<ProductMasterDetail | null>(null);
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -143,6 +144,42 @@ export default function AdminProductDetailPage() {
   useEffect(() => {
     loadProduct();
   }, [id]);
+
+  useEffect(() => {
+    if (!product) return;
+    if (product.imageUrl || product.lightImageUrl) {
+      setBlobUrl(null);
+      return;
+    }
+    const imgAtt = product.attachments?.find((a) =>
+      a.contentType?.startsWith("image/") ||
+      /\.(png|jpe?g|webp|svg)$/i.test(a.fileName)
+    );
+    if (!imgAtt) {
+      setBlobUrl(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const token = tokenStorage.getAccessToken();
+        const url = adminApi.productMaster.downloadAttachmentUrl(product.id, imgAtt.id);
+        const response = await fetch(`${config.apiBaseUrl}${url}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+          credentials: "include",
+        });
+        if (!response.ok) return;
+        const blob = await response.blob();
+        if (!cancelled) setBlobUrl(URL.createObjectURL(blob));
+      } catch {
+        /* ignore */
+      }
+    })();
+    return () => {
+      cancelled = true;
+      if (blobUrl) URL.revokeObjectURL(blobUrl);
+    };
+  }, [product?.id, product?.imageUrl, product?.lightImageUrl, product?.attachments]);
 
   useEffect(() => {
     adminApi.categories()
@@ -199,8 +236,8 @@ export default function AdminProductDetailPage() {
   const p = product;
   const usage = p.usage;
 
-  const sourceImg = p.imageUrl || p.lightImageUrl || "/images/products_transparent/Industrial Iron Casting.png";
-  const productImage = getThemedImage(sourceImg, false);
+  const sourceImg = p.imageUrl || p.lightImageUrl;
+  const productImage = sourceImg ? getThemedImage(sourceImg, false) : blobUrl;
 
   return (
     <div className="space-y-6">
@@ -304,21 +341,45 @@ export default function AdminProductDetailPage() {
           </span>
         </div>
 
-        <div className="rounded-2xl border border-neutral-200/80 dark:border-white/10 bg-gradient-to-b from-neutral-50 to-neutral-100/90 dark:from-[#161a26] dark:to-[#0d1017] p-6 flex flex-col items-center justify-center relative overflow-hidden shadow-inner">
-          <div className="w-full h-64 sm:h-72 flex items-center justify-center p-4">
-            <img
-              src={productImage}
-              alt={p.productName}
-              className="max-h-56 sm:max-h-64 max-w-[85%] w-auto h-auto object-contain filter drop-shadow-[0_10px_20px_rgba(0,0,0,0.12)] dark:drop-shadow-[0_16px_32px_rgba(0,0,0,0.85)] transition-transform hover:scale-105 duration-300"
-            />
-          </div>
+        <div className="rounded-2xl border border-neutral-200/80 dark:border-white/10 bg-gradient-to-b from-neutral-50 to-neutral-100/90 dark:from-[#161a26] dark:to-[#0d1017] p-6 flex flex-col items-center justify-center relative overflow-hidden shadow-inner min-h-[260px]">
+          {productImage ? (
+            <>
+              <div className="w-full h-64 sm:h-72 flex items-center justify-center p-4">
+                <img
+                  src={productImage}
+                  alt={p.productName}
+                  className="max-h-56 sm:max-h-64 max-w-[85%] w-auto h-auto object-contain filter drop-shadow-[0_10px_20px_rgba(0,0,0,0.12)] dark:drop-shadow-[0_16px_32px_rgba(0,0,0,0.85)] transition-transform hover:scale-105 duration-300"
+                />
+              </div>
 
-          <div className="w-full flex items-center justify-between text-[11px] font-mono text-neutral-500 dark:text-neutral-400 pt-3 border-t border-neutral-200/60 dark:border-white/5 mt-2">
-            <span className="truncate max-w-[320px]">Asset: {productImage}</span>
-            <a href={productImage} target="_blank" rel="noreferrer" className="text-[var(--color-primary)] hover:underline font-semibold">
-              View Full Resolution ↗
-            </a>
-          </div>
+              <div className="w-full flex items-center justify-between text-[11px] font-mono text-neutral-500 dark:text-neutral-400 pt-3 border-t border-neutral-200/60 dark:border-white/5 mt-2">
+                <span className="truncate max-w-[320px]">Asset: {productImage}</span>
+                <a href={productImage} target="_blank" rel="noreferrer" className="text-[var(--color-primary)] hover:underline font-semibold">
+                  View Full Resolution ↗
+                </a>
+              </div>
+            </>
+          ) : (
+            <div className="flex flex-col items-center justify-center text-center p-8 space-y-3">
+              <div className="w-14 h-14 rounded-2xl bg-neutral-200/60 dark:bg-white/5 flex items-center justify-center text-neutral-400 dark:text-neutral-500">
+                <Package size={28} className="opacity-60" />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-neutral-800 dark:text-neutral-200 m-0">No 3D Render or Image Uploaded</h4>
+                <p className="text-xs text-neutral-500 dark:text-neutral-400 max-w-sm mt-1 mb-0">
+                  This product has no primary image attached. You can upload CAD renders, transparent 3D previews, or product photos anytime.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDrawerOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3.5 h-8 rounded-lg bg-[var(--color-primary)] text-white text-xs font-semibold hover:brightness-110 shadow-sm transition-all cursor-pointer mt-1"
+              >
+                <Upload size={13} />
+                Upload Image
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
