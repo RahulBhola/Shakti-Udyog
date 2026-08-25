@@ -14,6 +14,8 @@ import {
   RefreshCw,
   Eye,
   EyeOff,
+  ChevronDown,
+  ChevronUp,
   Search,
   Download,
   Upload,
@@ -788,6 +790,30 @@ export default function AdminSettingsPage() {
     return SECTIONS.find((s) => s.id === activeTab) ?? SECTIONS[0];
   }, [activeTab]);
 
+  // Section Groups Collapse / Expand State
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
+
+  const toggleGroup = (groupId: string) => {
+    setCollapsedGroups((prev) => ({
+      ...prev,
+      [groupId]: !prev[groupId],
+    }));
+  };
+
+  const areAllCollapsed = useMemo(() => {
+    if (!activeSection?.groups?.length) return false;
+    return activeSection.groups.every((_, idx) => !!collapsedGroups[`${activeSection.id}-${idx}`]);
+  }, [activeSection, collapsedGroups]);
+
+  const toggleAllGroups = () => {
+    const nextCollapsed = !areAllCollapsed;
+    const updates: Record<string, boolean> = { ...collapsedGroups };
+    activeSection.groups.forEach((_, idx) => {
+      updates[`${activeSection.id}-${idx}`] = nextCollapsed;
+    });
+    setCollapsedGroups(updates);
+  };
+
   // KPI calculations
   const totalConfigsCount = allKeys.length;
   const activeFeaturesCount = useMemo(() => {
@@ -1110,85 +1136,159 @@ export default function AdminSettingsPage() {
         /* Category View */
         <div className="space-y-6">
           {/* Section Hero Banner Card */}
-          <div className="p-5 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-2xs flex items-start gap-4">
-            <div
-              className={cn(
-                "w-12 h-12 rounded-2xl border flex items-center justify-center shrink-0 shadow-2xs",
-                activeSection.badgeBg,
-                activeSection.badgeText,
-                activeSection.badgeBorder
-              )}
-            >
-              <activeSection.icon size={24} />
+          <div className="p-5 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-4 flex-1 min-w-0">
+              <div
+                className={cn(
+                  "w-12 h-12 rounded-2xl border flex items-center justify-center shrink-0 shadow-2xs",
+                  activeSection.badgeBg,
+                  activeSection.badgeText,
+                  activeSection.badgeBorder
+                )}
+              >
+                <activeSection.icon size={24} />
+              </div>
+              <div className="space-y-1 flex-1 min-w-0">
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <h2 className="text-lg font-extrabold text-neutral-900 dark:text-white tracking-tight m-0">
+                    {activeSection.title}
+                  </h2>
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-neutral-100 dark:bg-white/10 text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-white/10">
+                    {activeSection.groups.length} {activeSection.groups.length === 1 ? "Section" : "Sections"}
+                  </span>
+                </div>
+                <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed m-0">
+                  {activeSection.description}
+                </p>
+              </div>
             </div>
-            <div className="space-y-1 flex-1 min-w-0">
-              <h2 className="text-lg font-extrabold text-neutral-900 dark:text-white tracking-tight">
-                {activeSection.title}
-              </h2>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">
-                {activeSection.description}
-              </p>
+
+            {/* Global View / Hide All Toggle */}
+            <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+              <button
+                type="button"
+                onClick={toggleAllGroups}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-white/5 hover:bg-neutral-50 dark:hover:bg-white/10 text-xs font-bold text-neutral-700 dark:text-neutral-300 transition-all shadow-2xs cursor-pointer"
+                title={areAllCollapsed ? "View all sections in this tab" : "Hide all sections in this tab"}
+              >
+                {areAllCollapsed ? <Eye size={13} className="text-blue-500" /> : <EyeOff size={13} className="text-neutral-500" />}
+                <span>{areAllCollapsed ? "View All Sections" : "Hide All Sections"}</span>
+              </button>
             </div>
           </div>
 
           {/* Render Groups in Section */}
-          <div className="space-y-6">
-            {activeSection.groups.map((group, gIdx) => (
-              <div
-                key={gIdx}
-                className="p-6 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-2xs space-y-5"
-              >
-                <div className="border-b border-neutral-200/80 dark:border-white/10 pb-3.5">
-                  <h3 className="text-sm font-extrabold text-neutral-900 dark:text-white">{group.title}</h3>
-                  {group.description && (
-                    <p className="text-[11.5px] text-neutral-500 dark:text-neutral-400 mt-0.5">
-                      {group.description}
-                    </p>
+          <div className="space-y-4">
+            {activeSection.groups.map((group, gIdx) => {
+              const groupId = `${activeSection.id}-${gIdx}`;
+              const isHidden = !!collapsedGroups[groupId];
+              const groupDirtyCount = group.fields.filter(
+                (f) => (values[f.key] ?? "") !== (originalValues[f.key] ?? "")
+              ).length;
+
+              return (
+                <div
+                  key={gIdx}
+                  className="rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-2xs transition-all overflow-hidden"
+                >
+                  {/* Group Header with Click-to-Toggle & Hide/View Action */}
+                  <div
+                    onClick={() => toggleGroup(groupId)}
+                    className="p-5 flex items-center justify-between gap-4 cursor-pointer select-none hover:bg-neutral-50/70 dark:hover:bg-white/[0.02] transition-colors"
+                  >
+                    <div className="space-y-0.5 flex-1 min-w-0">
+                      <div className="flex items-center gap-2.5 flex-wrap">
+                        <h3 className="text-sm font-extrabold text-neutral-900 dark:text-white m-0">
+                          {group.title}
+                        </h3>
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-neutral-100 dark:bg-white/10 text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-white/10">
+                          {group.fields.length} {group.fields.length === 1 ? "Field" : "Fields"}
+                        </span>
+                        {groupDirtyCount > 0 && (
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                            {groupDirtyCount} Modified
+                          </span>
+                        )}
+                      </div>
+                      {group.description && (
+                        <p className="text-[11.5px] text-neutral-500 dark:text-neutral-400 m-0">
+                          {group.description}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Hide / View Toggle Action */}
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleGroup(groupId);
+                        }}
+                        className={cn(
+                          "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-2xs cursor-pointer",
+                          isHidden
+                            ? "bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100"
+                            : "bg-neutral-100 dark:bg-white/5 border-neutral-200 dark:border-white/10 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-200/60"
+                        )}
+                        title={isHidden ? "View section fields" : "Hide section fields"}
+                      >
+                        {isHidden ? <Eye size={13} /> : <EyeOff size={13} />}
+                        <span>{isHidden ? "View Details" : "Hide Section"}</span>
+                        {isHidden ? <ChevronDown size={13} /> : <ChevronUp size={13} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Collapsible Content Body */}
+                  {!isHidden && (
+                    <div className="px-6 pb-6 pt-2 border-t border-neutral-100 dark:border-white/5 space-y-5 animate-in fade-in slide-in-from-top-1 duration-150">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3">
+                        {group.fields.map((field) => {
+                          const isFullWidth =
+                            field.type === "multiline" || field.type === "list" || field.type === "boolean";
+                          return (
+                            <div
+                              key={field.key}
+                              className={cn(
+                                "space-y-1.5",
+                                isFullWidth && "md:col-span-2"
+                              )}
+                            >
+                              <FieldRenderer
+                                field={field}
+                                value={values[field.key] ?? ""}
+                                onChange={(v) => updateField(field.key, v)}
+                                isDirty={(values[field.key] ?? "") !== (originalValues[field.key] ?? "")}
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Helper tool inside integrations */}
+                      {activeSection.id === "integrations" && group.title.includes("SMTP") && (
+                        <div className="pt-3 border-t border-neutral-200/80 dark:border-white/10 flex items-center justify-between flex-wrap gap-3">
+                          <p className="text-[11px] text-neutral-500 dark:text-neutral-400">
+                            Verify mail server handshake by dispatching a test transmission.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={handleTestSmtp}
+                            disabled={testEmailSending}
+                            className="px-3.5 py-1.5 rounded-xl bg-neutral-100 dark:bg-white/5 hover:bg-neutral-200/70 dark:hover:bg-white/10 border border-neutral-200 dark:border-white/10 text-xs font-bold text-neutral-800 dark:text-neutral-200 flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+                          >
+                            <Send size={13} className={testEmailSending ? "animate-spin" : ""} />
+                            <span>{testEmailSending ? "Testing SMTP..." : "Send Test Email"}</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {group.fields.map((field) => {
-                    const isFullWidth =
-                      field.type === "multiline" || field.type === "list" || field.type === "boolean";
-                    return (
-                      <div
-                        key={field.key}
-                        className={cn(
-                          "space-y-1.5",
-                          isFullWidth && "md:col-span-2"
-                        )}
-                      >
-                        <FieldRenderer
-                          field={field}
-                          value={values[field.key] ?? ""}
-                          onChange={(v) => updateField(field.key, v)}
-                          isDirty={(values[field.key] ?? "") !== (originalValues[field.key] ?? "")}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Helper tool inside integrations */}
-                {activeSection.id === "integrations" && group.title.includes("SMTP") && (
-                  <div className="pt-3 border-t border-neutral-200/80 dark:border-white/10 flex items-center justify-between flex-wrap gap-3">
-                    <p className="text-[11px] text-neutral-500 dark:text-neutral-400">
-                      Verify mail server handshake by dispatching a test transmission.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={handleTestSmtp}
-                      disabled={testEmailSending}
-                      className="px-3.5 py-1.5 rounded-xl bg-neutral-100 dark:bg-white/5 hover:bg-neutral-200/70 dark:hover:bg-white/10 border border-neutral-200 dark:border-white/10 text-xs font-bold text-neutral-800 dark:text-neutral-200 flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
-                    >
-                      <Send size={13} className={testEmailSending ? "animate-spin" : ""} />
-                      <span>{testEmailSending ? "Testing SMTP..." : "Send Test Email"}</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
