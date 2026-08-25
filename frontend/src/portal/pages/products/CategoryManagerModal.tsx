@@ -487,114 +487,122 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
               </button>
             </div>
           ) : (
-            <table className="inv-table w-full" style={{ tableLayout: "fixed" }}>
-              <colgroup>
-                <col style={{ width: "38%" }} />
-                <col style={{ width: "24%" }} />
-                <col style={{ width: "14%" }} />
-                <col style={{ width: "8%" }} />
-                <col style={{ width: "16%" }} />
-                <col style={{ width: "8%" }} />
-              </colgroup>
-              <thead>
-                <tr>
-                  <th style={{ width: "38%" }}>Category</th>
-                  <th style={{ width: "24%" }}>Slug</th>
-                  <th style={{ width: "14%" }}>Products</th>
-                  <th style={{ width: "8%" }}>Order</th>
-                  <th style={{ width: "16%" }}>Status</th>
-                  <th style={{ width: "8%", textAlign: "right" }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((cat) => {
-                  const cColor = catColor(cat.name);
-                  const stats = categoryProductStats.get(cat.name.trim().toLowerCase()) ?? { total: 0, active: 0 };
-
-                  return (
-                    <tr key={cat.id}>
-                      {/* Category Info */}
-                      <td style={{ overflow: "hidden", maxWidth: 0 }}>
-                        <div className="flex items-center gap-3 min-w-0">
-                          <span
-                            className="flex items-center justify-center w-8 h-8 rounded-xl shrink-0 font-bold text-xs shadow-sm"
-                            style={{ background: cColor.bg, color: cColor.fg }}
-                          >
-                            <Folder size={15} />
-                          </span>
-                          <div className="min-w-0 flex-1 overflow-hidden">
-                            <div className="text-xs font-bold text-neutral-900 dark:text-white truncate">{cat.name}</div>
-                            {cat.description ? (
-                              <div className="text-[11px] text-neutral-400 truncate mt-0.5">{cat.description}</div>
-                            ) : (
-                              <div className="text-[10px] text-neutral-400/60 italic truncate mt-0.5">No description set</div>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Slug */}
-                      <td style={{ overflow: "hidden", maxWidth: 0 }}>
-                        <span className="font-mono text-[11px] text-neutral-500 dark:text-neutral-400 block truncate px-2 py-0.5 rounded bg-neutral-100 dark:bg-white/5 w-fit max-w-full">
-                          {cat.slug || "—"}
-                        </span>
-                      </td>
-
-                      {/* Products Count */}
-                      <td>
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-neutral-100 dark:bg-white/5 border border-neutral-200/80 dark:border-white/10 text-neutral-700 dark:text-neutral-300 whitespace-nowrap">
-                          {stats.total} {stats.total === 1 ? "Product" : "Products"}
-                        </span>
-                      </td>
-
-                      {/* Display Order */}
-                      <td>
-                        <span className="font-mono text-xs text-neutral-500">{cat.displayOrder}</span>
-                      </td>
-
-                      {/* Single Unified Category Status Switch */}
-                      <td>
-                        <button
-                          type="button"
-                          onClick={() => void toggleCategoryStatus(cat)}
-                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold border transition-all cursor-pointer ${
-                            cat.isVisible
-                              ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/25 shadow-sm shadow-emerald-500/10"
-                              : "bg-neutral-500/15 text-neutral-500 dark:text-neutral-400 border-neutral-400/30 hover:bg-neutral-500/25"
-                          }`}
-                          title={`Click to switch between Active (Live) and Inactive (Hidden)`}
-                        >
-                          <span className={`w-2 h-2 rounded-full ${cat.isVisible ? "bg-emerald-500 animate-pulse" : "bg-neutral-400"}`} />
-                          <span>{cat.isVisible ? "Active (Live)" : "Inactive"}</span>
-                        </button>
-                      </td>
-
-                      {/* Row Action Buttons */}
-                      <td style={{ textAlign: "right" }}>
-                        <div className="flex items-center justify-end gap-1">
-                          <button
-                            type="button"
-                            onClick={() => setFormModal({ open: true, category: cat })}
-                            className="p-1.5 rounded-lg text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/10 transition-all cursor-pointer"
-                            title="Edit Category"
-                          >
-                            <Pencil size={14} />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setConfirmDelete(cat)}
-                            className="p-1.5 rounded-lg text-neutral-400 hover:text-red-500 hover:bg-red-500/10 transition-all cursor-pointer"
-                            title="Delete Category"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      </td>
+            <div className="p-4 sm:p-6">
+              <div className="overflow-x-auto rounded-2xl border border-neutral-200/80 dark:border-white/10 bg-white dark:bg-[#121520] shadow-sm">
+                <table className="w-full text-left border-collapse" style={{ minWidth: 700, tableLayout: "fixed" }}>
+                  <colgroup>
+                    <col style={{ width: "36%" }} />
+                    <col style={{ width: "22%" }} />
+                    <col style={{ width: "14%" }} />
+                    <col style={{ width: "8%" }} />
+                    <col style={{ width: "12%" }} />
+                    <col style={{ width: "8%" }} />
+                  </colgroup>
+                  <thead>
+                    <tr className="bg-neutral-50/80 dark:bg-white/[0.02] border-b border-neutral-200/80 dark:border-white/10">
+                      <th className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 py-3.5 px-4 text-left">Category</th>
+                      <th className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 py-3.5 px-3 text-left">Slug</th>
+                      <th className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 py-3.5 px-3 text-left">Products</th>
+                      <th className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 py-3.5 px-2 text-center">Order</th>
+                      <th className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 py-3.5 px-3 text-left">Status</th>
+                      <th className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 py-3.5 px-4 text-right">Actions</th>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                  </thead>
+                  <tbody className="divide-y divide-neutral-100 dark:divide-white/[0.04]">
+                    {filtered.map((cat) => {
+                      const cColor = catColor(cat.name);
+                      const stats = categoryProductStats.get(cat.name.trim().toLowerCase()) ?? { total: 0, active: 0 };
+
+                      return (
+                        <tr
+                          key={cat.id}
+                          className="hover:bg-orange-500/[0.04] dark:hover:bg-orange-500/[0.06] transition-colors"
+                        >
+                          {/* Category Info */}
+                          <td className="py-3 px-4 align-middle" style={{ overflow: "hidden" }}>
+                            <div className="flex items-center gap-3 min-w-0">
+                              <span
+                                className="flex items-center justify-center w-8 h-8 rounded-xl shrink-0 font-bold text-xs shadow-xs"
+                                style={{ background: cColor.bg, color: cColor.fg }}
+                              >
+                                <Folder size={15} />
+                              </span>
+                              <div className="min-w-0 flex-1 overflow-hidden">
+                                <div className="text-xs font-bold text-neutral-900 dark:text-white truncate">{cat.name}</div>
+                                {cat.description ? (
+                                  <div className="text-[11px] text-neutral-400 truncate mt-0.5">{cat.description}</div>
+                                ) : (
+                                  <div className="text-[10px] text-neutral-400/60 italic truncate mt-0.5">No description set</div>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Slug */}
+                          <td className="py-3 px-3 align-middle" style={{ overflow: "hidden" }}>
+                            <span className="font-mono text-[11px] text-neutral-500 dark:text-neutral-400 block truncate px-2 py-0.5 rounded bg-neutral-100 dark:bg-white/5 border border-neutral-200/50 dark:border-white/5 w-fit max-w-full">
+                              {cat.slug || "—"}
+                            </span>
+                          </td>
+
+                          {/* Products Count */}
+                          <td className="py-3 px-3 align-middle">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-neutral-100 dark:bg-white/5 border border-neutral-200/80 dark:border-white/10 text-neutral-700 dark:text-neutral-300 whitespace-nowrap">
+                              <Boxes size={12} className="text-neutral-400 shrink-0" />
+                              <span>{stats.total} {stats.total === 1 ? "Product" : "Products"}</span>
+                            </span>
+                          </td>
+
+                          {/* Display Order */}
+                          <td className="py-3 px-2 align-middle text-center">
+                            <span className="font-mono text-xs font-bold text-neutral-500">{cat.displayOrder}</span>
+                          </td>
+
+                          {/* Single Unified Category Status Switch */}
+                          <td className="py-3 px-3 align-middle">
+                            <button
+                              type="button"
+                              onClick={() => void toggleCategoryStatus(cat)}
+                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold border transition-all cursor-pointer whitespace-nowrap ${
+                                cat.isVisible
+                                  ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/25 shadow-xs"
+                                  : "bg-neutral-500/15 text-neutral-500 dark:text-neutral-400 border-neutral-400/30 hover:bg-neutral-500/25"
+                              }`}
+                              title={`Click to switch between Active (Live) and Inactive (Hidden)`}
+                            >
+                              <span className={`w-1.5 h-1.5 rounded-full ${cat.isVisible ? "bg-emerald-500 animate-pulse" : "bg-neutral-400"}`} />
+                              <span>{cat.isVisible ? "Active" : "Inactive"}</span>
+                            </button>
+                          </td>
+
+                          {/* Row Action Buttons */}
+                          <td className="py-3 px-4 align-middle text-right">
+                            <div className="flex items-center justify-end gap-1 whitespace-nowrap">
+                              <button
+                                type="button"
+                                onClick={() => setFormModal({ open: true, category: cat })}
+                                className="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/10 transition-all cursor-pointer"
+                                title="Edit Category"
+                              >
+                                <Pencil size={13} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setConfirmDelete(cat)}
+                                className="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-red-500 hover:bg-red-500/10 transition-all cursor-pointer"
+                                title="Delete Category"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           )}
         </div>
 

@@ -645,10 +645,10 @@ export default function AdminProductPage() {
         </td>
 
         {/* Category */}
-        <td>
+        <td style={{ minWidth: 150 }}>
           {p.categoryName ? (
             <span
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border truncate max-w-[170px] shadow-xs"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border truncate max-w-[170px] shadow-xs whitespace-nowrap"
               style={{ background: catCol.bg, color: catCol.fg, borderColor: catCol.border }}
               title={p.categoryName}
             >
@@ -661,9 +661,9 @@ export default function AdminProductPage() {
         </td>
 
         {/* Type / Casting Process */}
-        <td>
+        <td style={{ minWidth: 130 }}>
           {p.castingType ? (
-            <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-neutral-100 dark:bg-white/[0.04] border border-neutral-200/80 dark:border-white/10 text-neutral-700 dark:text-neutral-300">
+            <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-neutral-100 dark:bg-white/[0.04] border border-neutral-200/80 dark:border-white/10 text-neutral-700 dark:text-neutral-300 whitespace-nowrap">
               {p.castingType}
             </span>
           ) : (
@@ -672,10 +672,10 @@ export default function AdminProductPage() {
         </td>
 
         {/* Material */}
-        <td>
+        <td style={{ minWidth: 120 }}>
           {p.material ? (
             <span
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border ${
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border whitespace-nowrap ${
                 isDuctile
                   ? "bg-teal-500/10 text-teal-700 dark:text-teal-300 border-teal-500/25"
                   : "bg-slate-500/10 text-slate-700 dark:text-slate-300 border-slate-500/25"
@@ -690,9 +690,9 @@ export default function AdminProductPage() {
         </td>
 
         {/* Grade */}
-        <td>
+        <td style={{ minWidth: 90 }}>
           {p.materialGrade ? (
-            <span className="font-mono text-xs font-bold px-2.5 py-1 rounded-lg bg-neutral-100 dark:bg-white/5 border border-neutral-200/80 dark:border-white/10 text-neutral-800 dark:text-neutral-200">
+            <span className="font-mono text-xs font-bold px-2.5 py-1 rounded-lg bg-neutral-100 dark:bg-white/5 border border-neutral-200/80 dark:border-white/10 text-neutral-800 dark:text-neutral-200 whitespace-nowrap">
               {p.materialGrade}
             </span>
           ) : (
@@ -701,10 +701,10 @@ export default function AdminProductPage() {
         </td>
 
         {/* Weight */}
-        <td>
+        <td style={{ minWidth: 95 }}>
           {p.weight != null ? (
-            <span className="inline-flex items-center gap-1.5 font-mono text-xs font-bold text-neutral-800 dark:text-neutral-200 bg-neutral-100/80 dark:bg-white/5 px-2.5 py-1 rounded-lg border border-neutral-200/60 dark:border-white/5">
-              <Scale size={12} className="text-neutral-400" />
+            <span className="inline-flex items-center gap-1.5 font-mono text-xs font-bold text-neutral-800 dark:text-neutral-200 bg-neutral-100/80 dark:bg-white/5 px-2.5 py-1 rounded-lg border border-neutral-200/60 dark:border-white/5 whitespace-nowrap">
+              <Scale size={12} className="text-neutral-400 shrink-0" />
               <span>{p.weight.toFixed(2)} kg</span>
             </span>
           ) : (
@@ -713,17 +713,17 @@ export default function AdminProductPage() {
         </td>
 
         {/* Status */}
-        <td>
+        <td style={{ minWidth: 100 }}>
           <StatusBadge status={isArchived ? "Archived" : p.status} />
         </td>
 
         {/* Actions */}
-        <td style={{ textAlign: "right" }}>
-          <div className="flex items-center justify-end gap-1.5 py-1" onClick={(e) => e.stopPropagation()}>
+        <td style={{ minWidth: 140, textAlign: "right" }}>
+          <div className="flex items-center justify-end gap-1.5 py-1 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
             {isArchived ? (
               <button
                 type="button"
-                className="p-1.5 rounded-lg text-emerald-500 hover:bg-emerald-500/15 hover:text-emerald-600 transition-all cursor-pointer"
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-emerald-500 hover:bg-emerald-500/15 hover:text-emerald-600 transition-all cursor-pointer"
                 title="Unarchive / Restore Product"
                 aria-label="Restore"
                 onClick={() => void handleRestore(p.id)}
@@ -733,9 +733,9 @@ export default function AdminProductPage() {
             ) : (
               <button
                 type="button"
-                className={`p-1.5 rounded-lg transition-all cursor-pointer ${
+                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
                   p.status === "Active"
-                    ? "text-emerald-500 hover:bg-emerald-500/15 hover:text-emerald-600 shadow-sm shadow-emerald-500/20"
+                    ? "text-emerald-500 hover:bg-emerald-500/15 hover:text-emerald-600 shadow-xs"
                     : "text-neutral-400 hover:bg-neutral-200/60 dark:hover:bg-white/10 hover:text-neutral-600 dark:hover:text-neutral-200"
                 }`}
                 title={p.status === "Active" ? "Deactivate (hide from website)" : "Activate (publish to website)"}
@@ -747,7 +747,7 @@ export default function AdminProductPage() {
             )}
             <button
               type="button"
-              className="p-1.5 rounded-lg text-neutral-500 hover:bg-neutral-100 dark:hover:bg-white/10 hover:text-neutral-900 dark:hover:text-white transition-all cursor-pointer"
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-neutral-500 hover:bg-neutral-100 dark:hover:bg-white/10 hover:text-neutral-900 dark:hover:text-white transition-all cursor-pointer"
               title="View Product Details"
               aria-label="View"
               onClick={() => navigate(`/admin/products/${p.id}`)}
@@ -756,7 +756,7 @@ export default function AdminProductPage() {
             </button>
             <button
               type="button"
-              className="p-1.5 rounded-lg text-neutral-500 hover:bg-neutral-100 dark:hover:bg-white/10 hover:text-neutral-900 dark:hover:text-white transition-all cursor-pointer"
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-neutral-500 hover:bg-neutral-100 dark:hover:bg-white/10 hover:text-neutral-900 dark:hover:text-white transition-all cursor-pointer"
               title="Edit Product"
               aria-label="Edit"
               onClick={() => navigate(`/admin/products/${p.id}`)}
@@ -765,7 +765,7 @@ export default function AdminProductPage() {
             </button>
             <button
               type="button"
-              className="p-1.5 rounded-lg text-neutral-400 hover:bg-red-500/15 hover:text-red-500 transition-all cursor-pointer"
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-neutral-400 hover:bg-red-500/15 hover:text-red-500 transition-all cursor-pointer"
               title="Delete Product"
               aria-label="Delete"
               onClick={() => setConfirmDelete(p)}
@@ -980,16 +980,16 @@ export default function AdminProductPage() {
           /* Table View */
           <div className="inv-table-wrap my-4 overflow-hidden rounded-2xl border border-neutral-200/80 dark:border-white/10 bg-white dark:bg-[#121520] shadow-sm">
             <div className="inv-scroll overflow-x-auto">
-              <table className="inv-table w-full" style={{ minWidth: 880 }}>
+              <table className="inv-table w-full" style={{ minWidth: 1100, tableLayout: "fixed" }}>
                 <colgroup>
-                  <col style={{ width: "27%" }} />
-                  <col style={{ width: "16%" }} />
+                  <col style={{ width: "26%" }} />
+                  <col style={{ width: "15%" }} />
+                  <col style={{ width: "13%" }} />
                   <col style={{ width: "12%" }} />
-                  <col style={{ width: "12%" }} />
+                  <col style={{ width: "9%" }} />
+                  <col style={{ width: "9%" }} />
                   <col style={{ width: "10%" }} />
-                  <col style={{ width: "8%" }} />
-                  <col style={{ width: "8%" }} />
-                  <col style={{ width: "7%" }} />
+                  <col style={{ width: "13%" }} />
                 </colgroup>
                 <thead>
                   <tr className="bg-neutral-50/80 dark:bg-white/[0.02] border-b border-neutral-200/80 dark:border-white/10">
