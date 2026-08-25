@@ -5,7 +5,7 @@ import { Loading } from "../../components/ui";
 import { formatDate } from "../shared";
 import {
   Building2, CheckCircle2, Search, RefreshCw, ChevronLeft, ChevronRight,
-  X, Download, Filter, Mail, Phone, Eye, Folder, FileText, Receipt,
+  X, Download, Filter, Mail, Phone, Eye, ClipboardList, FileText, ShoppingCart, Receipt,
   Trash2, AlertTriangle, ShieldCheck, MapPin, Globe,
   Calendar, Check, Copy, ExternalLink,
 } from "lucide-react";
@@ -259,25 +259,35 @@ function CompanyDetailsDrawer({
             <div className="text-xs font-extrabold uppercase tracking-wider text-neutral-400">
               Operational Portals & Documents
             </div>
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={() => { onClose(); navigate(`/admin/orders?company=${company.id}`); }}
-                className="p-3 rounded-xl border border-neutral-200/80 dark:border-white/10 bg-white dark:bg-[#121520] hover:border-orange-500/40 text-left transition-all group cursor-pointer shadow-xs"
-              >
-                <Folder size={16} className="text-orange-500 mb-1.5" />
-                <div className="text-xs font-bold text-neutral-900 dark:text-white">Orders</div>
-                <div className="text-[11px] text-neutral-400">View Client Orders</div>
-              </button>
-
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               <button
                 type="button"
                 onClick={() => { onClose(); navigate(`/admin/enquiries?company=${company.id}`); }}
                 className="p-3 rounded-xl border border-neutral-200/80 dark:border-white/10 bg-white dark:bg-[#121520] hover:border-blue-500/40 text-left transition-all group cursor-pointer shadow-xs"
               >
-                <FileText size={16} className="text-blue-500 mb-1.5" />
+                <ClipboardList size={16} className="text-blue-500 mb-1.5" />
                 <div className="text-xs font-bold text-neutral-900 dark:text-white">Enquiries</div>
-                <div className="text-[11px] text-neutral-400">Client RFQ Deals</div>
+                <div className="text-[11px] text-neutral-400">Client RFQs</div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { onClose(); navigate(`/admin/quotations?company=${company.id}`); }}
+                className="p-3 rounded-xl border border-neutral-200/80 dark:border-white/10 bg-white dark:bg-[#121520] hover:border-purple-500/40 text-left transition-all group cursor-pointer shadow-xs"
+              >
+                <FileText size={16} className="text-purple-500 mb-1.5" />
+                <div className="text-xs font-bold text-neutral-900 dark:text-white">Quotes</div>
+                <div className="text-[11px] text-neutral-400">Quotations</div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { onClose(); navigate(`/admin/orders?company=${company.id}`); }}
+                className="p-3 rounded-xl border border-neutral-200/80 dark:border-white/10 bg-white dark:bg-[#121520] hover:border-orange-500/40 text-left transition-all group cursor-pointer shadow-xs"
+              >
+                <ShoppingCart size={16} className="text-orange-500 mb-1.5" />
+                <div className="text-xs font-bold text-neutral-900 dark:text-white">Orders</div>
+                <div className="text-[11px] text-neutral-400">Client Orders</div>
               </button>
 
               <button
@@ -952,20 +962,29 @@ export default function AdminCompaniesPage() {
 
                           <button
                             type="button"
-                            onClick={() => navigate(`/admin/orders?company=${c.id}`)}
+                            onClick={() => navigate(`/admin/enquiries?company=${c.id}`)}
                             className="w-8 h-8 rounded-lg flex items-center justify-center border border-neutral-200/80 dark:border-white/10 bg-neutral-50 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 hover:border-blue-500/50 hover:text-blue-600 dark:hover:text-blue-400 hover:shadow-xs transition-all cursor-pointer"
-                            title="View Orders"
+                            title="View Enquiries"
                           >
-                            <Folder size={14} />
+                            <ClipboardList size={14} />
                           </button>
 
                           <button
                             type="button"
-                            onClick={() => navigate(`/admin/enquiries?company=${c.id}`)}
+                            onClick={() => navigate(`/admin/quotations?company=${c.id}`)}
                             className="w-8 h-8 rounded-lg flex items-center justify-center border border-neutral-200/80 dark:border-white/10 bg-neutral-50 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 hover:border-purple-500/50 hover:text-purple-600 dark:hover:text-purple-400 hover:shadow-xs transition-all cursor-pointer"
-                            title="View Enquiries"
+                            title="View Quotes"
                           >
                             <FileText size={14} />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => navigate(`/admin/orders?company=${c.id}`)}
+                            className="w-8 h-8 rounded-lg flex items-center justify-center border border-neutral-200/80 dark:border-white/10 bg-neutral-50 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 hover:border-orange-500/50 hover:text-orange-600 dark:hover:text-orange-400 hover:shadow-xs transition-all cursor-pointer"
+                            title="View Orders"
+                          >
+                            <ShoppingCart size={14} />
                           </button>
 
                           <button
