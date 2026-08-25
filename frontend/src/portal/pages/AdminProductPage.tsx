@@ -12,7 +12,7 @@ import {
   Package, Plus, Download, Search, RefreshCw, Eye, MoreVertical,
   ChevronLeft, ChevronRight, X, Copy, Archive, Trash2, FileEdit,
   Boxes, CheckCircle2, Clock, Tag, TrendingDown, LayoutGrid, Table as TableIcon,
-  Scale, FolderTree, Power, AlertTriangle,
+  Scale, FolderTree, Power, AlertTriangle, RotateCcw,
 } from "lucide-react";
 import "./erpListView.css";
 
@@ -101,6 +101,7 @@ function AdminProductCard({
   onEdit,
   onDuplicate,
   onArchive,
+  onRestore,
   onDelete,
   onToggleStatus,
   openMenuId,
@@ -111,6 +112,7 @@ function AdminProductCard({
   onEdit: () => void;
   onDuplicate: () => void;
   onArchive: () => void;
+  onRestore?: () => void;
   onDelete: () => void;
   onToggleStatus: () => void;
   openMenuId: string | null;
@@ -183,20 +185,19 @@ function AdminProductCard({
             <img
               src={displayImg}
               alt={product.productName}
-              loading="lazy"
-              className="max-h-36 max-w-[90%] w-auto h-auto object-contain transition-transform duration-500 group-hover:scale-105 filter drop-shadow-[0_6px_14px_rgba(0,0,0,0.12)] dark:drop-shadow-[0_8px_16px_rgba(0,0,0,0.75)]"
+              className="max-w-full max-h-full object-contain transition-transform duration-300 group-hover:scale-105"
             />
           ) : (
-            <div className="flex flex-col items-center justify-center text-neutral-400 dark:text-neutral-500 gap-2">
-              <Package size={36} className="opacity-40" />
-              <span className="text-[11px] font-mono">No Image Uploaded</span>
+            <div className="flex flex-col items-center justify-center text-neutral-300 dark:text-neutral-600 select-none">
+              <Package size={36} strokeWidth={1.5} className="opacity-40 mb-1" />
+              <span className="text-[11px] font-mono tracking-wider opacity-60">No Image Uploaded</span>
             </div>
           )}
 
-          {/* Code Overlay Pill */}
-          <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-white/90 dark:bg-black/60 backdrop-blur-sm border border-neutral-200 dark:border-white/10 font-mono text-[10px] font-semibold text-neutral-800 dark:text-white/90 shadow-sm">
+          {/* Product Code overlay */}
+          <span className="absolute bottom-2.5 left-2.5 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold tracking-wider bg-white/90 dark:bg-black/60 backdrop-blur-md border border-neutral-200/80 dark:border-white/10 text-neutral-800 dark:text-neutral-200 shadow-sm">
             {product.productCode}
-          </div>
+          </span>
         </div>
 
         {/* Title & Category */}
@@ -235,7 +236,7 @@ function AdminProductCard({
         <button
           type="button"
           onClick={onView}
-          className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all bg-[var(--color-primary)] text-white hover:brightness-110 shadow-sm"
+          className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all bg-[var(--color-primary)] text-white hover:brightness-110 shadow-sm cursor-pointer"
         >
           <Eye size={14} /> View Details
         </button>
@@ -243,7 +244,7 @@ function AdminProductCard({
         <button
           type="button"
           onClick={onEdit}
-          className="inline-flex items-center justify-center p-2 rounded-lg border border-neutral-200 dark:border-white/10 bg-neutral-50 hover:bg-neutral-100 dark:bg-white/5 dark:hover:bg-white/10 text-neutral-700 dark:text-neutral-300 transition-all"
+          className="inline-flex items-center justify-center p-2 rounded-lg border border-neutral-200 dark:border-white/10 bg-neutral-50 hover:bg-neutral-100 dark:bg-white/5 dark:hover:bg-white/10 text-neutral-700 dark:text-neutral-300 transition-all cursor-pointer"
           title="Edit Product"
         >
           <FileEdit size={15} />
@@ -264,24 +265,26 @@ function AdminProductCard({
 
           {isMenuOpen && (
             <div
-              className="absolute right-0 bottom-full mb-1 w-40 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#161a24] shadow-2xl p-1 z-30 flex flex-col gap-0.5"
+              className="absolute right-0 bottom-full mb-1 w-44 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#161a24] shadow-2xl p-1 z-30 flex flex-col gap-0.5"
               onClick={(e) => e.stopPropagation()}
             >
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setOpenMenuId(null);
-                  onToggleStatus();
-                }}
-                className={`flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg text-left font-medium cursor-pointer ${
-                  product.status === "Active"
-                    ? "text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-500/10"
-                    : "text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10"
-                }`}
-              >
-                <Power size={13} /> {product.status === "Active" ? "Deactivate" : "Activate"}
-              </button>
+              {product.status !== "Archived" && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setOpenMenuId(null);
+                    onToggleStatus();
+                  }}
+                  className={`flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg text-left font-medium cursor-pointer ${
+                    product.status === "Active"
+                      ? "text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-500/10"
+                      : "text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10"
+                  }`}
+                >
+                  <Power size={13} /> {product.status === "Active" ? "Deactivate" : "Activate"}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={(e) => {
@@ -293,17 +296,35 @@ function AdminProductCard({
               >
                 <Copy size={13} /> Duplicate
               </button>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setOpenMenuId(null);
-                  onArchive();
-                }}
-                className="flex items-center gap-2 px-3 py-1.5 text-xs text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-white/10 rounded-lg text-left font-medium cursor-pointer"
-              >
-                <Archive size={13} /> Archive
-              </button>
+
+              {product.status === "Archived" ? (
+                onRestore && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpenMenuId(null);
+                      onRestore();
+                    }}
+                    className="flex items-center gap-2 px-3 py-1.5 text-xs text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded-lg text-left font-medium cursor-pointer"
+                  >
+                    <RotateCcw size={13} /> Restore Product
+                  </button>
+                )
+              ) : (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setOpenMenuId(null);
+                    onArchive();
+                  }}
+                  className="flex items-center gap-2 px-3 py-1.5 text-xs text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-white/10 rounded-lg text-left font-medium cursor-pointer"
+                >
+                  <Archive size={13} /> Archive
+                </button>
+              )}
+
               <div className="h-px bg-neutral-200 dark:bg-white/10 my-0.5" />
               <button
                 type="button"
@@ -314,7 +335,7 @@ function AdminProductCard({
                 }}
                 className="flex items-center gap-2 px-3 py-1.5 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/20 rounded-lg text-left font-medium cursor-pointer"
               >
-                <Trash2 size={13} /> Delete
+                <Trash2 size={13} /> Delete Permanently
               </button>
             </div>
           )}
@@ -438,6 +459,20 @@ export default function AdminProductPage() {
     }
   };
 
+  const handleRestore = async (id: string) => {
+    try {
+      await adminApi.productMaster.restore(id);
+      load();
+      loadStats();
+    } catch (e) {
+      setNotice({
+        title: "Restore Failed",
+        message: e instanceof Error ? e.message : "Failed to restore product.",
+        type: "error",
+      });
+    }
+  };
+
   const handleDuplicate = async (id: string) => {
     try {
       const dup = await adminApi.productMaster.duplicate(id);
@@ -455,7 +490,7 @@ export default function AdminProductPage() {
 
   const handleDelete = async (id: string) => {
     try {
-      await adminApi.productMaster.archive(id);
+      await adminApi.productMaster.delete(id);
       load();
       loadStats();
     } catch (e) {
@@ -526,19 +561,24 @@ export default function AdminProductPage() {
         <td><StatusBadge status={p.status} /></td>
         <td>
           <div className="inv-actions" onClick={(e) => e.stopPropagation()}>
-            <button
-              className="inv-icon-btn"
-              title={p.status === "Active" ? "Deactivate (hide from public catalog)" : "Activate (publish to public catalog)"}
-              aria-label={p.status === "Active" ? "Deactivate" : "Activate"}
-              onClick={() => void handleToggleStatus(p)}
-            >
-              <Power size={15} className={p.status === "Active" ? "text-emerald-500" : "text-neutral-400 hover:text-emerald-500"} />
-            </button>
+            {p.status !== "Archived" && (
+              <button
+                className="inv-icon-btn"
+                title={p.status === "Active" ? "Deactivate (hide from public catalog)" : "Activate (publish to public catalog)"}
+                aria-label={p.status === "Active" ? "Deactivate" : "Activate"}
+                onClick={() => void handleToggleStatus(p)}
+              >
+                <Power size={15} className={p.status === "Active" ? "text-emerald-500" : "text-neutral-400 hover:text-emerald-500"} />
+              </button>
+            )}
             <button className="inv-icon-btn" title="View" aria-label="View" onClick={() => navigate(`/admin/products/${p.id}`)}>
               <Eye size={16} />
             </button>
             <button className="inv-icon-btn" title="Edit" aria-label="Edit" onClick={() => navigate(`/admin/products/${p.id}`)}>
               <FileEdit size={16} />
+            </button>
+            <button className="inv-icon-btn text-red-500 hover:text-red-600" title="Delete Permanently" aria-label="Delete" onClick={() => setConfirmDelete(p)}>
+              <Trash2 size={16} />
             </button>
           </div>
         </td>
@@ -678,6 +718,7 @@ export default function AdminProductPage() {
                 onEdit={() => navigate(`/admin/products/${product.id}`)}
                 onDuplicate={() => void handleDuplicate(product.id)}
                 onArchive={() => void handleArchive(product.id)}
+                onRestore={() => void handleRestore(product.id)}
                 onDelete={() => setConfirmDelete(product)}
                 onToggleStatus={() => void handleToggleStatus(product)}
                 openMenuId={openMenuId}
@@ -723,12 +764,13 @@ export default function AdminProductPage() {
 
       {/* Pagination */}
       <div className="inv-pagination">
-        <span className="inv-pagination__info">
-          {data ? `Showing ${data.items.length} of ${data.totalCount} products` : ""}
-        </span>
+        <div className="inv-pagination__info">
+          Showing {data?.items.length ? (page - 1) * pageSize + 1 : 0}–
+          {Math.min(page * pageSize, data?.totalCount ?? 0)} of {data?.totalCount ?? 0}
+        </div>
 
-        <div className="inv-field" style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-          <label className="inv-field__label" style={{ margin: 0 }}>Per Page</label>
+        <div className="inv-pagination__size">
+          <label style={{ fontSize: 12, color: "var(--text-muted)" }}>Per page:</label>
           <select className="inv-select" style={{ width: "auto", padding: "7px 34px 7px 10px" }}
             value={pageSize} onChange={(e) => setPageSize(Number(e.target.value))}>
             {PAGE_SIZES.map((n) => <option key={n} value={n}>{n}</option>)}
@@ -772,9 +814,9 @@ export default function AdminProductPage() {
       {/* Delete confirmation */}
       <ConfirmDialog
         open={!!confirmDelete}
-        title="Delete this product?"
-        message={confirmDelete ? `"${confirmDelete.productName}" will be removed from the catalog. This cannot be undone.` : ""}
-        confirmLabel="Delete"
+        title="Permanently delete this product?"
+        message={confirmDelete ? `"${confirmDelete.productName}" and its attachments will be permanently deleted from the database. This action cannot be undone.` : ""}
+        confirmLabel="Permanently Delete"
         onCancel={() => setConfirmDelete(null)}
         onConfirm={() => {
           const p = confirmDelete;

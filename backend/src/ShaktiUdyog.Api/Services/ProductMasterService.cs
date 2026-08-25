@@ -18,6 +18,8 @@ public interface IProductMasterService
     Task<ProductMasterDetailDto> CreateProductAsync(CreateProductMasterRequest request, Guid userId, string? ip);
     Task<ProductMasterDetailDto?> UpdateProductAsync(Guid id, UpdateProductMasterRequest request, Guid userId, string? ip);
     Task<bool> ArchiveProductAsync(Guid id, Guid userId, string? ip);
+    Task<bool> RestoreProductAsync(Guid id, Guid userId, string? ip);
+    Task<bool> DeleteProductAsync(Guid id, Guid userId, string? ip);
     Task<ProductMasterDetailDto> DuplicateProductAsync(Guid id, Guid userId, string? ip);
     Task<ProductMasterAttachmentDto> UploadAttachmentAsync(Guid id, IFormFile file, string? description, Guid userId, string? ip);
     Task<Stream?> DownloadAttachmentAsync(Guid productId, Guid attachmentId);
@@ -294,6 +296,50 @@ public class ProductMasterService(
 
         await db.SaveChangesAsync();
         await audit.WriteAsync("productmaster.archived", userId, "ProductMaster", id.ToString(), ip);
+        return true;
+    }
+
+    public async Task<bool> RestoreProductAsync(Guid id, Guid userId, string? ip)
+    {
+        var p = await db.ProductMasters.IgnoreQueryFilters().SingleOrDefaultAsync(pm => pm.Id == id);
+        if (p is null) return false;
+
+        p.IsArchived = false;
+        p.Status = "Inactive";
+        p.UpdatedAtUtc = DateTimeOffset.UtcNow;
+        p.UpdatedByUserId = userId;
+
+        await db.SaveChangesAsync();
+        await audit.WriteAsync("productmaster.restored", userId, "ProductMaster", id.ToString(), ip);
+        return true;
+    }
+
+    public async Task<bool> DeleteProductAsync(Guid id, Guid userId, string? ip)
+    {
+        var p = await db.ProductMasters
+            .IgnoreQueryFilters()
+            .Include(pm => pm.Attachments)
+            .SingleOrDefaultAsync(pm => pm.Id == id);
+
+        if (p is null) return false;
+
+        foreach (var att in p.Attachments)
+        {
+            try
+            {
+                await storage.DeleteAsync(att.StorageKey);
+            }
+            catch
+            {
+                // best-effort cleanup
+            }
+        }
+
+        db.ProductMasterAttachments.RemoveRange(p.Attachments);
+        db.ProductMasters.Remove(p);
+
+        await db.SaveChangesAsync();
+        await audit.WriteAsync("productmaster.deleted", userId, "ProductMaster", id.ToString(), ip);
         return true;
     }
 

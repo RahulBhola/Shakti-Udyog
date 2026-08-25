@@ -89,12 +89,28 @@ public class ProductMasterController(IProductMasterService service, AppDbContext
         }
     }
 
-    /// <summary>Archive (soft-delete) a product.</summary>
+    /// <summary>Permanently delete a product.</summary>
     [HttpDelete("{id:guid}")]
+    [Authorize(Policy = AuthPolicies.AdminOnly)]
+    public async Task<IActionResult> DeleteProduct(Guid id)
+    {
+        return await service.DeleteProductAsync(id, UserId, ClientIp) ? Ok(new { message = "Product permanently deleted." }) : NotFound();
+    }
+
+    /// <summary>Archive a product.</summary>
+    [HttpPost("{id:guid}/archive")]
     [Authorize(Policy = AuthPolicies.AdminOnly)]
     public async Task<IActionResult> ArchiveProduct(Guid id)
     {
         return await service.ArchiveProductAsync(id, UserId, ClientIp) ? Ok(new { message = "Product archived." }) : NotFound();
+    }
+
+    /// <summary>Restore an archived product.</summary>
+    [HttpPost("{id:guid}/restore")]
+    [Authorize(Policy = AuthPolicies.AdminOnly)]
+    public async Task<IActionResult> RestoreProduct(Guid id)
+    {
+        return await service.RestoreProductAsync(id, UserId, ClientIp) ? Ok(new { message = "Product restored." }) : NotFound();
     }
 
     /// <summary>Duplicate a product (creates a copy with "(Copy)" suffix in Draft status).</summary>

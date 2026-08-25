@@ -6,6 +6,7 @@ import { tokenStorage } from "../../auth/tokenStorage";
 import { config } from "../../config";
 import { Loading } from "../../components/ui";
 import ProductDrawer from "./products/ProductDrawer";
+import { ConfirmDialog } from "./ConfirmDialog";
 import { formatDate } from "../shared";
 import { getThemedImage } from "../../utils/themeImage";
 import {
@@ -15,6 +16,7 @@ import {
   Beaker, Cog, Paperclip, Building2,
   ChevronDown, ChevronUp, Upload, Plus,
   FileSpreadsheet, Image as ImageIcon, Power,
+  Trash2, RotateCcw,
 } from "lucide-react";
 
 /* ------------------------------------------------------------------ */
@@ -294,6 +296,8 @@ export default function AdminProductDetailPage() {
     }
   };
 
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
   const handleArchive = async () => {
     if (!product) return;
     try {
@@ -303,6 +307,34 @@ export default function AdminProductDetailPage() {
       setNotice({
         title: "Archive Failed",
         message: e?.message || "Failed to archive product.",
+        type: "error",
+      });
+    }
+  };
+
+  const handleRestore = async () => {
+    if (!product) return;
+    try {
+      await adminApi.productMaster.restore(product.id);
+      loadProduct();
+    } catch (e: any) {
+      setNotice({
+        title: "Restore Failed",
+        message: e?.message || "Failed to restore product.",
+        type: "error",
+      });
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!product) return;
+    try {
+      await adminApi.productMaster.delete(product.id);
+      navigate("/admin/products");
+    } catch (e: any) {
+      setNotice({
+        title: "Delete Failed",
+        message: e?.message || "Failed to delete product.",
         type: "error",
       });
     }
@@ -340,29 +372,32 @@ export default function AdminProductDetailPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleToggleStatus}
-              className={`inline-flex items-center gap-1.5 px-3.5 h-9 rounded-xl border text-xs font-bold transition-all shadow-sm cursor-pointer ${
-                p.status === "Active"
-                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20"
+            {p.status !== "Archived" && (
+              <button
+                type="button"
+                onClick={handleToggleStatus}
+                className={`inline-flex items-center gap-1.5 px-3.5 h-9 rounded-xl border text-xs font-bold transition-all shadow-sm cursor-pointer ${
+                  p.status === "Active"
+                    ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20"
+                    : p.status === "Draft"
+                    ? "border-orange-500/30 bg-orange-500/10 text-orange-600 dark:text-orange-400 hover:bg-orange-500/20"
+                    : "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20"
+                }`}
+                title={
+                  p.status === "Active"
+                    ? "Product is published. Click to Deactivate (hide from public)."
+                    : "Product is unpublished. Click to Activate (publish to public)."
+                }
+              >
+                <Power size={13} />
+                {p.status === "Active"
+                  ? "Active (Live)"
                   : p.status === "Draft"
-                  ? "border-orange-500/30 bg-orange-500/10 text-orange-600 dark:text-orange-400 hover:bg-orange-500/20"
-                  : "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20"
-              }`}
-              title={
-                p.status === "Active"
-                  ? "Product is published. Click to Deactivate (hide from public)."
-                  : "Product is unpublished. Click to Activate (publish to public)."
-              }
-            >
-              <Power size={13} />
-              {p.status === "Active"
-                ? "Active (Live)"
-                : p.status === "Draft"
-                ? "Draft (Click to Publish)"
-                : "Inactive (Hidden)"}
-            </button>
+                  ? "Draft (Click to Publish)"
+                  : "Inactive (Hidden)"}
+              </button>
+            )}
+
             <button
               type="button"
               onClick={() => setDrawerOpen(true)}
@@ -371,6 +406,7 @@ export default function AdminProductDetailPage() {
               <Edit3 size={14} />
               Edit Specification
             </button>
+
             <button
               type="button"
               onClick={handleDuplicate}
@@ -379,13 +415,34 @@ export default function AdminProductDetailPage() {
               <Copy size={13} />
               Duplicate
             </button>
+
+            {p.status === "Archived" ? (
+              <button
+                type="button"
+                onClick={handleRestore}
+                className="inline-flex items-center gap-1.5 px-3.5 h-9 rounded-xl border border-emerald-200 dark:border-emerald-500/20 bg-emerald-50 dark:bg-emerald-500/10 text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition-all cursor-pointer"
+              >
+                <RotateCcw size={13} />
+                Restore Product
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleArchive}
+                className="inline-flex items-center gap-1.5 px-3.5 h-9 rounded-xl border border-amber-200 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-500/10 text-xs font-semibold text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-500/20 transition-all cursor-pointer"
+              >
+                <Archive size={13} />
+                Archive
+              </button>
+            )}
+
             <button
               type="button"
-              onClick={handleArchive}
+              onClick={() => setConfirmDelete(true)}
               className="inline-flex items-center gap-1.5 px-3.5 h-9 rounded-xl border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 transition-all cursor-pointer"
             >
-              <Archive size={13} />
-              Archive
+              <Trash2 size={13} />
+              Delete Permanently
             </button>
           </div>
         </div>
@@ -701,6 +758,19 @@ export default function AdminProductDetailPage() {
           </div>
         </div>
       )}
+
+      {/* Delete confirmation dialog */}
+      <ConfirmDialog
+        open={confirmDelete}
+        title="Permanently delete this product?"
+        message={product ? `"${product.productName}" and its technical drawings/attachments will be permanently deleted from the database. This action cannot be undone.` : ""}
+        confirmLabel="Permanently Delete"
+        onCancel={() => setConfirmDelete(false)}
+        onConfirm={() => {
+          setConfirmDelete(false);
+          void handleDelete();
+        }}
+      />
     </div>
   );
 }
