@@ -2,28 +2,28 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { adminApi, type AdminCategory, type ProductMasterListItem } from "../../../api/adminApi";
 import { ConfirmDialog } from "../ConfirmDialog";
 import {
-  Folder, FolderTree, Plus, Search, Eye, EyeOff,
+  FolderTree, Plus, Search, Eye, EyeOff,
   Pencil, Trash2, X, AlertCircle,
-  RefreshCw, Boxes, Tag, Check,
+  RefreshCw, Boxes, Tag, Check, Hash,
 } from "lucide-react";
 import "../erpListView.css";
 
-const CAT_COLORS: Record<string, { bg: string; fg: string }> = {
-  "Grey Iron Castings": { bg: "rgba(37,99,235,0.15)", fg: "#3B82F6" },
-  "Ductile Iron Castings": { bg: "rgba(20,184,166,0.15)", fg: "#14B8A6" },
-  "SG Iron Castings": { bg: "rgba(245,158,11,0.15)", fg: "#F59E0B" },
-  "Machined Components": { bg: "rgba(124,58,237,0.15)", fg: "#8B5CF6" },
-  "Custom Castings": { bg: "rgba(236,72,153,0.15)", fg: "#EC4899" },
-  "Precision Mechanism": { bg: "rgba(14,165,233,0.15)", fg: "#0EA5E9" },
-  "Commercial Hospitality": { bg: "rgba(249,115,22,0.15)", fg: "#F97316" },
-  "Power Transmission": { bg: "rgba(168,85,247,0.15)", fg: "#A855F7" },
-  "Agricultural Machinery": { bg: "rgba(34,197,94,0.15)", fg: "#22C55E" },
-  "Automotive & Powertrain": { bg: "rgba(239,68,68,0.15)", fg: "#EF4444" },
-  "Industrial Machinery": { bg: "rgba(59,130,246,0.15)", fg: "#3B82F6" },
-  "Industrial & Structural": { bg: "rgba(139,92,246,0.15)", fg: "#8B5CF6" },
-  "Fasteners & Hardware": { bg: "rgba(236,72,153,0.15)", fg: "#EC4899" },
+const CAT_COLORS: Record<string, { bg: string; fg: string; border: string }> = {
+  "Grey Iron Castings": { bg: "rgba(59,130,246,0.12)", fg: "#3B82F6", border: "rgba(59,130,246,0.25)" },
+  "Ductile Iron Castings": { bg: "rgba(20,184,166,0.12)", fg: "#14B8A6", border: "rgba(20,184,166,0.25)" },
+  "SG Iron Castings": { bg: "rgba(245,158,11,0.12)", fg: "#F59E0B", border: "rgba(245,158,11,0.25)" },
+  "Machined Components": { bg: "rgba(139,92,246,0.12)", fg: "#8B5CF6", border: "rgba(139,92,246,0.25)" },
+  "Custom Castings": { bg: "rgba(236,72,153,0.12)", fg: "#EC4899", border: "rgba(236,72,153,0.25)" },
+  "Precision Mechanism": { bg: "rgba(14,165,233,0.12)", fg: "#0EA5E9", border: "rgba(14,165,233,0.25)" },
+  "Commercial Hospitality": { bg: "rgba(249,115,22,0.12)", fg: "#F97316", border: "rgba(249,115,22,0.25)" },
+  "Power Transmission": { bg: "rgba(168,85,247,0.12)", fg: "#A855F7", border: "rgba(168,85,247,0.25)" },
+  "Agricultural Machinery": { bg: "rgba(34,197,94,0.12)", fg: "#22C55E", border: "rgba(34,197,94,0.25)" },
+  "Automotive & Powertrain": { bg: "rgba(239,68,68,0.12)", fg: "#EF4444", border: "rgba(239,68,68,0.25)" },
+  "Industrial Machinery": { bg: "rgba(59,130,246,0.12)", fg: "#3B82F6", border: "rgba(59,130,246,0.25)" },
+  "Industrial & Structural": { bg: "rgba(139,92,246,0.12)", fg: "#8B5CF6", border: "rgba(139,92,246,0.25)" },
+  "Fasteners & Hardware": { bg: "rgba(236,72,153,0.12)", fg: "#EC4899", border: "rgba(236,72,153,0.25)" },
 };
-const DEFAULT_COLOR = { bg: "rgba(148,163,184,0.15)", fg: "#94A3B8" };
+const DEFAULT_COLOR = { bg: "rgba(148,163,184,0.12)", fg: "#94A3B8", border: "rgba(148,163,184,0.25)" };
 
 function catColor(name: string) {
   return CAT_COLORS[name] ?? DEFAULT_COLOR;
@@ -301,7 +301,7 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
         isVisible: newVisibility,
       });
 
-      // 2. Synchronize all products under this category (Active when visible, Inactive when hidden)
+      // 2. Synchronize all products under this category
       await adminApi.setCategoryProductsStatus(cat.id, targetStatus).catch(() => null);
 
       setFeedbackNotice(`"${cat.name}" is now ${newVisibility ? "Active & Published" : "Hidden & Deactivated"}.`);
@@ -340,10 +340,10 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
-        style={{ maxWidth: 880, width: "95vw", maxHeight: "90vh", display: "flex", flexDirection: "column" }}
+        style={{ maxWidth: 900, width: "95vw", maxHeight: "90vh", display: "flex", flexDirection: "column" }}
       >
         {/* Header */}
-        <div className="inv-modal__head shrink-0 bg-white/80 dark:bg-[#0f121a]/80 backdrop-blur-xl border-b border-neutral-200/80 dark:border-white/10">
+        <div className="inv-modal__head shrink-0 bg-white/90 dark:bg-[#0f121a]/90 backdrop-blur-xl border-b border-neutral-200/80 dark:border-white/10 px-6 py-4">
           <div className="flex items-center gap-3">
             <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-[var(--color-primary)]/10 text-[var(--color-primary)] shadow-sm">
               <FolderTree size={20} />
@@ -373,8 +373,8 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
         </div>
 
         {/* Category KPIs Summary Bar */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 px-6 py-3 border-b border-neutral-200/60 dark:border-white/[0.06] bg-neutral-50/50 dark:bg-white/[0.01] shrink-0">
-          <div className="p-2.5 rounded-xl border border-neutral-200/80 dark:border-white/[0.06] bg-white dark:bg-[#121520] flex items-center gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 px-6 py-3 border-b border-neutral-200/60 dark:border-white/[0.06] bg-neutral-50/60 dark:bg-white/[0.01] shrink-0">
+          <div className="p-2.5 rounded-xl border border-neutral-200/80 dark:border-white/[0.06] bg-white dark:bg-[#121520] flex items-center gap-3 shadow-xs">
             <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center shrink-0">
               <Tag size={15} />
             </div>
@@ -384,7 +384,7 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
             </div>
           </div>
 
-          <div className="p-2.5 rounded-xl border border-neutral-200/80 dark:border-white/[0.06] bg-white dark:bg-[#121520] flex items-center gap-3">
+          <div className="p-2.5 rounded-xl border border-neutral-200/80 dark:border-white/[0.06] bg-white dark:bg-[#121520] flex items-center gap-3 shadow-xs">
             <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0">
               <Eye size={15} />
             </div>
@@ -394,7 +394,7 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
             </div>
           </div>
 
-          <div className="p-2.5 rounded-xl border border-neutral-200/80 dark:border-white/[0.06] bg-white dark:bg-[#121520] flex items-center gap-3">
+          <div className="p-2.5 rounded-xl border border-neutral-200/80 dark:border-white/[0.06] bg-white dark:bg-[#121520] flex items-center gap-3 shadow-xs">
             <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0">
               <EyeOff size={15} />
             </div>
@@ -404,7 +404,7 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
             </div>
           </div>
 
-          <div className="p-2.5 rounded-xl border border-neutral-200/80 dark:border-white/[0.06] bg-white dark:bg-[#121520] flex items-center gap-3">
+          <div className="p-2.5 rounded-xl border border-neutral-200/80 dark:border-white/[0.06] bg-white dark:bg-[#121520] flex items-center gap-3 shadow-xs">
             <div className="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-500 flex items-center justify-center shrink-0">
               <Boxes size={15} />
             </div>
@@ -468,7 +468,7 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
         )}
 
         {/* Modal Body / Table */}
-        <div className="inv-modal__body flex-1 overflow-y-auto p-0">
+        <div className="inv-modal__body flex-1 overflow-y-auto p-4 sm:p-6">
           {loading ? (
             <div className="py-20 text-center text-xs text-neutral-400 flex flex-col items-center justify-center gap-2">
               <RefreshCw size={20} className="animate-spin text-orange-500" />
@@ -476,7 +476,7 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
             </div>
           ) : filtered.length === 0 ? (
             <div className="py-20 text-center text-neutral-400 space-y-2">
-              <Folder size={36} className="mx-auto opacity-30" />
+              <FolderTree size={36} className="mx-auto opacity-30" />
               <p className="text-xs font-medium text-neutral-500">No categories found matching your filter.</p>
               <button
                 type="button"
@@ -487,127 +487,133 @@ export function CategoryManagerModal({ open, onClose, onCategoriesChanged }: Cat
               </button>
             </div>
           ) : (
-            <div className="p-4 sm:p-6">
-              <div className="overflow-x-auto rounded-2xl border border-neutral-200/80 dark:border-white/10 bg-white dark:bg-[#121520] shadow-sm">
-                <table className="w-full text-left border-collapse" style={{ minWidth: 700, tableLayout: "fixed" }}>
-                  <colgroup>
-                    <col style={{ width: "36%" }} />
-                    <col style={{ width: "22%" }} />
-                    <col style={{ width: "14%" }} />
-                    <col style={{ width: "8%" }} />
-                    <col style={{ width: "12%" }} />
-                    <col style={{ width: "8%" }} />
-                  </colgroup>
-                  <thead>
-                    <tr className="bg-neutral-50/80 dark:bg-white/[0.02] border-b border-neutral-200/80 dark:border-white/10">
-                      <th className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 py-3.5 px-4 text-left">Category</th>
-                      <th className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 py-3.5 px-3 text-left">Slug</th>
-                      <th className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 py-3.5 px-3 text-left">Products</th>
-                      <th className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 py-3.5 px-2 text-center">Order</th>
-                      <th className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 py-3.5 px-3 text-left">Status</th>
-                      <th className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 py-3.5 px-4 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-neutral-100 dark:divide-white/[0.04]">
-                    {filtered.map((cat) => {
-                      const cColor = catColor(cat.name);
-                      const stats = categoryProductStats.get(cat.name.trim().toLowerCase()) ?? { total: 0, active: 0 };
+            <div className="overflow-hidden rounded-2xl border border-neutral-200/80 dark:border-white/10 bg-white dark:bg-[#121520] shadow-sm">
+              <table className="w-full text-left border-collapse" style={{ minWidth: 700, tableLayout: "fixed" }}>
+                <colgroup>
+                  <col style={{ width: "38%" }} />
+                  <col style={{ width: "22%" }} />
+                  <col style={{ width: "14%" }} />
+                  <col style={{ width: "8%" }} />
+                  <col style={{ width: "10%" }} />
+                  <col style={{ width: "8%" }} />
+                </colgroup>
+                <thead>
+                  <tr className="bg-neutral-50/80 dark:bg-white/[0.02] border-b border-neutral-200/80 dark:border-white/10">
+                    <th className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 py-3.5 px-4 text-left">Category</th>
+                    <th className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 py-3.5 px-3 text-left">Slug</th>
+                    <th className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 py-3.5 px-3 text-left">Products</th>
+                    <th className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 py-3.5 px-2 text-center">Order</th>
+                    <th className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 py-3.5 px-3 text-left">Status</th>
+                    <th className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 py-3.5 px-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-neutral-100 dark:divide-white/[0.04]">
+                  {filtered.map((cat) => {
+                    const cColor = catColor(cat.name);
+                    const stats = categoryProductStats.get(cat.name.trim().toLowerCase()) ?? { total: 0, active: 0 };
 
-                      return (
-                        <tr
-                          key={cat.id}
-                          className="hover:bg-orange-500/[0.04] dark:hover:bg-orange-500/[0.06] transition-colors"
-                        >
-                          {/* Category Info */}
-                          <td className="py-3 px-4 align-middle" style={{ overflow: "hidden" }}>
-                            <div className="flex items-center gap-3 min-w-0">
-                              <span
-                                className="flex items-center justify-center w-8 h-8 rounded-xl shrink-0 font-bold text-xs shadow-xs"
-                                style={{ background: cColor.bg, color: cColor.fg }}
-                              >
-                                <Folder size={15} />
-                              </span>
-                              <div className="min-w-0 flex-1 overflow-hidden">
-                                <div className="text-xs font-bold text-neutral-900 dark:text-white truncate">{cat.name}</div>
-                                {cat.description ? (
-                                  <div className="text-[11px] text-neutral-400 truncate mt-0.5">{cat.description}</div>
-                                ) : (
-                                  <div className="text-[10px] text-neutral-400/60 italic truncate mt-0.5">No description set</div>
-                                )}
-                              </div>
+                    return (
+                      <tr
+                        key={cat.id}
+                        className="hover:bg-neutral-50/80 dark:hover:bg-white/[0.02] transition-colors"
+                      >
+                        {/* Category Info */}
+                        <td className="py-3 px-4 align-middle" style={{ overflow: "hidden" }}>
+                          <div className="flex items-center gap-3 min-w-0">
+                            <span
+                              className="flex items-center justify-center w-9 h-9 rounded-xl shrink-0 font-bold text-xs shadow-xs border"
+                              style={{ background: cColor.bg, color: cColor.fg, borderColor: cColor.border }}
+                            >
+                              <FolderTree size={16} />
+                            </span>
+                            <div className="min-w-0 flex-1 overflow-hidden">
+                              <div className="text-[13px] font-bold text-neutral-900 dark:text-white truncate">{cat.name}</div>
+                              {cat.description ? (
+                                <div className="text-[11px] text-neutral-500 dark:text-neutral-400 truncate mt-0.5 leading-tight">{cat.description}</div>
+                              ) : (
+                                <div className="text-[11px] text-neutral-400/50 italic truncate mt-0.5">No description set</div>
+                              )}
                             </div>
-                          </td>
+                          </div>
+                        </td>
 
-                          {/* Slug */}
-                          <td className="py-3 px-3 align-middle" style={{ overflow: "hidden" }}>
-                            <span className="font-mono text-[11px] text-neutral-500 dark:text-neutral-400 block truncate px-2 py-0.5 rounded bg-neutral-100 dark:bg-white/5 border border-neutral-200/50 dark:border-white/5 w-fit max-w-full">
-                              {cat.slug || "—"}
+                        {/* Slug */}
+                        <td className="py-3 px-3 align-middle" style={{ overflow: "hidden" }}>
+                          <span className="inline-flex items-center gap-1 font-mono text-[11px] font-medium text-neutral-600 dark:text-neutral-300 px-2 py-0.5 rounded-md bg-neutral-100 dark:bg-white/5 border border-neutral-200/60 dark:border-white/5 truncate max-w-full">
+                            <span className="text-neutral-400 opacity-60">/</span>{cat.slug || "—"}
+                          </span>
+                        </td>
+
+                        {/* Products Count */}
+                        <td className="py-3 px-3 align-middle">
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-neutral-100/90 dark:bg-white/5 border border-neutral-200/80 dark:border-white/10 text-xs font-bold text-neutral-800 dark:text-neutral-200 whitespace-nowrap">
+                            <Boxes size={13} className="text-orange-500 shrink-0" />
+                            <span>{stats.total}</span>
+                            <span className="text-[10px] font-normal text-neutral-400 uppercase tracking-wider">
+                              {stats.total === 1 ? "Product" : "Products"}
                             </span>
-                          </td>
+                          </div>
+                        </td>
 
-                          {/* Products Count */}
-                          <td className="py-3 px-3 align-middle">
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-neutral-100 dark:bg-white/5 border border-neutral-200/80 dark:border-white/10 text-neutral-700 dark:text-neutral-300 whitespace-nowrap">
-                              <Boxes size={12} className="text-neutral-400 shrink-0" />
-                              <span>{stats.total} {stats.total === 1 ? "Product" : "Products"}</span>
+                        {/* Display Order */}
+                        <td className="py-3 px-2 align-middle text-center">
+                          <div className="flex items-center justify-center">
+                            <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md bg-neutral-100 dark:bg-white/5 border border-neutral-200/70 dark:border-white/10 font-mono text-xs font-bold text-neutral-600 dark:text-neutral-400">
+                              <Hash size={10} className="text-neutral-400" />
+                              <span>{cat.displayOrder}</span>
                             </span>
-                          </td>
+                          </div>
+                        </td>
 
-                          {/* Display Order */}
-                          <td className="py-3 px-2 align-middle text-center">
-                            <span className="font-mono text-xs font-bold text-neutral-500">{cat.displayOrder}</span>
-                          </td>
+                        {/* Single Unified Category Status Switch */}
+                        <td className="py-3 px-3 align-middle">
+                          <button
+                            type="button"
+                            onClick={() => void toggleCategoryStatus(cat)}
+                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold border transition-all cursor-pointer whitespace-nowrap ${
+                              cat.isVisible
+                                ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/25 shadow-xs"
+                                : "bg-neutral-500/10 text-neutral-500 dark:text-neutral-400 border-neutral-300 dark:border-white/10 hover:bg-neutral-500/20"
+                            }`}
+                            title={`Click to switch between Active (Live) and Inactive (Hidden)`}
+                          >
+                            <span className={`w-2 h-2 rounded-full ${cat.isVisible ? "bg-emerald-500 animate-pulse" : "bg-neutral-400"}`} />
+                            <span>{cat.isVisible ? "Active" : "Inactive"}</span>
+                          </button>
+                        </td>
 
-                          {/* Single Unified Category Status Switch */}
-                          <td className="py-3 px-3 align-middle">
+                        {/* Row Action Buttons */}
+                        <td className="py-3 px-4 align-middle text-right">
+                          <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
                             <button
                               type="button"
-                              onClick={() => void toggleCategoryStatus(cat)}
-                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold border transition-all cursor-pointer whitespace-nowrap ${
-                                cat.isVisible
-                                  ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/25 shadow-xs"
-                                  : "bg-neutral-500/15 text-neutral-500 dark:text-neutral-400 border-neutral-400/30 hover:bg-neutral-500/25"
-                              }`}
-                              title={`Click to switch between Active (Live) and Inactive (Hidden)`}
+                              onClick={() => setFormModal({ open: true, category: cat })}
+                              className="w-8 h-8 rounded-lg flex items-center justify-center border border-neutral-200/80 dark:border-white/10 bg-white dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 hover:border-orange-500/50 hover:text-orange-600 dark:hover:text-orange-400 hover:shadow-xs transition-all cursor-pointer"
+                              title="Edit Category"
                             >
-                              <span className={`w-1.5 h-1.5 rounded-full ${cat.isVisible ? "bg-emerald-500 animate-pulse" : "bg-neutral-400"}`} />
-                              <span>{cat.isVisible ? "Active" : "Inactive"}</span>
+                              <Pencil size={13} />
                             </button>
-                          </td>
-
-                          {/* Row Action Buttons */}
-                          <td className="py-3 px-4 align-middle text-right">
-                            <div className="flex items-center justify-end gap-1 whitespace-nowrap">
-                              <button
-                                type="button"
-                                onClick={() => setFormModal({ open: true, category: cat })}
-                                className="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/10 transition-all cursor-pointer"
-                                title="Edit Category"
-                              >
-                                <Pencil size={13} />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setConfirmDelete(cat)}
-                                className="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-red-500 hover:bg-red-500/10 transition-all cursor-pointer"
-                                title="Delete Category"
-                              >
-                                <Trash2 size={13} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                            <button
+                              type="button"
+                              onClick={() => setConfirmDelete(cat)}
+                              className="w-8 h-8 rounded-lg flex items-center justify-center border border-neutral-200/80 dark:border-white/10 bg-white dark:bg-neutral-800 text-neutral-400 hover:border-red-500/40 hover:text-red-500 hover:bg-red-500/5 hover:shadow-xs transition-all cursor-pointer"
+                              title="Delete Category"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           )}
         </div>
 
         {/* Modal Foot */}
-        <div className="inv-modal__foot shrink-0 flex items-center justify-between text-xs text-neutral-400 bg-white/80 dark:bg-[#0f121a]/80 backdrop-blur-xl border-t border-neutral-200/80 dark:border-white/10">
+        <div className="inv-modal__foot shrink-0 flex items-center justify-between text-xs text-neutral-400 bg-white/90 dark:bg-[#0f121a]/90 backdrop-blur-xl border-t border-neutral-200/80 dark:border-white/10 px-6 py-3.5">
           <span className="font-mono">{categories.length} total categories registered</span>
           <button className="inv-btn" onClick={onClose}>Close</button>
         </div>
