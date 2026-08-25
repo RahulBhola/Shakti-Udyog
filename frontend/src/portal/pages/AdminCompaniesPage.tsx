@@ -625,47 +625,51 @@ export default function AdminCompaniesPage() {
       {/* 2. KPI METRICS CARDS                                              */}
       {/* ================================================================= */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
-        <div className="p-4 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Total Companies</span>
-            <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
-              <Building2 size={16} />
-            </div>
+        {/* Total Companies */}
+        <div className="relative overflow-hidden p-4 sm:p-5 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all before:absolute before:inset-0 before:bg-[radial-gradient(150px_110px_at_95%_0%,rgba(59,130,246,0.18),transparent)] before:pointer-events-none">
+          <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
+            <Building2 size={18} />
           </div>
-          <div className="text-xl font-extrabold text-neutral-900 dark:text-white mt-2">{kpis.total}</div>
+          <div className="text-2xl sm:text-[26px] font-extrabold text-neutral-900 dark:text-white mt-3 leading-tight tracking-tight">
+            {kpis.total}
+          </div>
+          <div className="text-xs font-bold text-neutral-800 dark:text-neutral-200 mt-1">Total Companies</div>
           <div className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">All customer entities</div>
         </div>
 
-        <div className="p-4 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Active Clients</span>
-            <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
-              <CheckCircle2 size={16} />
-            </div>
+        {/* Active Clients */}
+        <div className="relative overflow-hidden p-4 sm:p-5 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all before:absolute before:inset-0 before:bg-[radial-gradient(150px_110px_at_95%_0%,rgba(16,185,129,0.18),transparent)] before:pointer-events-none">
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+            <CheckCircle2 size={18} />
           </div>
-          <div className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-2">{kpis.active}</div>
+          <div className="text-2xl sm:text-[26px] font-extrabold text-neutral-900 dark:text-white mt-3 leading-tight tracking-tight">
+            {kpis.active}
+          </div>
+          <div className="text-xs font-bold text-neutral-800 dark:text-neutral-200 mt-1">Active Clients</div>
           <div className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">Authorized for purchasing</div>
         </div>
 
-        <div className="p-4 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">GST Registered</span>
-            <div className="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center">
-              <ShieldCheck size={16} />
-            </div>
+        {/* GST Registered */}
+        <div className="relative overflow-hidden p-4 sm:p-5 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all before:absolute before:inset-0 before:bg-[radial-gradient(150px_110px_at_95%_0%,rgba(168,85,247,0.18),transparent)] before:pointer-events-none">
+          <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center">
+            <ShieldCheck size={18} />
           </div>
-          <div className="text-xl font-extrabold text-purple-600 dark:text-purple-400 mt-2">{kpis.withGst}</div>
+          <div className="text-2xl sm:text-[26px] font-extrabold text-neutral-900 dark:text-white mt-3 leading-tight tracking-tight">
+            {kpis.withGst}
+          </div>
+          <div className="text-xs font-bold text-neutral-800 dark:text-neutral-200 mt-1">GST Registered</div>
           <div className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">Valid tax identifiers</div>
         </div>
 
-        <div className="p-4 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Inactive Accounts</span>
-            <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
-              <Building2 size={16} />
-            </div>
+        {/* Inactive Accounts */}
+        <div className="relative overflow-hidden p-4 sm:p-5 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all before:absolute before:inset-0 before:bg-[radial-gradient(150px_110px_at_95%_0%,rgba(249,115,22,0.18),transparent)] before:pointer-events-none">
+          <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
+            <Building2 size={18} />
           </div>
-          <div className="text-xl font-extrabold text-amber-600 dark:text-amber-400 mt-2">{kpis.inactive}</div>
+          <div className="text-2xl sm:text-[26px] font-extrabold text-neutral-900 dark:text-white mt-3 leading-tight tracking-tight">
+            {kpis.inactive}
+          </div>
+          <div className="text-xs font-bold text-neutral-800 dark:text-neutral-200 mt-1">Inactive Accounts</div>
           <div className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">Suspended organizations</div>
         </div>
       </div>

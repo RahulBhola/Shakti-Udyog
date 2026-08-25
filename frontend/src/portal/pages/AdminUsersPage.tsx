@@ -821,58 +821,63 @@ export default function AdminUsersPage() {
       {/* 2. KPI METRICS CARDS                                              */}
       {/* ================================================================= */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
-        <div className="p-4 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Total Users</span>
-            <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
-              <Users size={16} />
-            </div>
+        {/* Total Users */}
+        <div className="relative overflow-hidden p-4 sm:p-5 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all before:absolute before:inset-0 before:bg-[radial-gradient(150px_110px_at_95%_0%,rgba(59,130,246,0.18),transparent)] before:pointer-events-none">
+          <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
+            <Users size={18} />
           </div>
-          <div className="text-xl font-extrabold text-neutral-900 dark:text-white mt-2">{kpis.total}</div>
+          <div className="text-2xl sm:text-[26px] font-extrabold text-neutral-900 dark:text-white mt-3 leading-tight tracking-tight">
+            {kpis.total}
+          </div>
+          <div className="text-xs font-bold text-neutral-800 dark:text-neutral-200 mt-1">Total Users</div>
           <div className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">All platform accounts</div>
         </div>
 
-        <div className="p-4 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Admins</span>
-            <div className="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center">
-              <Crown size={16} />
-            </div>
+        {/* Admins */}
+        <div className="relative overflow-hidden p-4 sm:p-5 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all before:absolute before:inset-0 before:bg-[radial-gradient(150px_110px_at_95%_0%,rgba(168,85,247,0.18),transparent)] before:pointer-events-none">
+          <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center">
+            <Crown size={18} />
           </div>
-          <div className="text-xl font-extrabold text-purple-600 dark:text-purple-400 mt-2">{kpis.admins}</div>
+          <div className="text-2xl sm:text-[26px] font-extrabold text-neutral-900 dark:text-white mt-3 leading-tight tracking-tight">
+            {kpis.admins}
+          </div>
+          <div className="text-xs font-bold text-neutral-800 dark:text-neutral-200 mt-1">Administrators</div>
           <div className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">Full governance rights</div>
         </div>
 
-        <div className="p-4 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Engineers</span>
-            <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
-              <Wrench size={16} />
-            </div>
+        {/* Engineers */}
+        <div className="relative overflow-hidden p-4 sm:p-5 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all before:absolute before:inset-0 before:bg-[radial-gradient(150px_110px_at_95%_0%,rgba(59,130,246,0.18),transparent)] before:pointer-events-none">
+          <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
+            <Wrench size={18} />
           </div>
-          <div className="text-xl font-extrabold text-blue-600 dark:text-blue-400 mt-2">{kpis.engineers}</div>
+          <div className="text-2xl sm:text-[26px] font-extrabold text-neutral-900 dark:text-white mt-3 leading-tight tracking-tight">
+            {kpis.engineers}
+          </div>
+          <div className="text-xs font-bold text-neutral-800 dark:text-neutral-200 mt-1">Engineers</div>
           <div className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">Production board access</div>
         </div>
 
-        <div className="p-4 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Customers</span>
-            <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
-              <Building2 size={16} />
-            </div>
+        {/* Customers */}
+        <div className="relative overflow-hidden p-4 sm:p-5 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all before:absolute before:inset-0 before:bg-[radial-gradient(150px_110px_at_95%_0%,rgba(16,185,129,0.18),transparent)] before:pointer-events-none">
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+            <Building2 size={18} />
           </div>
-          <div className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-2">{kpis.customers}</div>
+          <div className="text-2xl sm:text-[26px] font-extrabold text-neutral-900 dark:text-white mt-3 leading-tight tracking-tight">
+            {kpis.customers}
+          </div>
+          <div className="text-xs font-bold text-neutral-800 dark:text-neutral-200 mt-1">Customers</div>
           <div className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">Client portal accounts</div>
         </div>
 
-        <div className="p-4 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs col-span-2 sm:col-span-1">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Active Accounts</span>
-            <div className="w-8 h-8 rounded-xl bg-teal-500/10 text-teal-500 flex items-center justify-center">
-              <UserCheck size={16} />
-            </div>
+        {/* Active Accounts */}
+        <div className="relative overflow-hidden p-4 sm:p-5 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all before:absolute before:inset-0 before:bg-[radial-gradient(150px_110px_at_95%_0%,rgba(20,184,166,0.18),transparent)] before:pointer-events-none col-span-2 sm:col-span-1">
+          <div className="w-10 h-10 rounded-xl bg-teal-500/10 text-teal-500 flex items-center justify-center">
+            <UserCheck size={18} />
           </div>
-          <div className="text-xl font-extrabold text-teal-600 dark:text-teal-400 mt-2">{kpis.active}</div>
+          <div className="text-2xl sm:text-[26px] font-extrabold text-neutral-900 dark:text-white mt-3 leading-tight tracking-tight">
+            {kpis.active}
+          </div>
+          <div className="text-xs font-bold text-neutral-800 dark:text-neutral-200 mt-1">Active Accounts</div>
           <div className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">
             {kpis.inactive > 0 ? `${kpis.inactive} Deactivated` : "100% Active"}
           </div>
