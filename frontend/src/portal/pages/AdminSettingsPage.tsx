@@ -18,7 +18,6 @@ import {
   Download,
   Upload,
   RotateCcw,
-  Sparkles,
   Sliders,
   AlertTriangle,
   Send,
@@ -56,7 +55,9 @@ interface SectionDef {
   shortTitle: string;
   description: string;
   icon: LucideIcon;
-  badgeColor: string;
+  badgeBg: string;
+  badgeText: string;
+  badgeBorder: string;
   groups: {
     title: string;
     description?: string;
@@ -144,7 +145,9 @@ const SECTIONS: SectionDef[] = [
     shortTitle: "Company",
     description: "Official business identity, registration credentials, and plant locations used across invoices, quotations, and reports.",
     icon: Building2,
-    badgeColor: "text-blue-500 bg-blue-500/10 border-blue-500/20",
+    badgeBg: "bg-blue-500/10",
+    badgeText: "text-blue-600 dark:text-blue-400",
+    badgeBorder: "border-blue-500/20",
     groups: [
       {
         title: "Legal Identity & Contact",
@@ -186,7 +189,9 @@ const SECTIONS: SectionDef[] = [
     shortTitle: "Commercial",
     description: "Default financial parameters, standard margins, quotation validity windows, and terms applied to new RFQs.",
     icon: Percent,
-    badgeColor: "text-amber-500 bg-amber-500/10 border-amber-500/20",
+    badgeBg: "bg-amber-500/10",
+    badgeText: "text-amber-600 dark:text-amber-400",
+    badgeBorder: "border-amber-500/20",
     groups: [
       {
         title: "Taxation & Financial Rules",
@@ -226,7 +231,9 @@ const SECTIONS: SectionDef[] = [
     shortTitle: "Catalog Master",
     description: "Standardized taxonomies, casting alloys, surface finishes, and unit standards available across the ERP.",
     icon: Package,
-    badgeColor: "text-indigo-500 bg-indigo-500/10 border-indigo-500/20",
+    badgeBg: "bg-indigo-500/10",
+    badgeText: "text-indigo-600 dark:text-indigo-400",
+    badgeBorder: "border-indigo-500/20",
     groups: [
       {
         title: "Manufacturing & Material Taxonomies",
@@ -246,7 +253,9 @@ const SECTIONS: SectionDef[] = [
     shortTitle: "Notifications",
     description: "Automated event triggers, sender profiles, and distribution mailboxes for customer and internal alerts.",
     icon: Bell,
-    badgeColor: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20",
+    badgeBg: "bg-emerald-500/10",
+    badgeText: "text-emerald-600 dark:text-emerald-400",
+    badgeBorder: "border-emerald-500/20",
     groups: [
       {
         title: "Sender Identity & Routing Mailboxes",
@@ -277,7 +286,9 @@ const SECTIONS: SectionDef[] = [
     shortTitle: "Security",
     description: "Authentication policies, credential complexity, idle session expirations, and registration approval gates.",
     icon: ShieldCheck,
-    badgeColor: "text-purple-500 bg-purple-500/10 border-purple-500/20",
+    badgeBg: "bg-purple-500/10",
+    badgeText: "text-purple-600 dark:text-purple-400",
+    badgeBorder: "border-purple-500/20",
     groups: [
       {
         title: "Password & Session Rules",
@@ -306,7 +317,9 @@ const SECTIONS: SectionDef[] = [
     shortTitle: "Integrations",
     description: "SMTP mail relay servers, payment processing gateways, and external API credentials.",
     icon: Plug,
-    badgeColor: "text-cyan-500 bg-cyan-500/10 border-cyan-500/20",
+    badgeBg: "bg-cyan-500/10",
+    badgeText: "text-cyan-600 dark:text-cyan-400",
+    badgeBorder: "border-cyan-500/20",
     groups: [
       {
         title: "SMTP Email Relay Gateway",
@@ -333,7 +346,9 @@ const SECTIONS: SectionDef[] = [
     shortTitle: "Feature Flags",
     description: "Granular on/off toggle switches to instantly activate or deactivate specific portal modules.",
     icon: Flag,
-    badgeColor: "text-rose-500 bg-rose-500/10 border-rose-500/20",
+    badgeBg: "bg-rose-500/10",
+    badgeText: "text-rose-600 dark:text-rose-400",
+    badgeBorder: "border-rose-500/20",
     groups: [
       {
         title: "Operational Module Switches",
@@ -365,13 +380,13 @@ function ToggleSwitch({ checked, onChange, disabled = false }: { checked: boolea
       onClick={() => onChange(!checked)}
       className={cn(
         "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2",
-        checked ? "bg-[var(--color-primary)]" : "bg-slate-300 dark:bg-slate-700",
+        checked ? "bg-[var(--color-primary)]" : "bg-neutral-300 dark:bg-neutral-700",
         disabled && "opacity-50 cursor-not-allowed"
       )}
     >
       <span
         className={cn(
-          "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out",
+          "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out",
           checked ? "translate-x-5" : "translate-x-0"
         )}
       />
@@ -409,11 +424,11 @@ function ListTagEditor({ value, placeholder, onChange }: { value: string; placeh
 
   return (
     <div className="space-y-2">
-      <div className="flex flex-wrap gap-1.5 min-h-[38px] p-2 rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)]">
+      <div className="flex flex-wrap gap-1.5 min-h-[42px] p-2 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#090b10]">
         {items.map((item) => (
           <span
             key={item}
-            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 shadow-xs"
+            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-50 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/30 shadow-2xs"
           >
             <span>{item}</span>
             <button
@@ -434,11 +449,11 @@ function ListTagEditor({ value, placeholder, onChange }: { value: string; placeh
           onBlur={() => {
             if (inputValue.trim()) addTag(inputValue);
           }}
-          className="flex-1 min-w-[140px] bg-transparent text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none px-1 py-0.5"
+          className="flex-1 min-w-[140px] bg-transparent text-xs text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none px-1 py-1"
         />
       </div>
-      <p className="text-[11px] text-[var(--text-muted)]">
-        Press <kbd className="px-1 py-0.5 rounded bg-[var(--bg-surface-hover)] border border-[var(--border-default)] font-mono text-[10px]">Enter</kbd> or <kbd className="px-1 py-0.5 rounded bg-[var(--bg-surface-hover)] border border-[var(--border-default)] font-mono text-[10px]">,</kbd> to add multiple items.
+      <p className="text-[11px] text-neutral-500 dark:text-neutral-400">
+        Press <kbd className="px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-white/10 border border-neutral-200 dark:border-white/10 font-mono text-[10px] text-neutral-700 dark:text-neutral-300 font-semibold">Enter</kbd> or <kbd className="px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-white/10 border border-neutral-200 dark:border-white/10 font-mono text-[10px] text-neutral-700 dark:text-neutral-300 font-semibold">,</kbd> to add multiple items.
       </p>
     </div>
   );
@@ -454,13 +469,13 @@ function PasswordControl({ value, placeholder, onChange }: { value: string; plac
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
         autoComplete="new-password"
-        className="w-full pr-10 pl-3.5 py-2.5 text-xs rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/10 transition-all font-mono"
+        className="w-full pr-10 pl-3.5 py-2.5 text-xs rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#090b10] text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/10 transition-all font-mono"
       />
       <button
         type="button"
         onClick={() => setShow((v) => !v)}
         aria-label={show ? "Hide password" : "Show password"}
-        className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors p-1"
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 transition-colors p-1"
       >
         {show ? <Eye size={15} /> : <EyeOff size={15} />}
       </button>
@@ -485,31 +500,31 @@ function FieldRenderer({
       <div
         onClick={() => onChange(String(!isChecked))}
         className={cn(
-          "p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-4 group select-none",
+          "p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-4 group select-none shadow-2xs",
           isChecked
-            ? "bg-[var(--color-primary-subtle,rgba(14,165,233,0.04))] border-[var(--color-primary)]/40 hover:border-[var(--color-primary)] shadow-xs"
-            : "bg-[var(--bg-surface)] border-[var(--border-default)] hover:bg-[var(--bg-surface-hover)]"
+            ? "bg-emerald-50/50 dark:bg-emerald-500/[0.04] border-emerald-300 dark:border-emerald-500/30 hover:border-emerald-400"
+            : "bg-white dark:bg-[#0f121a] border-neutral-200/90 dark:border-white/10 hover:bg-neutral-50 dark:hover:bg-white/[0.02]"
         )}
       >
         <div className="flex-1 min-w-0 pr-2">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-[var(--text-primary)]">{field.label}</span>
+            <span className="text-xs font-bold text-neutral-900 dark:text-white">{field.label}</span>
             {isDirty && (
               <span className="w-1.5 h-1.5 rounded-full bg-amber-500" title="Modified" />
             )}
           </div>
           {field.help && (
-            <p className="text-[11.5px] text-[var(--text-secondary)] mt-0.5 leading-relaxed">{field.help}</p>
+            <p className="text-[11.5px] text-neutral-500 dark:text-neutral-400 mt-0.5 leading-relaxed">{field.help}</p>
           )}
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
           <span
             className={cn(
-              "px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wide",
+              "px-2.5 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wide",
               isChecked
-                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
-                : "bg-slate-500/10 text-slate-500 dark:text-slate-400 border border-slate-500/20"
+                ? "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/30"
+                : "bg-neutral-100 dark:bg-white/10 text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-white/10"
             )}
           >
             {isChecked ? "Active" : "Disabled"}
@@ -524,14 +539,14 @@ function FieldRenderer({
     return (
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
-          <label className="text-xs font-bold text-[var(--text-primary)] flex items-center gap-1.5">
+          <label className="text-xs font-bold text-neutral-900 dark:text-white flex items-center gap-1.5">
             <span>{field.label}</span>
             {isDirty && <span className="w-1.5 h-1.5 rounded-full bg-amber-500" title="Modified" />}
           </label>
-          <span className="text-[10px] font-mono font-semibold uppercase text-[var(--text-muted)]">Tag List</span>
+          <span className="text-[10px] font-mono font-semibold uppercase text-neutral-400">Tag List</span>
         </div>
         <ListTagEditor value={value} placeholder={field.placeholder} onChange={onChange} />
-        {field.help && <p className="text-[11px] text-[var(--text-muted)]">{field.help}</p>}
+        {field.help && <p className="text-[11px] text-neutral-500 dark:text-neutral-400">{field.help}</p>}
       </div>
     );
   }
@@ -540,20 +555,20 @@ function FieldRenderer({
     return (
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
-          <label className="text-xs font-bold text-[var(--text-primary)] flex items-center gap-1.5">
+          <label className="text-xs font-bold text-neutral-900 dark:text-white flex items-center gap-1.5">
             <span>{field.label}</span>
             {isDirty && <span className="w-1.5 h-1.5 rounded-full bg-amber-500" title="Modified" />}
           </label>
-          <span className="text-[10px] font-mono font-semibold uppercase text-[var(--text-muted)]">Textarea</span>
+          <span className="text-[10px] font-mono font-semibold uppercase text-neutral-400">Textarea</span>
         </div>
         <textarea
           value={value}
           placeholder={field.placeholder}
           onChange={(e) => onChange(e.target.value)}
           rows={3}
-          className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/10 transition-all resize-y"
+          className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#090b10] text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/10 transition-all resize-y"
         />
-        {field.help && <p className="text-[11px] text-[var(--text-muted)]">{field.help}</p>}
+        {field.help && <p className="text-[11px] text-neutral-500 dark:text-neutral-400">{field.help}</p>}
       </div>
     );
   }
@@ -562,14 +577,14 @@ function FieldRenderer({
     return (
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
-          <label className="text-xs font-bold text-[var(--text-primary)] flex items-center gap-1.5">
+          <label className="text-xs font-bold text-neutral-900 dark:text-white flex items-center gap-1.5">
             <span>{field.label}</span>
             {isDirty && <span className="w-1.5 h-1.5 rounded-full bg-amber-500" title="Modified" />}
           </label>
-          <span className="text-[10px] font-mono font-semibold uppercase text-[var(--text-muted)]">Secret</span>
+          <span className="text-[10px] font-mono font-semibold uppercase text-neutral-400">Secret</span>
         </div>
         <PasswordControl value={value} placeholder={field.placeholder} onChange={onChange} />
-        {field.help && <p className="text-[11px] text-[var(--text-muted)]">{field.help}</p>}
+        {field.help && <p className="text-[11px] text-neutral-500 dark:text-neutral-400">{field.help}</p>}
       </div>
     );
   }
@@ -577,7 +592,7 @@ function FieldRenderer({
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between">
-        <label className="text-xs font-bold text-[var(--text-primary)] flex items-center gap-1.5">
+        <label className="text-xs font-bold text-neutral-900 dark:text-white flex items-center gap-1.5">
           <span>{field.label}</span>
           {isDirty && <span className="w-1.5 h-1.5 rounded-full bg-amber-500" title="Modified" />}
         </label>
@@ -594,17 +609,17 @@ function FieldRenderer({
           placeholder={field.placeholder}
           onChange={(e) => onChange(e.target.value)}
           className={cn(
-            "w-full px-3.5 py-2.5 text-xs rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/10 transition-all",
+            "w-full px-3.5 py-2.5 text-xs rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#090b10] text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/10 transition-all",
             field.unitSuffix && "pr-14"
           )}
         />
         {field.unitSuffix && (
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-[var(--text-muted)] pointer-events-none">
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-neutral-400 pointer-events-none">
             {field.unitSuffix}
           </span>
         )}
       </div>
-      {field.help && <p className="text-[11px] text-[var(--text-muted)]">{field.help}</p>}
+      {field.help && <p className="text-[11px] text-neutral-500 dark:text-neutral-400">{field.help}</p>}
     </div>
   );
 }
@@ -641,7 +656,6 @@ export default function AdminSettingsPage() {
     adminApi
       .settings()
       .then((data) => {
-        // Merge fetched data over default fallbacks so all keys are fully populated
         const merged: Record<string, string> = { ...DEFAULT_SETTINGS, ...(data ?? {}) };
         setOriginalValues(merged);
         setValues(merged);
@@ -786,14 +800,14 @@ export default function AdminSettingsPage() {
 
   if (!loaded) {
     return (
-      <div className="space-y-6 animate-pulse p-6">
-        <div className="h-40 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-default)]" />
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div className="space-y-6 animate-pulse">
+        <div className="h-28 rounded-2xl bg-neutral-100 dark:bg-white/5 border border-neutral-200 dark:border-white/10" />
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3.5">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="h-24 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-default)]" />
+            <div key={i} className="h-28 rounded-2xl bg-neutral-100 dark:bg-white/5 border border-neutral-200 dark:border-white/10" />
           ))}
         </div>
-        <div className="h-96 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-default)]" />
+        <div className="h-96 rounded-2xl bg-neutral-100 dark:bg-white/5 border border-neutral-200 dark:border-white/10" />
       </div>
     );
   }
@@ -806,8 +820,8 @@ export default function AdminSettingsPage() {
           className={cn(
             "fixed top-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl text-white text-xs font-semibold backdrop-blur-xl border transition-all animate-in slide-in-from-top-4",
             toast.type === "success"
-              ? "bg-emerald-600/95 border-emerald-500/40 shadow-emerald-900/20"
-              : "bg-rose-600/95 border-rose-500/40 shadow-rose-900/20"
+              ? "bg-emerald-600 border-emerald-500 shadow-emerald-900/20"
+              : "bg-rose-600 border-rose-500 shadow-rose-900/20"
           )}
         >
           {toast.type === "success" ? <CheckCircle2 size={18} /> : <XCircle size={18} />}
@@ -831,181 +845,186 @@ export default function AdminSettingsPage() {
         className="hidden"
       />
 
-      {/* 1. Hero Header */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-6 md:p-8 text-white shadow-xl border border-slate-800">
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-          <div className="space-y-2">
-            <div className="flex items-center gap-3 flex-wrap">
-              <div className="p-2.5 rounded-xl bg-indigo-500/20 border border-indigo-500/30 text-indigo-400">
-                <Sliders className="w-6 h-6" />
-              </div>
-              <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-white">
+      {/* ================================================================= */}
+      {/* 1. HERO HEADER                                                    */}
+      {/* ================================================================= */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3.5">
+          <div className="w-12 h-12 rounded-2xl bg-[var(--color-primary)]/10 text-[var(--color-primary)] border border-[var(--color-primary)]/20 flex items-center justify-center shadow-xs">
+            <Sliders size={24} />
+          </div>
+          <div>
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <h1 className="text-xl sm:text-2xl font-extrabold text-neutral-900 dark:text-white tracking-tight m-0">
                 System & Enterprise Settings
               </h1>
-              <span className="px-2.5 py-0.5 text-xs font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 rounded-full flex items-center gap-1">
-                <Sparkles size={11} />
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-neutral-100 dark:bg-white/10 text-neutral-700 dark:text-neutral-300 border border-neutral-200/70 dark:border-white/10">
                 Production ERP Config
               </span>
               {isDirty && (
-                <span className="px-2.5 py-0.5 text-xs font-bold bg-amber-500 text-slate-950 rounded-full shadow-sm animate-pulse">
+                <span className="px-2.5 py-0.5 text-xs font-bold bg-amber-500 text-slate-950 rounded-full shadow-xs animate-pulse">
                   {dirtyKeys.length} Unsaved Changes
                 </span>
               )}
             </div>
-            <p className="text-slate-400 text-xs md:text-sm max-w-2xl leading-relaxed">
-              Manage Shakti Udyog corporate identity, quotation & commercial policies, notification relays,
-              security parameters, and modular feature flags.
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 m-0">
+              Manage corporate identity, quotation & commercial policies, notifications, security rules, and modular feature flags.
             </p>
-          </div>
-
-          {/* Action Toolbar */}
-          <div className="flex items-center gap-2 flex-wrap shrink-0">
-            <button
-              type="button"
-              onClick={handleExportJson}
-              className="px-3.5 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700 text-slate-300 text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm"
-              title="Backup current configuration as JSON"
-            >
-              <Download size={14} />
-              <span>Export JSON</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="px-3.5 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700 text-slate-300 text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm"
-              title="Upload JSON configuration backup"
-            >
-              <Upload size={14} />
-              <span>Import</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setShowResetConfirm(true)}
-              className="px-3.5 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700 text-slate-300 text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm"
-              title="Restore standard factory defaults"
-            >
-              <RotateCcw size={14} />
-              <span>Defaults</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={loadSettings}
-              className="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700 text-slate-300 transition-all"
-              title="Reload from server"
-            >
-              <RefreshCw size={15} />
-            </button>
-
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={saving || !isDirty}
-              className={cn(
-                "px-5 py-2 rounded-xl font-bold text-xs flex items-center gap-2 shadow-lg transition-all",
-                isDirty
-                  ? "bg-[var(--color-primary)] text-white hover:opacity-90 shadow-[var(--color-primary)]/20 animate-pulse"
-                  : "bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed opacity-60"
-              )}
-            >
-              <Save size={15} className={saving ? "animate-spin" : ""} />
-              <span>{saving ? "Saving..." : "Save Changes"}</span>
-            </button>
           </div>
         </div>
 
-        {/* Ambient Glow */}
-        <div className="absolute -top-24 -right-24 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+        {/* Action Toolbar */}
+        <div className="flex items-center gap-2 flex-wrap shrink-0">
+          <button
+            type="button"
+            onClick={handleExportJson}
+            className="inline-flex items-center gap-1.5 px-3.5 h-9 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#121520] hover:bg-neutral-50 dark:hover:bg-white/5 text-xs font-bold text-neutral-700 dark:text-neutral-300 transition-all shadow-2xs cursor-pointer"
+            title="Download JSON configuration backup"
+          >
+            <Download size={13} className="text-blue-500" />
+            <span>Export JSON</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="inline-flex items-center gap-1.5 px-3.5 h-9 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#121520] hover:bg-neutral-50 dark:hover:bg-white/5 text-xs font-bold text-neutral-700 dark:text-neutral-300 transition-all shadow-2xs cursor-pointer"
+            title="Upload JSON configuration backup"
+          >
+            <Upload size={13} className="text-indigo-500" />
+            <span>Import</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setShowResetConfirm(true)}
+            className="inline-flex items-center gap-1.5 px-3.5 h-9 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#121520] hover:bg-neutral-50 dark:hover:bg-white/5 text-xs font-bold text-neutral-700 dark:text-neutral-300 transition-all shadow-2xs cursor-pointer"
+            title="Restore standard factory defaults"
+          >
+            <RotateCcw size={13} className="text-amber-500" />
+            <span>Defaults</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={loadSettings}
+            className="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#121520] hover:bg-neutral-50 dark:hover:bg-white/5 text-neutral-700 dark:text-neutral-300 transition-all shadow-2xs cursor-pointer"
+            title="Reload settings from server"
+          >
+            <RefreshCw size={14} />
+          </button>
+
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving || !isDirty}
+            className={cn(
+              "inline-flex items-center gap-2 px-4 h-9 rounded-xl font-bold text-xs shadow-sm transition-all cursor-pointer",
+              isDirty
+                ? "bg-[var(--color-primary)] text-white hover:opacity-90 shadow-[var(--color-primary)]/20"
+                : "bg-neutral-100 dark:bg-white/5 text-neutral-400 dark:text-neutral-600 border border-neutral-200/80 dark:border-white/10 cursor-not-allowed"
+            )}
+          >
+            <Save size={14} className={saving ? "animate-spin" : ""} />
+            <span>{saving ? "Saving..." : "Save Changes"}</span>
+          </button>
+        </div>
       </div>
 
-      {/* 2. KPI Metrics Grid */}
+      {/* ================================================================= */}
+      {/* 2. KPI METRICS CARDS                                              */}
+      {/* ================================================================= */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
-        <div className="p-4 rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] shadow-xs flex items-center gap-3.5">
-          <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-500 flex items-center justify-center shrink-0">
-            <Layers size={20} />
+        {/* Total Parameters */}
+        <div className="relative overflow-hidden p-4 sm:p-5 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-2xs hover:shadow-md hover:-translate-y-0.5 transition-all before:absolute before:inset-0 before:bg-[radial-gradient(150px_110px_at_95%_0%,rgba(59,130,246,0.15),transparent)] before:pointer-events-none">
+          <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
+            <Layers size={18} />
           </div>
-          <div>
-            <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wide">Total Parameters</p>
-            <p className="text-xl font-extrabold text-[var(--text-primary)] font-mono">{totalConfigsCount}</p>
+          <div className="text-2xl sm:text-[26px] font-extrabold text-neutral-900 dark:text-white mt-3 leading-tight tracking-tight font-mono">
+            {totalConfigsCount}
           </div>
+          <div className="text-xs font-bold text-neutral-800 dark:text-neutral-200 mt-1">Total Parameters</div>
+          <div className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">Configured system keys</div>
         </div>
 
-        <div className="p-4 rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] shadow-xs flex items-center gap-3.5">
-          <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-center shrink-0">
-            <Globe size={20} />
+        {/* Currency / Base */}
+        <div className="relative overflow-hidden p-4 sm:p-5 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-2xs hover:shadow-md hover:-translate-y-0.5 transition-all before:absolute before:inset-0 before:bg-[radial-gradient(150px_110px_at_95%_0%,rgba(245,158,11,0.15),transparent)] before:pointer-events-none">
+          <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
+            <Globe size={18} />
           </div>
-          <div>
-            <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wide">Currency / Base</p>
-            <p className="text-xl font-extrabold text-[var(--text-primary)] font-mono">{currencyCode}</p>
+          <div className="text-2xl sm:text-[26px] font-extrabold text-neutral-900 dark:text-white mt-3 leading-tight tracking-tight font-mono">
+            {currencyCode}
           </div>
+          <div className="text-xs font-bold text-neutral-800 dark:text-neutral-200 mt-1">Currency / Base</div>
+          <div className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">Operating currency slab</div>
         </div>
 
-        <div className="p-4 rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] shadow-xs flex items-center gap-3.5">
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 flex items-center justify-center shrink-0">
-            <Zap size={20} />
+        {/* Active Modules */}
+        <div className="relative overflow-hidden p-4 sm:p-5 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-2xs hover:shadow-md hover:-translate-y-0.5 transition-all before:absolute before:inset-0 before:bg-[radial-gradient(150px_110px_at_95%_0%,rgba(16,185,129,0.15),transparent)] before:pointer-events-none">
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+            <Zap size={18} />
           </div>
-          <div>
-            <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wide">Active Modules</p>
-            <p className="text-xl font-extrabold text-[var(--text-primary)] font-mono">
-              {activeFeaturesCount} <span className="text-xs font-medium text-[var(--text-muted)]">/ 6</span>
-            </p>
+          <div className="text-2xl sm:text-[26px] font-extrabold text-neutral-900 dark:text-white mt-3 leading-tight tracking-tight font-mono">
+            {activeFeaturesCount} <span className="text-xs font-medium text-neutral-500">/ 6</span>
           </div>
+          <div className="text-xs font-bold text-neutral-800 dark:text-neutral-200 mt-1">Active Modules</div>
+          <div className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">Enabled feature flags</div>
         </div>
 
-        <div className="p-4 rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] shadow-xs flex items-center gap-3.5">
-          <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-500 flex items-center justify-center shrink-0">
-            <Lock size={20} />
+        {/* Session Timeout */}
+        <div className="relative overflow-hidden p-4 sm:p-5 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-2xs hover:shadow-md hover:-translate-y-0.5 transition-all before:absolute before:inset-0 before:bg-[radial-gradient(150px_110px_at_95%_0%,rgba(168,85,247,0.15),transparent)] before:pointer-events-none">
+          <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center">
+            <Lock size={18} />
           </div>
-          <div>
-            <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wide">Session Timeout</p>
-            <p className="text-xl font-extrabold text-[var(--text-primary)] font-mono">
-              {sessionTimeout} <span className="text-xs font-medium text-[var(--text-muted)]">min</span>
-            </p>
+          <div className="text-2xl sm:text-[26px] font-extrabold text-neutral-900 dark:text-white mt-3 leading-tight tracking-tight font-mono">
+            {sessionTimeout} <span className="text-xs font-medium text-neutral-500">min</span>
           </div>
+          <div className="text-xs font-bold text-neutral-800 dark:text-neutral-200 mt-1">Session Timeout</div>
+          <div className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">Staff idle expiration</div>
         </div>
 
-        <div className="p-4 rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] shadow-xs flex items-center gap-3.5 col-span-2 sm:col-span-1">
-          <div className="w-10 h-10 rounded-xl bg-teal-500/10 border border-teal-500/20 text-teal-500 flex items-center justify-center shrink-0">
-            <Activity size={20} />
+        {/* Sync Status */}
+        <div className="relative overflow-hidden p-4 sm:p-5 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-2xs hover:shadow-md hover:-translate-y-0.5 transition-all before:absolute before:inset-0 before:bg-[radial-gradient(150px_110px_at_95%_0%,rgba(20,184,166,0.15),transparent)] before:pointer-events-none col-span-2 sm:col-span-1">
+          <div className="w-10 h-10 rounded-xl bg-teal-500/10 text-teal-500 flex items-center justify-center">
+            <Activity size={18} />
           </div>
-          <div>
-            <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wide">Sync Status</p>
-            <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 mt-0.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              Synchronized
-            </p>
+          <div className="text-lg font-extrabold text-emerald-600 dark:text-emerald-400 mt-3 leading-tight tracking-tight flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+            Synchronized
           </div>
+          <div className="text-xs font-bold text-neutral-800 dark:text-neutral-200 mt-1">Live Connection</div>
+          <div className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">DB schema aligned</div>
         </div>
       </div>
 
-      {/* 3. Search Bar & Category Navigation Toolbar */}
-      <div className="p-4 rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] shadow-xs space-y-4">
+      {/* ================================================================= */}
+      {/* 3. SEARCH & CATEGORY TOOLBAR                                      */}
+      {/* ================================================================= */}
+      <div className="p-4 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-2xs space-y-3.5">
         {/* Global Search Input */}
         <div className="relative">
-          <Search className="absolute left-3.5 top-3 w-4 h-4 text-[var(--text-muted)]" />
+          <Search className="absolute left-3.5 top-3 w-4 h-4 text-neutral-400" />
           <input
             type="text"
             placeholder="Search all 40+ system settings, GST rules, SMTP, passwords, modules..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-10 py-2.5 text-xs md:text-sm rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/10 transition-all"
+            className="w-full pl-10 pr-10 py-2.5 text-xs sm:text-sm rounded-xl border border-neutral-200 dark:border-white/10 bg-neutral-50 dark:bg-[#090b10] text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/10 transition-all"
           />
           {searchQuery && (
             <button
               type="button"
               onClick={() => setSearchQuery("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)] p-1 rounded-lg"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 dark:hover:text-white p-1 rounded-lg"
             >
               <X size={14} />
             </button>
           )}
         </div>
 
-        {/* Category Tabs (when not in search mode) */}
+        {/* Category Segmented Tabs */}
         {!searchResults && (
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
             {SECTIONS.map((sec) => {
               const Icon = sec.icon;
               const isActive = activeTab === sec.id;
@@ -1019,13 +1038,13 @@ export default function AdminSettingsPage() {
                   type="button"
                   onClick={() => setActiveTab(sec.id)}
                   className={cn(
-                    "px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shrink-0 select-none",
+                    "px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shrink-0 select-none cursor-pointer",
                     isActive
-                      ? "bg-[var(--color-primary)] text-white shadow-md shadow-[var(--color-primary)]/20"
-                      : "bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] border border-[var(--border-default)]"
+                      ? "bg-[var(--color-primary)] text-white shadow-sm"
+                      : "bg-neutral-100 dark:bg-white/5 border border-neutral-200/80 dark:border-white/10 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-200/60 dark:hover:bg-white/10"
                   )}
                 >
-                  <Icon size={15} />
+                  <Icon size={14} />
                   <span>{sec.shortTitle}</span>
                   {secDirtyCount > 0 && (
                     <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
@@ -1037,30 +1056,32 @@ export default function AdminSettingsPage() {
         )}
       </div>
 
-      {/* 4. Active Section Content or Search Results */}
+      {/* ================================================================= */}
+      {/* 4. ACTIVE SECTION OR SEARCH RESULTS                               */}
+      {/* ================================================================= */}
       {searchResults ? (
         /* Search Results View */
-        <div className="p-6 rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] shadow-xs space-y-6">
-          <div className="flex items-center justify-between border-b border-[var(--border-default)] pb-4">
+        <div className="p-6 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-2xs space-y-6">
+          <div className="flex items-center justify-between border-b border-neutral-200/80 dark:border-white/10 pb-4">
             <div>
-              <h2 className="text-base font-extrabold text-[var(--text-primary)]">
+              <h2 className="text-base font-extrabold text-neutral-900 dark:text-white">
                 Search Results ({searchResults.length} matches)
               </h2>
-              <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
                 Showing all matching configuration fields across categories.
               </p>
             </div>
             <button
               type="button"
               onClick={() => setSearchQuery("")}
-              className="text-xs font-semibold text-[var(--color-primary)] hover:underline"
+              className="text-xs font-bold text-[var(--color-primary)] hover:underline cursor-pointer"
             >
               Clear Search
             </button>
           </div>
 
           {searchResults.length === 0 ? (
-            <div className="py-12 text-center text-xs text-[var(--text-muted)]">
+            <div className="py-12 text-center text-xs text-neutral-400">
               No configuration parameter matches "{searchQuery}".
             </div>
           ) : (
@@ -1069,7 +1090,7 @@ export default function AdminSettingsPage() {
                 <div
                   key={field.key}
                   className={cn(
-                    "p-4 rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] space-y-2",
+                    "p-4 rounded-xl border border-neutral-200/80 dark:border-white/10 bg-neutral-50/70 dark:bg-white/[0.02] space-y-2",
                     (field.type === "multiline" || field.type === "list" || field.type === "boolean") &&
                       "md:col-span-2"
                   )}
@@ -1086,23 +1107,25 @@ export default function AdminSettingsPage() {
           )}
         </div>
       ) : (
-        /* Category Groups View */
+        /* Category View */
         <div className="space-y-6">
-          {/* Section Description Card */}
-          <div className="p-5 rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] shadow-xs flex items-start gap-4">
+          {/* Section Hero Banner Card */}
+          <div className="p-5 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-2xs flex items-start gap-4">
             <div
               className={cn(
-                "w-12 h-12 rounded-2xl border flex items-center justify-center shrink-0 shadow-xs",
-                activeSection.badgeColor
+                "w-12 h-12 rounded-2xl border flex items-center justify-center shrink-0 shadow-2xs",
+                activeSection.badgeBg,
+                activeSection.badgeText,
+                activeSection.badgeBorder
               )}
             >
               <activeSection.icon size={24} />
             </div>
             <div className="space-y-1 flex-1 min-w-0">
-              <h2 className="text-lg font-extrabold text-[var(--text-primary)] tracking-tight">
+              <h2 className="text-lg font-extrabold text-neutral-900 dark:text-white tracking-tight">
                 {activeSection.title}
               </h2>
-              <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">
                 {activeSection.description}
               </p>
             </div>
@@ -1113,12 +1136,12 @@ export default function AdminSettingsPage() {
             {activeSection.groups.map((group, gIdx) => (
               <div
                 key={gIdx}
-                className="p-6 rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] shadow-xs space-y-5"
+                className="p-6 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-2xs space-y-5"
               >
-                <div className="border-b border-[var(--border-default)] pb-3.5">
-                  <h3 className="text-sm font-extrabold text-[var(--text-primary)]">{group.title}</h3>
+                <div className="border-b border-neutral-200/80 dark:border-white/10 pb-3.5">
+                  <h3 className="text-sm font-extrabold text-neutral-900 dark:text-white">{group.title}</h3>
                   {group.description && (
-                    <p className="text-[11.5px] text-[var(--text-secondary)] mt-0.5">
+                    <p className="text-[11.5px] text-neutral-500 dark:text-neutral-400 mt-0.5">
                       {group.description}
                     </p>
                   )}
@@ -1147,17 +1170,17 @@ export default function AdminSettingsPage() {
                   })}
                 </div>
 
-                {/* Optional helper actions per section (e.g. SMTP test tool) */}
+                {/* Helper tool inside integrations */}
                 {activeSection.id === "integrations" && group.title.includes("SMTP") && (
-                  <div className="pt-2 border-t border-[var(--border-default)] flex items-center justify-between flex-wrap gap-3">
-                    <p className="text-[11px] text-[var(--text-muted)]">
+                  <div className="pt-3 border-t border-neutral-200/80 dark:border-white/10 flex items-center justify-between flex-wrap gap-3">
+                    <p className="text-[11px] text-neutral-500 dark:text-neutral-400">
                       Verify mail server handshake by dispatching a test transmission.
                     </p>
                     <button
                       type="button"
                       onClick={handleTestSmtp}
                       disabled={testEmailSending}
-                      className="px-3.5 py-1.5 rounded-xl bg-[var(--bg-surface)] hover:bg-[var(--bg-surface-hover)] border border-[var(--border-default)] text-xs font-semibold text-[var(--text-primary)] flex items-center gap-1.5 transition-all shadow-xs"
+                      className="px-3.5 py-1.5 rounded-xl bg-neutral-100 dark:bg-white/5 hover:bg-neutral-200/70 dark:hover:bg-white/10 border border-neutral-200 dark:border-white/10 text-xs font-bold text-neutral-800 dark:text-neutral-200 flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
                     >
                       <Send size={13} className={testEmailSending ? "animate-spin" : ""} />
                       <span>{testEmailSending ? "Testing SMTP..." : "Send Test Email"}</span>
@@ -1170,9 +1193,11 @@ export default function AdminSettingsPage() {
         </div>
       )}
 
-      {/* 5. Sticky Floating Action Bar on Unsaved Changes */}
+      {/* ================================================================= */}
+      {/* 5. STICKY FLOATING BAR ON UNSAVED CHANGES                         */}
+      {/* ================================================================= */}
       {isDirty && (
-        <div className="fixed bottom-6 inset-x-6 max-w-4xl mx-auto z-40 p-4 rounded-2xl bg-slate-950/95 text-white border border-slate-700 shadow-2xl backdrop-blur-xl flex items-center justify-between gap-4 animate-in slide-in-from-bottom-6">
+        <div className="fixed bottom-6 inset-x-6 max-w-4xl mx-auto z-40 p-4 rounded-2xl bg-neutral-900/95 dark:bg-[#0c0f17]/95 text-white border border-neutral-700 dark:border-white/15 shadow-2xl backdrop-blur-xl flex items-center justify-between gap-4 animate-in slide-in-from-bottom-6">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-500/30 text-amber-400 flex items-center justify-center shrink-0">
               <AlertTriangle size={16} />
@@ -1181,8 +1206,8 @@ export default function AdminSettingsPage() {
               <p className="text-xs font-bold text-white">
                 You have {dirtyKeys.length} unsaved configuration change{dirtyKeys.length > 1 ? "s" : ""}
               </p>
-              <p className="text-[11px] text-slate-400 hidden sm:block">
-                Remember to save your edits before navigating away from this page.
+              <p className="text-[11px] text-neutral-400 hidden sm:block">
+                Save your changes before leaving this page.
               </p>
             </div>
           </div>
@@ -1191,7 +1216,7 @@ export default function AdminSettingsPage() {
             <button
               type="button"
               onClick={handleDiscardChanges}
-              className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors"
+              className="px-3.5 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs font-bold transition-colors cursor-pointer"
             >
               Discard
             </button>
@@ -1199,7 +1224,7 @@ export default function AdminSettingsPage() {
               type="button"
               onClick={handleSave}
               disabled={saving}
-              className="px-4 py-2 rounded-xl bg-[var(--color-primary)] hover:opacity-90 text-white text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-[var(--color-primary)]/20 transition-all"
+              className="px-4 py-2 rounded-xl bg-[var(--color-primary)] hover:opacity-90 text-white text-xs font-bold flex items-center gap-1.5 shadow-md transition-all cursor-pointer"
             >
               <Save size={14} className={saving ? "animate-spin" : ""} />
               <span>{saving ? "Saving..." : "Save Changes"}</span>
@@ -1208,16 +1233,16 @@ export default function AdminSettingsPage() {
         </div>
       )}
 
-      {/* Reset Defaults Confirmation Modal (Zero native browser alerts rule) */}
+      {/* Reset Defaults Confirmation Modal */}
       {showResetConfirm && (
-        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
-          <div className="w-full max-w-md rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] p-6 shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
+          <div className="w-full max-w-md rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0c0f17] p-6 shadow-2xl space-y-4">
             <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-center">
               <RotateCcw size={22} />
             </div>
             <div className="space-y-1">
-              <h3 className="text-base font-extrabold text-[var(--text-primary)]">Reset to Factory Defaults?</h3>
-              <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+              <h3 className="text-base font-extrabold text-neutral-900 dark:text-white">Reset to Factory Defaults?</h3>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">
                 This will populate all company details, GST rules, email gateways, and feature flags with the standard system templates. You can still review changes before saving.
               </p>
             </div>
@@ -1225,14 +1250,14 @@ export default function AdminSettingsPage() {
               <button
                 type="button"
                 onClick={() => setShowResetConfirm(false)}
-                className="px-4 py-2 rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] text-xs font-semibold text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all"
+                className="px-4 py-2 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-white/5 text-xs font-bold text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-white/10 transition-all cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleResetToDefaults}
-                className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold transition-all shadow-md"
+                className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold transition-all shadow-md cursor-pointer"
               >
                 Reset Defaults
               </button>
@@ -1243,23 +1268,23 @@ export default function AdminSettingsPage() {
 
       {/* JSON Import Preview Modal */}
       {showImportModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
-          <div className="w-full max-w-lg rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-[var(--border-default)] pb-3">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
+          <div className="w-full max-w-lg rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0c0f17] p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-neutral-200/80 dark:border-white/10 pb-3">
               <div className="flex items-center gap-2">
                 <FileJson className="w-5 h-5 text-[var(--color-primary)]" />
-                <h3 className="text-sm font-extrabold text-[var(--text-primary)]">Import Configuration JSON</h3>
+                <h3 className="text-sm font-extrabold text-neutral-900 dark:text-white">Import Configuration JSON</h3>
               </div>
               <button
                 type="button"
                 onClick={() => setShowImportModal(false)}
-                className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-1 rounded-lg"
+                className="text-neutral-400 hover:text-neutral-700 dark:hover:text-white p-1 rounded-lg cursor-pointer"
               >
                 <X size={16} />
               </button>
             </div>
 
-            <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">
               Review or paste your configuration dictionary below. Existing values will be overridden with matching keys upon confirmation.
             </p>
 
@@ -1267,21 +1292,21 @@ export default function AdminSettingsPage() {
               value={importJsonText}
               onChange={(e) => setImportJsonText(e.target.value)}
               rows={10}
-              className="w-full p-3 rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] text-[var(--text-primary)] text-xs font-mono focus:outline-none focus:border-[var(--color-primary)] transition-all resize-y"
+              className="w-full p-3 rounded-xl border border-neutral-200 dark:border-white/10 bg-neutral-50 dark:bg-[#090b10] text-neutral-900 dark:text-white text-xs font-mono focus:outline-none focus:border-[var(--color-primary)] transition-all resize-y"
             />
 
             <div className="flex items-center justify-end gap-2 pt-2">
               <button
                 type="button"
                 onClick={() => setShowImportModal(false)}
-                className="px-4 py-2 rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] text-xs font-semibold text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all"
+                className="px-4 py-2 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-white/5 text-xs font-bold text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-white/10 transition-all cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleApplyImport}
-                className="px-4 py-2 rounded-xl bg-[var(--color-primary)] text-white text-xs font-bold hover:opacity-90 transition-all shadow-md"
+                className="px-4 py-2 rounded-xl bg-[var(--color-primary)] text-white text-xs font-bold hover:opacity-90 transition-all shadow-md cursor-pointer"
               >
                 Apply Configuration
               </button>
