@@ -11,12 +11,12 @@ import {
   X,
   Download,
   Eye,
-  ClipboardList,
   FileText,
   Clock,
   Plus,
   Trash2,
   FileEdit,
+  Layers,
   Paperclip,
   CheckCircle2,
   Package,
@@ -361,7 +361,7 @@ export default function EnquiryListPage() {
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-[var(--text-secondary)]">Total Enquiries</span>
             <span className="p-2 rounded-lg bg-blue-500/10 text-blue-500">
-              <ClipboardList size={16} />
+              <FileText size={16} />
             </span>
           </div>
           <div className="text-2xl font-extrabold text-[var(--text-primary)] mt-2">
@@ -387,7 +387,7 @@ export default function EnquiryListPage() {
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-[var(--text-secondary)]">Quotes Issued</span>
             <span className="p-2 rounded-lg bg-purple-500/10 text-purple-500">
-              <FileText size={16} />
+              <Layers size={16} />
             </span>
           </div>
           <div className="text-2xl font-extrabold text-[var(--text-primary)] mt-2">

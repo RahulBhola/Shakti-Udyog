@@ -443,82 +443,76 @@ export default function AdminReportsPage() {
         <div className="py-8 text-center"><Loading label="Loading business metrics summary..." /></div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
-          <div className="p-3.5 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Enquiries</span>
-              <div className="w-7 h-7 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center">
-                <ClipboardList size={14} />
-              </div>
+          {/* Enquiries */}
+          <div className="relative overflow-hidden p-4 sm:p-5 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all before:absolute before:inset-0 before:bg-[radial-gradient(150px_110px_at_95%_0%,rgba(59,130,246,0.18),transparent)] before:pointer-events-none">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
+              <ClipboardList size={18} />
             </div>
-            <div className="text-lg font-extrabold text-neutral-900 dark:text-white mt-1.5">
+            <div className="text-2xl sm:text-[26px] font-extrabold text-neutral-900 dark:text-white mt-3 leading-tight tracking-tight">
               {(counts?.enquiries ?? 0).toLocaleString()}
             </div>
-            <div className="text-[10px] text-neutral-500 dark:text-neutral-400">Total RFQs</div>
+            <div className="text-xs font-bold text-neutral-800 dark:text-neutral-200 mt-1">Enquiries</div>
+            <div className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">Total RFQs</div>
           </div>
 
-          <div className="p-3.5 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Quotes</span>
-              <div className="w-7 h-7 rounded-lg bg-purple-500/10 text-purple-500 flex items-center justify-center">
-                <FileText size={14} />
-              </div>
+          {/* Quotes */}
+          <div className="relative overflow-hidden p-4 sm:p-5 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all before:absolute before:inset-0 before:bg-[radial-gradient(150px_110px_at_95%_0%,rgba(168,85,247,0.18),transparent)] before:pointer-events-none">
+            <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center">
+              <FileText size={18} />
             </div>
-            <div className="text-lg font-extrabold text-purple-600 dark:text-purple-400 mt-1.5">
+            <div className="text-2xl sm:text-[26px] font-extrabold text-purple-600 dark:text-purple-400 mt-3 leading-tight tracking-tight">
               {(counts?.quotations ?? 0).toLocaleString()}
             </div>
-            <div className="text-[10px] text-neutral-500 dark:text-neutral-400">Issued Quotes</div>
+            <div className="text-xs font-bold text-neutral-800 dark:text-neutral-200 mt-1">Quotes</div>
+            <div className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">Issued Quotes</div>
           </div>
 
-          <div className="p-3.5 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Orders</span>
-              <div className="w-7 h-7 rounded-lg bg-orange-500/10 text-orange-500 flex items-center justify-center">
-                <ShoppingCart size={14} />
-              </div>
+          {/* Orders */}
+          <div className="relative overflow-hidden p-4 sm:p-5 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all before:absolute before:inset-0 before:bg-[radial-gradient(150px_110px_at_95%_0%,rgba(249,115,22,0.18),transparent)] before:pointer-events-none">
+            <div className="w-10 h-10 rounded-xl bg-orange-500/10 text-orange-500 flex items-center justify-center">
+              <ShoppingCart size={18} />
             </div>
-            <div className="text-lg font-extrabold text-orange-600 dark:text-orange-400 mt-1.5">
+            <div className="text-2xl sm:text-[26px] font-extrabold text-orange-600 dark:text-orange-400 mt-3 leading-tight tracking-tight">
               {(counts?.orders ?? 0).toLocaleString()}
             </div>
-            <div className="text-[10px] text-neutral-500 dark:text-neutral-400">Confirmed</div>
+            <div className="text-xs font-bold text-neutral-800 dark:text-neutral-200 mt-1">Orders</div>
+            <div className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">Confirmed</div>
           </div>
 
-          <div className="p-3.5 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Invoices</span>
-              <div className="w-7 h-7 rounded-lg bg-teal-500/10 text-teal-500 flex items-center justify-center">
-                <Receipt size={14} />
-              </div>
+          {/* Invoices */}
+          <div className="relative overflow-hidden p-4 sm:p-5 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all before:absolute before:inset-0 before:bg-[radial-gradient(150px_110px_at_95%_0%,rgba(20,184,166,0.18),transparent)] before:pointer-events-none">
+            <div className="w-10 h-10 rounded-xl bg-teal-500/10 text-teal-500 flex items-center justify-center">
+              <Receipt size={18} />
             </div>
-            <div className="text-lg font-extrabold text-teal-600 dark:text-teal-400 mt-1.5">
+            <div className="text-2xl sm:text-[26px] font-extrabold text-teal-600 dark:text-teal-400 mt-3 leading-tight tracking-tight">
               {(counts?.invoices ?? 0).toLocaleString()}
             </div>
-            <div className="text-[10px] text-neutral-500 dark:text-neutral-400">Generated</div>
+            <div className="text-xs font-bold text-neutral-800 dark:text-neutral-200 mt-1">Invoices</div>
+            <div className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">Generated</div>
           </div>
 
-          <div className="p-3.5 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Revenue</span>
-              <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
-                <TrendingUp size={14} />
-              </div>
+          {/* Revenue */}
+          <div className="relative overflow-hidden p-4 sm:p-5 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all before:absolute before:inset-0 before:bg-[radial-gradient(150px_110px_at_95%_0%,rgba(16,185,129,0.18),transparent)] before:pointer-events-none">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+              <TrendingUp size={18} />
             </div>
-            <div className="text-lg font-extrabold text-emerald-600 dark:text-emerald-400 mt-1.5">
+            <div className="text-2xl sm:text-[26px] font-extrabold text-emerald-600 dark:text-emerald-400 mt-3 leading-tight tracking-tight">
               {formatMoney(revenue)}
             </div>
-            <div className="text-[10px] text-neutral-500 dark:text-neutral-400">Total Billed</div>
+            <div className="text-xs font-bold text-neutral-800 dark:text-neutral-200 mt-1">Revenue</div>
+            <div className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">Total Billed</div>
           </div>
 
-          <div className="p-3.5 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Outstanding</span>
-              <div className="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center">
-                <Wallet size={14} />
-              </div>
+          {/* Outstanding */}
+          <div className="relative overflow-hidden p-4 sm:p-5 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all before:absolute before:inset-0 before:bg-[radial-gradient(150px_110px_at_95%_0%,rgba(249,115,22,0.18),transparent)] before:pointer-events-none">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
+              <Wallet size={18} />
             </div>
-            <div className="text-lg font-extrabold text-amber-600 dark:text-amber-400 mt-1.5">
+            <div className="text-2xl sm:text-[26px] font-extrabold text-amber-600 dark:text-amber-400 mt-3 leading-tight tracking-tight">
               {formatMoney(finance?.outstandingAmount)}
             </div>
-            <div className="text-[10px] text-neutral-500 dark:text-neutral-400">Pending Credit</div>
+            <div className="text-xs font-bold text-neutral-800 dark:text-neutral-200 mt-1">Outstanding</div>
+            <div className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">Pending Credit</div>
           </div>
         </div>
       )}
