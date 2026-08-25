@@ -91,6 +91,29 @@ public class AdminController(IAdminService adminService, IOrderAdminService orde
         return Ok(new { message = user.IsActive ? "User activated." : "User deactivated." });
     }
 
+    [HttpPost("users/clean-test-users")]
+    public async Task<IActionResult> CleanTestUsers()
+    {
+        var testUsers = await userManager.Users
+            .Where(u => u.Email.StartsWith("sessiontest_") || u.Email.StartsWith("rotatetest_") || u.Email.Contains(".test.local"))
+            .ToListAsync();
+
+        int deletedCount = 0;
+        foreach (var u in testUsers)
+        {
+            var sessions = await db.UserSessions.Where(s => s.UserId == u.Id).ToListAsync();
+            if (sessions.Count > 0) db.UserSessions.RemoveRange(sessions);
+            var tokens = await db.RefreshTokens.Where(t => t.UserId == u.Id).ToListAsync();
+            if (tokens.Count > 0) db.RefreshTokens.RemoveRange(tokens);
+            var userCompanies = await db.UserCompanies.Where(uc => uc.UserId == u.Id).ToListAsync();
+            if (userCompanies.Count > 0) db.UserCompanies.RemoveRange(userCompanies);
+            await db.SaveChangesAsync();
+            await userManager.DeleteAsync(u);
+            deletedCount++;
+        }
+        return Ok(new { message = $"Cleaned up {deletedCount} test accounts.", deletedCount });
+    }
+
     [HttpDelete("users/{id:guid}")]
     public async Task<IActionResult> DeleteUser(Guid id)
     {

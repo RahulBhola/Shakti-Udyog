@@ -93,6 +93,7 @@ export const adminApi = {
 
   // ---- Users & Engineers ---------------------------------------------------
   users: () => apiGet<{ id: string; fullName: string | null; email: string; role: string }[]>(`${base}/users`),
+  cleanTestUsers: () => apiPost<{ message: string; deletedCount: number }>(`${base}/users/clean-test-users`, {}),
   createEngineer: (payload: { fullName: string; password?: string; email?: string }) =>
     apiPost<{ userId: string; email: string; fullName: string }>(`${base}/engineers`, payload),
 
