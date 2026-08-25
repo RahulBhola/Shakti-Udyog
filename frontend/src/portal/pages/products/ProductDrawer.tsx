@@ -72,10 +72,6 @@ export default function ProductDrawer({ open, onClose, onSave, categories, initi
   );
 
   const handleNext = () => {
-    if (step === 5 && !hasProductImage) {
-      setSaveError("Please attach a primary product image before proceeding to review.");
-      return;
-    }
     setSaveError(null);
     setStep(Math.min(STEPS.length - 1, step + 1));
   };
@@ -92,7 +88,7 @@ export default function ProductDrawer({ open, onClose, onSave, categories, initi
 
     // For publishing as Active, require product image
     if (finalStatus === "Active" && !hasProductImage) {
-      setSaveError("Please attach a primary product image before publishing as Active.");
+      setSaveError("Cannot publish as Active: A primary product image is required. Please upload an image in Attachments (Step 6) or save as Draft.");
       setStep(5);
       return;
     }
@@ -170,7 +166,7 @@ export default function ProductDrawer({ open, onClose, onSave, categories, initi
           onRemove={handleRemoveFile}
         />
       );
-      case 6: return <ReviewStep data={data} onChange={handleChange} />;
+      case 6: return <ReviewStep data={data} onChange={handleChange} categories={categories} />;
       default: return null;
     }
   };
@@ -178,25 +174,32 @@ export default function ProductDrawer({ open, onClose, onSave, categories, initi
   return (
     <>
       {/* Overlay */}
-      <div className="fixed inset-0 bg-black/50 z-40" onClick={onClose} />
+      <div className="fixed inset-0 bg-black/50 z-40 transition-opacity" onClick={onClose} />
 
       {/* Drawer */}
-      <div className="fixed top-0 right-0 h-full w-[700px] max-w-[100vw] bg-[var(--bg-app)] border-l border-[var(--border-default)] z-50 flex flex-col shadow-2xl animate-in slide-in-from-right">
+      <div className="fixed inset-y-0 right-0 z-50 w-full max-w-2xl bg-[var(--bg-card)] border-l border-[var(--border-default)] shadow-2xl flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-default)] bg-[var(--bg-card)] shrink-0">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-default)] shrink-0">
           <div>
-            <h2 className="text-base font-semibold text-[var(--text-primary)]">{isEditing ? "Edit Product" : "Add Product"}</h2>
-            <p className="text-[12px] text-[var(--text-muted)]">Step {step + 1} of {STEPS.length} — {STEPS[step].label}</p>
+            <h2 className="text-lg font-bold text-[var(--text-primary)]">
+              {isEditing ? "Edit Product" : "New Product"}
+            </h2>
+            <p className="text-[12px] text-[var(--text-muted)]">
+              Step {step + 1} of {STEPS.length} — {STEPS[step].label}
+            </p>
           </div>
-          <button type="button" onClick={onClose}
-            className="flex items-center justify-center w-8 h-8 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] cursor-pointer">
-            <X size={16} />
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-colors cursor-pointer"
+          >
+            <X size={18} />
           </button>
         </div>
 
-        {/* Body */}
-        <div className="flex flex-1 min-h-0">
-          {/* Stepper sidebar */}
+        {/* Body with step sidebar */}
+        <div className="flex-1 flex overflow-hidden">
+          {/* Step list sidebar */}
           <div className="w-48 border-r border-[var(--border-default)] p-4 shrink-0 hidden md:block">
             <div className="space-y-0">
               {STEPS.map((s, i) => (
@@ -204,10 +207,6 @@ export default function ProductDrawer({ open, onClose, onSave, categories, initi
                   key={s.key}
                   type="button"
                   onClick={() => {
-                    if (step === 5 && i > 5 && !hasProductImage) {
-                      setSaveError("Please attach a primary product image before proceeding to review.");
-                      return;
-                    }
                     setSaveError(null);
                     setStep(i);
                   }}

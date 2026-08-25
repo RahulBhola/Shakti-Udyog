@@ -451,6 +451,13 @@ export default function AdminProductPage() {
   const handleToggleStatus = async (product: ProductMasterListItem) => {
     try {
       const newStatus = product.status === "Active" ? "Inactive" : "Active";
+      if (newStatus === "Active") {
+        const hasImage = Boolean(product.imageUrl || product.lightImageUrl || product.firstAttachmentId);
+        if (!hasImage) {
+          alert("Cannot activate product: A primary product image is required before publishing to the public catalogue. Please edit the product and upload an image in Attachments.");
+          return;
+        }
+      }
       await adminApi.productMaster.update(product.id, { status: newStatus });
       load();
       loadStats();

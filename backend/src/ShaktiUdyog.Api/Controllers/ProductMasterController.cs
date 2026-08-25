@@ -78,8 +78,15 @@ public class ProductMasterController(IProductMasterService service, AppDbContext
     [Authorize(Policy = AuthPolicies.AdminOnly)]
     public async Task<IActionResult> UpdateProduct(Guid id, [FromBody] UpdateProductMasterRequest request)
     {
-        var result = await service.UpdateProductAsync(id, request, UserId, ClientIp);
-        return result is null ? NotFound() : Ok(result);
+        try
+        {
+            var result = await service.UpdateProductAsync(id, request, UserId, ClientIp);
+            return result is null ? NotFound() : Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     /// <summary>Archive (soft-delete) a product.</summary>

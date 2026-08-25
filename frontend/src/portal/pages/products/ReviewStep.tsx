@@ -1,6 +1,7 @@
 interface ReviewStepProps {
   data: Record<string, any>;
   onChange?: (field: string, value: any) => void;
+  categories?: { id: string; name: string }[];
 }
 
 function Row({ label, value }: { label: string; value: any }) {
@@ -24,7 +25,10 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-export default function ReviewStep({ data, onChange }: ReviewStepProps) {
+export default function ReviewStep({ data, onChange, categories = [] }: ReviewStepProps) {
+  const categoryName = categories.find((c) => c.id === data.categoryId)?.name || data.categoryName || data.categoryId || "—";
+  const hasImage = Boolean(data._productImageFile || data.imageUrl || data.lightImageUrl);
+
   return (
     <div className="space-y-5">
       <h3 className="text-sm font-semibold text-[var(--text-primary)]">Review Product Details</h3>
@@ -40,6 +44,11 @@ export default function ReviewStep({ data, onChange }: ReviewStepProps) {
                 ? "Draft: Hidden from customer catalog while specs/drawings are being prepared."
                 : "Active: Published live in the public catalog and available for customer enquiries."}
             </div>
+            {!hasImage && data.status === "Active" && (
+              <div className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold mt-1">
+                ⚠️ Primary image required before publishing as Active.
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -71,7 +80,7 @@ export default function ReviewStep({ data, onChange }: ReviewStepProps) {
       <Section title="Basic Information">
         <Row label="Product Name" value={data.productName} />
         <Row label="Product Code" value={data.productCode} />
-        <Row label="Category" value={data.categoryId} />
+        <Row label="Category" value={categoryName} />
         <Row label="Casting Type" value={data.castingType} />
         <Row label="Application" value={data.application} />
         <Row label="Unit" value={data.unit} />

@@ -254,8 +254,23 @@ public class ProductMasterService(
         if (request.SellingPrice.HasValue) p.SellingPrice = request.SellingPrice;
         if (request.GstPercent.HasValue) p.GstPercent = request.GstPercent;
         if (request.HsnCode is not null) p.HsnCode = request.HsnCode;
-        if (request.Currency is not null) p.Currency = request.Currency;
-        if (request.Status is not null) p.Status = request.Status;
+        if (request.Status is not null)
+        {
+            if (string.Equals(request.Status, "Active", StringComparison.OrdinalIgnoreCase))
+            {
+                var effectiveImageUrl = request.ImageUrl ?? p.ImageUrl;
+                var effectiveLightImageUrl = request.LightImageUrl ?? p.LightImageUrl;
+                var hasImageAttachment = p.Attachments.Any(a => a.ContentType.StartsWith("image/"));
+
+                if (string.IsNullOrWhiteSpace(effectiveImageUrl) &&
+                    string.IsNullOrWhiteSpace(effectiveLightImageUrl) &&
+                    !hasImageAttachment)
+                {
+                    throw new InvalidOperationException("Cannot activate product: A primary product image is required before publishing to the public catalogue. Please upload an image in Attachments.");
+                }
+            }
+            p.Status = request.Status;
+        }
 
         p.UpdatedAtUtc = DateTimeOffset.UtcNow;
         p.UpdatedByUserId = userId;
