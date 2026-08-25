@@ -12,7 +12,7 @@ import {
   Package, Plus, Download, Search, RefreshCw, Eye, MoreVertical,
   ChevronLeft, ChevronRight, X, Copy, Archive, Trash2, FileEdit,
   Boxes, CheckCircle2, Clock, Tag, TrendingDown, LayoutGrid, Table as TableIcon,
-  Scale, FolderTree, Power, AlertTriangle, RotateCcw, Paperclip,
+  Scale, FolderTree, Power, AlertTriangle, RotateCcw, Paperclip, EyeOff,
 } from "lucide-react";
 import "./erpListView.css";
 
@@ -703,6 +703,64 @@ export default function AdminProductPage() {
             {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </div>
+
+        {categoryFilter && (
+          <div className="flex items-center gap-1.5 self-end pb-0.5">
+            <button
+              className="inv-btn"
+              title="Activate all products in this selected category"
+              onClick={async () => {
+                try {
+                  const selCat = categories.find((c) => c.id === categoryFilter);
+                  await adminApi.setCategoryProductsStatus(categoryFilter, "Active");
+                  load();
+                  loadStats();
+                  setNotice({
+                    title: "Category Products Activated",
+                    message: `All products under "${selCat?.name || "Selected Category"}" have been activated and published.`,
+                    type: "info",
+                  });
+                } catch (e) {
+                  setNotice({
+                    title: "Action Failed",
+                    message: e instanceof Error ? e.message : "Failed to activate products.",
+                    type: "error",
+                  });
+                }
+              }}
+            >
+              <Power size={13} className="text-emerald-500" />
+              <span>Activate Category</span>
+            </button>
+
+            <button
+              className="inv-btn"
+              title="Deactivate all products in this selected category"
+              onClick={async () => {
+                try {
+                  const selCat = categories.find((c) => c.id === categoryFilter);
+                  await adminApi.setCategoryProductsStatus(categoryFilter, "Inactive");
+                  load();
+                  loadStats();
+                  setNotice({
+                    title: "Category Products Deactivated",
+                    message: `All products under "${selCat?.name || "Selected Category"}" have been deactivated (hidden).`,
+                    type: "info",
+                  });
+                } catch (e) {
+                  setNotice({
+                    title: "Action Failed",
+                    message: e instanceof Error ? e.message : "Failed to deactivate products.",
+                    type: "error",
+                  });
+                }
+              }}
+            >
+              <EyeOff size={13} className="text-amber-500" />
+              <span>Deactivate Category</span>
+            </button>
+          </div>
+        )}
 
         <button className="inv-btn inv-btn--icon" title="Refresh" aria-label="Refresh" onClick={() => { load(); loadStats(); }}>
           <RefreshCw size={16} />

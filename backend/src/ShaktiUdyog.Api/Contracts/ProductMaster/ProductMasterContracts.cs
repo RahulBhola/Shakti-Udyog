@@ -191,3 +191,5 @@ public record ProductMasterQueryParams(
     Guid? CategoryId = null,
     string? Status = null,
     string? CastingType = null);
+
+public record SetCategoryProductsStatusRequest(string Status);

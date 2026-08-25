@@ -27,7 +27,7 @@ public class AdminContentController(IAdminContentService service) : ControllerBa
     // ---- Categories --------------------------------------------------------
     [HttpGet("categories")] public async Task<IActionResult> GetCategories() => Ok(await service.GetAllCategoriesAsync());
     [HttpPost("categories")] public async Task<IActionResult> CreateCategory(CreateCategoryRequest request) { var c = await service.CreateCategoryAsync(request.Name, request.Slug, request.Description, request.ParentId); return CreatedAtAction(nameof(GetCategories), null, c); }
-    [HttpPut("categories/{id:guid}")] public async Task<IActionResult> UpdateCategory(Guid id, UpdateCategoryRequest request) => Ok(await service.UpdateCategoryAsync(id, request.Name, request.Description, request.DisplayOrder, request.IsVisible) ? new { message = "Category updated." } : NotFound());
+    [HttpPut("categories/{id:guid}")] public async Task<IActionResult> UpdateCategory(Guid id, UpdateCategoryRequest request) => Ok(await service.UpdateCategoryAsync(id, request.Name, request.Slug, request.Description, request.ParentId, request.DisplayOrder, request.IsVisible) ? new { message = "Category updated." } : NotFound());
     [HttpDelete("categories/{id:guid}")] public async Task<IActionResult> DeleteCategory(Guid id) => Ok(await service.DeleteCategoryAsync(id) ? new { message = "Category deleted." } : NotFound());
 
     // ---- Industries --------------------------------------------------------
@@ -51,7 +51,7 @@ public class AdminContentController(IAdminContentService service) : ControllerBa
 }
 
 public record CreateCategoryRequest(string Name, string? Slug, string? Description, Guid? ParentId);
-public record UpdateCategoryRequest(string Name, string? Description, int DisplayOrder, bool IsVisible);
+public record UpdateCategoryRequest(string Name, string? Slug, string? Description, Guid? ParentId, int DisplayOrder, bool IsVisible);
 public record CreateIndustryRequest(string Name, string? Description, string? ExampleComponents);
 public record UpdateIndustryRequest(string Name, string? Description, bool IsActive);
 public record CreateResourceRequest(string Title, string Slug, string Summary, string? Body, string? Category);

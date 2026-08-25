@@ -20,6 +20,7 @@ public interface IProductMasterService
     Task<bool> ArchiveProductAsync(Guid id, Guid userId, string? ip);
     Task<bool> RestoreProductAsync(Guid id, Guid userId, string? ip);
     Task<bool> DeleteProductAsync(Guid id, Guid userId, string? ip);
+    Task<int> SetCategoryProductsStatusAsync(Guid categoryId, string targetStatus, Guid userId, string? ip);
     Task<ProductMasterDetailDto> DuplicateProductAsync(Guid id, Guid userId, string? ip);
     Task<ProductMasterAttachmentDto> UploadAttachmentAsync(Guid id, IFormFile file, string? description, Guid userId, string? ip);
     Task<Stream?> DownloadAttachmentAsync(Guid productId, Guid attachmentId);
@@ -343,6 +344,58 @@ public class ProductMasterService(
         await db.SaveChangesAsync();
         await audit.WriteAsync("productmaster.deleted", userId, "ProductMaster", id.ToString(), ip);
         return true;
+    }
+
+    public async Task<int> SetCategoryProductsStatusAsync(Guid categoryId, string targetStatus, Guid userId, string? ip)
+    {
+        var category = await db.Categories.FindAsync(categoryId);
+        if (category is null) return 0;
+
+        var products = await db.ProductMasters
+            .IgnoreQueryFilters()
+            .Include(p => p.Attachments)
+            .Where(p => p.CategoryId == categoryId || (p.CategoryId == null && p.Category != null && p.Category.Name == category.Name))
+            .ToListAsync();
+
+        if (products.Count == 0) return 0;
+
+        int updatedCount = 0;
+        foreach (var p in products)
+        {
+            if (string.Equals(targetStatus, "Active", StringComparison.OrdinalIgnoreCase))
+            {
+                var hasImage = !string.IsNullOrWhiteSpace(p.ImageUrl) || !string.IsNullOrWhiteSpace(p.LightImageUrl) || p.Attachments.Any(a => a.ContentType.StartsWith("image/"));
+                if (!hasImage && string.IsNullOrWhiteSpace(p.ImageUrl))
+                {
+                    p.ImageUrl = "/images/Industrial Iron Casting.png";
+                }
+                p.Status = "Active";
+                p.IsArchived = false;
+            }
+            else if (string.Equals(targetStatus, "Inactive", StringComparison.OrdinalIgnoreCase))
+            {
+                p.Status = "Inactive";
+                p.IsArchived = false;
+            }
+            else if (string.Equals(targetStatus, "Draft", StringComparison.OrdinalIgnoreCase))
+            {
+                p.Status = "Draft";
+                p.IsArchived = false;
+            }
+            else if (string.Equals(targetStatus, "Archived", StringComparison.OrdinalIgnoreCase))
+            {
+                p.Status = "Archived";
+                p.IsArchived = true;
+            }
+
+            p.UpdatedAtUtc = DateTimeOffset.UtcNow;
+            p.UpdatedByUserId = userId;
+            updatedCount++;
+        }
+
+        await db.SaveChangesAsync();
+        await audit.WriteAsync("productmaster.bulk_category_status_updated", userId, "Category", categoryId.ToString(), ip);
+        return updatedCount;
     }
 
     public async Task<ProductMasterDetailDto> DuplicateProductAsync(Guid id, Guid userId, string? ip)

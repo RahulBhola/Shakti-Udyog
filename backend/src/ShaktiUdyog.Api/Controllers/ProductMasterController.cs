@@ -122,6 +122,16 @@ public class ProductMasterController(IProductMasterService service, AppDbContext
         return CreatedAtAction(nameof(GetProduct), new { id = result.Id }, result);
     }
 
+    /// <summary>Bulk activate or deactivate all products within a specific category.</summary>
+    [HttpPost("category/{categoryId:guid}/status")]
+    [HttpPost("categories/{categoryId:guid}/status")]
+    [Authorize(Policy = AuthPolicies.AdminOnly)]
+    public async Task<IActionResult> SetCategoryProductsStatus(Guid categoryId, [FromBody] SetCategoryProductsStatusRequest request)
+    {
+        var count = await service.SetCategoryProductsStatusAsync(categoryId, request.Status, UserId, ClientIp);
+        return Ok(new { updatedCount = count, message = $"Successfully updated {count} product(s) in category to '{request.Status}'." });
+    }
+
     /// <summary>Upload an attachment (drawing, image, PDF, etc.).</summary>
     [HttpPost("{id:guid}/attachments")]
     [Authorize(Policy = AuthPolicies.AdminOnly)]

@@ -123,7 +123,7 @@ public class PublicContentService(
         {
             var activeProducts = await db.ProductMasters
                 .IgnoreQueryFilters()
-                .Where(p => p.Status == "Active" && !p.IsArchived)
+                .Where(p => p.Status == "Active" && !p.IsArchived && (p.Category == null || p.Category.IsVisible))
                 .Include(p => p.Category)
                 .Include(p => p.Attachments)
                 .OrderBy(p => p.Category != null ? p.Category.DisplayOrder : 99)
@@ -183,7 +183,7 @@ public class PublicContentService(
                 .IgnoreQueryFilters()
                 .Include(pm => pm.Category)
                 .Include(pm => pm.Attachments)
-                .FirstOrDefaultAsync(pm => pm.Id == id && pm.Status == "Active" && !pm.IsArchived);
+                .FirstOrDefaultAsync(pm => pm.Id == id && pm.Status == "Active" && !pm.IsArchived && (pm.Category == null || pm.Category.IsVisible));
 
             if (p is not null)
             {
@@ -214,6 +214,7 @@ public class PublicContentService(
                 .Include(pm => pm.Attachments)
                 .FirstOrDefaultAsync(pm =>
                     pm.Status == "Active" && !pm.IsArchived &&
+                    (pm.Category == null || pm.Category.IsVisible) &&
                     (pm.ProductCode.ToLower() == clean ||
                      pm.ProductName.ToLower().Replace(" ", "-") == clean ||
                      pm.ProductName.ToLower() == clean.Replace("-", " ")));
