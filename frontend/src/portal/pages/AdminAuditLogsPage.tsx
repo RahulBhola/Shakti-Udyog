@@ -645,12 +645,13 @@ export default function AdminAuditLogsPage() {
       </div>
 
       {/* ================================================================= */}
-      {/* 3. TOOLBAR & SEGMENTED MODULE TABS                                 */}
+      {/* 3. TOOLBAR & SEGMENTED MODULE TABS (Wrapped, No Scrollbars)        */}
       {/* ================================================================= */}
-      <div className="rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] p-4 shadow-xs space-y-3.5">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+      <div className="rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] p-4 shadow-xs space-y-3">
+        {/* Top Controls Row */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           {/* Real-time Search Input */}
-          <div className="relative w-full lg:w-96">
+          <div className="relative flex-1 max-w-lg">
             <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" />
             <input
               type="text"
@@ -670,27 +671,6 @@ export default function AdminAuditLogsPage() {
             )}
           </div>
 
-          {/* Quick Segmented Module Tabs */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0">
-            {MODULES.map((m) => {
-              const isCurrent = moduleFilter === m;
-              return (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => { setModuleFilter(m); setPage(1); }}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
-                    isCurrent
-                      ? "bg-[var(--color-primary)] text-white shadow-sm"
-                      : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-white/5"
-                  }`}
-                >
-                  <span>{m === "All" ? "All Logs" : m}</span>
-                </button>
-              );
-            })}
-          </div>
-
           {/* Toggle Advanced Filters */}
           <button
             type="button"
@@ -705,6 +685,27 @@ export default function AdminAuditLogsPage() {
             <span>Filter Options</span>
             {showAdvancedFilters ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
           </button>
+        </div>
+
+        {/* Segmented Module Filter Chips - Flex Wrapped (100% visible on screen, no scrollbar) */}
+        <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-neutral-100 dark:border-white/5">
+          {MODULES.map((m) => {
+            const isCurrent = moduleFilter === m;
+            return (
+              <button
+                key={m}
+                type="button"
+                onClick={() => { setModuleFilter(m); setPage(1); }}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                  isCurrent
+                    ? "bg-[var(--color-primary)] text-white shadow-sm"
+                    : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-white/5 bg-neutral-50 dark:bg-white/[0.02] border border-neutral-200/60 dark:border-white/5"
+                }`}
+              >
+                <span>{m === "All" ? "All Logs" : m}</span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Collapsible Advanced Filters */}
@@ -773,7 +774,7 @@ export default function AdminAuditLogsPage() {
       </div>
 
       {/* ================================================================= */}
-      {/* 4. MODERN HIGH-END AUDIT LOG TABLE                                */}
+      {/* 4. MODERN HIGH-END AUDIT LOG TABLE (Fluid Responsive)             */}
       {/* ================================================================= */}
       <div className="rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs overflow-hidden">
         {loading && items.length === 0 ? (
@@ -794,7 +795,7 @@ export default function AdminAuditLogsPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse" style={{ minWidth: 1100 }}>
+            <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-neutral-50/80 dark:bg-white/[0.02] border-b border-neutral-200/80 dark:border-white/10">
                   <th className="py-3.5 px-5 text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 w-36">
