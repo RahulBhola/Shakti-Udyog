@@ -134,6 +134,7 @@ export default function AdminProductDetailPage() {
   const [uploading, setUploading] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [notice, setNotice] = useState<{
     title: string;
     message: string;
@@ -295,8 +296,6 @@ export default function AdminProductDetailPage() {
       });
     }
   };
-
-  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const handleArchive = async () => {
     if (!product) return;
