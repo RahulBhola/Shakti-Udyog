@@ -282,6 +282,7 @@ export interface ProductMasterListItem {
   imageUrl: string | null;
   lightImageUrl: string | null;
   status: string;
+  isArchived?: boolean;
   attachmentCount: number;
   usedInCount: number;
   firstAttachmentId: string | null;

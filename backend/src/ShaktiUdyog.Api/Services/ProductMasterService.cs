@@ -83,6 +83,7 @@ public class ProductMasterService(
                 p.TensileStrength,
                 p.Application,
                 p.Status,
+                p.IsArchived,
                 p.Attachments.Count,
                 0,
                 firstAtt?.Id,
@@ -272,6 +273,7 @@ public class ProductMasterService(
                 }
             }
             p.Status = request.Status;
+            p.IsArchived = string.Equals(request.Status, "Archived", StringComparison.OrdinalIgnoreCase);
         }
 
         p.UpdatedAtUtc = DateTimeOffset.UtcNow;

@@ -342,6 +342,7 @@ export default function AdminProductDetailPage() {
 
   const p = product;
   const usage = p.usage;
+  const isArchived = Boolean(p.isArchived || p.status?.toLowerCase() === "archived");
 
   const sourceImg = p.imageUrl || p.lightImageUrl;
   const productImage = sourceImg ? getThemedImage(sourceImg, false) : blobUrl;
@@ -362,7 +363,7 @@ export default function AdminProductDetailPage() {
             <div>
               <div className="flex items-center gap-3">
                 <h1 className="text-xl font-extrabold text-neutral-900 dark:text-white tracking-tight m-0">{p.productName}</h1>
-                <StatusBadge status={p.status} />
+                <StatusBadge status={isArchived ? "Archived" : p.status} />
               </div>
               <p className="text-[12px] font-mono text-neutral-500 dark:text-neutral-400 mt-0.5 m-0">
                 <Hash size={12} className="inline mr-1" />
@@ -372,7 +373,7 @@ export default function AdminProductDetailPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            {p.status !== "Archived" && (
+            {!isArchived && (
               <button
                 type="button"
                 onClick={handleToggleStatus}
@@ -416,14 +417,14 @@ export default function AdminProductDetailPage() {
               Duplicate
             </button>
 
-            {p.status === "Archived" ? (
+            {isArchived ? (
               <button
                 type="button"
                 onClick={handleRestore}
                 className="inline-flex items-center gap-1.5 px-3.5 h-9 rounded-xl border border-emerald-200 dark:border-emerald-500/20 bg-emerald-50 dark:bg-emerald-500/10 text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition-all cursor-pointer"
               >
                 <RotateCcw size={13} />
-                Restore Product
+                Unarchive / Restore Product
               </button>
             ) : (
               <button

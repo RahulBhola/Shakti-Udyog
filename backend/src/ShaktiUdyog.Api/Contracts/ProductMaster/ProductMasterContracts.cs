@@ -16,6 +16,7 @@ public record ProductMasterListItemDto(
     string? TensileStrength,
     string? Application,
     string Status,
+    bool IsArchived,
     int AttachmentCount,
     int UsedInCount,
     Guid? FirstAttachmentId,

@@ -12,7 +12,7 @@ import {
   Package, Plus, Download, Search, RefreshCw, Eye, MoreVertical,
   ChevronLeft, ChevronRight, X, Copy, Archive, Trash2, FileEdit,
   Boxes, CheckCircle2, Clock, Tag, TrendingDown, LayoutGrid, Table as TableIcon,
-  Scale, FolderTree, Power, AlertTriangle, RotateCcw,
+  Scale, FolderTree, Power, AlertTriangle, RotateCcw, Paperclip,
 } from "lucide-react";
 import "./erpListView.css";
 
@@ -147,6 +147,7 @@ function AdminProductCard({
 
   const displayImg = rawImage || blobUrl;
   const isMenuOpen = openMenuId === product.id;
+  const isArchived = Boolean(product.isArchived || product.status?.toLowerCase() === "archived");
 
   return (
     <div
@@ -173,7 +174,7 @@ function AdminProductCard({
                 <span>{product.weight} kg</span>
               </div>
             )}
-            <StatusBadge status={product.status} />
+            <StatusBadge status={isArchived ? "Archived" : product.status} />
           </div>
         </div>
 
@@ -200,43 +201,55 @@ function AdminProductCard({
           </span>
         </div>
 
-        {/* Title & Category */}
-        <div className="mt-3 space-y-1">
-          <div className="text-[10.5px] font-mono font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+        {/* Product Details Header */}
+        <div className="mt-3">
+          <p className="text-[11px] font-mono font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-0.5 truncate">
             {product.categoryName || "Uncategorized"}
-          </div>
-          <h3 className="text-sm font-bold text-neutral-900 dark:text-white group-hover:text-[var(--color-primary)] transition-colors line-clamp-1">
+          </p>
+          <h3 className="text-[17px] font-bold text-neutral-900 dark:text-white leading-snug tracking-tight line-clamp-1 group-hover:text-[var(--color-primary)] transition-colors">
             {product.productName}
           </h3>
         </div>
 
-        {/* Specification Attribute Pills Grid */}
-        <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-neutral-100 dark:border-white/[0.06] text-[11px] font-mono">
-          <div className="p-2 rounded-lg bg-neutral-50 dark:bg-white/[0.03] border border-neutral-200/80 dark:border-white/[0.04]">
-            <span className="text-neutral-500 dark:text-neutral-400 block text-[9px] uppercase tracking-wider font-medium">Casting Type</span>
-            <span className="font-semibold text-neutral-800 dark:text-neutral-200 truncate block">
-              {product.castingType || "Sand Casting"}
+        {/* Technical Specs Key-Values Grid */}
+        <div className="grid grid-cols-2 gap-2 mt-4 p-2.5 rounded-xl border border-neutral-100 dark:border-white/[0.04] bg-neutral-50/50 dark:bg-white/[0.02]">
+          <div>
+            <span className="block text-[10px] font-mono uppercase text-neutral-400 dark:text-neutral-500 tracking-wider">Casting Type</span>
+            <span className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 truncate block">
+              {product.castingType || "—"}
             </span>
           </div>
 
-          <div className="p-2 rounded-lg bg-neutral-50 dark:bg-white/[0.03] border border-neutral-200/80 dark:border-white/[0.04]">
-            <span className="text-neutral-500 dark:text-neutral-400 block text-[9px] uppercase tracking-wider font-medium">Material</span>
-            <span className="font-semibold text-neutral-800 dark:text-neutral-200 truncate block">
-              {product.material || "Grey / SG Iron"}
+          <div>
+            <span className="block text-[10px] font-mono uppercase text-neutral-400 dark:text-neutral-500 tracking-wider">Grade / Spec</span>
+            <span className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 truncate block">
+              {product.materialGrade || product.material || "—"}
             </span>
+          </div>
+
+          <div>
+            <span className="block text-[10px] font-mono uppercase text-neutral-400 dark:text-neutral-500 tracking-wider">Tensile Str.</span>
+            <span className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 truncate block">
+              {product.tensileStrength || "Standard"}
+            </span>
+          </div>
+
+          <div>
+            <span className="block text-[10px] font-mono uppercase text-neutral-400 dark:text-neutral-500 tracking-wider">Drawings</span>
+            <div className="flex items-center gap-1 text-xs font-semibold text-neutral-800 dark:text-neutral-200">
+              <Paperclip size={11} className="opacity-70" />
+              <span>{product.attachmentCount} files</span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Action Footer */}
-      <div
-        className="mt-4 pt-3 border-t border-neutral-100 dark:border-white/[0.06] flex items-center justify-between gap-2"
-        onClick={(e) => e.stopPropagation()}
-      >
+      {/* Card Action Buttons Footer */}
+      <div className="flex items-center gap-2 mt-5 pt-3 border-t border-neutral-100 dark:border-white/[0.05]" onClick={(e) => e.stopPropagation()}>
         <button
           type="button"
           onClick={onView}
-          className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all bg-[var(--color-primary)] text-white hover:brightness-110 shadow-sm cursor-pointer"
+          className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-[var(--color-primary)] text-white text-xs font-bold hover:brightness-110 shadow-sm shadow-orange-500/20 transition-all cursor-pointer"
         >
           <Eye size={14} /> View Details
         </button>
@@ -265,10 +278,10 @@ function AdminProductCard({
 
           {isMenuOpen && (
             <div
-              className="absolute right-0 bottom-full mb-1 w-44 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#161a24] shadow-2xl p-1 z-30 flex flex-col gap-0.5"
+              className="absolute right-0 bottom-full mb-1 w-48 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#161a24] shadow-2xl p-1 z-30 flex flex-col gap-0.5"
               onClick={(e) => e.stopPropagation()}
             >
-              {product.status !== "Archived" && (
+              {!isArchived && (
                 <button
                   type="button"
                   onClick={(e) => {
@@ -297,20 +310,18 @@ function AdminProductCard({
                 <Copy size={13} /> Duplicate
               </button>
 
-              {product.status === "Archived" ? (
-                onRestore && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setOpenMenuId(null);
-                      onRestore();
-                    }}
-                    className="flex items-center gap-2 px-3 py-1.5 text-xs text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded-lg text-left font-medium cursor-pointer"
-                  >
-                    <RotateCcw size={13} /> Restore Product
-                  </button>
-                )
+              {isArchived ? (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setOpenMenuId(null);
+                    onRestore?.();
+                  }}
+                  className="flex items-center gap-2 px-3 py-1.5 text-xs text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded-lg text-left font-medium cursor-pointer"
+                >
+                  <RotateCcw size={13} /> Unarchive / Restore
+                </button>
               ) : (
                 <button
                   type="button"
@@ -333,7 +344,7 @@ function AdminProductCard({
                   setOpenMenuId(null);
                   onDelete();
                 }}
-                className="flex items-center gap-2 px-3 py-1.5 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/20 rounded-lg text-left font-medium cursor-pointer"
+                className="flex items-center gap-2 px-3 py-1.5 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg text-left font-medium cursor-pointer"
               >
                 <Trash2 size={13} /> Delete Permanently
               </button>
@@ -542,6 +553,7 @@ export default function AdminProductPage() {
   ];
 
   const renderTableRow = (p: ProductMasterListItem) => {
+    const isArchived = Boolean(p.isArchived || p.status?.toLowerCase() === "archived");
     return (
       <tr key={p.id} onClick={() => navigate(`/admin/products/${p.id}`)}>
         <td>
@@ -558,10 +570,19 @@ export default function AdminProductPage() {
         <td><div className="inv-date">{p.material ?? "—"}</div></td>
         <td><div className="inv-date">{p.materialGrade ?? "—"}</div></td>
         <td><div className="inv-amount__total">{p.weight != null ? `${p.weight} kg` : "—"}</div></td>
-        <td><StatusBadge status={p.status} /></td>
+        <td><StatusBadge status={isArchived ? "Archived" : p.status} /></td>
         <td>
           <div className="inv-actions" onClick={(e) => e.stopPropagation()}>
-            {p.status !== "Archived" && (
+            {isArchived ? (
+              <button
+                className="inv-icon-btn text-emerald-500 hover:text-emerald-600"
+                title="Unarchive / Restore Product"
+                aria-label="Restore"
+                onClick={() => void handleRestore(p.id)}
+              >
+                <RotateCcw size={15} />
+              </button>
+            ) : (
               <button
                 className="inv-icon-btn"
                 title={p.status === "Active" ? "Deactivate (hide from public catalog)" : "Activate (publish to public catalog)"}
