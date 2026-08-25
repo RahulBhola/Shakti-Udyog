@@ -6,6 +6,7 @@ import { useTheme } from "../auth/ThemeContext";
 import { PortalNotificationBell } from "../components/notifications/PortalNotificationBell";
 import { Sidebar } from "../components/sidebar/Sidebar";
 import type { NavSection } from "../components/sidebar/Sidebar";
+import { ProfileProgressBar, calculateProfileCompleteness } from "./components/ProfileCompletion";
 import { cn } from "../lib/utils";
 import "./portal.css";
 
@@ -126,7 +127,7 @@ export function CustomerLayout() {
 /* ------------------------------------------------------------------ */
 
 function CustomerProfileAvatar({ initials, displayName }: { initials: string; displayName: string }) {
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -175,6 +176,18 @@ function CustomerProfileAvatar({ initials, displayName }: { initials: string; di
                 <div className="text-[11px] text-[var(--text-secondary)] mt-0.5 font-medium">Customer Account</div>
               </div>
             </div>
+            {/* Profile Completion Indicator */}
+            {user && (
+              <div className="mt-2.5 pt-2 border-t border-[var(--border-default)]">
+                <Link to="/customer/profile" onClick={() => setOpen(false)} className="block no-underline hover:no-underline">
+                  <ProfileProgressBar
+                    percentage={calculateProfileCompleteness(user).percentage}
+                    size="sm"
+                    showLabel
+                  />
+                </Link>
+              </div>
+            )}
           </div>
 
           <CustomerDropdownItem icon={User} label="Company & Profile" href="/customer/profile" />

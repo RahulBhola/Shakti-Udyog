@@ -6,6 +6,7 @@ import { useTheme } from "../auth/ThemeContext";
 import { Sidebar } from "../components/sidebar/Sidebar";
 import type { NavSection } from "../components/sidebar/Sidebar";
 import { PortalNotificationBell } from "../components/notifications/PortalNotificationBell";
+import { ProfileProgressBar, calculateProfileCompleteness } from "./components/ProfileCompletion";
 import { cn } from "../lib/utils";
 import "./portal.css";
 
@@ -200,6 +201,18 @@ function ProfileAvatar({ initials, displayName }: { initials: string; displayNam
                 <div className="text-[11px] text-[var(--text-secondary)] mt-0.5">{roleLabel}</div>
               </div>
             </div>
+            {/* Profile Completion Indicator */}
+            {user && (
+              <div className="mt-2.5 pt-2 border-t border-[var(--border-default)]">
+                <Link to="/admin/profile" onClick={() => setOpen(false)} className="block no-underline hover:no-underline">
+                  <ProfileProgressBar
+                    percentage={calculateProfileCompleteness(user).percentage}
+                    size="sm"
+                    showLabel
+                  />
+                </Link>
+              </div>
+            )}
           </div>
 
           <DropdownItem icon={User} label="Profile" href="/admin/profile" />

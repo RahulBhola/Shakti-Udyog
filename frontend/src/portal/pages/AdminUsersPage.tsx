@@ -12,6 +12,7 @@ import {
   Sparkles, Clock, Calendar, Search,
   Power, CheckCircle2,
 } from "lucide-react";
+import { ProfileCompletenessBadge, ProfileProgressBar, calculateProfileCompleteness } from "../components/ProfileCompletion";
 import "./erpListView.css";
 
 /* ------------------------------------------------------------------ */
@@ -485,6 +486,26 @@ function UserDetailsDrawer({
               </div>
             </div>
           </div>
+
+          {/* Profile Completion Status Bar */}
+          {(() => {
+            const result = calculateProfileCompleteness(user);
+            return (
+              <div className="p-4 rounded-2xl border border-neutral-200/80 dark:border-white/10 bg-white dark:bg-[#121520] space-y-2.5 shadow-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-neutral-900 dark:text-white flex items-center gap-1.5">
+                    <Sparkles size={14} className="text-amber-500" /> Profile Completion
+                  </span>
+                  <ProfileCompletenessBadge percentage={result.percentage} />
+                </div>
+                <ProfileProgressBar percentage={result.percentage} size="sm" showLabel={false} />
+                <div className="flex items-center justify-between text-[11px] text-neutral-500 dark:text-neutral-400">
+                  <span>{result.completedItems.length} of {result.items.length} details provided</span>
+                  <span className="font-semibold text-neutral-700 dark:text-neutral-300">{result.statusLabel}</span>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Profile Specifications List */}
           <div className="rounded-2xl border border-neutral-200/80 dark:border-white/10 bg-white dark:bg-[#121520] p-4 space-y-3 shadow-xs">
@@ -1066,6 +1087,9 @@ export default function AdminUsersPage() {
                     Joined Date
                   </th>
                   <th className="py-3.5 px-4 text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                    Profile Status
+                  </th>
+                  <th className="py-3.5 px-4 text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
                     Status
                   </th>
                   <th className="py-3.5 px-4 text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
@@ -1154,6 +1178,11 @@ export default function AdminUsersPage() {
                         <div className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
                           {formatDate(u.createdAtUtc)}
                         </div>
+                      </td>
+
+                      {/* Profile Completeness Status */}
+                      <td className="py-3.5 px-4 align-middle">
+                        <ProfileCompletenessBadge percentage={calculateProfileCompleteness(u).percentage} compact />
                       </td>
 
                       {/* Status Toggle Switch */}

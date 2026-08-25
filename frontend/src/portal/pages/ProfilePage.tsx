@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, type FormEvent, type ReactNode } from "rea
 import { customerApi, type Profile, type CompanyDetail, type ContactPerson, type CompanyAddress, type CompanyDocument, type SecurityInfo } from "../../api/customerApi";
 import { formatDate } from "../shared";
 import { DevicesSessionsCard } from "../components/DevicesSessionsCard";
+import { ProfileCompletionCard } from "../components/ProfileCompletion";
 
 // ── Icons (inline SVG for reliable availability) ──────────────────────────
 
@@ -673,6 +674,18 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* ── Profile Completion Status Bar & Checklist ────────────────────── */}
+      <div style={{ marginBottom: 24 }}>
+        <ProfileCompletionCard
+          profileData={profile}
+          onNavigateTab={(tabKey) => {
+            if (tabKey === "personal") setActiveTab("personal");
+            else if (tabKey === "company") setActiveTab("company");
+            else if (tabKey === "contacts") setActiveTab("contacts");
+          }}
+        />
       </div>
 
       {/* ── Tab Navigation ──────────────────────────────────────────────── */}

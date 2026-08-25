@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { customerApi, type Dashboard } from "../../api/customerApi";
+import { customerApi, type Dashboard, type Profile } from "../../api/customerApi";
 import { Loading } from "../../components/ui";
 import { DashboardCard, DashboardHeader, QuickAction } from "../../components/dashboard";
+import { ProfileCompletionBanner } from "../components/ProfileCompletion";
 import { formatDate } from "../shared";
 import {
   ClipboardList,
@@ -107,15 +108,17 @@ function ViewAllLink({ href }: { href: string }) {
 
 export default function DashboardPage() {
   const [data, setData] = useState<Dashboard | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [error, setError] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   const handleRefresh = useCallback(() => {
     setRefreshing(true);
     setError(false);
-    customerApi
-      .dashboard()
-      .then(setData)
+    Promise.allSettled([
+      customerApi.dashboard().then(setData),
+      customerApi.profile().then(setProfile),
+    ])
       .catch(() => setError(true))
       .finally(() => setRefreshing(false));
   }, []);
@@ -125,6 +128,10 @@ export default function DashboardPage() {
       .dashboard()
       .then(setData)
       .catch(() => setError(true));
+    customerApi
+      .profile()
+      .then(setProfile)
+      .catch(() => {});
   }, []);
 
   if (error) {
@@ -159,6 +166,11 @@ export default function DashboardPage() {
     <div className="flex flex-col gap-6">
       {/* Welcome Header */}
       <DashboardHeader onRefresh={handleRefresh} refreshing={refreshing} />
+
+      {/* Profile Completion Banner */}
+      {profile && (
+        <ProfileCompletionBanner profileData={profile} href="/customer/profile" />
+      )}
 
       {/* KPI Cards: 4 column grid */}
       <div>

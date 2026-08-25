@@ -7,6 +7,7 @@ import {
   Layers, BadgeCheck,
 } from "lucide-react";
 import { DevicesSessionsCard } from "../components/DevicesSessionsCard";
+import { ProfileCompletionCard } from "../components/ProfileCompletion";
 import "./erpListView.css";
 
 interface ProfileData {
@@ -226,6 +227,16 @@ export default function AdminProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* Profile Completion Status Bar */}
+      <ProfileCompletionCard
+        profileData={profile || user}
+        onNavigateTab={(tabKey) => {
+          if (tabKey === "personal") setActiveTab("general");
+          else if (tabKey === "company") setActiveTab("permissions");
+          else if (tabKey === "contacts") setActiveTab("general");
+        }}
+      />
 
       {/* Navigation Tabs */}
       <div style={{ display: "flex", gap: 8, borderBottom: "1px solid var(--border-default)", paddingBottom: 2 }}>
