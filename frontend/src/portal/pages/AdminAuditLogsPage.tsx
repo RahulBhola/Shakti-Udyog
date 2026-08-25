@@ -1,14 +1,17 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode, type CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { apiGet } from "../../api/client";
 import { Loading } from "../../components/ui";
 import {
-  Activity, Zap, Users, Calendar, Clock, Search, RefreshCw, ChevronLeft, ChevronRight,
-  X, MoreVertical, Eye, Download, Filter,
+  Activity, Zap, Users, Calendar, Search, RefreshCw, ChevronLeft, ChevronRight,
+  X, Eye, Download, Filter, FileSearch, Wrench, Building2,
+  CheckCircle2, XCircle, PlusCircle, Edit3, Trash2, ArrowRightCircle, Cpu, Copy, Check,
+  Layers, Package, Receipt, CreditCard, Tag, Settings as SettingsIcon, ChevronDown, ChevronUp, AlertTriangle,
+  type LucideIcon,
 } from "lucide-react";
 import "./erpListView.css";
 
 /* ------------------------------------------------------------------ */
-/*  Types & helpers                                                    */
+/*  Types & Constants                                                 */
 /* ------------------------------------------------------------------ */
 
 interface AuditItem {
@@ -27,21 +30,35 @@ interface AuditItem {
 interface UserInfo {
   name: string;
   role: string;
+  email?: string;
 }
 
-const MODULES = ["Enquiry", "Quote", "Orders", "Production", "Invoice", "Payment", "Products", "Companies", "Users", "Settings"];
-const ACTION_TYPES = ["Created", "Updated", "Approved", "Rejected", "Generated", "Deleted", "Moved", "Received"];
-const PAGE_SIZES = [10, 20, 50];
+const MODULES = ["All", "Enquiry", "Quote", "Orders", "Production", "Invoice", "Payment", "Products", "Companies", "Users", "Settings"] as const;
+const ACTION_TYPES = ["All", "Created", "Updated", "Approved", "Rejected", "Deleted", "Moved", "Generated"];
+const PAGE_SIZES = [10, 20, 50, 100];
 
-// Technical/auth activities that should never be shown as "business activity".
+// Exclude noise/auth internal events
 const isExcluded = (a: string): boolean =>
   a.startsWith("auth.") || a.startsWith("token") || a.startsWith("jwt") || a.includes("refresh")
   || a.startsWith("middleware") || a.startsWith("api.") || a.startsWith("worker")
   || a.startsWith("login") || a.startsWith("password") || a.startsWith("role.") || a.startsWith("permission");
 
 const MODULE_MAP: Record<string, string> = {
-  enquiry: "Enquiry", quotation: "Quote", order: "Orders", invoice: "Invoice", payment: "Payment",
-  product: "Products", company: "Companies", user: "Users", setting: "Settings", category: "Products", production: "Production",
+  enquiry: "Enquiry",
+  contactrequest: "Enquiry",
+  quotation: "Quote",
+  quote: "Quote",
+  order: "Orders",
+  orders: "Orders",
+  invoice: "Invoice",
+  payment: "Payment",
+  product: "Products",
+  productmaster: "Products",
+  company: "Companies",
+  user: "Users",
+  setting: "Settings",
+  category: "Products",
+  production: "Production",
 };
 
 function moduleOf(item: AuditItem): string {
@@ -50,50 +67,81 @@ function moduleOf(item: AuditItem): string {
     return MODULE_MAP[key] ?? item.entityType;
   }
   const prefix = item.action.split(".")[0]?.toLowerCase() ?? "";
-  return MODULE_MAP[prefix] ?? prefix;
+  return (MODULE_MAP[prefix] ?? prefix) || "System";
 }
 
-function actionLabel(item: AuditItem): { label: string; tone: string } {
-  const verb = item.action.split(".").pop() ?? item.action;
-  const v = verb.toLowerCase();
-  if (v === "created" || v === "received" || v === "paid") return { label: `Created ${item.entityType ?? ""}`.trim() || "Created", tone: "green" };
-  if (v === "approved" || v === "accepted" || v === "verified") return { label: `Approved ${item.entityType ?? ""}`.trim(), tone: "blue" };
-  if (v === "generated" || v === "issued") return { label: `Generated ${item.entityType ?? ""}`.trim(), tone: "purple" };
-  if (v === "updated" || v === "modified" || v === "changed" || v === "moved") return { label: `Updated ${item.entityType ?? ""}`.trim(), tone: "orange" };
-  if (v === "rejected" || v === "deleted" || v === "cancelled" || v === "declined") return { label: `Rejected ${item.entityType ?? ""}`.trim(), tone: "red" };
-  return { label: item.action, tone: "gray" };
-}
-
-function moduleTone(module: string): string {
+function moduleIcon(module: string): LucideIcon {
   switch (module) {
-    case "Enquiry": case "Companies": return "blue";
-    case "Quote": case "Products": return "purple";
-    case "Orders": case "Production": return "orange";
-    case "Invoice": return "red";
-    case "Payment": return "green";
-    case "Users": case "Settings": return "teal";
-    default: return "gray";
+    case "Enquiry": return FileSearch;
+    case "Quote": return Layers;
+    case "Orders": return Package;
+    case "Production": return Wrench;
+    case "Invoice": return Receipt;
+    case "Payment": return CreditCard;
+    case "Products": return Tag;
+    case "Companies": return Building2;
+    case "Users": return Users;
+    case "Settings": return SettingsIcon;
+    default: return Activity;
   }
 }
 
-function roleLabel(role: string | undefined): string {
-  switch (role) {
-    case "Admin": return "Administrator";
-    case "Engineer": return "Engineer";
-    case "Customer": return "Customer";
-    default: return "User";
+function moduleColor(module: string): { bg: string; text: string; border: string } {
+  switch (module) {
+    case "Enquiry": return { bg: "bg-blue-500/10 dark:bg-blue-500/20", text: "text-blue-600 dark:text-blue-400", border: "border-blue-500/20" };
+    case "Quote": return { bg: "bg-purple-500/10 dark:bg-purple-500/20", text: "text-purple-600 dark:text-purple-400", border: "border-purple-500/20" };
+    case "Orders": case "Production": return { bg: "bg-orange-500/10 dark:bg-orange-500/20", text: "text-orange-600 dark:text-orange-400", border: "border-orange-500/20" };
+    case "Invoice": return { bg: "bg-red-500/10 dark:bg-red-500/20", text: "text-red-600 dark:text-red-400", border: "border-red-500/20" };
+    case "Payment": return { bg: "bg-emerald-500/10 dark:bg-emerald-500/20", text: "text-emerald-600 dark:text-emerald-400", border: "border-emerald-500/20" };
+    case "Companies": return { bg: "bg-indigo-500/10 dark:bg-indigo-500/20", text: "text-indigo-600 dark:text-indigo-400", border: "border-indigo-500/20" };
+    case "Users": case "Settings": return { bg: "bg-teal-500/10 dark:bg-teal-500/20", text: "text-teal-600 dark:text-teal-400", border: "border-teal-500/20" };
+    default: return { bg: "bg-neutral-500/10 dark:bg-neutral-500/20", text: "text-neutral-600 dark:text-neutral-400", border: "border-neutral-500/20" };
   }
+}
+
+function parseAction(item: AuditItem): { label: string; icon: LucideIcon; bg: string; text: string; border: string } {
+  const raw = item.action.split(".").pop() ?? item.action;
+  const v = raw.toLowerCase();
+
+  if (v.includes("created") || v.includes("received") || v.includes("added")) {
+    return { label: `Created ${item.entityType ?? ""}`.trim() || "Created", icon: PlusCircle, bg: "bg-emerald-500/10", text: "text-emerald-600 dark:text-emerald-400", border: "border-emerald-500/20" };
+  }
+  if (v.includes("approved") || v.includes("accepted") || v.includes("verified")) {
+    return { label: `Approved ${item.entityType ?? ""}`.trim(), icon: CheckCircle2, bg: "bg-blue-500/10", text: "text-blue-600 dark:text-blue-400", border: "border-blue-500/20" };
+  }
+  if (v.includes("rejected") || v.includes("declined") || v.includes("cancelled")) {
+    return { label: `Rejected ${item.entityType ?? ""}`.trim(), icon: XCircle, bg: "bg-red-500/10", text: "text-red-600 dark:text-red-400", border: "border-red-500/20" };
+  }
+  if (v.includes("deleted") || v.includes("removed")) {
+    return { label: `Deleted ${item.entityType ?? ""}`.trim(), icon: Trash2, bg: "bg-red-500/10", text: "text-red-600 dark:text-red-400", border: "border-red-500/20" };
+  }
+  if (v.includes("updated") || v.includes("modified") || v.includes("edited")) {
+    return { label: `Updated ${item.entityType ?? ""}`.trim(), icon: Edit3, bg: "bg-amber-500/10", text: "text-amber-600 dark:text-amber-400", border: "border-amber-500/20" };
+  }
+  if (v.includes("moved") || v.includes("stage") || v.includes("status")) {
+    return { label: `Moved ${item.entityType ?? ""}`.trim(), icon: ArrowRightCircle, bg: "bg-purple-500/10", text: "text-purple-600 dark:text-purple-400", border: "border-purple-500/20" };
+  }
+  return { label: item.action, icon: Activity, bg: "bg-neutral-100 dark:bg-white/5", text: "text-neutral-700 dark:text-neutral-300", border: "border-neutral-200/60 dark:border-white/10" };
+}
+
+const AVATAR_PALETTES = [
+  { bg: "rgba(59,130,246,0.15)", fg: "#3B82F6", border: "rgba(59,130,246,0.3)" },
+  { bg: "rgba(16,185,129,0.15)", fg: "#10B981", border: "rgba(16,185,129,0.3)" },
+  { bg: "rgba(249,115,22,0.15)", fg: "#F97316", border: "rgba(249,115,22,0.3)" },
+  { bg: "rgba(168,85,247,0.15)", fg: "#A855F7", border: "rgba(168,85,247,0.3)" },
+  { bg: "rgba(236,72,153,0.15)", fg: "#EC4899", border: "rgba(236,72,153,0.3)" },
+];
+
+function getAvatarStyle(name: string) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  const idx = Math.abs(hash) % AVATAR_PALETTES.length;
+  return AVATAR_PALETTES[idx];
 }
 
 function initials(name: string | undefined): string {
   if (!name) return "?";
   return name.trim().split(/\s+/).slice(0, 2).map((w) => w.charAt(0).toUpperCase()).join("") || "?";
-}
-
-function detailSentence(item: AuditItem): string {
-  const t = item.entityType ?? "Record";
-  if (item.entityId) return `${t} ${item.entityId}`;
-  return t;
 }
 
 function formatDateTime(iso: string): { date: string; time: string } {
@@ -104,11 +152,208 @@ function formatDateTime(iso: string): { date: string; time: string } {
   };
 }
 
-interface Filters { search: string; module: string; action: string; user: string; from: string; to: string; }
-const EMPTY: Filters = { search: "", module: "All", action: "All", user: "All", from: "", to: "" };
+/* ------------------------------------------------------------------ */
+/*  Audit Event Details RHS Drawer                                     */
+/* ------------------------------------------------------------------ */
+
+function AuditEventDrawer({
+  item,
+  userInfo,
+  onClose,
+}: {
+  item: AuditItem;
+  userInfo: UserInfo | null;
+  onClose: () => void;
+}) {
+  const [copiedId, setCopiedId] = useState(false);
+  const actionMeta = parseAction(item);
+  const module = moduleOf(item);
+  const ModIcon = moduleIcon(module);
+  const modColors = moduleColor(module);
+  const dt = formatDateTime(item.occurredAtUtc);
+
+  const copyEntityId = () => {
+    if (!item.entityId) return;
+    navigator.clipboard.writeText(item.entityId);
+    setCopiedId(true);
+    setTimeout(() => setCopiedId(false), 2000);
+  };
+
+  return (
+    <>
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-40 animate-in fade-in duration-200" onClick={onClose} />
+      <div
+        className="fixed inset-y-0 right-0 z-50 w-full max-w-xl bg-white dark:bg-[#0c0f17] border-l border-neutral-200 dark:border-white/10 shadow-2xl flex flex-col h-full animate-in slide-in-from-right duration-300"
+        role="dialog"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Drawer Header */}
+        <div className="px-6 py-4 border-b border-neutral-200/80 dark:border-white/10 flex items-center justify-between bg-white dark:bg-[#0f121a] shrink-0">
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center border shadow-xs ${actionMeta.bg} ${actionMeta.text} ${actionMeta.border}`}>
+              <actionMeta.icon size={20} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-extrabold text-base text-neutral-900 dark:text-white m-0">
+                  {actionMeta.label}
+                </h3>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-neutral-100 dark:bg-white/10 text-neutral-600 dark:text-neutral-300">
+                  #{item.id}
+                </span>
+              </div>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 m-0 mt-0.5">
+                {dt.date} at {dt.time}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-9 h-9 rounded-xl border border-neutral-200 dark:border-white/10 flex items-center justify-center text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* Drawer Content */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          {/* Actor Profile Card */}
+          <div className="rounded-2xl border border-neutral-200/80 dark:border-white/10 bg-neutral-50/70 dark:bg-white/[0.02] p-4 space-y-3">
+            <div className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-400">
+              Triggered By (Actor)
+            </div>
+            <div className="flex items-center gap-3.5">
+              {userInfo ? (
+                <>
+                  <div
+                    className="w-11 h-11 rounded-xl flex items-center justify-center font-extrabold text-sm border shadow-xs"
+                    style={{ ...getAvatarStyle(userInfo.name) }}
+                  >
+                    {initials(userInfo.name)}
+                  </div>
+                  <div>
+                    <div className="font-extrabold text-sm text-neutral-900 dark:text-white">
+                      {userInfo.name}
+                    </div>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-xs text-neutral-500 font-mono">
+                        {userInfo.role === "Admin" ? "Administrator" : userInfo.role}
+                      </span>
+                      {item.ipAddress && (
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-neutral-200/70 dark:bg-white/10 text-neutral-700 dark:text-neutral-300">
+                          IP: {item.ipAddress}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-blue-500/15 text-blue-500 border border-blue-500/30">
+                    <Cpu size={20} />
+                  </div>
+                  <div>
+                    <div className="font-extrabold text-sm text-neutral-900 dark:text-white">
+                      System Automated Engine
+                    </div>
+                    <div className="text-xs text-neutral-500 mt-0.5">
+                      Background event / automated trigger
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Module & Entity Meta */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="p-4 rounded-2xl border border-neutral-200/80 dark:border-white/10 bg-white dark:bg-[#121520] shadow-xs">
+              <div className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Module</div>
+              <div className="flex items-center gap-2 mt-2">
+                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border ${modColors.bg} ${modColors.text} ${modColors.border}`}>
+                  <ModIcon size={13} />
+                  <span>{module}</span>
+                </span>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-2xl border border-neutral-200/80 dark:border-white/10 bg-white dark:bg-[#121520] shadow-xs">
+              <div className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Entity Type</div>
+              <div className="font-mono font-bold text-sm text-neutral-900 dark:text-white mt-2">
+                {item.entityType || "General System"}
+              </div>
+            </div>
+          </div>
+
+          {/* Entity GUID with 1-Click Copy */}
+          {item.entityId && (
+            <div className="p-4 rounded-2xl border border-neutral-200/80 dark:border-white/10 bg-white dark:bg-[#121520] shadow-xs flex items-center justify-between gap-3">
+              <div>
+                <div className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Target Entity ID</div>
+                <div className="font-mono font-bold text-xs text-neutral-800 dark:text-neutral-200 mt-1 select-all break-all">
+                  {item.entityId}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={copyEntityId}
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-neutral-200 dark:border-white/10 hover:bg-neutral-100 dark:hover:bg-white/5 text-xs font-bold text-neutral-700 dark:text-neutral-300 transition-colors shrink-0 cursor-pointer"
+              >
+                {copiedId ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
+                <span>{copiedId ? "Copied" : "Copy"}</span>
+              </button>
+            </div>
+          )}
+
+          {/* Detailed Changes / Payload Inspection */}
+          <div className="rounded-2xl border border-neutral-200/80 dark:border-white/10 bg-white dark:bg-[#121520] p-4 space-y-3 shadow-xs">
+            <div className="text-xs font-extrabold uppercase tracking-wider text-neutral-400 pb-2 border-b border-neutral-100 dark:border-white/5">
+              Event Payload & Changes
+            </div>
+
+            {item.newValues ? (
+              <div>
+                <div className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 mb-1">New State / Payload:</div>
+                <pre className="p-3 rounded-xl bg-neutral-50 dark:bg-black/40 border border-neutral-200/70 dark:border-white/5 text-xs font-mono text-neutral-800 dark:text-neutral-200 overflow-x-auto whitespace-pre-wrap">
+                  {item.newValues}
+                </pre>
+              </div>
+            ) : null}
+
+            {item.oldValues ? (
+              <div>
+                <div className="text-[11px] font-bold text-amber-600 dark:text-amber-400 mb-1">Previous State:</div>
+                <pre className="p-3 rounded-xl bg-neutral-50 dark:bg-black/40 border border-neutral-200/70 dark:border-white/5 text-xs font-mono text-neutral-800 dark:text-neutral-200 overflow-x-auto whitespace-pre-wrap">
+                  {item.oldValues}
+                </pre>
+              </div>
+            ) : null}
+
+            {!item.newValues && !item.oldValues && (
+              <p className="text-xs text-neutral-400 italic m-0">
+                Action recorded as atomic operation: {item.action}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Drawer Footer */}
+        <div className="p-4 border-t border-neutral-200/80 dark:border-white/10 bg-neutral-50/70 dark:bg-[#0f121a] flex items-center justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 rounded-xl bg-neutral-200/80 dark:bg-white/10 text-neutral-800 dark:text-neutral-200 text-xs font-bold hover:bg-neutral-300 dark:hover:bg-white/20 transition-colors cursor-pointer"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
 
 /* ------------------------------------------------------------------ */
-/*  Page                                                               */
+/*  Main Activity Trail & Audit Logs Page Component                    */
 /* ------------------------------------------------------------------ */
 
 export default function AdminAuditLogsPage() {
@@ -116,58 +361,96 @@ export default function AdminAuditLogsPage() {
   const [userMap, setUserMap] = useState<Record<string, UserInfo>>({});
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [draft, setDraft] = useState<Filters>(EMPTY);
-  const [applied, setApplied] = useState<Filters>(EMPTY);
+  const [refreshing, setRefreshing] = useState(false);
+  const [feedbackNotice, setFeedbackNotice] = useState<string | null>(null);
+
+  // Filters
+  const [search, setSearch] = useState("");
+  const [moduleFilter, setModuleFilter] = useState<string>("All");
+  const [actionFilter, setActionFilter] = useState<string>("All");
+  const [userFilter, setUserFilter] = useState<string>("All");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+
+  // Pagination & Drawer
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [openMenu, setOpenMenu] = useState<number | null>(null);
+  const [pageSize, setPageSize] = useState(20);
   const [viewing, setViewing] = useState<AuditItem | null>(null);
 
-  const load = useCallback(() => {
-    setLoading(true);
+  const load = useCallback((isManual = false) => {
+    if (isManual) setRefreshing(true);
+    else setLoading(true);
     setError(null);
-    Promise.all([
-      apiGet<any>(`/api/v1/admin/audit-logs?page=1&pageSize=200`),
-      apiGet<any[]>(`/api/v1/admin/users`).catch(() => [] as any[]),
-    ]).then(([logs, users]) => {
-      const raw: AuditItem[] = (logs?.items ?? []).filter((a: any) => !isExcluded(a.action ?? ""));
-      setItems(raw);
-      const map: Record<string, UserInfo> = {};
-      for (const u of users) {
-        map[String(u.id)] = { name: u.fullName ?? u.email, role: u.role ?? "User" };
-      }
-      setUserMap(map);
-    }).catch((e: Error) => setError(e.message)).finally(() => setLoading(false));
-  }, []);
-  useEffect(() => { void load(); }, [load]);
 
-  useEffect(() => { if (!openMenu) return; const onDown = () => setOpenMenu(null); document.addEventListener("mousedown", onDown); return () => document.removeEventListener("mousedown", onDown); }, [openMenu]);
-  useEffect(() => { setPage(1); }, [applied, pageSize]);
+    Promise.all([
+      apiGet<any>(`/api/v1/admin/audit-logs?page=1&pageSize=500`),
+      apiGet<any[]>(`/api/v1/admin/users`).catch(() => [] as any[]),
+    ])
+      .then(([logs, users]) => {
+        const raw: AuditItem[] = (logs?.items ?? []).filter((a: any) => !isExcluded(a.action ?? ""));
+        setItems(raw);
+        const map: Record<string, UserInfo> = {};
+        for (const u of users) {
+          map[String(u.id)] = { name: u.fullName ?? u.email, role: u.role ?? "User", email: u.email };
+        }
+        setUserMap(map);
+        if (isManual) {
+          setFeedbackNotice("Audit log stream refreshed successfully.");
+          setTimeout(() => setFeedbackNotice(null), 2500);
+        }
+      })
+      .catch((e: Error) => setError(e.message))
+      .finally(() => {
+        setLoading(false);
+        if (isManual) setRefreshing(false);
+      });
+  }, []);
+
+  useEffect(() => { void load(false); }, [load]);
 
   const userOptions = useMemo(() => {
     const set = new Set<string>();
-    for (const it of items) { const u = it.userId ? userMap[it.userId] : null; if (u) set.add(u.name); }
+    for (const it of items) {
+      const u = it.userId ? userMap[it.userId] : null;
+      if (u) set.add(u.name);
+    }
     return Array.from(set).sort();
   }, [items, userMap]);
 
   const filtered = useMemo(() => {
-    const q = applied.search.trim().toLowerCase();
-    const result = items.filter((it) => {
+    const q = search.trim().toLowerCase();
+    return items.filter((it) => {
       const user = it.userId ? userMap[it.userId] : null;
-      const module = moduleOf(it);
-      const action = actionLabel(it).label.toLowerCase();
-      const detail = detailSentence(it).toLowerCase();
-      if (q && !(module.toLowerCase().includes(q) || action.includes(q) || detail.includes(q) || (it.action ?? "").toLowerCase().includes(q))) return false;
-      if (applied.module !== "All" && module !== applied.module) return false;
-      if (applied.action !== "All" && !action.includes(applied.action.toLowerCase())) return false;
-      if (applied.user !== "All" && (user?.name ?? "") !== applied.user) return false;
+      const mod = moduleOf(it);
+      const action = parseAction(it).label.toLowerCase();
+
+      if (q) {
+        const matchSearch =
+          mod.toLowerCase().includes(q)
+          || action.includes(q)
+          || (it.action ?? "").toLowerCase().includes(q)
+          || (it.entityId ?? "").toLowerCase().includes(q)
+          || (user?.name ?? "").toLowerCase().includes(q)
+          || (it.ipAddress ?? "").toLowerCase().includes(q);
+        if (!matchSearch) return false;
+      }
+
+      if (moduleFilter !== "All" && mod !== moduleFilter) return false;
+      if (actionFilter !== "All" && !action.includes(actionFilter.toLowerCase())) return false;
+      if (userFilter !== "All" && (user?.name ?? "") !== userFilter) return false;
+
       const t = new Date(it.occurredAtUtc).getTime();
-      if (applied.from && t < new Date(applied.from).getTime()) return false;
-      if (applied.to) { const end = new Date(applied.to); end.setHours(23, 59, 59, 999); if (t > end.getTime()) return false; }
+      if (fromDate && t < new Date(fromDate).getTime()) return false;
+      if (toDate) {
+        const end = new Date(toDate);
+        end.setHours(23, 59, 59, 999);
+        if (t > end.getTime()) return false;
+      }
+
       return true;
     });
-    return result;
-  }, [items, applied, userMap]);
+  }, [items, search, moduleFilter, actionFilter, userFilter, fromDate, toDate, userMap]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(page, totalPages);
@@ -175,276 +458,547 @@ export default function AdminAuditLogsPage() {
 
   const kpis = useMemo(() => {
     const now = new Date();
-    const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
-    const startOfWeek = new Date(now); startOfWeek.setDate(now.getDate() - now.getDay()); startOfWeek.setHours(0,0,0,0);
-    const today = items.filter((i) => startOfDay(new Date(i.occurredAtUtc)) === startOfDay(now)).length;
-    const week = items.filter((i) => new Date(i.occurredAtUtc).getTime() >= startOfWeek.getTime()).length;
-    const activeUsers = new Set(items.map((i) => i.userId).filter(Boolean)).size;
-    const last = items.length ? new Date(items[0].occurredAtUtc) : null;
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const todayCount = items.filter((i) => new Date(i.occurredAtUtc).getTime() >= startOfDay).length;
+    const weekCount = items.filter((i) => new Date(i.occurredAtUtc).getTime() >= startOfWeek.getTime()).length;
+    const uniqueActors = new Set(items.map((i) => i.userId).filter(Boolean)).size;
+
     return {
-      total: items.length, today, activeUsers, week,
-      lastUpdated: last ? `${last.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })} ${last.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}` : "—",
-      weekLabel: `${new Date(startOfWeek).toLocaleDateString("en-IN", { day: "numeric", month: "short" })} – ${now.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}`,
+      total: items.length,
+      today: todayCount,
+      actors: uniqueActors,
+      week: weekCount,
+      systemEvents: items.filter((i) => !i.userId).length,
     };
   }, [items]);
 
-  const hasFilters = applied.search !== "" || applied.module !== "All" || applied.action !== "All" || applied.user !== "All" || applied.from !== "" || applied.to !== "";
-  const clearFilters = () => { setDraft(EMPTY); setApplied(EMPTY); setPage(1); };
-
   const exportCsv = () => {
     if (!filtered.length) return;
-    const header = ["Time", "User", "Role", "Action", "Module", "Details", "IP Address"];
+    const header = ["Timestamp (UTC)", "Actor", "Role", "Action", "Module", "Entity Type", "Entity ID", "IP Address"];
     const rows = filtered.map((i) => {
       const u = i.userId ? userMap[i.userId] : null;
-      return [new Date(i.occurredAtUtc).toLocaleString(), u?.name ?? "—", u ? roleLabel(u.role) : "—", actionLabel(i).label, moduleOf(i), detailSentence(i), i.ipAddress ?? "—"];
+      return [
+        i.occurredAtUtc,
+        u?.name ?? "System",
+        u?.role ?? "System Engine",
+        parseAction(i).label,
+        moduleOf(i),
+        i.entityType ?? "",
+        i.entityId ?? "",
+        i.ipAddress ?? "—",
+      ];
     });
     const esc = (s: string) => `"${String(s).replace(/"/g, '""')}"`;
     const csv = [header, ...rows].map((r) => r.map(esc).join(",")).join("\n");
-    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
-    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "activity-log.csv"; a.click(); URL.revokeObjectURL(a.href);
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `audit-logs-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
   };
 
-  const kpiCards = [
-    { label: "Total Activities", value: kpis.total, hint: "All recorded activities", icon: Activity, color: "var(--kpi-blue)", bg: "var(--kpi-blue-bg)", glow: "rgba(59,130,246,0.25)" },
-    { label: "Today's Activities", value: kpis.today, hint: "Performed today", icon: Zap, color: "var(--kpi-green)", bg: "var(--kpi-green-bg)", glow: "rgba(34,197,94,0.22)" },
-    { label: "Active Users", value: kpis.activeUsers, hint: "Users performed actions", icon: Users, color: "var(--kpi-purple)", bg: "var(--kpi-purple-bg)", glow: "rgba(167,139,250,0.22)" },
-    { label: "This Week", value: kpis.week, hint: kpis.weekLabel, icon: Calendar, color: "var(--kpi-orange)", bg: "var(--kpi-orange-bg)", glow: "rgba(249,115,22,0.22)" },
-    { label: "Last Updated", value: kpis.lastUpdated, hint: "Latest activity", icon: Clock, color: "var(--kpi-teal)", bg: "var(--kpi-teal-bg)", glow: "rgba(20,184,166,0.22)" },
-  ];
-
-  const renderRow = (it: AuditItem) => {
-    const dt = formatDateTime(it.occurredAtUtc);
-    const user = it.userId ? userMap[it.userId] : null;
-    const action = actionLabel(it);
-    const module = moduleOf(it);
-    return (
-      <tr key={it.id}>
-        <td>
-          <div className="inv-date">{dt.date}</div>
-          <div className="inv-time">{dt.time}</div>
-        </td>
-        <td>
-          <div className="inv-customer">
-            <span className="inv-avatar">{initials(user?.name)}</span>
-            <div>
-              <div className="inv-customer__name">{user?.name ?? "System"}</div>
-              <div className="inv-customer__contact">{user ? roleLabel(user.role) : "System event"}</div>
-            </div>
-          </div>
-        </td>
-        <td><span className={`inv-badge inv-badge--${action.tone}`}>{action.label}</span></td>
-        <td><span className={`inv-badge inv-badge--${moduleTone(module)}`}>{module}</span></td>
-        <td><div className="inv-sub" style={{ marginTop: 0 }}>{detailSentence(it)}</div></td>
-        <td><div className="inv-date">{it.ipAddress ?? "—"}</div></td>
-        <td>
-          <div className="inv-actions" onClick={(e) => e.stopPropagation()}>
-            <div className="inv-menu-wrap" onMouseDown={(e) => e.stopPropagation()}>
-              <button className="inv-icon-btn" title="More" aria-label="More actions"
-                aria-expanded={openMenu === it.id}
-                onClick={() => setOpenMenu((m) => (m === it.id ? null : it.id))}>
-                <MoreVertical size={16} />
-              </button>
-              {openMenu === it.id && (
-                <div className="inv-menu">
-                  <button className="inv-menu__item" onClick={() => { setOpenMenu(null); setViewing(it); }}>
-                    <Eye size={15} /> View Details
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </td>
-      </tr>
-    );
+  const clearFilters = () => {
+    setSearch("");
+    setModuleFilter("All");
+    setActionFilter("All");
+    setUserFilter("All");
+    setFromDate("");
+    setToDate("");
+    setPage(1);
   };
+
+  const hasActiveFilters = search || moduleFilter !== "All" || actionFilter !== "All" || userFilter !== "All" || fromDate || toDate;
 
   return (
-    <div className="inv-page">
-      {/* Header */}
-      <div className="inv-header">
-        <div>
-          <h1 className="inv-header__title">Activity Log</h1>
-          <p className="inv-header__subtitle">Track all important business activities performed across the system.</p>
+    <div className="space-y-6">
+      {/* ================================================================= */}
+      {/* 1. HERO HEADER                                                    */}
+      {/* ================================================================= */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3.5">
+          <div className="w-12 h-12 rounded-2xl bg-[var(--color-primary)]/10 text-[var(--color-primary)] flex items-center justify-center shadow-sm">
+            <FileSearch size={24} />
+          </div>
+          <div>
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-xl sm:text-2xl font-extrabold text-neutral-900 dark:text-white tracking-tight m-0">
+                Activity Trail & Audit Logs
+              </h1>
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-neutral-100 dark:bg-white/10 text-neutral-700 dark:text-neutral-300 border border-neutral-200/70 dark:border-white/10">
+                {kpis.total} Total Records
+              </span>
+            </div>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 m-0">
+              Immutable operational audit trail of system events, engineer quotes, order status transitions, and client interactions.
+            </p>
+          </div>
         </div>
-        <div className="inv-header__actions">
-          <button className="inv-btn" onClick={exportCsv} title="Export visible activities to CSV">
-            <Download size={16} /> Export CSV
+
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <button
+            type="button"
+            onClick={exportCsv}
+            className="inline-flex items-center gap-1.5 px-3.5 h-9 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#121520] hover:bg-neutral-50 dark:hover:bg-white/5 text-xs font-bold text-neutral-700 dark:text-neutral-300 transition-all shadow-xs cursor-pointer"
+            title="Export filtered logs to CSV"
+          >
+            <Download size={14} />
+            <span>Export CSV</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => void load(true)}
+            disabled={refreshing}
+            className="inline-flex items-center gap-1.5 px-3.5 h-9 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#121520] hover:bg-neutral-50 dark:hover:bg-white/5 text-xs font-bold text-neutral-700 dark:text-neutral-300 transition-all shadow-xs cursor-pointer disabled:opacity-60"
+            title="Refresh Audit Logs"
+          >
+            <RefreshCw size={13} className={refreshing ? "animate-spin text-orange-500" : ""} />
+            <span>{refreshing ? "Refreshing..." : "Refresh"}</span>
           </button>
         </div>
       </div>
 
-      {/* KPI cards */}
-      <div className="inv-kpi-grid">
-        {kpiCards.map((k) => (
-          <div key={k.label} className="inv-kpi"
-            style={{ "--inv-kpi-color": k.color, "--inv-kpi-bg": k.bg, "--inv-kpi-glow": k.glow } as CSSProperties}>
-            <span className="inv-kpi__icon"><k.icon size={20} /></span>
-            <span className="inv-kpi__value">{k.value}</span>
-            <span className="inv-kpi__label">{k.label}</span>
-            <span className="inv-kpi__hint">{k.hint}</span>
-          </div>
-        ))}
-      </div>
-
-      {/* Search & filter bar */}
-      <div className="inv-filterbar">
-        <div className="inv-field" style={{ flex: "1 1 200px" }}>
-          <label className="inv-field__label">Search</label>
-          <div style={{ position: "relative" }}>
-            <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
-            <input className="inv-input" style={{ paddingLeft: 32 }} type="search" value={draft.search}
-              placeholder="Search activities..." aria-label="Search activities"
-              onChange={(e) => setDraft((d) => ({ ...d, search: e.target.value }))} />
-          </div>
+      {/* Error Notice */}
+      {error && (
+        <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+          <AlertTriangle size={16} />
+          <span>{error}</span>
         </div>
-
-        <div className="inv-field">
-          <label className="inv-field__label">Date Range</label>
-          <div style={{ display: "flex", gap: 6 }}>
-            <input type="date" className="inv-input" value={draft.from} onChange={(e) => setDraft((d) => ({ ...d, from: e.target.value }))} aria-label="From date" />
-            <input type="date" className="inv-input" value={draft.to} onChange={(e) => setDraft((d) => ({ ...d, to: e.target.value }))} aria-label="To date" />
-          </div>
-        </div>
-
-        <div className="inv-field">
-          <label className="inv-field__label">Module</label>
-          <select className="inv-select" value={draft.module} onChange={(e) => setDraft((d) => ({ ...d, module: e.target.value }))}>
-            <option value="All">All Modules</option>
-            {MODULES.map((m) => <option key={m} value={m}>{m}</option>)}
-          </select>
-        </div>
-
-        <div className="inv-field">
-          <label className="inv-field__label">Action</label>
-          <select className="inv-select" value={draft.action} onChange={(e) => setDraft((d) => ({ ...d, action: e.target.value }))}>
-            <option value="All">All Actions</option>
-            {ACTION_TYPES.map((a) => <option key={a} value={a}>{a}</option>)}
-          </select>
-        </div>
-
-        <div className="inv-field">
-          <label className="inv-field__label">User</label>
-          <select className="inv-select" value={draft.user} onChange={(e) => setDraft((d) => ({ ...d, user: e.target.value }))}>
-            <option value="All">All Users</option>
-            {userOptions.map((u) => <option key={u} value={u}>{u}</option>)}
-          </select>
-        </div>
-
-        <button className="inv-btn" title="Reset filters" onClick={clearFilters}>
-          <X size={14} /> Reset
-        </button>
-        <button className="inv-btn inv-btn--primary" onClick={() => { setApplied(draft); setPage(1); }}>
-          <Filter size={15} /> Filter
-        </button>
-        <button className="inv-btn inv-btn--icon" title="Refresh" aria-label="Refresh" onClick={load}>
-          <RefreshCw size={16} />
-        </button>
-      </div>
-
-      {/* Loading / error / empty */}
-      {error && <div className="inv-status" style={{ color: "var(--color-danger)" }}>{error}</div>}
-      {!error && loading && <div className="inv-status"><Loading label="Loading activities" /></div>}
-      {!error && !loading && filtered.length === 0 && (
-        <div className="inv-status"><div>{hasFilters ? "No activities match the current filters." : "No business activities recorded yet."}</div></div>
       )}
 
-      {/* Table */}
-      {!error && !loading && paged.length > 0 && (
-        <div className="inv-table-wrap">
-          <div className="inv-scroll">
-            <table className="inv-table">
-              <colgroup>
-                <col style={{ width: "14%" }} />
-                <col style={{ width: "18%" }} />
-                <col style={{ width: "16%" }} />
-                <col style={{ width: "11%" }} />
-                <col style={{ width: "24%" }} />
-                <col style={{ width: "11%" }} />
-                <col style={{ width: "6%" }} />
-              </colgroup>
+      {/* Toast Notice */}
+      {feedbackNotice && (
+        <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+          <CheckCircle2 size={16} />
+          <span>{feedbackNotice}</span>
+        </div>
+      )}
+
+      {/* ================================================================= */}
+      {/* 2. KPI METRICS CARDS (Glow Formula)                               */}
+      {/* ================================================================= */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
+        {/* Total Activities */}
+        <div className="relative overflow-hidden p-4 sm:p-5 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all before:absolute before:inset-0 before:bg-[radial-gradient(150px_110px_at_95%_0%,rgba(59,130,246,0.18),transparent)] before:pointer-events-none">
+          <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
+            <Activity size={18} />
+          </div>
+          <div className="text-2xl sm:text-[26px] font-extrabold text-neutral-900 dark:text-white mt-3 leading-tight tracking-tight">
+            {kpis.total}
+          </div>
+          <div className="text-xs font-bold text-neutral-800 dark:text-neutral-200 mt-1">Total Activities</div>
+          <div className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">Recorded operations</div>
+        </div>
+
+        {/* Today's Events */}
+        <div className="relative overflow-hidden p-4 sm:p-5 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all before:absolute before:inset-0 before:bg-[radial-gradient(150px_110px_at_95%_0%,rgba(16,185,129,0.18),transparent)] before:pointer-events-none">
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+            <Zap size={18} />
+          </div>
+          <div className="text-2xl sm:text-[26px] font-extrabold text-neutral-900 dark:text-white mt-3 leading-tight tracking-tight">
+            {kpis.today}
+          </div>
+          <div className="text-xs font-bold text-neutral-800 dark:text-neutral-200 mt-1">Today's Events</div>
+          <div className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">Logged past 24h</div>
+        </div>
+
+        {/* Active Actors */}
+        <div className="relative overflow-hidden p-4 sm:p-5 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all before:absolute before:inset-0 before:bg-[radial-gradient(150px_110px_at_95%_0%,rgba(168,85,247,0.18),transparent)] before:pointer-events-none">
+          <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center">
+            <Users size={18} />
+          </div>
+          <div className="text-2xl sm:text-[26px] font-extrabold text-neutral-900 dark:text-white mt-3 leading-tight tracking-tight">
+            {kpis.actors}
+          </div>
+          <div className="text-xs font-bold text-neutral-800 dark:text-neutral-200 mt-1">Active Actors</div>
+          <div className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">Staff & clients active</div>
+        </div>
+
+        {/* This Week */}
+        <div className="relative overflow-hidden p-4 sm:p-5 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all before:absolute before:inset-0 before:bg-[radial-gradient(150px_110px_at_95%_0%,rgba(249,115,22,0.18),transparent)] before:pointer-events-none">
+          <div className="w-10 h-10 rounded-xl bg-orange-500/10 text-orange-500 flex items-center justify-center">
+            <Calendar size={18} />
+          </div>
+          <div className="text-2xl sm:text-[26px] font-extrabold text-neutral-900 dark:text-white mt-3 leading-tight tracking-tight">
+            {kpis.week}
+          </div>
+          <div className="text-xs font-bold text-neutral-800 dark:text-neutral-200 mt-1">This Week</div>
+          <div className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">Past 7 days volume</div>
+        </div>
+
+        {/* System Triggers */}
+        <div className="relative overflow-hidden p-4 sm:p-5 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all before:absolute before:inset-0 before:bg-[radial-gradient(150px_110px_at_95%_0%,rgba(20,184,166,0.18),transparent)] before:pointer-events-none col-span-2 sm:col-span-1">
+          <div className="w-10 h-10 rounded-xl bg-teal-500/10 text-teal-500 flex items-center justify-center">
+            <Cpu size={18} />
+          </div>
+          <div className="text-2xl sm:text-[26px] font-extrabold text-neutral-900 dark:text-white mt-3 leading-tight tracking-tight">
+            {kpis.systemEvents}
+          </div>
+          <div className="text-xs font-bold text-neutral-800 dark:text-neutral-200 mt-1">System Engine</div>
+          <div className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">Automated web triggers</div>
+        </div>
+      </div>
+
+      {/* ================================================================= */}
+      {/* 3. TOOLBAR & SEGMENTED MODULE TABS                                 */}
+      {/* ================================================================= */}
+      <div className="rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] p-4 shadow-xs space-y-3.5">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          {/* Real-time Search Input */}
+          <div className="relative w-full lg:w-96">
+            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              placeholder="Search logs by action, actor, entity ID, or IP..."
+              className="w-full pl-10 pr-8 h-10 text-xs rounded-xl border border-neutral-200 dark:border-white/10 bg-neutral-50 dark:bg-[#161a26] text-neutral-800 dark:text-white outline-none focus:border-orange-500 shadow-xs"
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 dark:hover:text-white cursor-pointer"
+              >
+                <X size={13} />
+              </button>
+            )}
+          </div>
+
+          {/* Quick Segmented Module Tabs */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0">
+            {MODULES.map((m) => {
+              const isCurrent = moduleFilter === m;
+              return (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => { setModuleFilter(m); setPage(1); }}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                    isCurrent
+                      ? "bg-[var(--color-primary)] text-white shadow-sm"
+                      : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-white/5"
+                  }`}
+                >
+                  <span>{m === "All" ? "All Logs" : m}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Toggle Advanced Filters */}
+          <button
+            type="button"
+            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+            className={`inline-flex items-center gap-1.5 px-3.5 h-10 rounded-xl text-xs font-bold border transition-colors cursor-pointer shrink-0 ${
+              showAdvancedFilters || hasActiveFilters
+                ? "border-orange-500/50 bg-orange-500/10 text-orange-600 dark:text-orange-400"
+                : "border-neutral-200 dark:border-white/10 bg-white dark:bg-[#121520] text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-white/5"
+            }`}
+          >
+            <Filter size={13} />
+            <span>Filter Options</span>
+            {showAdvancedFilters ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+          </button>
+        </div>
+
+        {/* Collapsible Advanced Filters */}
+        {showAdvancedFilters && (
+          <div className="pt-3 border-t border-neutral-100 dark:border-white/5 grid grid-cols-1 sm:grid-cols-4 gap-3 animate-in fade-in">
+            <div>
+              <label className="block text-[11px] font-bold text-neutral-500 dark:text-neutral-400 mb-1">Action Type</label>
+              <select
+                value={actionFilter}
+                onChange={(e) => { setActionFilter(e.target.value); setPage(1); }}
+                className="w-full px-3 py-2 text-xs rounded-xl border border-neutral-200 dark:border-white/10 bg-neutral-50 dark:bg-[#161a26] text-neutral-800 dark:text-white outline-none focus:border-orange-500"
+              >
+                {ACTION_TYPES.map((a) => (
+                  <option key={a} value={a}>{a === "All" ? "All Actions" : a}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-bold text-neutral-500 dark:text-neutral-400 mb-1">Specific Actor</label>
+              <select
+                value={userFilter}
+                onChange={(e) => { setUserFilter(e.target.value); setPage(1); }}
+                className="w-full px-3 py-2 text-xs rounded-xl border border-neutral-200 dark:border-white/10 bg-neutral-50 dark:bg-[#161a26] text-neutral-800 dark:text-white outline-none focus:border-orange-500"
+              >
+                <option value="All">All Actors</option>
+                {userOptions.map((u) => (
+                  <option key={u} value={u}>{u}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-bold text-neutral-500 dark:text-neutral-400 mb-1">From Date</label>
+              <input
+                type="date"
+                value={fromDate}
+                onChange={(e) => { setFromDate(e.target.value); setPage(1); }}
+                className="w-full px-3 py-2 text-xs rounded-xl border border-neutral-200 dark:border-white/10 bg-neutral-50 dark:bg-[#161a26] text-neutral-800 dark:text-white outline-none focus:border-orange-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-bold text-neutral-500 dark:text-neutral-400 mb-1">To Date</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  value={toDate}
+                  onChange={(e) => { setToDate(e.target.value); setPage(1); }}
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-neutral-200 dark:border-white/10 bg-neutral-50 dark:bg-[#161a26] text-neutral-800 dark:text-white outline-none focus:border-orange-500"
+                />
+                {hasActiveFilters && (
+                  <button
+                    type="button"
+                    onClick={clearFilters}
+                    className="px-3 py-2 rounded-xl text-xs font-bold text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
+                    title="Reset filters"
+                  >
+                    Reset
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ================================================================= */}
+      {/* 4. MODERN HIGH-END AUDIT LOG TABLE                                */}
+      {/* ================================================================= */}
+      <div className="rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs overflow-hidden">
+        {loading && items.length === 0 ? (
+          <div className="py-24 text-center"><Loading label="Streaming audit records..." /></div>
+        ) : filtered.length === 0 ? (
+          <div className="py-24 text-center text-neutral-400 space-y-2">
+            <FileSearch size={44} className="mx-auto opacity-30" />
+            <p className="text-sm font-medium text-neutral-500">No activity records match your current filters.</p>
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="text-xs text-[var(--color-primary)] hover:underline font-bold cursor-pointer"
+              >
+                Clear all filters
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse" style={{ minWidth: 1100 }}>
               <thead>
-                <tr>
-                  <th>Time</th>
-                  <th>User</th>
-                  <th>Action</th>
-                  <th>Module</th>
-                  <th>Details</th>
-                  <th>IP Address</th>
-                  <th style={{ textAlign: "right" }}>Actions</th>
+                <tr className="bg-neutral-50/80 dark:bg-white/[0.02] border-b border-neutral-200/80 dark:border-white/10">
+                  <th className="py-3.5 px-5 text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 w-36">
+                    Timestamp
+                  </th>
+                  <th className="py-3.5 px-4 text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                    Actor / User
+                  </th>
+                  <th className="py-3.5 px-4 text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                    Action
+                  </th>
+                  <th className="py-3.5 px-4 text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                    Module
+                  </th>
+                  <th className="py-3.5 px-4 text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                    Entity Details
+                  </th>
+                  <th className="py-3.5 px-4 text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                    IP Address
+                  </th>
+                  <th className="py-3.5 px-5 text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 text-right">
+                    Inspect
+                  </th>
                 </tr>
               </thead>
-              <tbody>
-                {paged.map((it) => renderRow(it))}
+              <tbody className="divide-y divide-neutral-100 dark:divide-white/[0.04]">
+                {paged.map((it) => {
+                  const dt = formatDateTime(it.occurredAtUtc);
+                  const user = it.userId ? userMap[it.userId] : null;
+                  const actionMeta = parseAction(it);
+                  const module = moduleOf(it);
+                  const modColors = moduleColor(module);
+                  const ModIcon = moduleIcon(module);
+
+                  return (
+                    <tr
+                      key={it.id}
+                      onClick={() => setViewing(it)}
+                      className="group hover:bg-orange-500/[0.03] dark:hover:bg-white/[0.02] transition-colors cursor-pointer"
+                    >
+                      {/* Timestamp */}
+                      <td className="py-3.5 px-5 align-middle">
+                        <div className="font-extrabold text-xs text-neutral-900 dark:text-white">
+                          {dt.date}
+                        </div>
+                        <div className="text-[11px] font-mono text-neutral-400 mt-0.5">
+                          {dt.time}
+                        </div>
+                      </td>
+
+                      {/* Actor */}
+                      <td className="py-3.5 px-4 align-middle">
+                        <div className="flex items-center gap-3">
+                          {user ? (
+                            <>
+                              <div
+                                className="w-8 h-8 rounded-xl flex items-center justify-center font-extrabold text-xs border shadow-xs shrink-0"
+                                style={{ ...getAvatarStyle(user.name) }}
+                              >
+                                {initials(user.name)}
+                              </div>
+                              <div className="min-w-0">
+                                <div className="font-bold text-xs text-neutral-900 dark:text-white truncate max-w-[170px]">
+                                  {user.name}
+                                </div>
+                                <div className="text-[10px] text-neutral-400 uppercase tracking-wider font-semibold">
+                                  {user.role === "Admin" ? "Administrator" : user.role}
+                                </div>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-blue-500/10 text-blue-500 border border-blue-500/20 shrink-0">
+                                <Cpu size={14} />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="font-bold text-xs text-neutral-900 dark:text-white">
+                                  System Engine
+                                </div>
+                                <div className="text-[10px] text-neutral-400">
+                                  Automated trigger
+                                </div>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Action */}
+                      <td className="py-3.5 px-4 align-middle">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-extrabold border ${actionMeta.bg} ${actionMeta.text} ${actionMeta.border}`}>
+                          <actionMeta.icon size={12} />
+                          <span>{actionMeta.label}</span>
+                        </span>
+                      </td>
+
+                      {/* Module */}
+                      <td className="py-3.5 px-4 align-middle">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-bold border ${modColors.bg} ${modColors.text} ${modColors.border}`}>
+                          <ModIcon size={12} />
+                          <span>{module}</span>
+                        </span>
+                      </td>
+
+                      {/* Entity Details */}
+                      <td className="py-3.5 px-4 align-middle">
+                        <div className="text-xs text-neutral-700 dark:text-neutral-300 font-medium truncate max-w-[240px]">
+                          {it.entityType ? (
+                            <span>{it.entityType} <span className="font-mono text-neutral-400 text-[11px]">{it.entityId ? `${it.entityId.slice(0, 12)}...` : ""}</span></span>
+                          ) : (
+                            <span className="text-neutral-400 italic">—</span>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* IP Address */}
+                      <td className="py-3.5 px-4 align-middle">
+                        {it.ipAddress ? (
+                          <span className="font-mono text-[11px] px-2 py-0.5 rounded-md bg-neutral-100 dark:bg-white/5 border border-neutral-200/70 dark:border-white/5 text-neutral-600 dark:text-neutral-400">
+                            {it.ipAddress}
+                          </span>
+                        ) : (
+                          <span className="text-neutral-400 text-xs italic">—</span>
+                        )}
+                      </td>
+
+                      {/* Inspect Action */}
+                      <td className="py-3.5 px-5 align-middle text-right" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          type="button"
+                          onClick={() => setViewing(it)}
+                          className="w-8 h-8 rounded-lg inline-flex items-center justify-center border border-neutral-200/80 dark:border-white/10 bg-neutral-50 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 hover:border-orange-500/50 hover:text-orange-600 dark:hover:text-orange-400 hover:shadow-xs transition-all cursor-pointer"
+                          title="Inspect Event Payload"
+                        >
+                          <Eye size={14} />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Pagination */}
-      <div className="inv-pagination">
-        <span className="inv-pagination__info">
-          {`Showing ${filtered.length === 0 ? 0 : (safePage - 1) * pageSize + 1}–${Math.min(safePage * pageSize, filtered.length)} of ${filtered.length} activities`}
-        </span>
-
-        <div className="inv-field" style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-          <label className="inv-field__label" style={{ margin: 0 }}>Rows</label>
-          <select className="inv-select" style={{ width: "auto", padding: "7px 34px 7px 10px" }}
-            value={pageSize} onChange={(e) => setPageSize(Number(e.target.value))}>
-            {PAGE_SIZES.map((n) => <option key={n} value={n}>{n}</option>)}
-          </select>
-        </div>
-
-        <button className="inv-page-btn" disabled={safePage <= 1} onClick={() => setPage((p) => p - 1)} aria-label="Previous page">
-          <ChevronLeft size={16} />
-        </button>
-
-        {Array.from({ length: totalPages }, (_, i) => i + 1)
-          .filter((n) => n === 1 || n === totalPages || Math.abs(n - safePage) <= 1)
-          .reduce<ReactNode[]>((acc, n, idx, arr) => {
-            if (idx > 0 && n - arr[idx - 1] > 1) acc.push(<span key={`e${n}`} style={{ color: "var(--text-muted)", padding: "0 2px" }}>…</span>);
-            acc.push(
-              <button key={n} className={`inv-page-btn ${n === safePage ? "inv-page-btn--active" : ""}`}
-                onClick={() => setPage(n)}>{n}</button>,
-            );
-            return acc;
-          }, [])}
-
-        <button className="inv-page-btn" disabled={safePage >= totalPages} onClick={() => setPage((p) => p + 1)} aria-label="Next page">
-          <ChevronRight size={16} />
-        </button>
-      </div>
-
-      {/* View details modal */}
-      {viewing && (
-        <div className="inv-modal-backdrop" onClick={() => setViewing(null)}>
-          <div className="inv-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Activity details">
-            <div className="inv-modal__head">
-              <span className="inv-modal__title">Activity Details</span>
-              <button className="inv-icon-btn" onClick={() => setViewing(null)} aria-label="Close"><X size={16} /></button>
-            </div>
-            <div className="inv-modal__body">
-              {[
-                ["Time", new Date(viewing.occurredAtUtc).toLocaleString()],
-                ["User", (viewing.userId ? userMap[viewing.userId]?.name : null) ?? "System"],
-                ["Role", viewing.userId ? roleLabel(userMap[viewing.userId]?.role) : "—"],
-                ["Action", viewing.action],
-                ["Module", moduleOf(viewing)],
-                ["Details", detailSentence(viewing)],
-                ["IP Address", viewing.ipAddress ?? "—"],
-                ["User Agent", viewing.userAgent ?? "—"],
-              ].map(([k, v]) => (
-                <div key={k} className="inv-modal__row">
-                  <span className="inv-modal__row-label">{k}</span>
-                  <span className="inv-modal__row-value">{v}</span>
-                </div>
-              ))}
-            </div>
-            <div className="inv-modal__foot">
-              <button className="inv-btn" onClick={() => setViewing(null)}>Close</button>
+        {/* ================================================================= */}
+        {/* 5. PAGINATION FOOTER                                              */}
+        {/* ================================================================= */}
+        <div className="p-4 bg-neutral-50/60 dark:bg-white/[0.01] border-t border-neutral-200/80 dark:border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-neutral-500 dark:text-neutral-400">
+          <div className="flex items-center gap-3">
+            <span>
+              Showing {filtered.length === 0 ? 0 : (safePage - 1) * pageSize + 1}–{Math.min(safePage * pageSize, filtered.length)} of {filtered.length} activities
+            </span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-neutral-400">Per page:</span>
+              <select
+                value={pageSize}
+                onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
+                className="px-2 py-1 rounded-lg border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#121520] text-neutral-800 dark:text-white font-bold outline-none cursor-pointer"
+              >
+                {PAGE_SIZES.map((sz) => (
+                  <option key={sz} value={sz}>{sz}</option>
+                ))}
+              </select>
             </div>
           </div>
+
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              disabled={safePage <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              className="p-1.5 rounded-lg border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#121520] text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/5 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+              aria-label="Previous Page"
+            >
+              <ChevronLeft size={14} />
+            </button>
+
+            <span className="px-3 font-bold text-neutral-800 dark:text-neutral-200">
+              Page {safePage} of {totalPages}
+            </span>
+
+            <button
+              type="button"
+              disabled={safePage >= totalPages}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              className="p-1.5 rounded-lg border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#121520] text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/5 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+              aria-label="Next Page"
+            >
+              <ChevronRight size={14} />
+            </button>
+          </div>
         </div>
+      </div>
+
+      {/* ================================================================= */}
+      {/* 6. SLIDE-OUT RHS AUDIT EVENT DETAILS DRAWER                       */}
+      {/* ================================================================= */}
+      {viewing && (
+        <AuditEventDrawer
+          item={viewing}
+          userInfo={viewing.userId ? userMap[viewing.userId] ?? null : null}
+          onClose={() => setViewing(null)}
+        />
       )}
     </div>
   );
