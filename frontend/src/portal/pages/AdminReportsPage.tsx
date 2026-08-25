@@ -161,9 +161,9 @@ function ReportPreviewModal({
   }, [parsed.rows, search]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150" onClick={onClose}>
       <div
-        className="w-full max-w-5xl bg-white dark:bg-[#121520] rounded-2xl border border-neutral-200 dark:border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200"
+        className="w-[96vw] max-w-7xl bg-white dark:bg-[#121520] rounded-2xl border border-neutral-200 dark:border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
       >
@@ -179,7 +179,7 @@ function ReportPreviewModal({
                   {report.name}
                 </h3>
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-neutral-200/70 dark:bg-white/10 text-neutral-700 dark:text-neutral-300">
-                  {parsed.rows.length} Records
+                  {parsed.rows.length} Records • {parsed.headers.length} Columns
                 </span>
               </div>
               <p className="text-xs text-neutral-500 dark:text-neutral-400 m-0 mt-0.5">
@@ -189,13 +189,13 @@ function ReportPreviewModal({
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="relative w-56 hidden sm:block">
+            <div className="relative w-64 hidden sm:block">
               <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search in preview..."
+                placeholder="Search across all columns..."
                 className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#161a26] text-neutral-900 dark:text-white outline-none focus:border-blue-500"
               />
             </div>
@@ -210,22 +210,22 @@ function ReportPreviewModal({
         </div>
 
         {/* Scrollable Table Content */}
-        <div className="flex-1 overflow-auto p-6">
+        <div className="flex-1 overflow-auto p-4 sm:p-6">
           {parsed.rows.length === 0 ? (
             <div className="py-20 text-center text-neutral-400">
               <FileSpreadsheet size={40} className="mx-auto opacity-30 mb-2" />
               <p className="text-sm font-medium">No records found for this report.</p>
             </div>
           ) : (
-            <div className="rounded-xl border border-neutral-200/80 dark:border-white/10 overflow-hidden">
-              <table className="w-full text-left text-xs border-collapse">
+            <div className="rounded-xl border border-neutral-200/80 dark:border-white/10 overflow-hidden shadow-xs">
+              <table className="w-full text-left text-xs border-collapse" style={{ minWidth: "max-content" }}>
                 <thead>
-                  <tr className="bg-neutral-100/80 dark:bg-white/[0.04] border-b border-neutral-200 dark:border-white/10">
-                    <th className="py-2.5 px-3.5 text-[10px] font-extrabold uppercase tracking-wider text-neutral-500 w-12 text-center">
+                  <tr className="bg-neutral-100/90 dark:bg-white/[0.06] border-b border-neutral-200 dark:border-white/10 sticky top-0 z-10">
+                    <th className="py-2.5 px-3.5 text-[10px] font-extrabold uppercase tracking-wider text-neutral-500 w-12 text-center bg-neutral-100/95 dark:bg-[#161a26]">
                       #
                     </th>
                     {parsed.headers.map((h, i) => (
-                      <th key={i} className="py-2.5 px-3.5 text-[11px] font-extrabold uppercase tracking-wider text-neutral-600 dark:text-neutral-300 whitespace-nowrap">
+                      <th key={i} className="py-2.5 px-4 text-[11px] font-extrabold uppercase tracking-wider text-neutral-600 dark:text-neutral-300 whitespace-nowrap bg-neutral-100/95 dark:bg-[#161a26]">
                         {h}
                       </th>
                     ))}
@@ -234,11 +234,11 @@ function ReportPreviewModal({
                 <tbody className="divide-y divide-neutral-100 dark:divide-white/[0.04]">
                   {filteredRows.map((row, rIdx) => (
                     <tr key={rIdx} className="hover:bg-neutral-50/80 dark:hover:bg-white/[0.02] transition-colors">
-                      <td className="py-2.5 px-3.5 text-neutral-400 font-mono text-[11px] text-center">
+                      <td className="py-2.5 px-3.5 text-neutral-400 font-mono text-[11px] text-center bg-neutral-50/40 dark:bg-white/[0.01]">
                         {rIdx + 1}
                       </td>
                       {row.map((cell, cIdx) => (
-                        <td key={cIdx} className="py-2.5 px-3.5 text-neutral-800 dark:text-neutral-200 font-medium whitespace-nowrap">
+                        <td key={cIdx} className="py-2.5 px-4 text-neutral-800 dark:text-neutral-200 font-medium whitespace-nowrap">
                           {cell || <span className="text-neutral-400/50 italic">—</span>}
                         </td>
                       ))}
