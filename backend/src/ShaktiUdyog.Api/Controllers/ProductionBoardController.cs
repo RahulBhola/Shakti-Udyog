@@ -15,7 +15,10 @@ namespace ShaktiUdyog.Api.Controllers;
 public class ProductionBoardController(IProductionBoardService service) : ControllerBase
 {
     private string? ClientIp => HttpContext.Connection.RemoteIpAddress?.ToString();
-    private Guid UserId => Guid.Parse(User.FindFirstValue("sub")!);
+    private Guid UserId => Guid.Parse(
+        HttpContext.User.FindFirst("sub")?.Value
+        ?? HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+        ?? throw new UnauthorizedAccessException("User identifier claim is missing."));
 
     // ── Stages / Lookups ────────────────────────────────────────────────────
 

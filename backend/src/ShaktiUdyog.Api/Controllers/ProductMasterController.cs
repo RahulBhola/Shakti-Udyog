@@ -16,7 +16,10 @@ namespace ShaktiUdyog.Api.Controllers;
 public class ProductMasterController(IProductMasterService service, AppDbContext db) : ControllerBase
 {
     private string? ClientIp => HttpContext.Connection.RemoteIpAddress?.ToString();
-    private Guid UserId => Guid.Parse(HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub)!);
+    private Guid UserId => Guid.Parse(
+        HttpContext.User.FindFirst("sub")?.Value
+        ?? HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+        ?? throw new UnauthorizedAccessException("User identifier claim is missing."));
 
     /// <summary>List products with pagination, search, and filters.</summary>
     [HttpGet]

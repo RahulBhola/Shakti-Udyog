@@ -249,11 +249,14 @@ function AdminProductCard({
           <FileEdit size={15} />
         </button>
 
-        <div className="relative">
+        <div className="relative product-card-menu-container" onMouseDown={(e) => e.stopPropagation()}>
           <button
             type="button"
-            onClick={() => setOpenMenuId(isMenuOpen ? null : product.id)}
-            className="inline-flex items-center justify-center p-2 rounded-lg border border-neutral-200 dark:border-white/10 bg-neutral-50 hover:bg-neutral-100 dark:bg-white/5 dark:hover:bg-white/10 text-neutral-700 dark:text-neutral-300 transition-all"
+            onClick={(e) => {
+              e.stopPropagation();
+              setOpenMenuId(isMenuOpen ? null : product.id);
+            }}
+            className="inline-flex items-center justify-center p-2 rounded-lg border border-neutral-200 dark:border-white/10 bg-neutral-50 hover:bg-neutral-100 dark:bg-white/5 dark:hover:bg-white/10 text-neutral-700 dark:text-neutral-300 transition-all cursor-pointer"
             title="More Options"
           >
             <MoreVertical size={15} />
@@ -262,11 +265,16 @@ function AdminProductCard({
           {isMenuOpen && (
             <div
               className="absolute right-0 bottom-full mb-1 w-40 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#161a24] shadow-2xl p-1 z-30 flex flex-col gap-0.5"
+              onClick={(e) => e.stopPropagation()}
             >
               <button
                 type="button"
-                onClick={() => { setOpenMenuId(null); onToggleStatus(); }}
-                className={`flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg text-left font-medium ${
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpenMenuId(null);
+                  onToggleStatus();
+                }}
+                className={`flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg text-left font-medium cursor-pointer ${
                   product.status === "Active"
                     ? "text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-500/10"
                     : "text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10"
@@ -276,23 +284,35 @@ function AdminProductCard({
               </button>
               <button
                 type="button"
-                onClick={() => { setOpenMenuId(null); onDuplicate(); }}
-                className="flex items-center gap-2 px-3 py-1.5 text-xs text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-white/10 rounded-lg text-left font-medium"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpenMenuId(null);
+                  onDuplicate();
+                }}
+                className="flex items-center gap-2 px-3 py-1.5 text-xs text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-white/10 rounded-lg text-left font-medium cursor-pointer"
               >
                 <Copy size={13} /> Duplicate
               </button>
               <button
                 type="button"
-                onClick={() => { setOpenMenuId(null); onArchive(); }}
-                className="flex items-center gap-2 px-3 py-1.5 text-xs text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-white/10 rounded-lg text-left font-medium"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpenMenuId(null);
+                  onArchive();
+                }}
+                className="flex items-center gap-2 px-3 py-1.5 text-xs text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-white/10 rounded-lg text-left font-medium cursor-pointer"
               >
                 <Archive size={13} /> Archive
               </button>
               <div className="h-px bg-neutral-200 dark:bg-white/10 my-0.5" />
               <button
                 type="button"
-                onClick={() => { setOpenMenuId(null); onDelete(); }}
-                className="flex items-center gap-2 px-3 py-1.5 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/20 rounded-lg text-left font-medium"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpenMenuId(null);
+                  onDelete();
+                }}
+                className="flex items-center gap-2 px-3 py-1.5 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/20 rounded-lg text-left font-medium cursor-pointer"
               >
                 <Trash2 size={13} /> Delete
               </button>
@@ -357,7 +377,10 @@ export default function AdminProductPage() {
   // Close menus on click outside
   useEffect(() => {
     if (!openMenuId) return;
-    const onDown = () => setOpenMenuId(null);
+    const onDown = (e: MouseEvent) => {
+      if ((e.target as HTMLElement)?.closest?.(".product-card-menu-container")) return;
+      setOpenMenuId(null);
+    };
     document.addEventListener("mousedown", onDown);
     return () => document.removeEventListener("mousedown", onDown);
   }, [openMenuId]);
@@ -394,7 +417,16 @@ export default function AdminProductPage() {
     loadStats();
   };
 
-  const handleArchive = async (id: string) => { await adminApi.productMaster.archive(id); load(); loadStats(); };
+  const handleArchive = async (id: string) => {
+    try {
+      await adminApi.productMaster.archive(id);
+      load();
+      loadStats();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Failed to archive product.");
+    }
+  };
+
   const handleDuplicate = async (id: string) => {
     try {
       const dup = await adminApi.productMaster.duplicate(id);
@@ -405,12 +437,26 @@ export default function AdminProductPage() {
       alert(e instanceof Error ? e.message : "Failed to duplicate product.");
     }
   };
-  const handleDelete = async (id: string) => { await adminApi.productMaster.archive(id); load(); loadStats(); };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await adminApi.productMaster.archive(id);
+      load();
+      loadStats();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Failed to delete product.");
+    }
+  };
+
   const handleToggleStatus = async (product: ProductMasterListItem) => {
-    const newStatus = product.status === "Active" ? "Inactive" : "Active";
-    await adminApi.productMaster.update(product.id, { status: newStatus });
-    load();
-    loadStats();
+    try {
+      const newStatus = product.status === "Active" ? "Inactive" : "Active";
+      await adminApi.productMaster.update(product.id, { status: newStatus });
+      load();
+      loadStats();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Failed to update product status.");
+    }
   };
 
   const kpis = [
