@@ -603,15 +603,26 @@ export default function AdminEngineersPage() {
   const [statusUser, setStatusUser] = useState<EngineerUser | null>(null);
   const [statusLoading, setStatusLoading] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [feedbackNotice, setFeedbackNotice] = useState<string | null>(null);
 
-  const load = useCallback(() => {
-    apiGet<EngineerUser[]>("/api/v1/admin/users")
-      .then((all) => setUsers(all.filter((u) => u.role === "Engineer")))
-      .catch((e: Error) => setError(e.message));
+  const load = useCallback((isManual = false) => {
+    if (isManual) setRefreshing(true);
+    return apiGet<EngineerUser[]>("/api/v1/admin/users")
+      .then((all) => {
+        setUsers(all.filter((u) => u.role === "Engineer"));
+        if (isManual) {
+          setFeedbackNotice("Engineer roster refreshed successfully.");
+          setTimeout(() => setFeedbackNotice(null), 2500);
+        }
+      })
+      .catch((e: Error) => setError(e.message))
+      .finally(() => {
+        if (isManual) setRefreshing(false);
+      });
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { void load(false); }, [load]);
 
   const filtered = useMemo(() => {
     return (users ?? []).filter((u) => {
@@ -715,12 +726,13 @@ export default function AdminEngineersPage() {
 
           <button
             type="button"
-            onClick={load}
-            className="inline-flex items-center gap-1.5 px-3.5 h-10 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#121520] hover:bg-neutral-50 dark:hover:bg-white/5 text-xs font-bold text-neutral-700 dark:text-neutral-300 transition-all shadow-xs cursor-pointer"
+            onClick={() => void load(true)}
+            disabled={refreshing}
+            className="inline-flex items-center gap-1.5 px-3.5 h-10 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#121520] hover:bg-neutral-50 dark:hover:bg-white/5 text-xs font-bold text-neutral-700 dark:text-neutral-300 transition-all shadow-xs cursor-pointer disabled:opacity-60"
             title="Refresh Engineers"
           >
-            <RefreshCw size={13} />
-            <span>Refresh</span>
+            <RefreshCw size={13} className={refreshing ? "animate-spin text-blue-500" : ""} />
+            <span>{refreshing ? "Refreshing..." : "Refresh"}</span>
           </button>
         </div>
       </div>

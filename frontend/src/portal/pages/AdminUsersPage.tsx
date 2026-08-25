@@ -618,15 +618,26 @@ export default function AdminUsersPage() {
   const [statusLoading, setStatusLoading] = useState(false);
   const [showCleanTestsModal, setShowCleanTestsModal] = useState(false);
   const [cleaningTests, setCleaningTests] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [feedbackNotice, setFeedbackNotice] = useState<string | null>(null);
 
-  const load = useCallback(() => {
-    apiGet<AdminUser[]>("/api/v1/admin/users")
-      .then(setUsers)
-      .catch((e: Error) => setError(e.message));
+  const load = useCallback((isManual = false) => {
+    if (isManual) setRefreshing(true);
+    return apiGet<AdminUser[]>("/api/v1/admin/users")
+      .then((data) => {
+        setUsers(data);
+        if (isManual) {
+          setFeedbackNotice("Users directory refreshed successfully.");
+          setTimeout(() => setFeedbackNotice(null), 2500);
+        }
+      })
+      .catch((e: Error) => setError(e.message))
+      .finally(() => {
+        if (isManual) setRefreshing(false);
+      });
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { void load(false); }, [load]);
 
   // Companies list
   const companies = useMemo(() => {
@@ -787,12 +798,13 @@ export default function AdminUsersPage() {
 
           <button
             type="button"
-            onClick={load}
-            className="inline-flex items-center gap-1.5 px-3.5 h-9 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#121520] hover:bg-neutral-50 dark:hover:bg-white/5 text-xs font-bold text-neutral-700 dark:text-neutral-300 transition-all shadow-xs cursor-pointer"
+            onClick={() => void load(true)}
+            disabled={refreshing}
+            className="inline-flex items-center gap-1.5 px-3.5 h-9 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#121520] hover:bg-neutral-50 dark:hover:bg-white/5 text-xs font-bold text-neutral-700 dark:text-neutral-300 transition-all shadow-xs cursor-pointer disabled:opacity-60"
             title="Refresh Users"
           >
-            <RefreshCw size={13} />
-            <span>Refresh</span>
+            <RefreshCw size={13} className={refreshing ? "animate-spin text-orange-500" : ""} />
+            <span>{refreshing ? "Refreshing..." : "Refresh"}</span>
           </button>
         </div>
       </div>
