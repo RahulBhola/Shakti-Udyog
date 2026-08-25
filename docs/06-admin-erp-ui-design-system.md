@@ -192,7 +192,35 @@ Standard modal structure for all destructive or status-altering operations:
 
 ---
 
-### E. Slide-Out Right-Hand Side (RHS) Drawer Architecture
+### E. Ambient Glowing Radial Gradient KPI Card Pattern
+
+Every KPI metric card must feature top-left icon badges, high-contrast typography, and smooth ambient top-right radial glow gradients:
+
+```tsx
+{/* Blue KPI Card */}
+<div className="relative overflow-hidden p-4 sm:p-5 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all before:absolute before:inset-0 before:bg-[radial-gradient(150px_110px_at_95%_0%,rgba(59,130,246,0.18),transparent)] before:pointer-events-none">
+  <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
+    <Users size={18} />
+  </div>
+  <div className="text-2xl sm:text-[26px] font-extrabold text-neutral-900 dark:text-white mt-3 leading-tight tracking-tight">
+    {kpis.total}
+  </div>
+  <div className="text-xs font-bold text-neutral-800 dark:text-neutral-200 mt-1">Total Users</div>
+  <div className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">All platform accounts</div>
+</div>
+
+{/* Color Palettes for Gradients:
+  - Blue:    before:bg-[radial-gradient(150px_110px_at_95%_0%,rgba(59,130,246,0.18),transparent)]
+  - Emerald: before:bg-[radial-gradient(150px_110px_at_95%_0%,rgba(16,185,129,0.18),transparent)]
+  - Purple:  before:bg-[radial-gradient(150px_110px_at_95%_0%,rgba(168,85,247,0.18),transparent)]
+  - Amber:   before:bg-[radial-gradient(150px_110px_at_95%_0%,rgba(249,115,22,0.18),transparent)]
+  - Teal:    before:bg-[radial-gradient(150px_110px_at_95%_0%,rgba(20,184,166,0.18),transparent)]
+*/}
+```
+
+---
+
+### F. Slide-Out Right-Hand Side (RHS) Drawer Architecture
 
 For full specifications and in-place sub-view editing (ensuring closing the edit form never closes the drawer):
 
