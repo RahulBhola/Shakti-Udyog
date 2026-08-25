@@ -12,7 +12,7 @@ import {
   Package, Plus, Download, Search, RefreshCw, Eye, MoreVertical,
   ChevronLeft, ChevronRight, X, Copy, Archive, Trash2, FileEdit,
   Boxes, CheckCircle2, Clock, Tag, TrendingDown, LayoutGrid, Table as TableIcon,
-  Scale, FolderTree, Power,
+  Scale, FolderTree, Power, AlertTriangle,
 } from "lucide-react";
 import "./erpListView.css";
 
@@ -347,6 +347,13 @@ export default function AdminProductPage() {
   const [categoriesModalOpen, setCategoriesModalOpen] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<ProductMasterListItem | null>(null);
+  const [notice, setNotice] = useState<{
+    title: string;
+    message: string;
+    type?: "warning" | "error" | "info";
+    actionLabel?: string;
+    onAction?: () => void;
+  } | null>(null);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -423,7 +430,11 @@ export default function AdminProductPage() {
       load();
       loadStats();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Failed to archive product.");
+      setNotice({
+        title: "Archive Failed",
+        message: e instanceof Error ? e.message : "Failed to archive product.",
+        type: "error",
+      });
     }
   };
 
@@ -434,7 +445,11 @@ export default function AdminProductPage() {
       await loadStats();
       navigate(`/admin/products/${dup.id}`);
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Failed to duplicate product.");
+      setNotice({
+        title: "Duplicate Failed",
+        message: e instanceof Error ? e.message : "Failed to duplicate product.",
+        type: "error",
+      });
     }
   };
 
@@ -444,7 +459,11 @@ export default function AdminProductPage() {
       load();
       loadStats();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Failed to delete product.");
+      setNotice({
+        title: "Delete Failed",
+        message: e instanceof Error ? e.message : "Failed to delete product.",
+        type: "error",
+      });
     }
   };
 
@@ -454,7 +473,16 @@ export default function AdminProductPage() {
       if (newStatus === "Active") {
         const hasImage = Boolean(product.imageUrl || product.lightImageUrl || product.firstAttachmentId);
         if (!hasImage) {
-          alert("Cannot activate product: A primary product image is required before publishing to the public catalogue. Please edit the product and upload an image in Attachments.");
+          setNotice({
+            title: "Primary Image Required",
+            message: `"${product.productName}" cannot be activated because it has no primary product image.\n\nPlease edit the product and upload an image in Attachments before publishing to the public catalogue.`,
+            type: "warning",
+            actionLabel: "Edit Product",
+            onAction: () => {
+              setNotice(null);
+              navigate(`/admin/products/${product.id}`);
+            },
+          });
           return;
         }
       }
@@ -462,7 +490,11 @@ export default function AdminProductPage() {
       load();
       loadStats();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Failed to update product status.");
+      setNotice({
+        title: "Status Update Failed",
+        message: e instanceof Error ? e.message : "Failed to update product status.",
+        type: "error",
+      });
     }
   };
 
@@ -750,6 +782,60 @@ export default function AdminProductPage() {
           if (p) void handleDelete(p.id);
         }}
       />
+
+      {/* Notice / Validation Modal Popup */}
+      {notice && (
+        <div className="inv-modal-backdrop" onClick={() => setNotice(null)}>
+          <div
+            className="inv-modal"
+            style={{ maxWidth: 440 }}
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className="inv-modal__body" style={{ alignItems: "center", textAlign: "center", padding: "28px 24px 16px" }}>
+              <span
+                className="inv-avatar"
+                style={{
+                  background: notice.type === "error" ? "rgba(239,68,68,0.12)" : "rgba(245,158,11,0.12)",
+                  color: notice.type === "error" ? "var(--color-danger)" : "var(--color-warning, #f59e0b)",
+                  width: 52,
+                  height: 52,
+                  borderRadius: 16,
+                  marginBottom: 8,
+                }}
+              >
+                <AlertTriangle size={24} />
+              </span>
+              <div className="inv-modal__title" style={{ fontSize: 18, fontWeight: 700 }}>{notice.title}</div>
+              <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: "8px 0 0", lineHeight: 1.55, whiteSpace: "pre-line" }}>
+                {notice.message}
+              </p>
+            </div>
+            <div className="inv-modal__foot" style={{ justifyContent: "center", gap: 10, padding: "16px 24px 24px" }}>
+              {notice.actionLabel && notice.onAction ? (
+                <>
+                  <button className="inv-btn" onClick={() => setNotice(null)}>Cancel</button>
+                  <button
+                    className="inv-btn inv-btn--primary"
+                    onClick={notice.onAction}
+                  >
+                    {notice.actionLabel}
+                  </button>
+                </>
+              ) : (
+                <button
+                  className="inv-btn inv-btn--primary"
+                  style={{ minWidth: 120 }}
+                  onClick={() => setNotice(null)}
+                >
+                  OK
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

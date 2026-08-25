@@ -132,6 +132,7 @@ export default function AdminProductDetailPage() {
   const [uploading, setUploading] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [notice, setNotice] = useState<{ title: string; message: string; type?: "warning" | "error" | "info" } | null>(null);
 
   const loadProduct = () => {
     setLoading(true);
@@ -205,7 +206,11 @@ export default function AdminProductDetailPage() {
       }
       loadProduct();
     } catch (e: any) {
-      alert("Failed to upload attachment: " + e.message);
+      setNotice({
+        title: "Upload Failed",
+        message: e instanceof Error ? e.message : "Failed to upload attachment.",
+        type: "error",
+      });
     } finally {
       setUploading(false);
     }
@@ -573,6 +578,48 @@ export default function AdminProductDetailPage() {
         categories={categories}
         initialData={product ? mapProductToFormData(product) : undefined}
       />
+
+      {/* Notice / Validation Modal Popup */}
+      {notice && (
+        <div className="inv-modal-backdrop" onClick={() => setNotice(null)}>
+          <div
+            className="inv-modal"
+            style={{ maxWidth: 440 }}
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className="inv-modal__body" style={{ alignItems: "center", textAlign: "center", padding: "28px 24px 16px" }}>
+              <span
+                className="inv-avatar"
+                style={{
+                  background: notice.type === "error" ? "rgba(239,68,68,0.12)" : "rgba(245,158,11,0.12)",
+                  color: notice.type === "error" ? "var(--color-danger)" : "var(--color-warning, #f59e0b)",
+                  width: 52,
+                  height: 52,
+                  borderRadius: 16,
+                  marginBottom: 8,
+                }}
+              >
+                <AlertTriangle size={24} />
+              </span>
+              <div className="inv-modal__title" style={{ fontSize: 18, fontWeight: 700 }}>{notice.title}</div>
+              <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: "8px 0 0", lineHeight: 1.55, whiteSpace: "pre-line" }}>
+                {notice.message}
+              </p>
+            </div>
+            <div className="inv-modal__foot" style={{ justifyContent: "center", gap: 10, padding: "16px 24px 24px" }}>
+              <button
+                className="inv-btn inv-btn--primary"
+                style={{ minWidth: 120 }}
+                onClick={() => setNotice(null)}
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
