@@ -57,7 +57,12 @@ export default function AdminProfilePage() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [department, setDepartment] = useState("Operations & Plant Administration");
   const [employeeId, setEmployeeId] = useState("EMP-SU-001");
-  const [originalPersonal, setOriginalPersonal] = useState({ fullName: "", phoneNumber: "", department: "Operations & Plant Administration", employeeId: "EMP-SU-001" });
+  const [originalPersonal, setOriginalPersonal] = useState({
+    fullName: "",
+    phoneNumber: "",
+    department: "Operations & Plant Administration",
+    employeeId: "EMP-SU-001",
+  });
 
   // Form states - Enterprise Company Profile
   const [companyName, setCompanyName] = useState("Shakti Udyog");
@@ -93,7 +98,7 @@ export default function AdminProfilePage() {
   const [notifyInvoices, setNotifyInvoices] = useState(true);
 
   // Navigation & Collapsible Groups state
-  const [activeTab, setActiveTab] = useState<"company" | "personal" | "security" | "permissions" | "notifications">("company");
+  const [activeTab, setActiveTab] = useState<"company" | "personal" | "security" | "permissions" | "notifications">("personal");
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const [copiedEmail, setCopiedEmail] = useState(false);
 
@@ -114,42 +119,22 @@ export default function AdminProfilePage() {
         adminApi.settings(),
       ]);
 
-      if (profileRes.status === "fulfilled") {
-        const p = profileRes.value;
-        setProfile(p);
-        setFullName(p.fullName || "");
-        setPhoneNumber(p.phoneNumber || "");
-        setOriginalPersonal({
-          fullName: p.fullName || "",
-          phoneNumber: p.phoneNumber || "",
-          department: "Operations & Plant Administration",
-          employeeId: "EMP-SU-001",
-        });
-      } else if (user) {
-        setProfile({
-          id: user.id,
-          email: user.email,
-          fullName: user.fullName,
-          phoneNumber: "",
-          isActive: true,
-          createdAtUtc: new Date().toISOString(),
-          lastLoginAtUtc: new Date().toISOString(),
-          companyName: "Shakti Udyog",
-          roles: user.roles,
-        });
-        setFullName(user.fullName || "");
-        setOriginalPersonal({
-          fullName: user.fullName || "",
-          phoneNumber: "",
-          department: "Operations & Plant Administration",
-          employeeId: "EMP-SU-001",
-        });
-      }
+      let initialEmpCode = "EMP-SU-001";
+      let initialDept = "Operations & Plant Administration";
 
       if (settingsRes.status === "fulfilled" && settingsRes.value) {
         const s = settingsRes.value;
         setSettings(s);
         setOriginalSettings(s);
+
+        if (s["admin.employeeCode"] || s["admin.employeeId"]) {
+          initialEmpCode = s["admin.employeeCode"] || s["admin.employeeId"];
+        }
+        if (s["admin.department"]) {
+          initialDept = s["admin.department"];
+        }
+        setEmployeeId(initialEmpCode);
+        setDepartment(initialDept);
 
         if (s["company.name"]) setCompanyName(s["company.name"]);
         if (s["company.website"]) setCompanyWebsite(s["company.website"]);
@@ -170,6 +155,38 @@ export default function AdminProfilePage() {
         if (s["notify.onOrderStatus"] || s["notify.onOrderPlaced"]) setNotifyOrders((s["notify.onOrderStatus"] || s["notify.onOrderPlaced"]) === "true");
         if (s["notify.onPayment"]) setNotifyPayments(s["notify.onPayment"] === "true");
         if (s["notify.onInvoice"] || s["notify.onInvoiceGenerated"]) setNotifyInvoices((s["notify.onInvoice"] || s["notify.onInvoiceGenerated"]) === "true");
+      }
+
+      if (profileRes.status === "fulfilled") {
+        const p = profileRes.value;
+        setProfile(p);
+        setFullName(p.fullName || "");
+        setPhoneNumber(p.phoneNumber || "");
+        setOriginalPersonal({
+          fullName: p.fullName || "",
+          phoneNumber: p.phoneNumber || "",
+          department: initialDept,
+          employeeId: initialEmpCode,
+        });
+      } else if (user) {
+        setProfile({
+          id: user.id,
+          email: user.email,
+          fullName: user.fullName,
+          phoneNumber: "",
+          isActive: true,
+          createdAtUtc: new Date().toISOString(),
+          lastLoginAtUtc: new Date().toISOString(),
+          companyName: "Shakti Udyog",
+          roles: user.roles,
+        });
+        setFullName(user.fullName || "");
+        setOriginalPersonal({
+          fullName: user.fullName || "",
+          phoneNumber: "",
+          department: initialDept,
+          employeeId: initialEmpCode,
+        });
       }
     } catch {
       // Ignored
@@ -198,10 +215,15 @@ export default function AdminProfilePage() {
     };
   }, [fullName, profile, user, phoneNumber, department, companyName, companyFactoryAddress, companyRegAddress]);
 
-  // Dirty detection
+  // Dirty detection - full field checking
   const isPersonalDirty = useMemo(() => {
-    return fullName !== originalPersonal.fullName || phoneNumber !== originalPersonal.phoneNumber;
-  }, [fullName, phoneNumber, originalPersonal]);
+    return (
+      fullName !== originalPersonal.fullName ||
+      phoneNumber !== originalPersonal.phoneNumber ||
+      department !== originalPersonal.department ||
+      employeeId !== originalPersonal.employeeId
+    );
+  }, [fullName, phoneNumber, department, employeeId, originalPersonal]);
 
   const isCompanyDirty = useMemo(() => {
     return (
@@ -240,50 +262,56 @@ export default function AdminProfilePage() {
   async function handleSaveAll() {
     setSaving(true);
     try {
-      // 1. Save personal profile
-      if (isPersonalDirty) {
+      // 1. Save personal profile if name or phone changed
+      if (fullName !== originalPersonal.fullName || phoneNumber !== originalPersonal.phoneNumber) {
         await apiPatch("/api/v1/admin/profile", {
           fullName: fullName.trim(),
           phoneNumber: phoneNumber.trim(),
         });
-        setOriginalPersonal((prev) => ({ ...prev, fullName, phoneNumber }));
         if (profile) setProfile({ ...profile, fullName, phoneNumber });
       }
 
-      // 2. Save company and notification settings
-      if (isCompanyDirty || isNotificationsDirty) {
-        const payload: Record<string, string> = {
-          ...settings,
-          "company.name": companyName.trim(),
-          "company.website": companyWebsite.trim(),
-          "company.email": companyEmail.trim(),
-          "company.phone": companyPhone.trim(),
-          "company.currency": companyCurrency.trim(),
-          "company.gst": companyGstin.trim(),
-          "company.gstin": companyGstin.trim(),
-          "company.pan": companyPan.trim(),
-          "company.cin": companyCin.trim(),
-          "company.msme": companyMsme.trim(),
-          "company.registeredAddress": companyRegAddress.trim(),
-          "company.factoryAddress": companyFactoryAddress.trim(),
-          "company.plantAddress": companyFactoryAddress.trim(),
-          "company.city": companyCity.trim(),
-          "company.state": companyState.trim(),
-          "company.pin": companyPin.trim(),
-          "notify.onNewEnquiry": String(notifyRfq),
-          "notify.onEnquiry": String(notifyRfq),
-          "notify.onOrderStatus": String(notifyOrders),
-          "notify.onOrderPlaced": String(notifyOrders),
-          "notify.onPayment": String(notifyPayments),
-          "notify.onInvoice": String(notifyInvoices),
-          "notify.onInvoiceGenerated": String(notifyInvoices),
-        };
-        await adminApi.updateSettings(payload);
-        setSettings(payload);
-        setOriginalSettings(payload);
-      }
+      // 2. Save settings (staff code, department, enterprise details, notifications)
+      const payload: Record<string, string> = {
+        ...settings,
+        "admin.employeeCode": employeeId.trim(),
+        "admin.employeeId": employeeId.trim(),
+        "admin.department": department.trim(),
+        "company.name": companyName.trim(),
+        "company.website": companyWebsite.trim(),
+        "company.email": companyEmail.trim(),
+        "company.phone": companyPhone.trim(),
+        "company.currency": companyCurrency.trim(),
+        "company.gst": companyGstin.trim(),
+        "company.gstin": companyGstin.trim(),
+        "company.pan": companyPan.trim(),
+        "company.cin": companyCin.trim(),
+        "company.msme": companyMsme.trim(),
+        "company.registeredAddress": companyRegAddress.trim(),
+        "company.factoryAddress": companyFactoryAddress.trim(),
+        "company.plantAddress": companyFactoryAddress.trim(),
+        "company.city": companyCity.trim(),
+        "company.state": companyState.trim(),
+        "company.pin": companyPin.trim(),
+        "notify.onNewEnquiry": String(notifyRfq),
+        "notify.onEnquiry": String(notifyRfq),
+        "notify.onOrderStatus": String(notifyOrders),
+        "notify.onOrderPlaced": String(notifyOrders),
+        "notify.onPayment": String(notifyPayments),
+        "notify.onInvoice": String(notifyInvoices),
+        "notify.onInvoiceGenerated": String(notifyInvoices),
+      };
+      await adminApi.updateSettings(payload);
+      setSettings(payload);
+      setOriginalSettings(payload);
+      setOriginalPersonal({
+        fullName,
+        phoneNumber,
+        department,
+        employeeId,
+      });
 
-      showToast("Profile & Enterprise Organization updated successfully.", "success");
+      showToast("Profile & Staff Details updated successfully.", "success");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to save profile changes.";
       showToast(msg, "error");
@@ -295,6 +323,8 @@ export default function AdminProfilePage() {
   function handleDiscard() {
     setFullName(originalPersonal.fullName);
     setPhoneNumber(originalPersonal.phoneNumber);
+    setDepartment(originalPersonal.department);
+    setEmployeeId(originalPersonal.employeeId);
 
     const s = originalSettings;
     setCompanyName(s["company.name"] ?? "Shakti Udyog");
@@ -377,17 +407,6 @@ export default function AdminProfilePage() {
   // Tab definitions with icons, badges, descriptions
   const TABS = [
     {
-      id: "company",
-      title: "Company Identity & Tax Profile",
-      shortTitle: "Company Profile",
-      description: "Official business identity, registration credentials, and plant locations used across invoices, quotations, and reports.",
-      icon: Building2,
-      badgeBg: "bg-blue-500/10",
-      badgeText: "text-blue-600 dark:text-blue-400",
-      badgeBorder: "border-blue-500/20",
-      groupCount: 3,
-    },
-    {
       id: "personal",
       title: "Personal Staff Details",
       shortTitle: "Personal Details",
@@ -397,6 +416,17 @@ export default function AdminProfilePage() {
       badgeText: "text-amber-600 dark:text-amber-400",
       badgeBorder: "border-amber-500/20",
       groupCount: 1,
+    },
+    {
+      id: "company",
+      title: "Company Identity & Tax Profile",
+      shortTitle: "Company Profile",
+      description: "Official business identity, registration credentials, and plant locations used across invoices, quotations, and reports.",
+      icon: Building2,
+      badgeBg: "bg-blue-500/10",
+      badgeText: "text-blue-600 dark:text-blue-400",
+      badgeBorder: "border-blue-500/20",
+      groupCount: 3,
     },
     {
       id: "security",
@@ -602,11 +632,11 @@ export default function AdminProfilePage() {
         <div className="flex items-center gap-2.5 self-start md:self-center shrink-0">
           <div className="p-3 rounded-xl border border-neutral-200/80 dark:border-white/10 bg-neutral-50 dark:bg-white/[0.02] text-center min-w-[105px]">
             <div className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">Department</div>
-            <div className="text-xs font-extrabold text-neutral-900 dark:text-white mt-0.5">Operations</div>
+            <div className="text-xs font-extrabold text-neutral-900 dark:text-white mt-0.5">{department}</div>
           </div>
           <div className="p-3 rounded-xl border border-neutral-200/80 dark:border-white/10 bg-neutral-50 dark:bg-white/[0.02] text-center min-w-[105px]">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">Admin Scope</div>
-            <div className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 mt-0.5">Full Root Access</div>
+            <div className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">Staff Code</div>
+            <div className="text-xs font-extrabold text-[var(--color-primary)] mt-0.5 font-mono">{employeeId}</div>
           </div>
         </div>
       </div>
@@ -694,7 +724,160 @@ export default function AdminProfilePage() {
       {/* 6. TAB CONTENT PANELS                                             */}
       {/* ================================================================= */}
 
-      {/* ── TAB 1: Enterprise Identity & Tax Profile ── */}
+      {/* ── TAB 1: Personal Staff Details ── */}
+      {activeTab === "personal" && (
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-2xs transition-all overflow-hidden">
+            <div
+              onClick={() => toggleGroup("personal-info")}
+              className="p-5 flex items-center justify-between gap-4 cursor-pointer select-none hover:bg-neutral-50/70 dark:hover:bg-white/[0.02] transition-colors"
+            >
+              <div className="space-y-0.5 flex-1 min-w-0">
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <h3 className="text-sm font-extrabold text-neutral-900 dark:text-white m-0">
+                    Personal Identity & Direct Contacts
+                  </h3>
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-neutral-100 dark:bg-white/10 text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-white/10">
+                    6 Fields
+                  </span>
+                  {isPersonalDirty && (
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                      Modified
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11.5px] text-neutral-500 dark:text-neutral-400 m-0">
+                  Update your public staff display name, employee code, direct mobile, and primary work email.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleGroup("personal-info");
+                }}
+                className={cn(
+                  "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-2xs cursor-pointer shrink-0",
+                  collapsedGroups["personal-info"]
+                    ? "bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100"
+                    : "bg-neutral-100 dark:bg-white/5 border-neutral-200 dark:border-white/10 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-200/60"
+                )}
+              >
+                {collapsedGroups["personal-info"] ? <Eye size={13} /> : <EyeOff size={13} />}
+                <span>{collapsedGroups["personal-info"] ? "View Details" : "Hide Section"}</span>
+                {collapsedGroups["personal-info"] ? <ChevronDown size={13} /> : <ChevronUp size={13} />}
+              </button>
+            </div>
+
+            {!collapsedGroups["personal-info"] && (
+              <div className="px-6 pb-6 pt-2 border-t border-neutral-100 dark:border-white/5 space-y-4 animate-in fade-in slide-in-from-top-1 duration-150">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3">
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-neutral-800 dark:text-neutral-200">
+                      Full Name <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder="e.g. Rahul Bhola"
+                      required
+                      className="w-full px-3.5 py-2 text-xs rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#090b10] text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:border-[var(--color-primary)] transition-all"
+                    />
+                    <span className="block text-[11px] text-neutral-400">Your staff identity displayed across ERP audit logs</span>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-neutral-800 dark:text-neutral-200">
+                      Work Email Address
+                    </label>
+                    <input
+                      type="email"
+                      value={user?.email || ""}
+                      disabled
+                      className="w-full px-3.5 py-2 text-xs rounded-xl border border-neutral-200/70 dark:border-white/5 bg-neutral-100 dark:bg-white/5 text-neutral-500 dark:text-neutral-400 font-mono cursor-not-allowed"
+                      title="Corporate email is managed by your system administrator"
+                    />
+                    <span className="block text-[11px] text-neutral-400">Managed via administrative user registry</span>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-neutral-800 dark:text-neutral-200">
+                      Direct Phone Number
+                    </label>
+                    <input
+                      type="tel"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      placeholder="+91 98765 43210"
+                      className="w-full px-3.5 py-2 text-xs rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#090b10] text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:border-[var(--color-primary)] transition-all"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-neutral-800 dark:text-neutral-200">
+                      Department / Operational Unit
+                    </label>
+                    <input
+                      type="text"
+                      value={department}
+                      onChange={(e) => setDepartment(e.target.value)}
+                      className="w-full px-3.5 py-2 text-xs rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#090b10] text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:border-[var(--color-primary)] transition-all"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-neutral-800 dark:text-neutral-200">
+                      Staff / Employee Code
+                    </label>
+                    <input
+                      type="text"
+                      value={employeeId}
+                      onChange={(e) => setEmployeeId(e.target.value)}
+                      placeholder="EMP-AD-001"
+                      className="w-full px-3.5 py-2 text-xs rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#090b10] text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:border-[var(--color-primary)] transition-all font-mono"
+                    />
+                    <span className="block text-[11px] text-neutral-400">Unique alphanumeric staff identity badge identifier</span>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-neutral-800 dark:text-neutral-200">
+                      Assigned Foundry Plant
+                    </label>
+                    <input
+                      type="text"
+                      value="Shakti Udyog Main Foundry (Ludhiana Plant 1)"
+                      disabled
+                      className="w-full px-3.5 py-2 text-xs rounded-xl border border-neutral-200/70 dark:border-white/5 bg-neutral-100 dark:bg-white/5 text-neutral-500 dark:text-neutral-400 cursor-not-allowed"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-3 border-t border-neutral-100 dark:border-white/5">
+                  <button
+                    type="button"
+                    onClick={handleSaveAll}
+                    disabled={saving || !isPersonalDirty}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 px-4 h-8 rounded-xl text-xs font-bold transition-all shadow-2xs cursor-pointer",
+                      isPersonalDirty
+                        ? "bg-[var(--color-primary)] hover:opacity-90 text-white shadow-sm"
+                        : "bg-neutral-100 dark:bg-white/5 text-neutral-400 dark:text-neutral-600 border border-neutral-200/80 dark:border-white/10 cursor-not-allowed"
+                    )}
+                  >
+                    <Save size={13} className={saving ? "animate-spin" : ""} />
+                    <span>{saving ? "Saving..." : "Save Personal Details"}</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB 2: Enterprise Identity & Tax Profile ── */}
       {activeTab === "company" && (
         <div className="space-y-4">
           {/* Group 1: Legal Identity & Contact */}
@@ -806,6 +989,23 @@ export default function AdminProfilePage() {
                     <span className="block text-[11px] text-neutral-400">Standard ISO-4217 currency code</span>
                   </div>
                 </div>
+
+                <div className="flex justify-end pt-3 border-t border-neutral-100 dark:border-white/5">
+                  <button
+                    type="button"
+                    onClick={handleSaveAll}
+                    disabled={saving || !isCompanyDirty}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 px-4 h-8 rounded-xl text-xs font-bold transition-all shadow-2xs cursor-pointer",
+                      isCompanyDirty
+                        ? "bg-[var(--color-primary)] hover:opacity-90 text-white shadow-sm"
+                        : "bg-neutral-100 dark:bg-white/5 text-neutral-400 dark:text-neutral-600 border border-neutral-200/80 dark:border-white/10 cursor-not-allowed"
+                    )}
+                  >
+                    <Save size={13} className={saving ? "animate-spin" : ""} />
+                    <span>{saving ? "Saving..." : "Save Company Profile"}</span>
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -903,6 +1103,23 @@ export default function AdminProfilePage() {
                       className="w-full px-3.5 py-2 text-xs rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#090b10] text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:border-[var(--color-primary)] transition-all font-mono uppercase"
                     />
                   </div>
+                </div>
+
+                <div className="flex justify-end pt-3 border-t border-neutral-100 dark:border-white/5">
+                  <button
+                    type="button"
+                    onClick={handleSaveAll}
+                    disabled={saving || !isCompanyDirty}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 px-4 h-8 rounded-xl text-xs font-bold transition-all shadow-2xs cursor-pointer",
+                      isCompanyDirty
+                        ? "bg-[var(--color-primary)] hover:opacity-90 text-white shadow-sm"
+                        : "bg-neutral-100 dark:bg-white/5 text-neutral-400 dark:text-neutral-600 border border-neutral-200/80 dark:border-white/10 cursor-not-allowed"
+                    )}
+                  >
+                    <Save size={13} className={saving ? "animate-spin" : ""} />
+                    <span>{saving ? "Saving..." : "Save Tax Profile"}</span>
+                  </button>
                 </div>
               </div>
             )}
@@ -1015,133 +1232,22 @@ export default function AdminProfilePage() {
                     />
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
-      {/* ── TAB 2: Personal Staff Details ── */}
-      {activeTab === "personal" && (
-        <div className="space-y-4">
-          <div className="rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-2xs transition-all overflow-hidden">
-            <div
-              onClick={() => toggleGroup("personal-info")}
-              className="p-5 flex items-center justify-between gap-4 cursor-pointer select-none hover:bg-neutral-50/70 dark:hover:bg-white/[0.02] transition-colors"
-            >
-              <div className="space-y-0.5 flex-1 min-w-0">
-                <div className="flex items-center gap-2.5 flex-wrap">
-                  <h3 className="text-sm font-extrabold text-neutral-900 dark:text-white m-0">
-                    Personal Identity & Direct Contacts
-                  </h3>
-                  <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-neutral-100 dark:bg-white/10 text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-white/10">
-                    6 Fields
-                  </span>
-                </div>
-                <p className="text-[11.5px] text-neutral-500 dark:text-neutral-400 m-0">
-                  Update your public staff display name, employee code, direct mobile, and primary work email.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleGroup("personal-info");
-                }}
-                className={cn(
-                  "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-2xs cursor-pointer shrink-0",
-                  collapsedGroups["personal-info"]
-                    ? "bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100"
-                    : "bg-neutral-100 dark:bg-white/5 border-neutral-200 dark:border-white/10 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-200/60"
-                )}
-              >
-                {collapsedGroups["personal-info"] ? <Eye size={13} /> : <EyeOff size={13} />}
-                <span>{collapsedGroups["personal-info"] ? "View Details" : "Hide Section"}</span>
-                {collapsedGroups["personal-info"] ? <ChevronDown size={13} /> : <ChevronUp size={13} />}
-              </button>
-            </div>
-
-            {!collapsedGroups["personal-info"] && (
-              <div className="px-6 pb-6 pt-2 border-t border-neutral-100 dark:border-white/5 space-y-4 animate-in fade-in slide-in-from-top-1 duration-150">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3">
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-neutral-800 dark:text-neutral-200">
-                      Full Name <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      placeholder="e.g. Rahul Bhola"
-                      required
-                      className="w-full px-3.5 py-2 text-xs rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#090b10] text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:border-[var(--color-primary)] transition-all"
-                    />
-                    <span className="block text-[11px] text-neutral-400">Your staff identity displayed across ERP audit logs</span>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-neutral-800 dark:text-neutral-200">
-                      Work Email Address
-                    </label>
-                    <input
-                      type="email"
-                      value={user?.email || ""}
-                      disabled
-                      className="w-full px-3.5 py-2 text-xs rounded-xl border border-neutral-200/70 dark:border-white/5 bg-neutral-100 dark:bg-white/5 text-neutral-500 dark:text-neutral-400 font-mono cursor-not-allowed"
-                      title="Corporate email is managed by your system administrator"
-                    />
-                    <span className="block text-[11px] text-neutral-400">Managed via administrative user registry</span>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-neutral-800 dark:text-neutral-200">
-                      Direct Phone Number
-                    </label>
-                    <input
-                      type="tel"
-                      value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value)}
-                      placeholder="+91 98765 43210"
-                      className="w-full px-3.5 py-2 text-xs rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#090b10] text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:border-[var(--color-primary)] transition-all"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-neutral-800 dark:text-neutral-200">
-                      Department / Operational Unit
-                    </label>
-                    <input
-                      type="text"
-                      value={department}
-                      onChange={(e) => setDepartment(e.target.value)}
-                      className="w-full px-3.5 py-2 text-xs rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#090b10] text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:border-[var(--color-primary)] transition-all"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-neutral-800 dark:text-neutral-200">
-                      Staff / Employee Code
-                    </label>
-                    <input
-                      type="text"
-                      value={employeeId}
-                      onChange={(e) => setEmployeeId(e.target.value)}
-                      className="w-full px-3.5 py-2 text-xs rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#090b10] text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:border-[var(--color-primary)] transition-all font-mono"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-neutral-800 dark:text-neutral-200">
-                      Assigned Foundry Plant
-                    </label>
-                    <input
-                      type="text"
-                      value="Shakti Udyog Main Foundry (Ludhiana Plant 1)"
-                      disabled
-                      className="w-full px-3.5 py-2 text-xs rounded-xl border border-neutral-200/70 dark:border-white/5 bg-neutral-100 dark:bg-white/5 text-neutral-500 dark:text-neutral-400 cursor-not-allowed"
-                    />
-                  </div>
+                <div className="flex justify-end pt-3 border-t border-neutral-100 dark:border-white/5">
+                  <button
+                    type="button"
+                    onClick={handleSaveAll}
+                    disabled={saving || !isCompanyDirty}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 px-4 h-8 rounded-xl text-xs font-bold transition-all shadow-2xs cursor-pointer",
+                      isCompanyDirty
+                        ? "bg-[var(--color-primary)] hover:opacity-90 text-white shadow-sm"
+                        : "bg-neutral-100 dark:bg-white/5 text-neutral-400 dark:text-neutral-600 border border-neutral-200/80 dark:border-white/10 cursor-not-allowed"
+                    )}
+                  >
+                    <Save size={13} className={saving ? "animate-spin" : ""} />
+                    <span>{saving ? "Saving..." : "Save Addresses"}</span>
+                  </button>
                 </div>
               </div>
             )}
@@ -1480,6 +1586,23 @@ export default function AdminProfilePage() {
                       />
                     </label>
                   ))}
+                </div>
+
+                <div className="flex justify-end pt-3 border-t border-neutral-100 dark:border-white/5">
+                  <button
+                    type="button"
+                    onClick={handleSaveAll}
+                    disabled={saving || !isNotificationsDirty}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 px-4 h-8 rounded-xl text-xs font-bold transition-all shadow-2xs cursor-pointer",
+                      isNotificationsDirty
+                        ? "bg-[var(--color-primary)] hover:opacity-90 text-white shadow-sm"
+                        : "bg-neutral-100 dark:bg-white/5 text-neutral-400 dark:text-neutral-600 border border-neutral-200/80 dark:border-white/10 cursor-not-allowed"
+                    )}
+                  >
+                    <Save size={13} className={saving ? "animate-spin" : ""} />
+                    <span>{saving ? "Saving..." : "Save Event Preferences"}</span>
+                  </button>
                 </div>
               </div>
             )}
