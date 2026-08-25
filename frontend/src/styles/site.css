@@ -4,6 +4,7 @@
    borders; depth via blur/opacity, not shadows; glow only on interaction.
 --------------------------------------------------------------------------- */
 @import "./tokens.css";
+@import "../features/auth/auth.css";
 
 * { box-sizing: border-box; }
 
@@ -2571,5 +2572,4 @@ ul, ol { padding-left: 1.25rem; }
 /* ═══════════════════════════════════════════════════════════════════════════
    AUTHENTICATION UI — Managed via frontend/src/features/auth/auth.css
    ═══════════════════════════════════════════════════════════════════════════ */
-@import "../features/auth/auth.css";
 

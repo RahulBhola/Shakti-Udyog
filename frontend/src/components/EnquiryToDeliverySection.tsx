@@ -157,7 +157,7 @@ export const EnquiryToDeliverySection: React.FC = () => {
                 
                 {/* The User-Provided Casting Image */}
                 <img
-                  src={getThemedImage('/images/enquiry-delivery-casting.png', isLight)}
+                  src={getThemedImage('/images/enquiry-delivery-casting-transparent.png', isLight)}
                   alt="Precision Cast Iron Component"
                   className={`max-h-[84%] max-w-[84%] object-contain transform hover:scale-105 transition-transform duration-500 ${
                     isLight ? 'drop-shadow-[0_12px_24px_rgba(0,0,0,0.12)]' : 'drop-shadow-[0_20px_35px_rgba(0,0,0,0.85)]'

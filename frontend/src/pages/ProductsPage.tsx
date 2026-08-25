@@ -195,7 +195,7 @@ export default function ProductsPage() {
             </div>
 
             {/* Material Filter Toggle Tabs */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 lg:pb-0">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="text-xs font-mono font-bold uppercase text-neutral-400 mr-1 shrink-0 hidden sm:inline">
                 Material:
               </span>
@@ -203,7 +203,7 @@ export default function ProductsPage() {
                 <button
                   key={mat}
                   onClick={() => setSelectedMaterial(mat)}
-                  className={`px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all shrink-0 border ${
+                  className={`px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all border cursor-pointer ${
                     selectedMaterial === mat
                       ? isLight
                         ? 'bg-orange-500 border-orange-500 text-white shadow-md shadow-orange-500/20'
@@ -220,9 +220,9 @@ export default function ProductsPage() {
 
           </div>
 
-          {/* Category Filter Pills Row */}
-          <div className="flex items-center gap-2 overflow-x-auto pt-6 border-t border-neutral-100 dark:border-white/[0.06] mt-6 scrollbar-none">
-            <div className="flex items-center gap-1.5 text-xs font-mono text-neutral-400 shrink-0 mr-2">
+          {/* Category Filter Pills (All Categories visible on one screen) */}
+          <div className="flex flex-wrap items-center gap-2 pt-5 border-t border-neutral-100 dark:border-white/[0.06] mt-6">
+            <div className="flex items-center gap-1.5 text-xs font-mono text-neutral-400 mr-1 shrink-0">
               <SlidersHorizontal className="w-3.5 h-3.5" />
               <span>Category:</span>
             </div>
@@ -237,13 +237,13 @@ export default function ProductsPage() {
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-3.5 py-1.5 rounded-full text-xs font-mono font-semibold transition-all shrink-0 border ${
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-mono font-semibold transition-all border cursor-pointer ${
                     selectedCategory === cat
                       ? isLight
                         ? 'bg-neutral-900 border-neutral-900 text-white shadow-sm'
                         : 'bg-white border-white text-neutral-950 font-bold shadow-[0_0_15px_rgba(255,255,255,0.25)]'
                       : isLight
-                        ? 'bg-neutral-50 border-neutral-200 text-neutral-600 hover:bg-neutral-100'
+                        ? 'bg-neutral-50 border-neutral-200 text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900'
                         : 'bg-white/5 border-white/10 text-neutral-400 hover:bg-white/10 hover:text-white'
                   }`}
                 >

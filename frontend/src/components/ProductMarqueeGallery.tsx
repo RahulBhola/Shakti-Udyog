@@ -2,12 +2,12 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  Heart,
   Layers,
   Clock,
   ArrowRight,
   Box,
   LayoutGrid,
+  ShieldCheck,
 } from 'lucide-react';
 import { useTheme } from '../auth/ThemeContext';
 import { getThemedImage } from '../utils/themeImage';
@@ -19,7 +19,6 @@ export interface GalleryProductItem {
   grade: string;
   weight: string;
   image: string;
-  likes: number;
   specs: string;
 }
 
@@ -32,7 +31,6 @@ const ROW_1_PRODUCTS: GalleryProductItem[] = [
     grade: 'SG 500/7 Ductile Iron',
     weight: '0.65 kg',
     image: '/images/Sewing_machine_parts/Cast Iron TA 1 Bracket Industrial Sewing Machine Part.png',
-    likes: 385,
     specs: 'Precision CNC machined kinematic bracket with micron tolerance',
   },
   {
@@ -42,7 +40,6 @@ const ROW_1_PRODUCTS: GalleryProductItem[] = [
     grade: 'FG 200 Cast Iron',
     weight: '2.4 kg',
     image: '/images/Sizzler Plate/Continental Sizzler Plate.png',
-    likes: 512,
     specs: 'Thermal shock resistant pre-seasoned heat retention platter',
   },
   {
@@ -52,7 +49,6 @@ const ROW_1_PRODUCTS: GalleryProductItem[] = [
     grade: 'FG 220 Grey Iron',
     weight: '3.8 kg',
     image: '/images/V Belt Pulley/Cast Iron V Belt Pulley Set.png',
-    likes: 429,
     specs: 'Dynamically balanced to ISO 1940 G6.3 up to 3,500 RPM',
   },
   {
@@ -62,7 +58,6 @@ const ROW_1_PRODUCTS: GalleryProductItem[] = [
     grade: 'FG 260 Hydraulic Iron',
     weight: '1.1 kg',
     image: '/images/Collar Plug/Cast Iron Collar Plug.png',
-    likes: 298,
     specs: 'Pressure containment certified for 250+ bar hydraulic lines',
   },
   {
@@ -72,7 +67,6 @@ const ROW_1_PRODUCTS: GalleryProductItem[] = [
     grade: 'SG 600/3 Ductile Iron',
     weight: '8.5 kg',
     image: '/images/cast_iron_casting/Cast Iron Tractor Part Casting.png',
-    likes: 488,
     specs: 'High fatigue strength for continuous heavy field tillage loads',
   },
   {
@@ -82,7 +76,6 @@ const ROW_1_PRODUCTS: GalleryProductItem[] = [
     grade: 'SG 700/2 High Tensile',
     weight: '1.4 kg',
     image: '/images/Gear Lever Parts/Cast Iron Car Gear Lever Part.png',
-    likes: 367,
     specs: 'Surface induction hardened against gear shifting torsional fatigue',
   },
   {
@@ -92,7 +85,6 @@ const ROW_1_PRODUCTS: GalleryProductItem[] = [
     grade: 'FG 260 Grey Iron',
     weight: '12.0 kg',
     image: '/images/Pulley Wheel/6 Inch Cast Iron Pulley Wheel.png',
-    likes: 452,
     specs: 'Wear resistant deep groove pulley for heavy material lifting',
   },
   {
@@ -102,7 +94,6 @@ const ROW_1_PRODUCTS: GalleryProductItem[] = [
     grade: 'FG 260 Hydraulic Iron',
     weight: '5.6 kg',
     image: '/images/cast_iron_casting/Cast Iron Rotary Barrel Pump Casting.png',
-    likes: 379,
     specs: 'Hydrostatically tested for zero porosity under continuous pressure',
   },
   {
@@ -112,7 +103,6 @@ const ROW_1_PRODUCTS: GalleryProductItem[] = [
     grade: 'FG 220 Grey Iron',
     weight: '0.9 kg',
     image: '/images/Hillside Washer/Cast Iron Hillside Washer.png',
-    likes: 284,
     specs: 'High load distributing diagonal anchor washer for steel structures',
   },
   {
@@ -122,7 +112,6 @@ const ROW_1_PRODUCTS: GalleryProductItem[] = [
     grade: 'FG 200 Cast Iron',
     weight: '16.5 kg',
     image: '/images/cast_iron_casting/Cast Iron Button Machine Casting.png',
-    likes: 540,
     specs: 'High vibrational damping base frame for industrial press automation',
   },
 ];
@@ -136,7 +125,6 @@ const ROW_2_PRODUCTS: GalleryProductItem[] = [
     grade: 'SG 500/7 Ductile Iron',
     weight: '0.85 kg',
     image: '/images/Link Part/Iron Link Part 50g.png',
-    likes: 315,
     specs: 'Precision ground bore with high tensile kinematic endurance',
   },
   {
@@ -146,7 +134,6 @@ const ROW_2_PRODUCTS: GalleryProductItem[] = [
     grade: 'SG 600/3 Ductile Iron',
     weight: '1.75 kg',
     image: '/images/cast_iron_casting/Cast Iron Train Door Handle Casting.png',
-    likes: 421,
     specs: 'Impact proof safety certified casting for passenger rail cars',
   },
   {
@@ -156,7 +143,6 @@ const ROW_2_PRODUCTS: GalleryProductItem[] = [
     grade: 'FG 200 Cast Iron',
     weight: '1.9 kg',
     image: '/images/Sizzler Plate/Continental Sizzler Plate 1.png',
-    likes: 388,
     specs: 'Heavy heat retention base designed for commercial kitchens',
   },
   {
@@ -166,7 +152,6 @@ const ROW_2_PRODUCTS: GalleryProductItem[] = [
     grade: 'FG 220 Grey Iron',
     weight: '0.45 kg',
     image: '/images/Cast Iron Nut/Cast Iron Door Closer Nut.png',
-    likes: 275,
     specs: 'Clean tapped threads with high torque clamp load capability',
   },
   {
@@ -176,7 +161,6 @@ const ROW_2_PRODUCTS: GalleryProductItem[] = [
     grade: 'SG 600/3 Ductile Iron',
     weight: '2.1 kg',
     image: '/images/Gear Lever Parts/Cast Iron Car Gear Lever Part 1.png',
-    likes: 495,
     specs: 'Reinforced pivot arm for commercial truck transmissions',
   },
   {
@@ -186,7 +170,6 @@ const ROW_2_PRODUCTS: GalleryProductItem[] = [
     grade: 'FG 260 Grey Iron',
     weight: '9.4 kg',
     image: '/images/Industrial Iron Casting.png',
-    likes: 362,
     specs: 'Stress relieved casting for dimensional stability under load',
   },
   {
@@ -196,7 +179,6 @@ const ROW_2_PRODUCTS: GalleryProductItem[] = [
     grade: 'FG 220 Grey Iron',
     weight: '0.35 kg',
     image: '/images/cast_iron_casting/Cast Iron Check Nut Casting.png',
-    likes: 240,
     specs: 'Cotter pin slotted locking nut for heavy shaft retention',
   },
   {
@@ -206,7 +188,6 @@ const ROW_2_PRODUCTS: GalleryProductItem[] = [
     grade: 'FG 220 Grey Iron',
     weight: '0.55 kg',
     image: '/images/Sewing_machine_parts/Cast Iron Chal T1 Industrial Sewing Machine Part.png',
-    likes: 412,
     specs: 'Vibration absorbing needle drive kinematic link',
   },
   {
@@ -216,7 +197,6 @@ const ROW_2_PRODUCTS: GalleryProductItem[] = [
     grade: 'SG 500/7 Ductile Iron',
     weight: '0.38 kg',
     image: '/images/Sewing_machine_parts/Cast Iron SV Came Industrial Sewing Machine Part.png',
-    likes: 349,
     specs: 'Micron profile ground cam lobe for cycle timing',
   },
   {
@@ -226,7 +206,6 @@ const ROW_2_PRODUCTS: GalleryProductItem[] = [
     grade: 'FG 260 Grey Iron',
     weight: '5.2 kg',
     image: '/images/V Belt Pulley/Cast Iron V Belt Pulley Set 1.png',
-    likes: 467,
     specs: 'Dual groove heavy power transmission drive pulley',
   },
 ];
@@ -244,7 +223,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ item, isLight }) => (
         : 'bg-[#0b0c10] border-white/[0.08] hover:border-sky-500/40 hover:bg-[#0e0f14] hover:shadow-[0_0_20px_rgba(56,189,248,0.12)]'
     }`}
   >
-    {/* Top Row: Category Pill Badge + Like Count */}
+    {/* Top Row: Category Pill Badge + Quality Certified Pill */}
     <div className="flex items-center justify-between text-xs mb-2.5">
       <span className={`px-2.5 py-0.5 rounded-full font-mono text-[10px] sm:text-[11px] font-semibold tracking-wide ${
         isLight
@@ -254,9 +233,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ item, isLight }) => (
         {item.category}
       </span>
 
-      <div className="flex items-center gap-1 text-neutral-400">
-        <Heart className="w-3.5 h-3.5 text-neutral-400 group-hover:text-red-400 transition-colors" />
-        <span className="font-mono text-[10px] sm:text-[11px]">{item.likes}</span>
+      <div className="flex items-center gap-1 text-[10px] sm:text-[11px] font-mono text-neutral-400">
+        <ShieldCheck className="w-3 h-3 text-emerald-500" />
+        <span className="hidden sm:inline">Certified</span>
       </div>
     </div>
 
@@ -371,7 +350,7 @@ export const ProductMarqueeGallery: React.FC = () => {
       </div>
 
       {/* Dual Continuous Infinite Marquee Rows Container */}
-      <div className="relative w-full space-y-4 sm:space-y-5 overflow-hidden py-2">
+      <div className="relative w-full space-y-4 sm:space-y-6 overflow-hidden py-4">
         
         {/* Left & Right Gradient Fade Masks for Seamless Edge Transitions */}
         <div className={`absolute top-0 left-0 bottom-0 w-16 sm:w-28 md:w-40 z-20 pointer-events-none bg-gradient-to-r ${
@@ -382,8 +361,8 @@ export const ProductMarqueeGallery: React.FC = () => {
         }`} />
 
         {/* Top Row: Moves from LEFT to RIGHT (marquee-ltr) */}
-        <div className="flex overflow-hidden">
-          <div className="animate-marquee-ltr flex gap-4 sm:gap-5 will-change-transform">
+        <div className="flex overflow-hidden py-3">
+          <div className="animate-marquee-ltr flex gap-4 sm:gap-5 will-change-transform py-2 px-1">
             {row1Loop.map((item, idx) => (
               <ProductCard key={`r1-${item.id}-${idx}`} item={item} isLight={isLight} />
             ))}
@@ -391,8 +370,8 @@ export const ProductMarqueeGallery: React.FC = () => {
         </div>
 
         {/* Bottom Row: Moves from RIGHT to LEFT (marquee-rtl) */}
-        <div className="flex overflow-hidden">
-          <div className="animate-marquee-rtl flex gap-4 sm:gap-5 will-change-transform">
+        <div className="flex overflow-hidden py-3">
+          <div className="animate-marquee-rtl flex gap-4 sm:gap-5 will-change-transform py-2 px-1">
             {row2Loop.map((item, idx) => (
               <ProductCard key={`r2-${item.id}-${idx}`} item={item} isLight={isLight} />
             ))}
