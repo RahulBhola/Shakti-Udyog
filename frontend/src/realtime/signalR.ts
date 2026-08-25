@@ -91,6 +91,11 @@ export function getRealtimeConnection(): HubConnection {
     }
   });
 
+  // Register system-level handler for real-time notifications
+  connection.on("NotificationCreated", (payload: NotificationCreatedPayload) => {
+    window.dispatchEvent(new CustomEvent("shakti:notification_created", { detail: payload }));
+  });
+
   return connection;
 }
 

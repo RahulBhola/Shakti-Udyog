@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
-import { Bell, User, LogOut, ExternalLink, Sun, Moon, HelpCircle } from "lucide-react";
+import { User, LogOut, ExternalLink, Sun, Moon, HelpCircle } from "lucide-react";
 import { useAuth } from "../auth/AuthContext";
 import { useTheme } from "../auth/ThemeContext";
-import { customerApi, type NotificationItem } from "../api/customerApi";
+import { PortalNotificationBell } from "../components/notifications/PortalNotificationBell";
 import { Sidebar } from "../components/sidebar/Sidebar";
 import type { NavSection } from "../components/sidebar/Sidebar";
 import { cn } from "../lib/utils";
@@ -94,7 +94,7 @@ export function CustomerLayout() {
           </Link>
 
           {/* Notification Bell */}
-          <CustomerNotificationBell />
+          <PortalNotificationBell />
 
           {/* Profile Avatar */}
           <CustomerProfileAvatar initials={initials} displayName={displayName} />
@@ -117,97 +117,6 @@ export function CustomerLayout() {
           <Outlet />
         </main>
       </div>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  Notification Bell — Theme-aware                                    */
-/* ------------------------------------------------------------------ */
-
-function CustomerNotificationBell() {
-  const [open, setOpen] = useState(false);
-  const [items, setItems] = useState<NotificationItem[]>([]);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    customerApi
-      .notifications(1, 5, true)
-      .then((d) => setItems(d.items))
-      .catch(() => {});
-  }, []);
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, []);
-
-  const unread = items.length;
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className={cn(
-          "flex items-center justify-center w-10 h-10 rounded-full",
-          "text-[var(--text-secondary)] hover:text-[var(--color-primary)] hover:bg-[var(--bg-surface-hover)]",
-          "shadow-sm border border-[var(--border-default)]",
-          "transition-all duration-200",
-          "focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--color-primary)]",
-        )}
-        aria-label="Notifications"
-        aria-expanded={open}
-      >
-        <Bell size={16} />
-        {unread > 0 && (
-          <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-[var(--color-danger)] rounded-full ring-2 ring-[var(--bg-header)]" />
-        )}
-      </button>
-
-      {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 z-50 rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] p-3 shadow-lg backdrop-blur-xl">
-          <div className="flex items-center justify-between border-b border-[var(--border-default)] pb-2 mb-2">
-            <span className="text-sm font-semibold text-[var(--text-primary)]">Notifications</span>
-            {unread > 0 && (
-              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-[var(--color-primary)]/15 text-[var(--color-primary)]">
-                {unread} new
-              </span>
-            )}
-          </div>
-
-          {items.length === 0 ? (
-            <div className="text-xs text-[var(--text-secondary)] py-6 text-center">No unread notifications</div>
-          ) : (
-            <div className="flex flex-col gap-1.5 max-h-64 overflow-y-auto">
-              {items.map((n) => (
-                <Link
-                  key={n.id}
-                  to={n.linkPath ?? "/customer/notifications"}
-                  className="flex flex-col gap-0.5 p-2 rounded-lg hover:bg-[var(--bg-surface-hover)] no-underline transition-colors duration-150"
-                  onClick={() => setOpen(false)}
-                >
-                  <span className="text-xs font-semibold text-[var(--text-primary)] truncate">{n.title}</span>
-                  <span className="text-[11px] text-[var(--text-secondary)]">{n.type}</span>
-                </Link>
-              ))}
-            </div>
-          )}
-
-          <div className="border-t border-[var(--border-default)] pt-2 mt-2 text-center">
-            <Link
-              to="/customer/notifications"
-              className="text-xs font-semibold text-[var(--color-primary)] hover:underline no-underline"
-              onClick={() => setOpen(false)}
-            >
-              View all notifications
-            </Link>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

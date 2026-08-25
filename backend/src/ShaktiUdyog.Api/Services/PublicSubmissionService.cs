@@ -1,4 +1,5 @@
 using ShaktiUdyog.Api.Contracts.Public;
+using ShaktiUdyog.Domain.Constants;
 using ShaktiUdyog.Domain.Entities;
 using ShaktiUdyog.Infrastructure.Auditing;
 using ShaktiUdyog.Infrastructure.Data;
@@ -21,6 +22,7 @@ public interface IPublicSubmissionService
 public class PublicSubmissionService(
     AppDbContext db,
     IAuditWriter audit,
+    INotificationDeliveryService notifications,
     ILogger<PublicSubmissionService> logger) : IPublicSubmissionService
 {
     private const string ContactRequestAccepted =
@@ -54,6 +56,19 @@ public class PublicSubmissionService(
         await audit.WriteAsync("public.contact_request.received", null, "ContactRequest", contactRequest.Id.ToString(), ipAddress);
         logger.LogInformation("ContactRequest {ContactRequestId} received from company {Company}.", contactRequest.Id, contactRequest.CompanyName);
 
+        try
+        {
+            await notifications.NotifyAdminsAsync(
+                NotificationTypes.General,
+                $"Contact Request: {contactRequest.CompanyName}",
+                $"{contactRequest.FullName} ({contactRequest.Email}) submitted a contact message.",
+                "/admin/audit");
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to dispatch notification for ContactRequest {Id}", contactRequest.Id);
+        }
+
         return new SubmissionAccepted(contactRequest.Id, ContactRequestAccepted);
     }
 
@@ -85,6 +100,19 @@ public class PublicSubmissionService(
         await db.SaveChangesAsync();
         await audit.WriteAsync("public.enquiry.received", null, "Enquiry", enquiry.Id.ToString(), ipAddress);
         logger.LogInformation("Enquiry {EnquiryId} received from company {Company}.", enquiry.Id, enquiry.CompanyName);
+
+        try
+        {
+            await notifications.NotifyAdminsAndEngineersAsync(
+                NotificationTypes.Enquiry,
+                $"New RFQ Enquiry: {enquiry.CompanyName}",
+                $"Product: {enquiry.ProductType} • Qty: {enquiry.Quantity} • Contact: {enquiry.FullName}",
+                "/admin/enquiries");
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to dispatch notification for Enquiry {Id}", enquiry.Id);
+        }
 
         return new SubmissionAccepted(enquiry.Id, EnquiryAccepted);
     }

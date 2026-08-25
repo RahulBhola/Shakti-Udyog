@@ -64,6 +64,7 @@ public class CustomerService(
     IUnitOfWork uow,
     UserManager<ApplicationUser> userManager,
     IFileStorageService storage,
+    INotificationDeliveryService notifications,
     IAuditWriter audit) : ICustomerService
 {
     // ---- Dashboard ----------------------------------------------------------
@@ -221,6 +222,23 @@ public class CustomerService(
 
         await db.SaveChangesAsync();
         await audit.WriteAsync("customer.enquiry.created", ctx.UserId, "Enquiry", enquiry.Id.ToString(), ip);
+
+        if (!request.SaveAsDraft)
+        {
+            try
+            {
+                await notifications.NotifyAdminsAndEngineersAsync(
+                    NotificationTypes.Enquiry,
+                    $"New RFQ Enquiry: {enquiry.CompanyName}",
+                    $"Client {enquiry.FullName} submitted an enquiry for {enquiry.ProductType} (Qty: {enquiry.Quantity}).",
+                    "/admin/enquiries");
+            }
+            catch
+            {
+                // Non-blocking notification dispatch
+            }
+        }
+
         return enquiry.Id;
     }
 
@@ -341,6 +359,20 @@ public class CustomerService(
 
         await db.SaveChangesAsync();
         await audit.WriteAsync("customer.enquiry.submitted", ctx.UserId, "Enquiry", enquiry.Id.ToString(), ip);
+
+        try
+        {
+            await notifications.NotifyAdminsAndEngineersAsync(
+                NotificationTypes.Enquiry,
+                $"RFQ Enquiry Submitted: {enquiry.CompanyName}",
+                $"Client {enquiry.FullName} submitted an enquiry for {enquiry.ProductType} (Qty: {enquiry.Quantity}).",
+                "/admin/enquiries");
+        }
+        catch
+        {
+            // Non-blocking notification dispatch
+        }
+
         return true;
     }
 
@@ -462,6 +494,22 @@ public class CustomerService(
         await db.SaveChangesAsync();
         await audit.WriteAsync(
             $"customer.quotation.{request.Response}ed", ctx.UserId, "Quotation", quotation.Id.ToString(), ip);
+
+        try
+        {
+            var actionText = request.Response == "accept" ? "Accepted"
+                : request.Response == "negotiate" ? "Revision Requested" : "Declined";
+            await notifications.NotifyAdminsAndEngineersAsync(
+                NotificationTypes.Quotation,
+                $"Quotation {quotation.QuotationNumber} {actionText}",
+                $"Customer responded to quotation {quotation.QuotationNumber} with action: {actionText}." + (!string.IsNullOrWhiteSpace(request.Comment) ? $" Comment: {request.Comment}" : ""),
+                "/admin/quotations");
+        }
+        catch
+        {
+            // Non-blocking notification dispatch
+        }
+
         return true;
     }
 
@@ -738,6 +786,20 @@ public class CustomerService(
         db.Payments.Add(payment);
         await db.SaveChangesAsync();
         await audit.WriteAsync("customer.payment_proof.submitted", ctx.UserId, "Payment", payment.Id.ToString(), ip);
+
+        try
+        {
+            await notifications.NotifyAdminsAsync(
+                NotificationTypes.Invoice,
+                $"Payment Proof Submitted: Invoice {invoice.InvoiceNumber}",
+                $"Amount: ₹{payment.Amount:0.00} • Ref: {payment.PaymentReference} via {payment.Method}.",
+                "/admin/invoices");
+        }
+        catch
+        {
+            // Non-blocking notification dispatch
+        }
+
         return new PaymentDto(
             payment.Id, payment.PaymentReference, payment.Method, payment.Amount,
             payment.PaymentDateUtc, payment.Status, payment.CreatedAtUtc);

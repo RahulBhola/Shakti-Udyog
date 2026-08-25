@@ -80,6 +80,7 @@ public static class DependencyInjection
         services.AddScoped<IProductionBoardService, ProductionBoardService>();
         services.AddScoped<IProductMasterService, ProductMasterService>();
         services.AddScoped<IEngineerManufacturingService, EngineerManufacturingService>();
+        services.AddScoped<INotificationDeliveryService, NotificationDeliveryService>();
         services.AddScoped<IPortalPush, PortalPushService>();
 
         // Background Workers (Automated Scheduled Hosted Services)

@@ -140,7 +140,7 @@ public class ReportService(AppDbContext db) : IReportService
         {
             var linkedUser = userCompanies.FirstOrDefault(uc => uc.CompanyId == c.Id)?.User;
             var primaryContact = c.ContactPersons.FirstOrDefault();
-            var contactName = primaryContact?.Name ?? linkedUser?.FullName ?? "";
+            var contactName = primaryContact?.FullName ?? linkedUser?.FullName ?? "";
             var email = !string.IsNullOrWhiteSpace(c.CompanyEmail) ? c.CompanyEmail : (linkedUser?.Email ?? primaryContact?.Email ?? "");
             var phone = !string.IsNullOrWhiteSpace(c.CompanyPhone) ? c.CompanyPhone : (linkedUser?.PhoneNumber ?? primaryContact?.Phone ?? "");
             var pincode = c.PostalCode ?? c.PinCode ?? "";
@@ -422,16 +422,21 @@ public class ReportService(AppDbContext db) : IReportService
 
         var userIds = logs.Where(l => l.UserId.HasValue).Select(l => l.UserId!.Value).Distinct().ToList();
         var users = await db.Users.Where(u => userIds.Contains(u.Id)).ToDictionaryAsync(u => u.Id, u => u);
+        var userRoleMap = await db.UserRoles
+            .Where(ur => userIds.Contains(ur.UserId))
+            .Join(db.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => new { ur.UserId, RoleName = r.Name })
+            .ToDictionaryAsync(x => x.UserId, x => x.RoleName);
 
         var rows = logs.Select(a =>
         {
             var user = a.UserId.HasValue && users.TryGetValue(a.UserId.Value, out var u) ? u : null;
+            var role = a.UserId.HasValue && userRoleMap.TryGetValue(a.UserId.Value, out var rName) ? rName : (user != null ? "Customer" : "Automated Trigger");
             return new[]
             {
                 a.OccurredAtUtc.ToString("yyyy-MM-dd HH:mm:ss"),
                 user != null ? (user.FullName ?? user.Email ?? "User") : "System Engine",
                 user?.Email ?? "",
-                user?.Role ?? "Automated Trigger",
+                role ?? "User",
                 a.Action,
                 a.EntityType ?? "General",
                 a.EntityId ?? "",

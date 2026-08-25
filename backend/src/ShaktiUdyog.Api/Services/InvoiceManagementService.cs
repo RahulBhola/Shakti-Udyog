@@ -31,7 +31,10 @@ public interface IInvoiceManagementService
 }
 
 public record RecordPaymentRequest(decimal Amount, string Method, string PaymentReference, DateTimeOffset PaymentDate);
-public class InvoiceManagementService(AppDbContext db, IAuditWriter audit) : IInvoiceManagementService
+public class InvoiceManagementService(
+    AppDbContext db,
+    INotificationDeliveryService notifications,
+    IAuditWriter audit) : IInvoiceManagementService
 {
     public async Task<PagedResult<InvoiceListItemDto>> GetInvoicesAsync(int page, int pageSize, string? status, string? search, Guid? companyId = null)
     {
@@ -107,6 +110,21 @@ public class InvoiceManagementService(AppDbContext db, IAuditWriter audit) : IIn
         db.InvoiceStatusHistories.Add(new InvoiceStatusHistory { Id = Guid.NewGuid(), InvoiceId = id, FromStatus = InvoiceStatuses.Draft, ToStatus = InvoiceStatuses.Issued, ChangedByUserId = userId, ChangedByRole = "Admin", Note = "Invoice approved" });
         await db.SaveChangesAsync();
         await audit.WriteAsync("admin.invoice.approved", userId, "Invoice", id.ToString(), ip);
+
+        try
+        {
+            await notifications.NotifyCompanyUsersAsync(
+                inv.CompanyId,
+                NotificationTypes.Invoice,
+                $"Tax Invoice Issued: {inv.InvoiceNumber}",
+                $"Invoice for ₹{inv.Total:0.00} is now available for download and settlement.",
+                $"/customer/invoices/{inv.Id}");
+        }
+        catch
+        {
+            // Non-blocking notification dispatch
+        }
+
         return true;
     }
 
@@ -150,6 +168,21 @@ public class InvoiceManagementService(AppDbContext db, IAuditWriter audit) : IIn
         p.Status = PaymentStatuses.Verified;
         await db.SaveChangesAsync();
         await audit.WriteAsync("admin.payment.verified", userId, "Payment", paymentId.ToString(), ip);
+
+        try
+        {
+            await notifications.NotifyCompanyUsersAsync(
+                p.CompanyId,
+                NotificationTypes.Invoice,
+                $"Payment Verified: ₹{p.Amount:0.00}",
+                $"Payment reference {p.PaymentReference} has been verified and settled.",
+                $"/customer/invoices/{p.InvoiceId}");
+        }
+        catch
+        {
+            // Non-blocking notification dispatch
+        }
+
         return true;
     }
 
@@ -161,6 +194,21 @@ public class InvoiceManagementService(AppDbContext db, IAuditWriter audit) : IIn
         p.VerificationNote = reason;
         await db.SaveChangesAsync();
         await audit.WriteAsync("admin.payment.rejected", userId, "Payment", paymentId.ToString(), ip);
+
+        try
+        {
+            await notifications.NotifyCompanyUsersAsync(
+                p.CompanyId,
+                NotificationTypes.Invoice,
+                $"Payment Proof Declined: Ref {p.PaymentReference}",
+                $"Your payment submission was not approved: {reason}",
+                $"/customer/invoices/{p.InvoiceId}");
+        }
+        catch
+        {
+            // Non-blocking notification dispatch
+        }
+
         return true;
     }
 

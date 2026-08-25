@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
-import { Bell, User, Settings, LogOut, ExternalLink, Sun, Moon } from "lucide-react";
+import { User, Settings, LogOut, ExternalLink, Sun, Moon } from "lucide-react";
 import { useAuth } from "../auth/AuthContext";
 import { useTheme } from "../auth/ThemeContext";
 import { Sidebar } from "../components/sidebar/Sidebar";
 import type { NavSection } from "../components/sidebar/Sidebar";
+import { PortalNotificationBell } from "../components/notifications/PortalNotificationBell";
 import { cn } from "../lib/utils";
 import "./portal.css";
 
@@ -113,7 +114,7 @@ export default function AdminLayout() {
           </Link>
 
           {/* Notification Bell */}
-          <NotificationBell />
+          <PortalNotificationBell />
 
           {/* Profile Avatar */}
           <ProfileAvatar initials={initials} displayName={displayName} />
@@ -136,50 +137,6 @@ export default function AdminLayout() {
           <Outlet />
         </main>
       </div>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  Notification Bell — Theme-aware                                    */
-/* ------------------------------------------------------------------ */
-
-function NotificationBell() {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, []);
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className={cn(
-          "flex items-center justify-center w-10 h-10 rounded-full",
-          "text-[var(--text-secondary)] hover:text-[var(--color-primary)] hover:bg-[var(--bg-surface-hover)]",
-          "shadow-sm border border-[var(--border-default)]",
-          "transition-all duration-200",
-          "focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--color-primary)]",
-        )}
-        aria-label="Notifications"
-        aria-expanded={open}
-      >
-        <Bell size={16} />
-        <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-[var(--color-danger)] rounded-full ring-2 ring-[var(--bg-header)]" />
-      </button>
-      {open && (
-        <div className="absolute right-0 top-full mt-2 w-72 z-50 rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] p-3 shadow-lg">
-          <div className="text-sm font-semibold text-[var(--text-primary)] mb-2">Notifications</div>
-          <div className="text-xs text-[var(--text-secondary)] py-4 text-center">No new notifications</div>
-        </div>
-      )}
     </div>
   );
 }

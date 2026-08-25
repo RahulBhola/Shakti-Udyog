@@ -19,6 +19,7 @@ import "./styles/site.css";
 
 import { useEffect } from "react";
 import { EnquiryModalProvider, useEnquiryModal } from "./context/EnquiryModalContext";
+import { NotificationProvider } from "./context/NotificationContext";
 
 // Route-level code splitting: each public page is its own chunk.
 const HomePage = lazy(() => import("./pages/HomePage"));
@@ -115,6 +116,7 @@ function App() {
       <ThemeProvider>
       <AuthProvider>
         <EnquiryModalProvider>
+        <NotificationProvider>
         <Suspense fallback={<Loading label="Loading page" />}>
           <Routes>
             {/* Public website */}
@@ -211,11 +213,13 @@ function App() {
               <Route path="profile" element={<AdminProfilePage />} />
               <Route path="settings" element={<AdminSettingsPage />} />
               <Route path="audit-logs" element={<AdminAuditLogsPage />} />
+              <Route path="notifications" element={<NotificationsPage />} />
               {/* Reporting */}
               <Route path="reports" element={<AdminReportsPage />} />
             </Route>
           </Routes>
         </Suspense>
+        </NotificationProvider>
         </EnquiryModalProvider>
       </AuthProvider>
     </ThemeProvider></BrowserRouter>
