@@ -37,6 +37,28 @@ function useIsLightMode() {
   return isLight;
 }
 
+const CAT_COLORS: Record<string, { bg: string; fg: string; border: string }> = {
+  "Grey Iron Castings": { bg: "rgba(37,99,235,0.12)", fg: "#3B82F6", border: "rgba(37,99,235,0.25)" },
+  "Ductile Iron Castings": { bg: "rgba(20,184,166,0.12)", fg: "#14B8A6", border: "rgba(20,184,166,0.25)" },
+  "SG Iron Castings": { bg: "rgba(245,158,11,0.12)", fg: "#F59E0B", border: "rgba(245,158,11,0.25)" },
+  "Machined Components": { bg: "rgba(124,58,237,0.12)", fg: "#8B5CF6", border: "rgba(124,58,237,0.25)" },
+  "Custom Castings": { bg: "rgba(236,72,153,0.12)", fg: "#EC4899", border: "rgba(236,72,153,0.25)" },
+  "Precision Mechanism": { bg: "rgba(14,165,233,0.12)", fg: "#0EA5E9", border: "rgba(14,165,233,0.25)" },
+  "Commercial Hospitality": { bg: "rgba(249,115,22,0.12)", fg: "#F97316", border: "rgba(249,115,22,0.25)" },
+  "Power Transmission": { bg: "rgba(168,85,247,0.12)", fg: "#A855F7", border: "rgba(168,85,247,0.25)" },
+  "Agricultural Machinery": { bg: "rgba(34,197,94,0.12)", fg: "#22C55E", border: "rgba(34,197,94,0.25)" },
+  "Automotive & Powertrain": { bg: "rgba(239,68,68,0.12)", fg: "#EF4444", border: "rgba(239,68,68,0.25)" },
+  "Industrial Machinery": { bg: "rgba(59,130,246,0.12)", fg: "#3B82F6", border: "rgba(59,130,246,0.25)" },
+  "Industrial & Structural": { bg: "rgba(139,92,246,0.12)", fg: "#8B5CF6", border: "rgba(139,92,246,0.25)" },
+  "Fasteners & Hardware": { bg: "rgba(236,72,153,0.12)", fg: "#EC4899", border: "rgba(236,72,153,0.25)" },
+};
+const DEFAULT_CAT_COLOR = { bg: "rgba(148,163,184,0.12)", fg: "#64748B", border: "rgba(148,163,184,0.25)" };
+
+function getCategoryColor(name?: string | null) {
+  if (!name) return DEFAULT_CAT_COLOR;
+  return CAT_COLORS[name] ?? DEFAULT_CAT_COLOR;
+}
+
 function statusTone(status: string): string {
   switch (status) {
     case "Active": return "green";
@@ -48,10 +70,43 @@ function statusTone(status: string): string {
 }
 
 function StatusBadge({ status }: { status: string }) {
+  const st = status.toLowerCase();
+  if (st === "active") {
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shadow-sm shadow-emerald-500/10 whitespace-nowrap">
+        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+        <span>Active</span>
+      </span>
+    );
+  }
+  if (st === "inactive") {
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-neutral-500/15 text-neutral-500 dark:text-neutral-400 border border-neutral-400/30 whitespace-nowrap">
+        <span className="w-1.5 h-1.5 rounded-full bg-neutral-400" />
+        <span>Inactive</span>
+      </span>
+    );
+  }
+  if (st === "draft") {
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 whitespace-nowrap">
+        <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+        <span>Draft</span>
+      </span>
+    );
+  }
+  if (st === "archived") {
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/30 whitespace-nowrap">
+        <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+        <span>Archived</span>
+      </span>
+    );
+  }
   return <span className={`inv-badge inv-badge--${statusTone(status)}`}>{status}</span>;
 }
 
-function ProductThumb({ item }: { item: ProductMasterListItem }) {
+function ProductThumb({ item, size = "md" }: { item: ProductMasterListItem; size?: "sm" | "md" | "lg" }) {
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const isLightMode = useIsLightMode();
 
@@ -78,17 +133,21 @@ function ProductThumb({ item }: { item: ProductMasterListItem }) {
   const sourceImage = item.imageUrl || item.lightImageUrl;
   const displaySrc = sourceImage ? getThemedImage(sourceImage, isLightMode) : blobUrl;
 
-  if (displaySrc) {
-    return (
-      <img
-        src={displaySrc}
-        alt={item.productName}
-        className="inv-avatar"
-        style={{ objectFit: "contain", background: "var(--bg-surface-hover, rgba(0,0,0,0.03))", padding: "2px", borderRadius: "8px" }}
-      />
-    );
-  }
-  return <span className="inv-avatar" style={{ background: "var(--bg-surface-hover)" }}><Package size={16} /></span>;
+  const dimClass = size === "lg" ? "w-16 h-16" : size === "md" ? "w-11 h-11" : "w-9 h-9";
+
+  return (
+    <div className={`relative ${dimClass} rounded-xl overflow-hidden shrink-0 border border-neutral-200/80 dark:border-white/10 bg-neutral-50 dark:bg-[#161a26] flex items-center justify-center shadow-sm group-hover:border-orange-500/40 transition-all p-1`}>
+      {displaySrc ? (
+        <img
+          src={displaySrc}
+          alt={item.productName}
+          className="w-full h-full object-contain drop-shadow-sm transition-transform duration-300 group-hover:scale-105"
+        />
+      ) : (
+        <Package size={size === "lg" ? 22 : 18} className="text-neutral-400 opacity-60" />
+      )}
+    </div>
+  );
 }
 
 /* ------------------------------------------------------------------ */
@@ -554,28 +613,117 @@ export default function AdminProductPage() {
 
   const renderTableRow = (p: ProductMasterListItem) => {
     const isArchived = Boolean(p.isArchived || p.status?.toLowerCase() === "archived");
+    const catCol = getCategoryColor(p.categoryName);
+    const isDuctile = (p.material ?? "").toLowerCase().includes("ductile") || (p.materialGrade ?? "").startsWith("SG");
+
     return (
-      <tr key={p.id} onClick={() => navigate(`/admin/products/${p.id}`)}>
-        <td>
-          <div className="inv-customer">
-            <ProductThumb item={p} />
-            <div>
-              <div className="inv-customer__name">{p.productName}</div>
-              <div className="inv-customer__contact">{p.productCode}</div>
+      <tr
+        key={p.id}
+        onClick={() => navigate(`/admin/products/${p.id}`)}
+        className="group hover:bg-orange-500/[0.04] dark:hover:bg-orange-500/[0.06] transition-all cursor-pointer"
+      >
+        {/* Product Info */}
+        <td style={{ minWidth: 260 }}>
+          <div className="flex items-center gap-3 min-w-0 py-1">
+            <ProductThumb item={p} size="md" />
+            <div className="min-w-0 flex-1">
+              <div className="text-[13.5px] font-bold text-neutral-900 dark:text-white truncate group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
+                {p.productName}
+              </div>
+              <div className="flex items-center gap-2 mt-0.5">
+                <span className="font-mono text-[11px] font-bold text-neutral-500 dark:text-neutral-400 tracking-wider">
+                  {p.productCode}
+                </span>
+                {p.firstAttachmentId && (
+                  <span className="text-[10px] text-neutral-400 font-medium flex items-center gap-0.5" title="Has attachment file">
+                    <Paperclip size={10} /> Attachment
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </td>
-        <td><div className="inv-date">{p.categoryName ?? "—"}</div></td>
-        <td><div className="inv-date">{p.castingType ?? "—"}</div></td>
-        <td><div className="inv-date">{p.material ?? "—"}</div></td>
-        <td><div className="inv-date">{p.materialGrade ?? "—"}</div></td>
-        <td><div className="inv-amount__total">{p.weight != null ? `${p.weight} kg` : "—"}</div></td>
-        <td><StatusBadge status={isArchived ? "Archived" : p.status} /></td>
+
+        {/* Category */}
         <td>
-          <div className="inv-actions" onClick={(e) => e.stopPropagation()}>
+          {p.categoryName ? (
+            <span
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border truncate max-w-[170px] shadow-xs"
+              style={{ background: catCol.bg, color: catCol.fg, borderColor: catCol.border }}
+              title={p.categoryName}
+            >
+              <FolderTree size={12} className="shrink-0" />
+              <span className="truncate">{p.categoryName}</span>
+            </span>
+          ) : (
+            <span className="text-xs text-neutral-400 italic">Unassigned</span>
+          )}
+        </td>
+
+        {/* Type / Casting Process */}
+        <td>
+          {p.castingType ? (
+            <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-neutral-100 dark:bg-white/[0.04] border border-neutral-200/80 dark:border-white/10 text-neutral-700 dark:text-neutral-300">
+              {p.castingType}
+            </span>
+          ) : (
+            <span className="text-xs text-neutral-400">—</span>
+          )}
+        </td>
+
+        {/* Material */}
+        <td>
+          {p.material ? (
+            <span
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border ${
+                isDuctile
+                  ? "bg-teal-500/10 text-teal-700 dark:text-teal-300 border-teal-500/25"
+                  : "bg-slate-500/10 text-slate-700 dark:text-slate-300 border-slate-500/25"
+              }`}
+            >
+              <span className={`w-1.5 h-1.5 rounded-full ${isDuctile ? "bg-teal-500" : "bg-slate-400"}`} />
+              <span>{p.material}</span>
+            </span>
+          ) : (
+            <span className="text-xs text-neutral-400">—</span>
+          )}
+        </td>
+
+        {/* Grade */}
+        <td>
+          {p.materialGrade ? (
+            <span className="font-mono text-xs font-bold px-2.5 py-1 rounded-lg bg-neutral-100 dark:bg-white/5 border border-neutral-200/80 dark:border-white/10 text-neutral-800 dark:text-neutral-200">
+              {p.materialGrade}
+            </span>
+          ) : (
+            <span className="text-xs text-neutral-400">—</span>
+          )}
+        </td>
+
+        {/* Weight */}
+        <td>
+          {p.weight != null ? (
+            <span className="inline-flex items-center gap-1.5 font-mono text-xs font-bold text-neutral-800 dark:text-neutral-200 bg-neutral-100/80 dark:bg-white/5 px-2.5 py-1 rounded-lg border border-neutral-200/60 dark:border-white/5">
+              <Scale size={12} className="text-neutral-400" />
+              <span>{p.weight.toFixed(2)} kg</span>
+            </span>
+          ) : (
+            <span className="text-xs text-neutral-400">—</span>
+          )}
+        </td>
+
+        {/* Status */}
+        <td>
+          <StatusBadge status={isArchived ? "Archived" : p.status} />
+        </td>
+
+        {/* Actions */}
+        <td style={{ textAlign: "right" }}>
+          <div className="flex items-center justify-end gap-1.5 py-1" onClick={(e) => e.stopPropagation()}>
             {isArchived ? (
               <button
-                className="inv-icon-btn text-emerald-500 hover:text-emerald-600"
+                type="button"
+                className="p-1.5 rounded-lg text-emerald-500 hover:bg-emerald-500/15 hover:text-emerald-600 transition-all cursor-pointer"
                 title="Unarchive / Restore Product"
                 aria-label="Restore"
                 onClick={() => void handleRestore(p.id)}
@@ -584,22 +732,45 @@ export default function AdminProductPage() {
               </button>
             ) : (
               <button
-                className="inv-icon-btn"
-                title={p.status === "Active" ? "Deactivate (hide from public catalog)" : "Activate (publish to public catalog)"}
+                type="button"
+                className={`p-1.5 rounded-lg transition-all cursor-pointer ${
+                  p.status === "Active"
+                    ? "text-emerald-500 hover:bg-emerald-500/15 hover:text-emerald-600 shadow-sm shadow-emerald-500/20"
+                    : "text-neutral-400 hover:bg-neutral-200/60 dark:hover:bg-white/10 hover:text-neutral-600 dark:hover:text-neutral-200"
+                }`}
+                title={p.status === "Active" ? "Deactivate (hide from website)" : "Activate (publish to website)"}
                 aria-label={p.status === "Active" ? "Deactivate" : "Activate"}
                 onClick={() => void handleToggleStatus(p)}
               >
-                <Power size={15} className={p.status === "Active" ? "text-emerald-500" : "text-neutral-400 hover:text-emerald-500"} />
+                <Power size={15} />
               </button>
             )}
-            <button className="inv-icon-btn" title="View" aria-label="View" onClick={() => navigate(`/admin/products/${p.id}`)}>
-              <Eye size={16} />
+            <button
+              type="button"
+              className="p-1.5 rounded-lg text-neutral-500 hover:bg-neutral-100 dark:hover:bg-white/10 hover:text-neutral-900 dark:hover:text-white transition-all cursor-pointer"
+              title="View Product Details"
+              aria-label="View"
+              onClick={() => navigate(`/admin/products/${p.id}`)}
+            >
+              <Eye size={15} />
             </button>
-            <button className="inv-icon-btn" title="Edit" aria-label="Edit" onClick={() => navigate(`/admin/products/${p.id}`)}>
-              <FileEdit size={16} />
+            <button
+              type="button"
+              className="p-1.5 rounded-lg text-neutral-500 hover:bg-neutral-100 dark:hover:bg-white/10 hover:text-neutral-900 dark:hover:text-white transition-all cursor-pointer"
+              title="Edit Product"
+              aria-label="Edit"
+              onClick={() => navigate(`/admin/products/${p.id}`)}
+            >
+              <FileEdit size={15} />
             </button>
-            <button className="inv-icon-btn text-red-500 hover:text-red-600" title="Delete Permanently" aria-label="Delete" onClick={() => setConfirmDelete(p)}>
-              <Trash2 size={16} />
+            <button
+              type="button"
+              className="p-1.5 rounded-lg text-neutral-400 hover:bg-red-500/15 hover:text-red-500 transition-all cursor-pointer"
+              title="Delete Product"
+              aria-label="Delete"
+              onClick={() => setConfirmDelete(p)}
+            >
+              <Trash2 size={15} />
             </button>
           </div>
         </td>
@@ -807,32 +978,32 @@ export default function AdminProductPage() {
           </div>
         ) : (
           /* Table View */
-          <div className="inv-table-wrap my-4">
-            <div className="inv-scroll">
-              <table className="inv-table">
+          <div className="inv-table-wrap my-4 overflow-hidden rounded-2xl border border-neutral-200/80 dark:border-white/10 bg-white dark:bg-[#121520] shadow-sm">
+            <div className="inv-scroll overflow-x-auto">
+              <table className="inv-table w-full" style={{ minWidth: 880 }}>
                 <colgroup>
-                  <col style={{ width: "24%" }} />
-                  <col style={{ width: "14%" }} />
-                  <col style={{ width: "11%" }} />
+                  <col style={{ width: "27%" }} />
+                  <col style={{ width: "16%" }} />
                   <col style={{ width: "12%" }} />
                   <col style={{ width: "12%" }} />
-                  <col style={{ width: "11%" }} />
                   <col style={{ width: "10%" }} />
-                  <col style={{ width: "6%" }} />
+                  <col style={{ width: "8%" }} />
+                  <col style={{ width: "8%" }} />
+                  <col style={{ width: "7%" }} />
                 </colgroup>
                 <thead>
-                  <tr>
-                    <th>Product</th>
-                    <th>Category</th>
-                    <th>Type</th>
-                    <th>Material</th>
-                    <th>Grade</th>
-                    <th>Weight</th>
-                    <th>Status</th>
-                    <th style={{ textAlign: "right" }}>Actions</th>
+                  <tr className="bg-neutral-50/80 dark:bg-white/[0.02] border-b border-neutral-200/80 dark:border-white/10">
+                    <th className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 py-3.5 px-4">Product</th>
+                    <th className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 py-3.5 px-3">Category</th>
+                    <th className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 py-3.5 px-3">Type</th>
+                    <th className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 py-3.5 px-3">Material</th>
+                    <th className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 py-3.5 px-3">Grade</th>
+                    <th className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 py-3.5 px-3">Weight</th>
+                    <th className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 py-3.5 px-3">Status</th>
+                    <th className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 py-3.5 px-4" style={{ textAlign: "right" }}>Actions</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-neutral-100 dark:divide-white/[0.04]">
                   {data.items.map((p) => renderTableRow(p))}
                 </tbody>
               </table>
