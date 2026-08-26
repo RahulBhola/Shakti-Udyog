@@ -209,7 +209,7 @@ public class AuthService(
             .Distinct()
             .ToList();
 
-        return new MeResponse(user.Id, user.Email ?? string.Empty, user.FullName, roles.ToList(), permissions);
+        return new MeResponse(user.Id, user.Email ?? string.Empty, user.FullName, roles.ToList(), permissions, user.AvatarUrl);
     }
 
     public async Task<AuthResponse?> RegisterAsync(RegisterRequest request, string? ipAddress, string? userAgent)

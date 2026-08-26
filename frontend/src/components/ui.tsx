@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import type { ReactNode } from "react";
 import { breadcrumbJsonLd } from "./Seo";
+export { UserAvatar } from "./ui/UserAvatar";
+export type { UserAvatarProps } from "./ui/UserAvatar";
 
 /* ---- Section & headings -------------------------------------------------- */
 

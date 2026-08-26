@@ -27,6 +27,14 @@ public class ExternalAuthService(
         var providerKey = externalUser.FindFirstValue(ClaimTypes.NameIdentifier);
         var email = externalUser.FindFirstValue(ClaimTypes.Email);
         var fullName = externalUser.FindFirstValue(ClaimTypes.Name);
+        var picture = externalUser.FindFirstValue("picture")
+            ?? externalUser.FindFirstValue("urn:google:picture")
+            ?? externalUser.FindFirstValue("image")
+            ?? externalUser.FindFirstValue("avatar_url")
+            ?? externalUser.Claims.FirstOrDefault(c =>
+                c.Type.EndsWith("picture", StringComparison.OrdinalIgnoreCase) ||
+                c.Type.EndsWith("avatar_url", StringComparison.OrdinalIgnoreCase) ||
+                c.Type.Contains("image", StringComparison.OrdinalIgnoreCase))?.Value;
 
         if (string.IsNullOrEmpty(providerKey) || string.IsNullOrEmpty(email))
         {
@@ -43,6 +51,10 @@ public class ExternalAuthService(
             {
                 var linkResult = await userManager.AddLoginAsync(user, new UserLoginInfo(provider, providerKey, provider));
                 if (!linkResult.Succeeded) return null;
+                if (!string.IsNullOrWhiteSpace(picture))
+                {
+                    user.AvatarUrl = picture;
+                }
                 await audit.WriteAsync("auth.external.linked", user.Id, "User", user.Id.ToString(), ipAddress, userAgent);
             }
             else
@@ -53,6 +65,7 @@ public class ExternalAuthService(
                     Email = email,
                     EmailConfirmed = true,
                     FullName = fullName,
+                    AvatarUrl = picture,
                     IsActive = true,
                     CreatedAtUtc = DateTimeOffset.UtcNow,
                 };
@@ -92,6 +105,15 @@ public class ExternalAuthService(
         }
 
         if (!user.IsActive) return null;
+
+        if (!string.IsNullOrWhiteSpace(picture) && user.AvatarUrl != picture)
+        {
+            user.AvatarUrl = picture;
+        }
+        if (!string.IsNullOrWhiteSpace(fullName) && string.IsNullOrWhiteSpace(user.FullName))
+        {
+            user.FullName = fullName;
+        }
 
         user.LastLoginAtUtc = DateTimeOffset.UtcNow;
         await userManager.UpdateAsync(user);

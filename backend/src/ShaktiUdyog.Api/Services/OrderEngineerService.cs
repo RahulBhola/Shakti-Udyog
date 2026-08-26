@@ -92,7 +92,7 @@ public class OrderEngineerService(
         var documents = await db.Documents
             .Where(d => d.OrderId == id && !d.IsDeleted && d.Category != "Invoice")
             .OrderByDescending(d => d.CreatedAtUtc)
-            .Select(d => new DocumentListItemDto(d.Id, d.Title, d.Category, d.FileName, d.SizeBytes, o.OrderNumber, d.CreatedAtUtc))
+            .Select(d => new DocumentListItemDto(d.Id, d.Title, d.Category, d.FileName, d.SizeBytes, o.OrderNumber, d.CreatedAtUtc, d.ContentType, d.OrderId))
             .ToListAsync();
 
         return new OrderDetailDto(o.Id, o.OrderNumber, o.PurchaseOrderReference, o.Status, label, desc,
@@ -180,7 +180,7 @@ public class OrderEngineerService(
         if (!CanManage(o, userId, callerIsAdmin)) throw new OrderAccessException();
         await using var stream = file.OpenReadStream();
         var stored = await storage.SaveAsync(stream, file.FileName, file.ContentType);
-        db.Documents.Add(new Document { Id = Guid.NewGuid(), CompanyId = Guid.Empty, OrderId = id, Title = file.FileName, Category = category, FileName = file.FileName, ContentType = file.ContentType, SizeBytes = stored.SizeBytes, StorageKey = stored.StorageKey, IsCustomerVisible = true });
+        db.Documents.Add(new Document { Id = Guid.NewGuid(), CompanyId = o.CompanyId, OrderId = id, Title = file.FileName, Category = category, FileName = file.FileName, ContentType = file.ContentType, SizeBytes = stored.SizeBytes, StorageKey = stored.StorageKey, IsCustomerVisible = true });
         await db.SaveChangesAsync();
         await audit.WriteAsync("engineer.order.document_uploaded", userId, "Document", id.ToString(), ip);
     }

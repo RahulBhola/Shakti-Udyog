@@ -198,7 +198,8 @@ public record PaymentProofRequest(
 
 public record DocumentListItemDto(
     Guid Id, string Title, string Category, string FileName, long SizeBytes,
-    string? OrderNumber, DateTimeOffset CreatedAtUtc);
+    string? OrderNumber, DateTimeOffset CreatedAtUtc,
+    string? ContentType = null, Guid? OrderId = null);
 
 // ---- Notifications ----------------------------------------------------------
 
@@ -213,7 +214,8 @@ public record PagedResult<T>(IReadOnlyList<T> Items, int Page, int PageSize, int
 public record ProfileDto(
     string Email, string? FullName, string? PhoneNumber,
     CompanyProfileDto? Company, bool MfaEnabled,
-    DateTimeOffset? AccountCreatedAtUtc = null);
+    DateTimeOffset? AccountCreatedAtUtc = null,
+    string? AvatarUrl = null);
 
 public record CompanyProfileDto(
     string Name, string? AddressLine1, string? City, string? State,
@@ -222,7 +224,8 @@ public record CompanyProfileDto(
 public record UpdateProfileRequest(
     [StringLength(150)] string? FullName,
     [StringLength(30)] string? PhoneNumber,
-    [StringLength(4000)] string? DeliveryAddresses);
+    [StringLength(4000)] string? DeliveryAddresses,
+    [StringLength(2000)] string? AvatarUrl = null);
 
 public record ChangePasswordRequest(
     [Required] string CurrentPassword,

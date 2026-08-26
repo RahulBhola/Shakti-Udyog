@@ -40,7 +40,7 @@ public class CustomerProfileService(
 
         return new ProfileDto(
             user.Email ?? string.Empty, user.FullName, user.PhoneNumber, company,
-            mfaEnabled, user.CreatedAtUtc);
+            mfaEnabled, user.CreatedAtUtc, user.AvatarUrl);
     }
 
     public async Task<bool> UpdateProfileAsync(CustomerContext ctx, UpdateProfileRequest request, string? ip)
@@ -58,6 +58,10 @@ public class CustomerProfileService(
         if (request.PhoneNumber is not null)
         {
             user.PhoneNumber = request.PhoneNumber.Trim();
+        }
+        if (request.AvatarUrl is not null)
+        {
+            user.AvatarUrl = string.IsNullOrWhiteSpace(request.AvatarUrl) ? null : request.AvatarUrl.Trim();
         }
         await userManager.UpdateAsync(user);
 

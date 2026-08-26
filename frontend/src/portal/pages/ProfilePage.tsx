@@ -3,6 +3,7 @@ import { customerApi, type Profile, type CompanyDetail, type ContactPerson, type
 import { formatDate } from "../shared";
 import { DevicesSessionsCard } from "../components/DevicesSessionsCard";
 import { ProfileCompletionCard } from "../components/ProfileCompletion";
+import { UserAvatar } from "../../components/ui";
 
 // ── Icons (inline SVG for reliable availability) ──────────────────────────
 
@@ -721,7 +722,27 @@ export default function ProfilePage() {
       {activeTab === "personal" && (
         <div style={{ display: "grid", gap: 24, maxWidth: 800 }}>
           <div style={cardStyle}>
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: colors.text, margin: "0 0 20px" }}>Personal Information</h2>
+            <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20, paddingBottom: 16, borderBottom: `1px solid ${colors.border}` }}>
+              <UserAvatar
+                avatarUrl={profile?.avatarUrl}
+                displayName={profile?.fullName || profile?.email}
+                size="2xl"
+                shape="rounded"
+              />
+              <div>
+                <h2 style={{ fontSize: 18, fontWeight: 700, color: colors.text, margin: 0 }}>
+                  {profile?.fullName || "Personal Information"}
+                </h2>
+                <p style={{ margin: "4px 0 0", fontSize: 13, color: colors.textSecondary }}>
+                  {profile?.email}
+                </p>
+                {profile?.avatarUrl && (
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 4, marginTop: 6, padding: "2px 8px", borderRadius: 12, fontSize: 11, fontWeight: 600, background: "rgba(59, 130, 246, 0.12)", color: "#3B82F6" }}>
+                    ✓ Linked via Google Account
+                  </span>
+                )}
+              </div>
+            </div>
             <form onSubmit={handleSavePersonal} style={{ display: "grid", gap: 16 }}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                 <div>

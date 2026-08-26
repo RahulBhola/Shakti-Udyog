@@ -54,6 +54,8 @@ public interface ICustomerService
 
     Task<IReadOnlyList<DocumentListItemDto>> GetDocumentsAsync(CustomerContext ctx, string? search, string? category);
     Task<(Stream Content, string FileName, string ContentType)?> OpenDocumentAsync(CustomerContext ctx, Guid documentId, string? ip);
+    Task<DocumentListItemDto?> UploadDocumentAsync(CustomerContext ctx, string title, string category, Guid? orderId, IFormFile file, string? ip);
+    Task<bool> DeleteDocumentAsync(CustomerContext ctx, Guid documentId, string? ip);
 
     Task<PagedResult<NotificationDto>> GetNotificationsAsync(CustomerContext ctx, int page, int pageSize, bool? unreadOnly);
     Task<bool> MarkNotificationReadAsync(CustomerContext ctx, Guid notificationId);
@@ -831,10 +833,10 @@ public class CustomerService(
     public async Task<(Stream Content, string FileName, string ContentType)?> OpenDocumentAsync(
         CustomerContext ctx, Guid documentId, string? ip)
     {
-        // Authorization: company ownership AND customer visibility, checked here
-        // in the backend regardless of what the frontend showed.
+        // Authorization: company ownership OR linked order company AND customer visibility
         var document = await db.Documents.SingleOrDefaultAsync(d =>
-            d.Id == documentId && d.IsCustomerVisible && ctx.CompanyIds.Contains(d.CompanyId));
+            d.Id == documentId && d.IsCustomerVisible &&
+            (ctx.CompanyIds.Contains(d.CompanyId) || (d.OrderId != null && db.Orders.Any(o => o.Id == d.OrderId && ctx.CompanyIds.Contains(o.CompanyId)))));
         if (document is null)
         {
             return null;
@@ -848,6 +850,61 @@ public class CustomerService(
 
         await audit.WriteAsync("customer.document.downloaded", ctx.UserId, "Document", document.Id.ToString(), ip);
         return (stream, document.FileName, document.ContentType);
+    }
+
+    public async Task<DocumentListItemDto?> UploadDocumentAsync(
+        CustomerContext ctx, string title, string category, Guid? orderId, IFormFile file, string? ip)
+    {
+        if (ctx.CompanyIds.Count == 0) return null;
+        var companyId = ctx.CompanyIds[0];
+
+        if (orderId.HasValue)
+        {
+            var orderExists = await db.Orders.AnyAsync(o => o.Id == orderId.Value && ctx.CompanyIds.Contains(o.CompanyId));
+            if (!orderExists) orderId = null;
+        }
+
+        await using var stream = file.OpenReadStream();
+        var stored = await storage.SaveAsync(stream, file.FileName, file.ContentType);
+
+        var doc = new Document
+        {
+            Id = Guid.NewGuid(),
+            CompanyId = companyId,
+            OrderId = orderId,
+            Title = string.IsNullOrWhiteSpace(title) ? file.FileName : title.Trim(),
+            Category = string.IsNullOrWhiteSpace(category) ? "Other" : category.Trim(),
+            FileName = file.FileName,
+            ContentType = file.ContentType,
+            SizeBytes = stored.SizeBytes,
+            StorageKey = stored.StorageKey,
+            IsCustomerVisible = true,
+            CreatedAtUtc = DateTimeOffset.UtcNow,
+        };
+
+        db.Documents.Add(doc);
+        await db.SaveChangesAsync();
+        await audit.WriteAsync("customer.document.uploaded", ctx.UserId, "Document", doc.Id.ToString(), ip);
+
+        var orderNumber = orderId.HasValue
+            ? await db.Orders.Where(o => o.Id == orderId.Value).Select(o => o.OrderNumber).FirstOrDefaultAsync()
+            : null;
+
+        return new DocumentListItemDto(
+            doc.Id, doc.Title, doc.Category, doc.FileName, doc.SizeBytes,
+            orderNumber, doc.CreatedAtUtc, doc.ContentType, doc.OrderId);
+    }
+
+    public async Task<bool> DeleteDocumentAsync(CustomerContext ctx, Guid documentId, string? ip)
+    {
+        var doc = await db.Documents.SingleOrDefaultAsync(d =>
+            d.Id == documentId && ctx.CompanyIds.Contains(d.CompanyId));
+        if (doc is null) return false;
+
+        db.Documents.Remove(doc);
+        await db.SaveChangesAsync();
+        await audit.WriteAsync("customer.document.deleted", ctx.UserId, "Document", documentId.ToString(), ip);
+        return true;
     }
 
     // ---- Notifications ------------------------------------------------------
@@ -897,7 +954,8 @@ public class CustomerService(
     // ---- Shared helpers -----------------------------------------------------
 
     private IQueryable<Document> CustomerVisibleDocuments(IReadOnlyList<Guid> companyIds) =>
-        db.Documents.Where(d => d.IsCustomerVisible && companyIds.Contains(d.CompanyId));
+        db.Documents.Where(d => d.IsCustomerVisible &&
+            (companyIds.Contains(d.CompanyId) || (d.OrderId != null && db.Orders.Any(o => o.Id == d.OrderId && companyIds.Contains(o.CompanyId)))));
 
     /// <summary>Projection including the related order number via subquery.</summary>
     private System.Linq.Expressions.Expression<Func<Document, DocumentListItemDto>> DocumentProjection =>
@@ -906,5 +964,7 @@ public class CustomerService(
             d.OrderId != null
                 ? db.Orders.Where(o => o.Id == d.OrderId).Select(o => o.OrderNumber).FirstOrDefault()
                 : null,
-            d.CreatedAtUtc);
+            d.CreatedAtUtc,
+            d.ContentType,
+            d.OrderId);
 }

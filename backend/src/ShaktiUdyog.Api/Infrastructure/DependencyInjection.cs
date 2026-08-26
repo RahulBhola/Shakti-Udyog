@@ -1,6 +1,7 @@
 using System.IO.Compression;
 using System.Text;
 using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -154,6 +155,10 @@ public static class DependencyInjection
                 options.CallbackPath = "/signin-google";
                 options.SaveTokens = false;
                 options.SignInScheme = IdentityConstants.ExternalScheme;
+                options.ClaimActions.MapJsonKey("picture", "picture");
+                options.ClaimActions.MapJsonKey("urn:google:picture", "picture");
+                options.ClaimActions.MapJsonKey("avatar_url", "picture");
+                options.ClaimActions.MapJsonKey("image", "picture");
             });
         }
 

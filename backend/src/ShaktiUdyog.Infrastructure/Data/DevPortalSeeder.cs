@@ -76,6 +76,63 @@ public static class DevPortalSeeder
             ApprovedAtUtc = DateTimeOffset.UtcNow,
         });
 
+        // Seed initial technical & quality documents for customer vault
+        var now = DateTimeOffset.UtcNow;
+        db.Documents.AddRange(
+            new Document
+            {
+                Id = Guid.NewGuid(),
+                CompanyId = company.Id,
+                Title = "ISO 9001:2015 Quality Management Certificate",
+                Category = "Certificate",
+                FileName = "ISO_9001_2015_Certificate_ShaktiUdyog.pdf",
+                ContentType = "application/pdf",
+                SizeBytes = 1845000,
+                StorageKey = "seed/iso_9001_cert.pdf",
+                IsCustomerVisible = true,
+                CreatedAtUtc = now.AddDays(-30),
+            },
+            new Document
+            {
+                Id = Guid.NewGuid(),
+                CompanyId = company.Id,
+                Title = "Foundry Metallurgy & Material Grade Specification (IS 210 FG 260)",
+                Category = "Drawing",
+                FileName = "Material_Spec_IS210_FG260_GreyIron.pdf",
+                ContentType = "application/pdf",
+                SizeBytes = 2450000,
+                StorageKey = "seed/material_spec_fg260.pdf",
+                IsCustomerVisible = true,
+                CreatedAtUtc = now.AddDays(-20),
+            },
+            new Document
+            {
+                Id = Guid.NewGuid(),
+                CompanyId = company.Id,
+                Title = "Spectrometric Chemical Analysis & Tensile Inspection Report",
+                Category = "Inspection Report",
+                FileName = "Lab_Inspection_Report_Batch_SU884.pdf",
+                ContentType = "application/pdf",
+                SizeBytes = 980000,
+                StorageKey = "seed/lab_report_884.pdf",
+                IsCustomerVisible = true,
+                CreatedAtUtc = now.AddDays(-5),
+            },
+            new Document
+            {
+                Id = Guid.NewGuid(),
+                CompanyId = company.Id,
+                Title = "Standard Casting Dimensional Tolerance Guide (ISO 8062-3 DGC)",
+                Category = "Drawing",
+                FileName = "Casting_Dimensional_Tolerances_ISO8062.pdf",
+                ContentType = "application/pdf",
+                SizeBytes = 3120000,
+                StorageKey = "seed/tolerances_guide.pdf",
+                IsCustomerVisible = true,
+                CreatedAtUtc = now.AddDays(-2),
+            }
+        );
+
         await db.SaveChangesAsync();
         logger.LogInformation("Seeded DEVELOPMENT demo customer '{Email}'. Do not use in production.", CustomerEmail);
     }

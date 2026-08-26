@@ -13,6 +13,7 @@ import {
   Power, CheckCircle2,
 } from "lucide-react";
 import { ProfileCompletenessBadge, ProfileProgressBar, calculateProfileCompleteness } from "../components/ProfileCompletion";
+import { UserAvatar } from "../../components/ui";
 import "./erpListView.css";
 
 /* ------------------------------------------------------------------ */
@@ -29,6 +30,7 @@ interface AdminUser {
   lastLoginAtUtc: string | null;
   companyName: string | null;
   role: string;
+  avatarUrl?: string | null;
 }
 
 interface Filters {
@@ -414,7 +416,6 @@ function UserDetailsDrawer({
   onDeleteUser?: (u: AdminUser) => void;
 }) {
   const [copied, setCopied] = useState(false);
-  const palette = getAvatarStyle(user.fullName || user.email);
 
   const copyEmail = () => {
     navigator.clipboard.writeText(user.email);
@@ -433,12 +434,13 @@ function UserDetailsDrawer({
         {/* Drawer Header */}
         <div className="px-6 py-4 border-b border-neutral-200/80 dark:border-white/10 flex items-center justify-between bg-white dark:bg-[#0f121a] shrink-0">
           <div className="flex items-center gap-3">
-            <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center font-extrabold text-sm border shadow-xs"
-              style={{ background: palette.bg, color: palette.fg, borderColor: palette.border }}
-            >
-              {initials(user.fullName, user.email)}
-            </div>
+            <UserAvatar
+              avatarUrl={user.avatarUrl}
+              displayName={user.fullName || user.email}
+              initials={initials(user.fullName, user.email)}
+              size="lg"
+              shape="rounded"
+            />
             <div>
               <h3 className="font-extrabold text-base text-neutral-900 dark:text-white m-0">
                 {user.fullName || "User Profile"}
@@ -1103,7 +1105,6 @@ export default function AdminUsersPage() {
               <tbody className="divide-y divide-neutral-100 dark:divide-white/[0.04]">
                 {paged.map((u) => {
                   const self = isSelf(u);
-                  const palette = getAvatarStyle(u.fullName || u.email);
 
                   return (
                     <tr
@@ -1116,12 +1117,13 @@ export default function AdminUsersPage() {
                       {/* User & Identity */}
                       <td className="py-3.5 px-5 align-middle">
                         <div className="flex items-center gap-3">
-                          <div
-                            className="w-10 h-10 rounded-xl flex items-center justify-center font-extrabold text-sm border shadow-xs shrink-0"
-                            style={{ background: palette.bg, color: palette.fg, borderColor: palette.border }}
-                          >
-                            {initials(u.fullName, u.email)}
-                          </div>
+                          <UserAvatar
+                            avatarUrl={u.avatarUrl}
+                            displayName={u.fullName || u.email}
+                            initials={initials(u.fullName, u.email)}
+                            size="lg"
+                            shape="rounded"
+                          />
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
                               <span className="font-bold text-sm text-neutral-900 dark:text-white truncate">

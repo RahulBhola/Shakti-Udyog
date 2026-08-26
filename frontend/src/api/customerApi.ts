@@ -243,6 +243,8 @@ export interface DocumentItem {
   sizeBytes: number;
   orderNumber: string | null;
   createdAtUtc: string;
+  contentType?: string | null;
+  orderId?: string | null;
 }
 
 export interface EnquiryTimelineEntry {
@@ -286,6 +288,7 @@ export interface Profile {
   } | null;
   mfaEnabled: boolean;
   accountCreatedAtUtc: string | null;
+  avatarUrl?: string | null;
 }
 
 // ---- Profile: Company -------------------------------------------------------
@@ -558,6 +561,16 @@ export const customerApi = {
   },
   /** Returns the authorized download URL path (fetched with auth by downloadDocument). */
   downloadDocument: (id: string) => `${base}/documents/${id}/download`,
+  previewDocumentUrl: (id: string) => `${base}/documents/${id}/preview`,
+  uploadDocument: (payload: { title: string; category: string; orderId?: string; file: File }) => {
+    const form = new FormData();
+    form.append("title", payload.title);
+    form.append("category", payload.category);
+    if (payload.orderId) form.append("orderId", payload.orderId);
+    form.append("file", payload.file);
+    return apiUpload<DocumentItem>(`${base}/documents/upload`, form);
+  },
+  deleteDocument: (id: string) => apiDelete<{ message: string }>(`${base}/documents/${id}`),
 
   notifications: (page = 1, pageSize = 20, unreadOnly?: boolean) =>
     apiGet<Paged<NotificationItem>>(
@@ -565,7 +578,7 @@ export const customerApi = {
   markNotificationRead: (id: string) => apiPost<void>(`${base}/notifications/${id}/read`),
 
   profile: () => apiGet<Profile>(`${base}/profile`),
-  updateProfile: (payload: { fullName?: string; phoneNumber?: string; deliveryAddresses?: string }) =>
+  updateProfile: (payload: { fullName?: string; phoneNumber?: string; deliveryAddresses?: string; avatarUrl?: string | null }) =>
     apiPatch<{ message: string }>(`${base}/profile`, payload),
   changePassword: (currentPassword: string, newPassword: string) =>
     apiPost<{ message: string }>(`${base}/profile/change-password`, { currentPassword, newPassword }),

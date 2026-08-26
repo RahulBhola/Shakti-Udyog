@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { DevicesSessionsCard } from "../components/DevicesSessionsCard";
 import { ProfileCompletionCard } from "../components/ProfileCompletion";
+import { UserAvatar } from "../../components/ui";
 import { formatDate } from "../shared";
 import { cn } from "../../lib/utils";
 import "./erpListView.css";
@@ -584,9 +585,14 @@ export default function AdminProfilePage() {
       {/* ================================================================= */}
       <div className="p-6 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-start sm:items-center gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[var(--color-primary)] to-indigo-600 text-white font-extrabold text-2xl flex items-center justify-center shadow-lg shadow-blue-500/20 shrink-0">
-            {initials}
-          </div>
+          <UserAvatar
+            avatarUrl={user?.avatarUrl}
+            displayName={fullName || profile?.fullName || user?.fullName || "Staff Administrator"}
+            initials={initials}
+            size="2xl"
+            shape="rounded"
+            className="shadow-lg shadow-blue-500/20"
+          />
 
           <div className="space-y-1">
             <div className="flex items-center gap-2 flex-wrap">

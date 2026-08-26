@@ -8,6 +8,7 @@ export interface AuthUser {
   fullName: string | null;
   roles: Role[];
   permissions: string[];
+  avatarUrl?: string | null;
 }
 
 export interface UserSession {

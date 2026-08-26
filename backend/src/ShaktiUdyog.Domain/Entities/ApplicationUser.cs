@@ -11,6 +11,7 @@ public class ApplicationUser : IdentityUser<Guid>
 {
     public string? FullName { get; set; }
     public string? CompanyName { get; set; }
+    public string? AvatarUrl { get; set; }
     public bool IsActive { get; set; } = true;
     public DateTimeOffset CreatedAtUtc { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset? LastLoginAtUtc { get; set; }

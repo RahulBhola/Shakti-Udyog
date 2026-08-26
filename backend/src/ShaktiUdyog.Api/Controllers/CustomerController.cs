@@ -408,6 +408,58 @@ public class CustomerController(
             : File(file.Value.Content, file.Value.ContentType, file.Value.FileName);
     }
 
+    /// <summary>Streams a document inline for browser previewing (PDF, images, etc.).</summary>
+    [HttpGet("documents/{id:guid}/preview")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> PreviewDocument(Guid id)
+    {
+        var (ctx, failure) = await RequireContextAsync();
+        if (failure is not null) return failure;
+
+        var file = await customerService.OpenDocumentAsync(ctx!, id, ClientIp);
+        if (file is null) return NotFound();
+
+        Response.Headers.Append("Content-Disposition", $"inline; filename=\"{file.Value.FileName}\"");
+        return File(file.Value.Content, file.Value.ContentType);
+    }
+
+    /// <summary>Allows customer to upload a technical drawing, PO, or reference file to their document vault.</summary>
+    [HttpPost("documents/upload")]
+    [RequestSizeLimit(25 * 1024 * 1024)]
+    [ProducesResponseType<DocumentListItemDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> UploadDocument(
+        [FromForm] string title,
+        [FromForm] string category,
+        [FromForm] Guid? orderId,
+        IFormFile file)
+    {
+        var (ctx, failure) = await RequireContextAsync();
+        if (failure is not null) return failure;
+
+        if (file is null || file.Length == 0)
+        {
+            return BadRequest(new MessageResponse("Please select a valid file to upload."));
+        }
+
+        var result = await customerService.UploadDocumentAsync(ctx!, title, category, orderId, file, ClientIp);
+        return result is null ? BadRequest(new MessageResponse("Upload failed.")) : Ok(result);
+    }
+
+    /// <summary>Deletes a customer-uploaded document.</summary>
+    [HttpDelete("documents/{id:guid}")]
+    [ProducesResponseType<MessageResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteDocument(Guid id)
+    {
+        var (ctx, failure) = await RequireContextAsync();
+        if (failure is not null) return failure;
+
+        var success = await customerService.DeleteDocumentAsync(ctx!, id, ClientIp);
+        return success ? Ok(new MessageResponse("Document removed successfully.")) : NotFound(new MessageResponse("Document not found or cannot be deleted."));
+    }
+
     // ---- Notifications ------------------------------------------------------
 
     [HttpGet("notifications")]

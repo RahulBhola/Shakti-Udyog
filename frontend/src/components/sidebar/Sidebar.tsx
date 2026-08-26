@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../../auth/AuthContext";
 import { cn } from "../../lib/utils";
+import { UserAvatar } from "../ui/UserAvatar";
 import { SidebarSection } from "./SidebarSection";
 import { SidebarItem } from "./SidebarItem";
 
@@ -185,16 +186,13 @@ export function Sidebar({ sections, onLogout }: SidebarProps) {
           )}
         >
           <div className="flex items-center gap-3 w-full">
-            <span
-              className={cn(
-                "flex items-center justify-center rounded-lg shrink-0",
-                "bg-[var(--color-primary)] text-[var(--color-primary-text)] font-bold",
-                collapsed ? "w-9 h-9 text-sm" : "w-9 h-9 text-sm",
-              )}
-              aria-hidden="true"
-            >
-              {initials}
-            </span>
+            <UserAvatar
+              avatarUrl={user?.avatarUrl}
+              displayName={displayName}
+              initials={initials}
+              size="md"
+              shape="rounded"
+            />
 
             {!collapsed && (
               <div className="flex-1 min-w-0 text-left">

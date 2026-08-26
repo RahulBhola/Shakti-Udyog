@@ -35,7 +35,8 @@ public record MeResponse(
     string Email,
     string? FullName,
     IReadOnlyList<string> Roles,
-    IReadOnlyList<string> Permissions);
+    IReadOnlyList<string> Permissions,
+    string? AvatarUrl = null);
 
 public record MessageResponse(string Message);
 

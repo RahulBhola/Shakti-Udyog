@@ -8,6 +8,7 @@ export * from "./Badge";
 export * from "./Card";
 export * from "./Modal";
 export * from "./EmptyState";
+export * from "./UserAvatar";
 export {
   Section,
   SectionHeading,

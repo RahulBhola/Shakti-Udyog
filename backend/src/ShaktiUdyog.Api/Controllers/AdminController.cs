@@ -61,7 +61,7 @@ public class AdminController(IAdminService adminService, IOrderAdminService orde
 
         var users = await userManager.Users
             .OrderByDescending(u => u.CreatedAtUtc)
-            .Select(u => new { u.Id, u.Email, u.FullName, u.PhoneNumber, u.IsActive, u.CreatedAtUtc, u.LastLoginAtUtc, u.CompanyName })
+            .Select(u => new { u.Id, u.Email, u.FullName, u.PhoneNumber, u.IsActive, u.CreatedAtUtc, u.LastLoginAtUtc, u.CompanyName, u.AvatarUrl })
             .ToListAsync();
 
         var result = users.Select(u =>
@@ -74,7 +74,7 @@ public class AdminController(IAdminService adminService, IOrderAdminService orde
             return new
             {
                 u.Id, u.Email, u.FullName, u.PhoneNumber, u.IsActive,
-                u.CreatedAtUtc, u.LastLoginAtUtc, u.CompanyName,
+                u.CreatedAtUtc, u.LastLoginAtUtc, u.CompanyName, u.AvatarUrl,
                 Role = role
             };
         });
@@ -95,7 +95,7 @@ public class AdminController(IAdminService adminService, IOrderAdminService orde
     public async Task<IActionResult> CleanTestUsers()
     {
         var testUsers = await userManager.Users
-            .Where(u => u.Email.StartsWith("sessiontest_") || u.Email.StartsWith("rotatetest_") || u.Email.Contains(".test.local"))
+            .Where(u => u.Email != null && (u.Email.StartsWith("sessiontest_") || u.Email.StartsWith("rotatetest_") || u.Email.Contains(".test.local")))
             .ToListAsync();
 
         int deletedCount = 0;
@@ -228,6 +228,7 @@ public class AdminController(IAdminService adminService, IOrderAdminService orde
             user.CreatedAtUtc,
             user.LastLoginAtUtc,
             user.CompanyName,
+            user.AvatarUrl,
             Roles = roles,
         });
     }

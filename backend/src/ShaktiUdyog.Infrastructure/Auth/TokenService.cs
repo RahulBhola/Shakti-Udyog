@@ -38,6 +38,17 @@ public class TokenService(
             claims.Add(new Claim(ClaimTypes.Sid, sessionId.Value.ToString()));
         }
 
+        if (!string.IsNullOrEmpty(user.FullName))
+        {
+            claims.Add(new Claim("name", user.FullName));
+        }
+
+        if (!string.IsNullOrEmpty(user.AvatarUrl))
+        {
+            claims.Add(new Claim("picture", user.AvatarUrl));
+            claims.Add(new Claim("avatar_url", user.AvatarUrl));
+        }
+
         var roles = await userManager.GetRolesAsync(user);
         foreach (var role in roles)
         {

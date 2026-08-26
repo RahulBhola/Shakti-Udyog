@@ -6,6 +6,7 @@ import { useEnquiryModal } from "../context/EnquiryModalContext";
 import { company } from "../content/company";
 import { cta, navItems } from "../content/navigation";
 import { Sun, Moon, Menu, X, ArrowRight, User, LogOut } from "lucide-react";
+import { UserAvatar } from "./ui";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -206,14 +207,18 @@ function Header() {
             <div className="hidden sm:flex items-center gap-2">
               <Link
                 to={portalHref()}
-                className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-medium transition-all ${
+                className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                   isLight
                     ? "text-neutral-700 bg-neutral-100 hover:bg-neutral-200 border border-neutral-200 shadow-sm"
                     : "text-neutral-300 bg-neutral-900/80 hover:bg-neutral-800 border border-neutral-800 hover:border-neutral-700 hover:text-white"
                 }`}
               >
-                <User className="w-3.5 h-3.5 text-neutral-400" />
-                <span className="max-w-[100px] truncate">{user.email}</span>
+                <UserAvatar
+                  avatarUrl={user.avatarUrl}
+                  displayName={user.fullName || user.email}
+                  size="xs"
+                />
+                <span className="max-w-[120px] truncate">{user.fullName || user.email}</span>
               </Link>
               <button
                 type="button"

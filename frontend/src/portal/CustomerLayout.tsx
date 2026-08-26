@@ -7,6 +7,7 @@ import { PortalNotificationBell } from "../components/notifications/PortalNotifi
 import { Sidebar } from "../components/sidebar/Sidebar";
 import type { NavSection } from "../components/sidebar/Sidebar";
 import { ProfileProgressBar, calculateProfileCompleteness } from "./components/ProfileCompletion";
+import { UserAvatar } from "../components/ui";
 import { cn } from "../lib/utils";
 import "./portal.css";
 
@@ -150,27 +151,29 @@ function CustomerProfileAvatar({ initials, displayName }: { initials: string; di
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className={cn(
-          "flex items-center justify-center w-10 h-10 rounded-full",
-          "bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-hover)]",
-          "text-white text-sm font-bold",
-          "shadow-md hover:shadow-lg",
-          "transition-all duration-200",
-          "focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--color-primary)]",
-        )}
+        className="rounded-full focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--color-primary)] transition-transform hover:scale-105"
         aria-label="User menu"
         aria-expanded={open}
       >
-        {initials}
+        <UserAvatar
+          avatarUrl={user?.avatarUrl}
+          displayName={displayName}
+          initials={initials}
+          size="lg"
+          className="shadow-md hover:shadow-lg"
+        />
       </button>
 
       {open && (
         <div className="absolute right-0 top-full mt-2 w-56 z-50 rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] p-1.5 shadow-lg backdrop-blur-xl">
           <div className="px-3 py-2.5 border-b border-[var(--border-default)] mb-1">
             <div className="flex items-center gap-3">
-              <span className="flex items-center justify-center w-9 h-9 rounded-full bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-hover)] text-white text-xs font-bold shrink-0">
-                {initials}
-              </span>
+              <UserAvatar
+                avatarUrl={user?.avatarUrl}
+                displayName={displayName}
+                initials={initials}
+                size="md"
+              />
               <div className="min-w-0">
                 <div className="text-sm font-semibold text-[var(--text-primary)] truncate">{displayName}</div>
                 <div className="text-[11px] text-[var(--text-secondary)] mt-0.5 font-medium">Customer Account</div>
