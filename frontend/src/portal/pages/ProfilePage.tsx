@@ -254,6 +254,39 @@ export default function ProfilePage() {
   const [addresses, setAddresses] = useState<CompanyAddress[]>([]);
   const [documents, setDocuments] = useState<CompanyDocument[]>([]);
 
+  // Personal form controlled state (preserves changes across tab navigation)
+  const [personalFullName, setPersonalFullName] = useState("");
+  const [personalPhone, setPersonalPhone] = useState("");
+  const [personalCountryCode, setPersonalCountryCode] = useState("+91");
+  const [personalPreferredComm, setPersonalPreferredComm] = useState("Email");
+  const [personalDeliveryAddresses, setPersonalDeliveryAddresses] = useState("");
+
+  // Company form controlled state (preserves changes across tab navigation)
+  const [companyForm, setCompanyForm] = useState({
+    legalBusinessName: "",
+    businessType: "",
+    industry: "",
+    website: "",
+    companyEmail: "",
+    companyPhone: "",
+    purchaseEmail: "",
+    accountsEmail: "",
+    registeredAddress: "",
+    factoryAddress: "",
+    city: "",
+    state: "",
+    country: "India",
+    pinCode: "",
+    gstNumber: "",
+    panNumber: "",
+    cinNumber: "",
+    msmeNumber: "",
+    preferredCurrency: "INR",
+    preferredPaymentMethod: "",
+    preferredCommunication: "Email",
+    preferredLanguage: "English",
+  });
+
   // UI state
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -293,7 +326,36 @@ export default function ProfilePage() {
         customerApi.companyDocuments().catch<CompanyDocument[]>(() => []),
       ]);
       setProfile(p);
+      setPersonalFullName(p.fullName || user?.fullName || "");
+      setPersonalPhone(p.phoneNumber || "");
+      setPersonalDeliveryAddresses(p.company?.deliveryAddresses || "");
       setCompany(c);
+      if (c) {
+        setCompanyForm({
+          legalBusinessName: c.legalBusinessName || "",
+          businessType: c.businessType || "",
+          industry: c.industry || "",
+          website: c.website || "",
+          companyEmail: c.companyEmail || "",
+          companyPhone: c.companyPhone || "",
+          purchaseEmail: c.purchaseEmail || "",
+          accountsEmail: c.accountsEmail || "",
+          registeredAddress: c.registeredAddress || "",
+          factoryAddress: c.factoryAddress || "",
+          city: c.city || "",
+          state: c.state || "",
+          country: c.country || "India",
+          pinCode: c.pinCode || "",
+          gstNumber: c.gstNumber || "",
+          panNumber: c.panNumber || "",
+          cinNumber: c.cinNumber || "",
+          msmeNumber: c.msmeNumber || "",
+          preferredCurrency: c.preferredCurrency || "INR",
+          preferredPaymentMethod: c.preferredPaymentMethod || "",
+          preferredCommunication: c.preferredCommunication || "Email",
+          preferredLanguage: c.preferredLanguage || "English",
+        });
+      }
       setContacts(ct);
       setAddresses(a);
       setDocuments(d);
@@ -401,18 +463,20 @@ export default function ProfilePage() {
 
   async function handleSavePersonal(e: FormEvent) {
     e.preventDefault();
-    const data = new FormData(e.currentTarget as HTMLFormElement);
     setBusy(true);
     try {
       await customerApi.updateProfile({
-        fullName: (data.get("fullName") as string)?.trim() || undefined,
-        phoneNumber: (data.get("phoneNumber") as string)?.trim() || undefined,
-        deliveryAddresses: (data.get("deliveryAddresses") as string)?.trim() || undefined,
+        fullName: personalFullName.trim() || undefined,
+        phoneNumber: personalPhone.trim() || undefined,
+        deliveryAddresses: personalDeliveryAddresses.trim() || undefined,
       });
       showToast("Personal information updated.", "success");
       recordProfileUpdate();
       const p = await customerApi.profile();
       setProfile(p);
+      setPersonalFullName(p.fullName || user?.fullName || "");
+      setPersonalPhone(p.phoneNumber || "");
+      setPersonalDeliveryAddresses(p.company?.deliveryAddresses || "");
       await refreshUser();
     } catch {
       showToast("Could not update personal information.", "error");
@@ -423,38 +487,36 @@ export default function ProfilePage() {
 
   async function handleSaveCompany(e: FormEvent) {
     e.preventDefault();
-    const form = e.currentTarget as HTMLFormElement;
-    const data = new FormData(form);
     setBusy(true);
     try {
       await customerApi.updateCompany({
-        legalBusinessName: (data.get("legalBusinessName") as string)?.trim() || undefined,
-        businessType: (data.get("businessType") as string) || undefined,
-        industry: (data.get("industry") as string)?.trim() || undefined,
-        website: (data.get("website") as string)?.trim() || undefined,
-        companyEmail: (data.get("companyEmail") as string)?.trim() || undefined,
-        companyPhone: (data.get("companyPhone") as string)?.trim() || undefined,
-        purchaseEmail: (data.get("purchaseEmail") as string)?.trim() || undefined,
-        accountsEmail: (data.get("accountsEmail") as string)?.trim() || undefined,
-        registeredAddress: (data.get("registeredAddress") as string)?.trim() || undefined,
-        factoryAddress: (data.get("factoryAddress") as string)?.trim() || undefined,
-        city: (data.get("city") as string)?.trim() || undefined,
-        state: (data.get("state") as string)?.trim() || undefined,
-        country: (data.get("country") as string)?.trim() || undefined,
-        pinCode: (data.get("pinCode") as string)?.trim() || undefined,
-        gstNumber: (data.get("gstNumber") as string)?.trim() || undefined,
-        panNumber: (data.get("panNumber") as string)?.trim() || undefined,
-        cinNumber: (data.get("cinNumber") as string)?.trim() || undefined,
-        msmeNumber: (data.get("msmeNumber") as string)?.trim() || undefined,
-        preferredCurrency: (data.get("preferredCurrency") as string) || undefined,
-        preferredPaymentMethod: (data.get("preferredPaymentMethod") as string) || undefined,
-        preferredCommunication: (data.get("preferredCommunication") as string) || undefined,
-        preferredLanguage: (data.get("preferredLanguage") as string) || undefined,
+        legalBusinessName: companyForm.legalBusinessName.trim() || undefined,
+        businessType: companyForm.businessType || undefined,
+        industry: companyForm.industry.trim() || undefined,
+        website: companyForm.website.trim() || undefined,
+        companyEmail: companyForm.companyEmail.trim() || undefined,
+        companyPhone: companyForm.companyPhone.trim() || undefined,
+        purchaseEmail: companyForm.purchaseEmail.trim() || undefined,
+        accountsEmail: companyForm.accountsEmail.trim() || undefined,
+        registeredAddress: companyForm.registeredAddress.trim() || undefined,
+        factoryAddress: companyForm.factoryAddress.trim() || undefined,
+        city: companyForm.city.trim() || undefined,
+        state: companyForm.state.trim() || undefined,
+        country: companyForm.country.trim() || undefined,
+        pinCode: companyForm.pinCode.trim() || undefined,
+        gstNumber: companyForm.gstNumber.trim() || undefined,
+        panNumber: companyForm.panNumber.trim() || undefined,
+        cinNumber: companyForm.cinNumber.trim() || undefined,
+        msmeNumber: companyForm.msmeNumber.trim() || undefined,
+        preferredCurrency: companyForm.preferredCurrency || undefined,
+        preferredPaymentMethod: companyForm.preferredPaymentMethod || undefined,
+        preferredCommunication: companyForm.preferredCommunication || undefined,
+        preferredLanguage: companyForm.preferredLanguage || undefined,
       });
-      showToast("Company information updated.", "success");
-      recordProfileUpdate();
       const c = await customerApi.companyDetail();
       setCompany(c);
+      showToast("Company information updated.", "success");
+      recordProfileUpdate();
     } catch {
       showToast("Could not update company information.", "error");
     } finally { setBusy(false); }
@@ -464,6 +526,32 @@ export default function ProfilePage() {
     try {
       const c = await customerApi.companyDetail();
       setCompany(c);
+      if (c) {
+        setCompanyForm({
+          legalBusinessName: c.legalBusinessName || "",
+          businessType: c.businessType || "",
+          industry: c.industry || "",
+          website: c.website || "",
+          companyEmail: c.companyEmail || "",
+          companyPhone: c.companyPhone || "",
+          purchaseEmail: c.purchaseEmail || "",
+          accountsEmail: c.accountsEmail || "",
+          registeredAddress: c.registeredAddress || "",
+          factoryAddress: c.factoryAddress || "",
+          city: c.city || "",
+          state: c.state || "",
+          country: c.country || "India",
+          pinCode: c.pinCode || "",
+          gstNumber: c.gstNumber || "",
+          panNumber: c.panNumber || "",
+          cinNumber: c.cinNumber || "",
+          msmeNumber: c.msmeNumber || "",
+          preferredCurrency: c.preferredCurrency || "INR",
+          preferredPaymentMethod: c.preferredPaymentMethod || "",
+          preferredCommunication: c.preferredCommunication || "Email",
+          preferredLanguage: c.preferredLanguage || "English",
+        });
+      }
       showToast("Changes have been reset.", "success");
     } catch {
       showToast("Could not reset changes.", "error");
@@ -637,23 +725,41 @@ export default function ProfilePage() {
 
   // ── Preferences ──────────────────────────────────────────────────────────
 
-  const [preferences, setPreferences] = useState({
-    language: "English",
-    timezone: "Asia/Kolkata",
-    dateFormat: "DD/MM/YYYY",
-    currency: "INR",
-    emailNotifications: true,
-    quotationUpdates: true,
-    invoiceNotifications: true,
-    marketingEmails: false,
+  interface CustomerPreferences {
+    language: string;
+    timezone: string;
+    dateFormat: string;
+    currency: string;
+    emailNotifications: boolean;
+    quotationUpdates: boolean;
+    invoiceNotifications: boolean;
+    marketingEmails: boolean;
+  }
+
+  const [preferences, setPreferences] = useState<CustomerPreferences>(() => {
+    const saved = localStorage.getItem("su_customer_preferences");
+    if (saved) {
+      try { return JSON.parse(saved); } catch {}
+    }
+    return {
+      language: "English",
+      timezone: "Asia/Kolkata",
+      dateFormat: "DD/MM/YYYY",
+      currency: "INR",
+      emailNotifications: true,
+      quotationUpdates: true,
+      invoiceNotifications: true,
+      marketingEmails: false,
+    };
   });
 
   async function handleSavePreferences() {
     setBusy(true);
     try {
-      // Simulate save — backend endpoint TBD
+      localStorage.setItem("su_customer_preferences", JSON.stringify(preferences));
       await new Promise(r => setTimeout(r, 300));
       showToast("Preferences saved.", "success");
+      recordProfileUpdate();
     } catch {
       showToast("Could not save preferences.", "error");
     } finally { setBusy(false); }
@@ -689,7 +795,16 @@ export default function ProfilePage() {
       return (
         <div key={field.key}>
           <label htmlFor={id} style={labelStyle}>{field.label}{field.required && <span style={{ color: colors.danger, marginLeft: 2 }}>*</span>}</label>
-          <select id={id} name={field.key} value={value ?? ""} onChange={onChange ? e => onChange(e.target.value) : undefined} style={{ ...styles, cursor: "pointer", appearance: "none" as const, backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center", paddingRight: 36 }}>
+          <select
+            id={id}
+            name={field.key}
+            value={value ?? ""}
+            onChange={e => {
+              if (onChange) onChange(e.target.value);
+              else setCompanyForm(p => ({ ...p, [field.key]: e.target.value }));
+            }}
+            style={{ ...styles, cursor: "pointer", appearance: "none" as const, backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center", paddingRight: 36 }}
+          >
             {field.options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
         </div>
@@ -698,7 +813,20 @@ export default function ProfilePage() {
     return (
       <div key={field.key}>
         <label htmlFor={id} style={labelStyle}>{field.label}{field.required && <span style={{ color: colors.danger, marginLeft: 2 }}>*</span>}</label>
-        <input id={id} name={field.key} type={field.type} defaultValue={value ?? ""} placeholder={field.placeholder} style={styles} onFocus={e => { e.target.style.borderColor = colors.primary; }} onBlur={e => { e.target.style.borderColor = colors.border; }} />
+        <input
+          id={id}
+          name={field.key}
+          type={field.type}
+          value={value ?? ""}
+          onChange={e => {
+            if (onChange) onChange(e.target.value);
+            else setCompanyForm(p => ({ ...p, [field.key]: e.target.value }));
+          }}
+          placeholder={field.placeholder}
+          style={styles}
+          onFocus={e => { e.target.style.borderColor = colors.primary; }}
+          onBlur={e => { e.target.style.borderColor = colors.border; }}
+        />
       </div>
     );
   }
@@ -949,7 +1077,14 @@ export default function ProfilePage() {
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                 <div>
                   <label style={labelStyle}>Full Name *</label>
-                  <input name="fullName" type="text" defaultValue={profile?.fullName ?? ""} required style={inputStyle} />
+                  <input
+                    name="fullName"
+                    type="text"
+                    value={personalFullName}
+                    onChange={e => setPersonalFullName(e.target.value)}
+                    required
+                    style={inputStyle}
+                  />
                 </div>
                 <div>
                   <label style={labelStyle}>Designation / Role</label>
@@ -979,7 +1114,11 @@ export default function ProfilePage() {
               <div style={{ display: "grid", gridTemplateColumns: "1fr 3fr", gap: 16 }}>
                 <div>
                   <label style={labelStyle}>Country Code</label>
-                  <select defaultValue="+91" style={inputStyle}>
+                  <select
+                    value={personalCountryCode}
+                    onChange={e => setPersonalCountryCode(e.target.value)}
+                    style={inputStyle}
+                  >
                     <option value="+91">🇮🇳 +91</option>
                     <option value="+1">🇺🇸 +1</option>
                     <option value="+44">🇬🇧 +44</option>
@@ -987,12 +1126,22 @@ export default function ProfilePage() {
                 </div>
                 <div>
                   <label style={labelStyle}>Phone</label>
-                  <input name="phoneNumber" type="tel" defaultValue={profile?.phoneNumber ?? ""} style={inputStyle} />
+                  <input
+                    name="phoneNumber"
+                    type="tel"
+                    value={personalPhone}
+                    onChange={e => setPersonalPhone(e.target.value)}
+                    style={inputStyle}
+                  />
                 </div>
               </div>
               <div>
                 <label style={labelStyle}>Preferred Communication</label>
-                <select defaultValue="Email" style={inputStyle}>
+                <select
+                  value={personalPreferredComm}
+                  onChange={e => setPersonalPreferredComm(e.target.value)}
+                  style={inputStyle}
+                >
                   <option value="Email">Email</option>
                   <option value="Phone">Phone</option>
                   <option value="WhatsApp">WhatsApp</option>
@@ -1000,7 +1149,13 @@ export default function ProfilePage() {
               </div>
               <div>
                 <label style={labelStyle}>Delivery Addresses</label>
-                <textarea name="deliveryAddresses" defaultValue={profile?.company?.deliveryAddresses ?? ""} placeholder="One address per line" style={{ ...inputStyle, minHeight: 80, resize: "vertical" as const }} />
+                <textarea
+                  name="deliveryAddresses"
+                  value={personalDeliveryAddresses}
+                  onChange={e => setPersonalDeliveryAddresses(e.target.value)}
+                  placeholder="One address per line"
+                  style={{ ...inputStyle, minHeight: 80, resize: "vertical" as const }}
+                />
               </div>
               <div style={{ display: "flex", gap: 10, paddingTop: 8 }}>
                 <button type="submit" disabled={busy} style={{ ...btnPrimary, opacity: busy ? 0.6 : 1 }}>{busy ? "Saving..." : "Save Personal Information"}</button>
@@ -1104,40 +1259,40 @@ export default function ProfilePage() {
             <h2 style={{ fontSize: 18, fontWeight: 700, color: colors.text, margin: "0 0 20px" }}>Company Information</h2>
             <form onSubmit={handleSaveCompany} style={{ display: "grid", gap: 16 }}>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
-                {renderField({ key: "legalBusinessName", label: "Legal Business Name", type: "text", placeholder: "e.g. Shakti Udyog Pvt Ltd" }, company?.legalBusinessName ?? undefined)}
-                {renderField({ key: "businessType", label: "Business Type", type: "select", required: true, options: businessTypeOptions }, company?.businessType ?? undefined)}
-                {renderField({ key: "industry", label: "Industry", type: "text", placeholder: "e.g. Iron Casting" }, company?.industry ?? undefined)}
+                {renderField({ key: "legalBusinessName", label: "Legal Business Name", type: "text", placeholder: "e.g. Shakti Udyog Pvt Ltd" }, companyForm.legalBusinessName)}
+                {renderField({ key: "businessType", label: "Business Type", type: "select", required: true, options: businessTypeOptions }, companyForm.businessType)}
+                {renderField({ key: "industry", label: "Industry", type: "text", placeholder: "e.g. Iron Casting" }, companyForm.industry)}
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
-                {renderField({ key: "website", label: "Company Website", type: "url", placeholder: "https://" }, company?.website ?? undefined)}
-                {renderField({ key: "companyEmail", label: "Company Email", type: "email", required: true }, company?.companyEmail ?? undefined)}
-                {renderField({ key: "companyPhone", label: "Company Phone", type: "tel", required: true }, company?.companyPhone ?? undefined)}
+                {renderField({ key: "website", label: "Company Website", type: "url", placeholder: "https://" }, companyForm.website)}
+                {renderField({ key: "companyEmail", label: "Company Email", type: "email", required: true }, companyForm.companyEmail)}
+                {renderField({ key: "companyPhone", label: "Company Phone", type: "tel", required: true }, companyForm.companyPhone)}
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
-                {renderField({ key: "purchaseEmail", label: "Purchase Department Email", type: "email" }, company?.purchaseEmail ?? undefined)}
-                {renderField({ key: "accountsEmail", label: "Accounts Department Email", type: "email" }, company?.accountsEmail ?? undefined)}
+                {renderField({ key: "purchaseEmail", label: "Purchase Department Email", type: "email" }, companyForm.purchaseEmail)}
+                {renderField({ key: "accountsEmail", label: "Accounts Department Email", type: "email" }, companyForm.accountsEmail)}
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
-                {renderField({ key: "registeredAddress", label: "Registered Address", type: "text", required: true, placeholder: "Full address" }, company?.registeredAddress ?? undefined)}
-                {renderField({ key: "factoryAddress", label: "Factory Address", type: "text", placeholder: "Optional" }, company?.factoryAddress ?? undefined)}
+                {renderField({ key: "registeredAddress", label: "Registered Address", type: "text", required: true, placeholder: "Full address" }, companyForm.registeredAddress)}
+                {renderField({ key: "factoryAddress", label: "Factory Address", type: "text", placeholder: "Optional" }, companyForm.factoryAddress)}
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 16 }}>
-                {renderField({ key: "city", label: "City", type: "text", required: true }, company?.city ?? undefined)}
-                {renderField({ key: "state", label: "State", type: "text", required: true }, company?.state ?? undefined)}
-                {renderField({ key: "country", label: "Country", type: "text", required: true }, company?.country ?? undefined)}
-                {renderField({ key: "pinCode", label: "PIN Code", type: "text", required: true }, company?.pinCode ?? undefined)}
-                {renderField({ key: "gstNumber", label: "GST Number", type: "text", required: true, placeholder: "e.g. 03ABCDE1234F1Z5" }, company?.gstNumber ?? undefined)}
+                {renderField({ key: "city", label: "City", type: "text", required: true }, companyForm.city)}
+                {renderField({ key: "state", label: "State", type: "text", required: true }, companyForm.state)}
+                {renderField({ key: "country", label: "Country", type: "text", required: true }, companyForm.country)}
+                {renderField({ key: "pinCode", label: "PIN Code", type: "text", required: true }, companyForm.pinCode)}
+                {renderField({ key: "gstNumber", label: "GST Number", type: "text", required: true, placeholder: "e.g. 03ABCDE1234F1Z5" }, companyForm.gstNumber)}
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
-                {renderField({ key: "panNumber", label: "PAN Number", type: "text", placeholder: "e.g. ABCDE1234F" }, company?.panNumber ?? undefined)}
-                {renderField({ key: "cinNumber", label: "CIN Number", type: "text", placeholder: "Optional" }, company?.cinNumber ?? undefined)}
-                {renderField({ key: "msmeNumber", label: "MSME/Udyam Number", type: "text", placeholder: "Optional" }, company?.msmeNumber ?? undefined)}
-                {renderField({ key: "preferredCurrency", label: "Preferred Currency", type: "select", options: currencyOptions }, company?.preferredCurrency ?? undefined)}
+                {renderField({ key: "panNumber", label: "PAN Number", type: "text", placeholder: "e.g. ABCDE1234F" }, companyForm.panNumber)}
+                {renderField({ key: "cinNumber", label: "CIN Number", type: "text", placeholder: "Optional" }, companyForm.cinNumber)}
+                {renderField({ key: "msmeNumber", label: "MSME/Udyam Number", type: "text", placeholder: "Optional" }, companyForm.msmeNumber)}
+                {renderField({ key: "preferredCurrency", label: "Preferred Currency", type: "select", options: currencyOptions }, companyForm.preferredCurrency)}
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
-                {renderField({ key: "preferredPaymentMethod", label: "Preferred Payment Method", type: "select", options: paymentMethodOptions }, company?.preferredPaymentMethod ?? undefined)}
-                {renderField({ key: "preferredCommunication", label: "Preferred Communication", type: "select", options: communicationOptions }, company?.preferredCommunication ?? undefined)}
-                {renderField({ key: "preferredLanguage", label: "Preferred Language", type: "select", options: languageOptions }, company?.preferredLanguage ?? undefined)}
+                {renderField({ key: "preferredPaymentMethod", label: "Preferred Payment Method", type: "select", options: paymentMethodOptions }, companyForm.preferredPaymentMethod)}
+                {renderField({ key: "preferredCommunication", label: "Preferred Communication", type: "select", options: communicationOptions }, companyForm.preferredCommunication)}
+                {renderField({ key: "preferredLanguage", label: "Preferred Language", type: "select", options: languageOptions }, companyForm.preferredLanguage)}
               </div>
 
               <div style={{ display: "flex", gap: 12, paddingTop: 12, borderTop: `1px solid ${colors.border}` }}>
@@ -1533,20 +1688,20 @@ export default function ProfilePage() {
               <div style={{ borderTop: `1px solid ${colors.border}`, paddingTop: 16, marginTop: 8 }}>
                 <h3 style={{ fontSize: 15, fontWeight: 600, color: colors.text, margin: "0 0 16px" }}>Email Notifications</h3>
                 <div style={{ display: "grid", gap: 12 }}>
-                  {[
-                    { key: "emailNotifications", label: "Email Notifications" },
-                    { key: "quotationUpdates", label: "Quote Updates" },
-                    { key: "invoiceNotifications", label: "Invoice Notifications" },
-                    { key: "marketingEmails", label: "Marketing Emails" },
-                  ].map(item => (
+                  {([
+                    { key: "emailNotifications" as const, label: "Email Notifications" },
+                    { key: "quotationUpdates" as const, label: "Quote Updates" },
+                    { key: "invoiceNotifications" as const, label: "Invoice Notifications" },
+                    { key: "marketingEmails" as const, label: "Marketing Emails" },
+                  ]).map(item => (
                     <label key={item.key} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", padding: 8, borderRadius: 8, background: colors.bg }}>
                       <span style={{ fontSize: 14, color: colors.text }}>{item.label}</span>
                       <button
                         type="button"
-                        onClick={() => setPreferences(p => ({ ...p, [item.key]: !(p as any)[item.key] }))}
-                        style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: (preferences as any)[item.key] ? colors.primary : colors.textMuted }}
+                        onClick={() => setPreferences(p => ({ ...p, [item.key]: !p[item.key] }))}
+                        style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: preferences[item.key] ? colors.primary : colors.textMuted }}
                       >
-                        {(preferences as any)[item.key] ? <IconToggleOn /> : <IconToggleOff />}
+                        {preferences[item.key] ? <IconToggleOn /> : <IconToggleOff />}
                       </button>
                     </label>
                   ))}
