@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, useMemo, useRef, type FormEvent, type ReactNode } from "react";
 import { customerApi, type Profile, type CompanyDetail, type ContactPerson, type CompanyAddress, type CompanyDocument } from "../../api/customerApi";
 import { useAuth } from "../../auth/AuthContext";
 import { formatDate } from "../shared";
@@ -389,6 +389,35 @@ export default function ProfilePage() {
       ? profile.avatarUrl
       : (user?.avatarUrl || null);
 
+  // Combined composite profile object for ProfileCompletion calculation
+  const compositeProfile = useMemo(() => {
+    const compName = (companyForm.legalBusinessName || company?.legalBusinessName || company?.name || profile?.company?.name || "").trim();
+    const regAddr = (companyForm.registeredAddress || company?.registeredAddress || profile?.company?.addressLine1 || "").trim();
+    const facAddr = (companyForm.factoryAddress || company?.factoryAddress || "").trim();
+    const city = (companyForm.city || company?.city || profile?.company?.city || "").trim();
+    const deliveryAddrs = (profile?.company?.deliveryAddresses || "").trim();
+
+    return {
+      fullName: (personalFullName || profile?.fullName || user?.fullName || "").trim(),
+      email: (profile?.email || user?.email || "").trim(),
+      phoneNumber: (personalPhone || profile?.phoneNumber || "").trim(),
+      designation: "Customer Representative",
+      companyName: compName,
+      company: {
+        name: compName,
+        legalBusinessName: compName,
+        registeredAddress: regAddr,
+        factoryAddress: facAddr,
+        addressLine1: regAddr,
+        city: city,
+        deliveryAddresses: deliveryAddrs,
+      },
+      addresses: addresses,
+      emailConfirmed: profile?.emailConfirmed ?? true,
+      roles: user?.roles || ["Customer"],
+    };
+  }, [personalFullName, personalPhone, profile, user, companyForm, company, addresses]);
+
   // ── Data Loading ─────────────────────────────────────────────────────────
 
   async function loadAll() {
@@ -633,8 +662,12 @@ export default function ProfilePage() {
         preferredCommunication: companyForm.preferredCommunication || undefined,
         preferredLanguage: companyForm.preferredLanguage || undefined,
       });
-      const c = await customerApi.companyDetail();
+      const [c, p] = await Promise.all([
+        customerApi.companyDetail(),
+        customerApi.profile(),
+      ]);
       setCompany(c);
+      setProfile(p);
       localStorage.removeItem(COMPANY_DRAFT_KEY);
       showToast("Company information updated.", "success");
       recordProfileUpdate();
@@ -1046,11 +1079,12 @@ export default function ProfilePage() {
       {/* ── Profile Completion Status Bar & Checklist ────────────────────── */}
       <div style={{ marginBottom: 20 }}>
         <ProfileCompletionCard
-          profileData={profile}
+          profileData={compositeProfile}
           onNavigateTab={(tabKey) => {
             if (tabKey === "personal") setActiveTab("personal");
             else if (tabKey === "company") setActiveTab("company");
             else if (tabKey === "contacts") setActiveTab("contacts");
+            else if (tabKey === "addresses") setActiveTab("addresses");
           }}
         />
       </div>

@@ -65,16 +65,16 @@ export function calculateProfileCompleteness(data: any): CompletenessResult {
   const designation = (data.designation || data.title || (data.roles && data.roles.length > 0 ? data.roles[0] : "") || (data.company?.name ? "Customer Representative" : "Customer")).trim();
   const companyName = (data.company?.name || data.company?.legalBusinessName || data.companyName || "").trim();
   const hasAddress = Boolean(
-    data.company?.deliveryAddresses ||
-    data.company?.addressLine1 ||
-    data.company?.city ||
-    data.company?.registeredAddress ||
-    data.company?.factoryAddress ||
-    data.addressLine1 ||
-    data.city ||
-    data.registeredAddress ||
-    data.factoryAddress ||
-    (data.addresses && data.addresses.length > 0)
+    (data.company?.deliveryAddresses && String(data.company.deliveryAddresses).trim().length > 0) ||
+    (data.company?.addressLine1 && String(data.company.addressLine1).trim().length > 0) ||
+    (data.company?.city && String(data.company.city).trim().length > 0) ||
+    (data.company?.registeredAddress && String(data.company.registeredAddress).trim().length > 0) ||
+    (data.company?.factoryAddress && String(data.company.factoryAddress).trim().length > 0) ||
+    (data.addressLine1 && String(data.addressLine1).trim().length > 0) ||
+    (data.city && String(data.city).trim().length > 0) ||
+    (data.registeredAddress && String(data.registeredAddress).trim().length > 0) ||
+    (data.factoryAddress && String(data.factoryAddress).trim().length > 0) ||
+    (Array.isArray(data.addresses) && data.addresses.length > 0)
   );
   const isEmailVerified = data.emailConfirmed !== false && Boolean(email);
 
@@ -379,8 +379,9 @@ export function ProfileCompletionCard({
                 onClick={() => {
                   if (onNavigateTab) {
                     if (item.category === "personal") onNavigateTab("personal");
-                    else if (item.category === "company") onNavigateTab("company");
+                    else if (item.category === "company" && item.key !== "address") onNavigateTab("company");
                     else if (item.category === "contact") onNavigateTab("contacts");
+                    else if (item.key === "address" || item.category === "company") onNavigateTab("addresses");
                   }
                 }}
                 className={cn(
