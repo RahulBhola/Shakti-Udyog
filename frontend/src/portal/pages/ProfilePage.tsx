@@ -1365,22 +1365,45 @@ export default function ProfilePage() {
       )}
 
       {/* ═══ Company Tab ═══ */}
-      {activeTab === "company" && (
+      {activeTab === "company" && (() => {
+        const statusStr = (company?.verificationStatus || "Pending").trim().toLowerCase();
+        const isCompanyVerified = statusStr === "verified" || statusStr === "approved";
+        const isCompanyUnderReview = statusStr === "submitted" || statusStr === "under review";
+        const isCompanyRejected = statusStr === "rejected";
+
+        const isFullyVerified = isCompanyVerified && (company?.gstVerified ?? false) && (company?.emailVerified ?? false);
+        const isPartiallyVerified = !isFullyVerified && (isCompanyVerified || (company?.gstVerified ?? false) || (company?.emailVerified ?? false) || (company?.phoneVerified ?? false));
+
+        return (
         <div style={{ display: "grid", gap: 24 }}>
           {/* Verification Status */}
           <div style={cardStyle}>
             <h2 style={{ fontSize: 18, fontWeight: 700, color: colors.text, margin: "0 0 16px" }}>Verification Status</h2>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
               <span style={{ fontSize: 14, color: colors.textSecondary }}>Overall Status:</span>
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 14px", borderRadius: 20, fontSize: 13, fontWeight: 600, background: colors.warningLight, color: colors.warning }}>
-                <IconAlertCircle /> Partially Verified
-              </span>
+              {isFullyVerified ? (
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 14px", borderRadius: 20, fontSize: 13, fontWeight: 600, background: colors.successLight, color: colors.success }}>
+                  <IconCheck /> Fully Verified
+                </span>
+              ) : isPartiallyVerified ? (
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 14px", borderRadius: 20, fontSize: 13, fontWeight: 600, background: colors.warningLight, color: colors.warning }}>
+                  <IconAlertCircle /> Partially Verified
+                </span>
+              ) : isCompanyRejected ? (
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 14px", borderRadius: 20, fontSize: 13, fontWeight: 600, background: colors.dangerLight, color: colors.danger }}>
+                  <IconX /> Action Required
+                </span>
+              ) : (
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 14px", borderRadius: 20, fontSize: 13, fontWeight: 600, background: "rgba(59, 130, 246, 0.12)", color: "#3B82F6" }}>
+                  <IconAlertCircle /> Pending Verification
+                </span>
+              )}
             </div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               <VerificationBadge label="GST Verified" verified={company?.gstVerified ?? false} />
               <VerificationBadge label="Email Verified" verified={company?.emailVerified ?? false} />
               <VerificationBadge label="Phone Verified" verified={company?.phoneVerified ?? false} />
-              <VerificationBadge label="Company Verification" verified={(company?.verificationStatus ?? "Pending") === "Verified"} />
+              <VerificationBadge label="Company Verification" verified={isCompanyVerified} />
             </div>
           </div>
 
@@ -1502,51 +1525,106 @@ export default function ProfilePage() {
             {/* Verification Status Card */}
             <div style={cardStyle}>
               <h2 style={{ fontSize: 18, fontWeight: 700, color: colors.text, margin: "0 0 16px" }}>Company Verification</h2>
-              {(company?.verificationStatus ?? "Pending") === "Pending" || company?.verificationStatus === "Submitted" ? (
-                <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 14px", borderRadius: 20, fontSize: 13, fontWeight: 600, background: colors.warningLight, color: colors.warning }}>
-                      <IconAlertCircle /> {company?.verificationStatus === "Submitted" ? "Under Review" : "Pending"}
-                    </span>
-                  </div>
-                  <p style={{ margin: "0 0 4px", fontSize: 14, color: colors.textSecondary, lineHeight: 1.5 }}>
-                    Our team is reviewing your company information and uploaded documents. You will be notified after verification.
-                  </p>
-                  {company?.verificationSubmittedOn && (
-                    <p style={{ margin: "8px 0 0", fontSize: 12, color: colors.textMuted }}>
-                      Submitted on: {formatDate(company.verificationSubmittedOn)}
-                    </p>
-                  )}
-                  {company?.verificationStatus === "Pending" && (
-                    <button type="button" style={{ ...btnPrimary, marginTop: 16 }} onClick={async () => {
-                      try { await customerApi.submitCompanyVerification(); showToast("Verification submitted.", "success"); const c = await customerApi.companyDetail(); setCompany(c); } catch { showToast("Could not submit.", "error"); }
-                    }}>Submit for Verification</button>
-                  )}
-                </div>
-              ) : company?.verificationStatus === "Verified" ? (
+              {isCompanyVerified ? (
                 <div>
                   <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
                     <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 14px", borderRadius: 20, fontSize: 13, fontWeight: 600, background: colors.successLight, color: colors.success }}>
                       <IconCheck /> Verified
                     </span>
                   </div>
-                  <p style={{ margin: 0, fontSize: 14, color: colors.textSecondary }}>Your company has been verified.</p>
+                  <p style={{ margin: "0 0 4px", fontSize: 14, color: colors.textSecondary, lineHeight: 1.5 }}>
+                    Your company entity and statutory details have been verified and approved by Shakti Udyog.
+                  </p>
+                  {company?.verificationSubmittedOn && (
+                    <p style={{ margin: "6px 0 0", fontSize: 12, color: colors.textMuted }}>
+                      Verified on: {formatDate(company.verificationSubmittedOn)}
+                    </p>
+                  )}
                 </div>
-              ) : (
+              ) : isCompanyUnderReview ? (
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 14px", borderRadius: 20, fontSize: 13, fontWeight: 600, background: colors.warningLight, color: colors.warning }}>
+                      <IconAlertCircle /> Under Review
+                    </span>
+                  </div>
+                  <p style={{ margin: "0 0 4px", fontSize: 14, color: colors.textSecondary, lineHeight: 1.5 }}>
+                    Our compliance team is reviewing your company information and uploaded documents. You will be notified once verified.
+                  </p>
+                  {company?.verificationSubmittedOn && (
+                    <p style={{ margin: "8px 0 0", fontSize: 12, color: colors.textMuted }}>
+                      Submitted on: {formatDate(company.verificationSubmittedOn)}
+                    </p>
+                  )}
+                </div>
+              ) : isCompanyRejected ? (
                 <div>
                   <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
                     <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 14px", borderRadius: 20, fontSize: 13, fontWeight: 600, background: colors.dangerLight, color: colors.danger }}>
                       <IconX /> Rejected
                     </span>
                   </div>
-                  <p style={{ margin: "0 0 8px", fontSize: 14, color: colors.textSecondary }}>Your verification was not approved. Please update your documents and resubmit.</p>
-                  <button type="button" style={btnPrimary}>Resubmit</button>
+                  <p style={{ margin: "0 0 8px", fontSize: 14, color: colors.textSecondary, lineHeight: 1.5 }}>
+                    Your verification was not approved. Please verify your company details and resubmit for review.
+                  </p>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    style={{ ...btnPrimary, opacity: busy ? 0.6 : 1 }}
+                    onClick={async () => {
+                      try {
+                        setBusy(true);
+                        await customerApi.submitCompanyVerification();
+                        showToast("Verification re-submitted successfully.", "success");
+                        const c = await customerApi.companyDetail();
+                        setCompany(c);
+                      } catch {
+                        showToast("Could not re-submit verification.", "error");
+                      } finally {
+                        setBusy(false);
+                      }
+                    }}
+                  >
+                    {busy ? "Submitting..." : "Resubmit Verification"}
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 14px", borderRadius: 20, fontSize: 13, fontWeight: 600, background: "rgba(59, 130, 246, 0.12)", color: "#3B82F6" }}>
+                      <IconAlertCircle /> Pending Verification
+                    </span>
+                  </div>
+                  <p style={{ margin: "0 0 8px", fontSize: 14, color: colors.textSecondary, lineHeight: 1.5 }}>
+                    Submit your company details for verified enterprise status, credit terms, and priority dispatch.
+                  </p>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    style={{ ...btnPrimary, marginTop: 8, opacity: busy ? 0.6 : 1 }}
+                    onClick={async () => {
+                      try {
+                        setBusy(true);
+                        await customerApi.submitCompanyVerification();
+                        showToast("Verification submitted successfully.", "success");
+                        const c = await customerApi.companyDetail();
+                        setCompany(c);
+                      } catch {
+                        showToast("Could not submit verification.", "error");
+                      } finally {
+                        setBusy(false);
+                      }
+                    }}
+                  >
+                    {busy ? "Submitting..." : "Submit for Verification"}
+                  </button>
                 </div>
               )}
             </div>
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* ═══ Contact Persons Tab ═══ */}
       {activeTab === "contacts" && (
