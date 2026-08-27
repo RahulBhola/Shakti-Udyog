@@ -62,7 +62,7 @@ export function calculateProfileCompleteness(data: any): CompletenessResult {
   const fullName = (data.fullName || data.name || "").trim();
   const email = (data.email || "").trim();
   const phoneNumber = (data.phoneNumber || data.phone || "").trim();
-  const designation = (data.designation || data.title || "").trim();
+  const designation = (data.designation || data.title || (data.roles && data.roles.length > 0 ? data.roles[0] : "") || (data.company?.name ? "Customer Representative" : "Customer")).trim();
   const companyName = (data.company?.name || data.companyName || "").trim();
   const hasAddress = Boolean(
     data.company?.deliveryAddresses ||

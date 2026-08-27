@@ -952,8 +952,18 @@ export default function ProfilePage() {
                   <input name="fullName" type="text" defaultValue={profile?.fullName ?? ""} required style={inputStyle} />
                 </div>
                 <div>
-                  <label style={labelStyle}>Designation</label>
-                  <input name="designation" type="text" defaultValue={profile?.company?.name ? "Customer Representative" : ""} placeholder="e.g. Purchase Manager" style={inputStyle} />
+                  <label style={labelStyle}>Designation / Role</label>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <input
+                      value={profile?.company?.name ? "Customer Representative" : "Authorized Customer"}
+                      disabled
+                      style={{ ...inputStyle, background: colors.borderLight, color: colors.textSecondary }}
+                    />
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 10px", borderRadius: 20, fontSize: 11, fontWeight: 600, background: "rgba(59, 130, 246, 0.12)", color: "#3B82F6", whiteSpace: "nowrap" }}>
+                      Assigned
+                    </span>
+                  </div>
+                  <p style={{ margin: "4px 0 0", fontSize: 11, color: colors.textMuted }}>Role & designation permissions are managed by Shakti Udyog admin.</p>
                 </div>
               </div>
               <div>
