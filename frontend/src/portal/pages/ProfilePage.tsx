@@ -29,7 +29,6 @@ function IconToggleOn() { return <svg width="20" height="20" viewBox="0 0 24 24"
 function IconToggleOff() { return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="6" width="20" height="12" rx="6"/><circle cx="8" cy="12" r="4" fill="currentColor"/></svg>; }
 function IconStar() { return <svg width="14" height="14" viewBox="0 0 24 24" fill="#F59E0B" stroke="#F59E0B" strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>; }
 function IconChevronRight() { return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>; }
-function IconPhone() { return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>; }
 
 // ── Design Tokens ──────────────────────────────────────────────────────────
 
@@ -316,28 +315,6 @@ export default function ProfilePage() {
   const avatarFileInputRef = useRef<HTMLInputElement>(null);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
-  // Phone verification state
-  const [showPhoneVerifyModal, setShowPhoneVerifyModal] = useState(false);
-  const [phoneOtp, setPhoneOtp] = useState("");
-  const [phoneOtpSending, setPhoneOtpSending] = useState(false);
-  const [phoneOtpVerifying, setPhoneOtpVerifying] = useState(false);
-  const [phoneOtpTimer, setPhoneOtpTimer] = useState(0);
-
-  useEffect(() => {
-    if (phoneOtpTimer <= 0) return;
-    const interval = setInterval(() => {
-      setPhoneOtpTimer(prev => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [phoneOtpTimer]);
-
-  const isPhoneMatchingVerified = Boolean(
-    (profile?.phoneNumberConfirmed || localStorage.getItem("su_customer_phone_verified") === "true") &&
-    personalPhone.trim() &&
-    profile?.phoneNumber &&
-    personalPhone.trim() === profile.phoneNumber.trim()
-  );
-
   // Profile update timestamp tracking
   const [profileUpdatedAt, setProfileUpdatedAt] = useState<string>(() => {
     return localStorage.getItem("su_customer_profile_updated_at") || "";
@@ -619,65 +596,6 @@ export default function ProfilePage() {
     } catch {
       showToast("Could not update personal information.", "error");
     } finally { setBusy(false); }
-  }
-
-  async function handleOpenPhoneVerifyModal() {
-    if (!personalPhone.trim()) {
-      showToast("Please enter a phone number first.", "error");
-      return;
-    }
-    setShowPhoneVerifyModal(true);
-    setPhoneOtp("");
-    setPhoneOtpSending(true);
-    try {
-      const fullPhone = `${personalCountryCode} ${personalPhone.trim()}`;
-      const res = await customerApi.sendPhoneOtp(fullPhone);
-      setPhoneOtpTimer(60);
-      showToast(res.message || `OTP sent to ${fullPhone}`, "success");
-    } catch {
-      setPhoneOtpTimer(60);
-      showToast(`Verification code sent to ${personalCountryCode} ${personalPhone.trim()}`, "success");
-    } finally {
-      setPhoneOtpSending(false);
-    }
-  }
-
-  async function handleResendPhoneOtp() {
-    setPhoneOtpSending(true);
-    try {
-      const fullPhone = `${personalCountryCode} ${personalPhone.trim()}`;
-      const res = await customerApi.sendPhoneOtp(fullPhone);
-      setPhoneOtpTimer(60);
-      showToast(res.message || "Verification code resent.", "success");
-    } catch {
-      setPhoneOtpTimer(60);
-      showToast("Verification code resent.", "success");
-    } finally {
-      setPhoneOtpSending(false);
-    }
-  }
-
-  async function handleConfirmPhoneOtp(e: FormEvent) {
-    e.preventDefault();
-    if (phoneOtp.length < 6) {
-      showToast("Please enter the 6-digit verification code.", "error");
-      return;
-    }
-    setPhoneOtpVerifying(true);
-    try {
-      const fullPhone = `${personalCountryCode} ${personalPhone.trim()}`;
-      await customerApi.verifyPhoneOtp(fullPhone, phoneOtp.trim());
-      localStorage.setItem("su_customer_phone_verified", "true");
-      setProfile(prev => prev ? { ...prev, phoneNumber: personalPhone.trim(), phoneNumberConfirmed: true } : prev);
-      recordProfileUpdate();
-      setShowPhoneVerifyModal(false);
-      showToast(`Phone number ${fullPhone} verified successfully!`, "success");
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Invalid or expired OTP code.";
-      showToast(msg, "error");
-    } finally {
-      setPhoneOtpVerifying(false);
-    }
   }
 
   // ── Company Tab ──────────────────────────────────────────────────────────
@@ -1346,36 +1264,7 @@ export default function ProfilePage() {
                   </select>
                 </div>
                 <div>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                    <label style={{ ...labelStyle, marginBottom: 0 }}>Phone Number</label>
-                    {isPhoneMatchingVerified ? (
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 8px", borderRadius: 20, fontSize: 11, fontWeight: 600, background: colors.successLight, color: colors.success }}>
-                        <IconCheck /> Verified
-                      </span>
-                    ) : personalPhone.trim() ? (
-                      <button
-                        type="button"
-                        onClick={handleOpenPhoneVerifyModal}
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: 4,
-                          padding: "2px 8px",
-                          borderRadius: 12,
-                          fontSize: 11,
-                          fontWeight: 600,
-                          background: "rgba(59, 130, 246, 0.12)",
-                          color: "#3B82F6",
-                          border: "none",
-                          cursor: "pointer",
-                        }}
-                      >
-                        <IconPhone /> Verify via OTP
-                      </button>
-                    ) : (
-                      <span style={{ fontSize: 11, color: colors.textMuted }}>Optional</span>
-                    )}
-                  </div>
+                  <label style={labelStyle}>Phone Number</label>
                   <input
                     name="phoneNumber"
                     type="tel"
@@ -1384,11 +1273,6 @@ export default function ProfilePage() {
                     placeholder="e.g. 9876543210"
                     style={inputStyle}
                   />
-                  {isPhoneMatchingVerified ? (
-                    <p style={{ margin: "4px 0 0", fontSize: 11, color: colors.success }}>✓ Mobile number verified for SMS alerts and order status.</p>
-                  ) : personalPhone.trim() ? (
-                    <p style={{ margin: "4px 0 0", fontSize: 11, color: colors.textMuted }}>Unverified. Click &quot;Verify via OTP&quot; to authenticate your phone.</p>
-                  ) : null}
                 </div>
               </div>
               <div>
@@ -2066,69 +1950,6 @@ export default function ProfilePage() {
       )}
         </div>
       </div>
-
-      {/* ── Phone Verification Modal ── */}
-      {showPhoneVerifyModal && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-          <div style={{ ...cardStyle, maxWidth: 440, width: "100%", padding: 28, position: "relative", boxShadow: "0 20px 40px -15px rgba(0,0,0,0.3)" }}>
-            <button
-              type="button"
-              onClick={() => setShowPhoneVerifyModal(false)}
-              style={{ position: "absolute", top: 16, right: 16, background: "none", border: "none", color: colors.textSecondary, cursor: "pointer", fontSize: 18 }}
-            >
-              <IconX />
-            </button>
-            <div style={{ width: 48, height: 48, borderRadius: 14, background: "rgba(59, 130, 246, 0.12)", color: "#3B82F6", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
-              <IconPhone />
-            </div>
-            <h3 style={{ fontSize: 20, fontWeight: 800, color: colors.text, margin: "0 0 6px" }}>Verify Phone Number</h3>
-            <p style={{ fontSize: 13, color: colors.textSecondary, margin: "0 0 20px", lineHeight: 1.5 }}>
-              Enter the 6-digit verification code sent to <strong>{personalCountryCode} {personalPhone}</strong>.
-            </p>
-
-            <form onSubmit={handleConfirmPhoneOtp} style={{ display: "grid", gap: 16 }}>
-              <div>
-                <label style={labelStyle}>6-Digit Verification Code</label>
-                <input
-                  type="text"
-                  maxLength={6}
-                  value={phoneOtp}
-                  onChange={e => setPhoneOtp(e.target.value.replace(/\D/g, ""))}
-                  placeholder="123456"
-                  autoFocus
-                  style={{ ...inputStyle, textAlign: "center", letterSpacing: "8px", fontSize: 22, fontWeight: 700, padding: "10px 14px" }}
-                />
-              </div>
-
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12 }}>
-                <span style={{ color: colors.textSecondary }}>
-                  {phoneOtpTimer > 0 ? `Resend code in ${phoneOtpTimer}s` : "Didn't receive code?"}
-                </span>
-                {phoneOtpTimer === 0 && (
-                  <button
-                    type="button"
-                    onClick={handleResendPhoneOtp}
-                    disabled={phoneOtpSending}
-                    style={{ background: "none", border: "none", color: "#3B82F6", fontWeight: 600, cursor: "pointer" }}
-                  >
-                    {phoneOtpSending ? "Sending..." : "Resend OTP"}
-                  </button>
-                )}
-              </div>
-
-              <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
-                <button
-                  type="submit"
-                  disabled={phoneOtpVerifying || phoneOtp.length < 6}
-                  style={{ ...btnPrimary, width: "100%", justifyContent: "center", opacity: (phoneOtpVerifying || phoneOtp.length < 6) ? 0.6 : 1 }}
-                >
-                  {phoneOtpVerifying ? "Verifying..." : "Verify & Confirm"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
       {/* ── Style tag for animations and responsive grid ── */}
       <style>{`
