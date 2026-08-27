@@ -325,7 +325,7 @@ export default function DocumentsPage() {
         <div>
           <div className="flex items-center gap-2.5 flex-wrap">
             <h1 className="text-xl sm:text-2xl font-extrabold text-neutral-900 dark:text-white tracking-tight m-0 flex items-center gap-2.5">
-              <span className="p-2 rounded-xl bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20 inline-flex items-center justify-center">
+              <span className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 inline-flex items-center justify-center">
                 <FileText size={20} />
               </span>
               Document Library & Technical Vault
@@ -349,7 +349,7 @@ export default function DocumentsPage() {
               className={cn(
                 "p-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer",
                 viewMode === "grid"
-                  ? "bg-orange-500 text-white shadow-xs"
+                  ? "bg-blue-600 text-white shadow-xs"
                   : "text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/5"
               )}
               title="Grid card view"
@@ -362,7 +362,7 @@ export default function DocumentsPage() {
               className={cn(
                 "p-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer",
                 viewMode === "table"
-                  ? "bg-orange-500 text-white shadow-xs"
+                  ? "bg-blue-600 text-white shadow-xs"
                   : "text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/5"
               )}
               title="Table list view"
@@ -379,14 +379,14 @@ export default function DocumentsPage() {
             className="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#121520] hover:bg-neutral-50 dark:hover:bg-white/5 text-neutral-700 dark:text-neutral-300 transition-all shadow-xs cursor-pointer"
             title="Refresh document list"
           >
-            <RefreshCw size={14} className={refreshing ? "animate-spin text-orange-500" : ""} />
+            <RefreshCw size={14} className={refreshing ? "animate-spin text-blue-600" : ""} />
           </button>
 
           {/* Upload Document Primary CTA */}
           <button
             type="button"
             onClick={() => setUploadModalOpen(true)}
-            className="inline-flex items-center gap-2 px-4 h-9 rounded-xl font-bold text-xs bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white transition-all shadow-sm shadow-orange-500/20 cursor-pointer"
+            className="inline-flex items-center gap-2 px-4 h-9 rounded-xl font-bold text-xs bg-blue-600 hover:bg-blue-700 text-white transition-all shadow-sm shadow-blue-500/20 cursor-pointer"
           >
             <UploadCloud size={15} />
             <span>Upload Document</span>
@@ -395,63 +395,68 @@ export default function DocumentsPage() {
       </div>
 
       {/* ================================================================= */}
-      {/* 2. KPI METRICS CARDS                                              */}
+      {/* 2. KPI METRICS CARDS (ADMIN ERP DESIGN SYSTEM GRADIENTS)           */}
       {/* ================================================================= */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
-        <div className="p-4 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs flex items-center gap-3.5">
-          <div className="w-10 h-10 rounded-xl bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20 flex items-center justify-center shrink-0">
+        {/* Total Files */}
+        <div className="p-4 rounded-2xl border border-blue-500/20 dark:border-blue-500/30 bg-gradient-to-br from-blue-500/[0.08] via-white dark:via-[#0f121a] to-white dark:to-[#0f121a] shadow-xs hover:shadow-md hover:shadow-blue-500/5 hover:border-blue-500/40 transition-all flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30 flex items-center justify-center shrink-0 shadow-xs">
             <FileText size={18} />
           </div>
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-neutral-400">Total Files</div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-blue-600/80 dark:text-blue-400/80">Total Files</div>
             <div className="text-xl font-extrabold text-neutral-900 dark:text-white leading-none mt-1">
               {metrics.total}
             </div>
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs flex items-center gap-3.5">
-          <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center justify-center shrink-0">
+        {/* QA & Reports */}
+        <div className="p-4 rounded-2xl border border-amber-500/20 dark:border-amber-500/30 bg-gradient-to-br from-amber-500/[0.08] via-white dark:via-[#0f121a] to-white dark:to-[#0f121a] shadow-xs hover:shadow-md hover:shadow-amber-500/5 hover:border-amber-500/40 transition-all flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 flex items-center justify-center shrink-0 shadow-xs">
             <FileCheck size={18} />
           </div>
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-neutral-400">QA & Reports</div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-amber-600/80 dark:text-amber-400/80">QA & Reports</div>
             <div className="text-xl font-extrabold text-neutral-900 dark:text-white leading-none mt-1">
               {metrics.reports}
             </div>
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs flex items-center gap-3.5">
-          <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 flex items-center justify-center shrink-0">
+        {/* Drawings & CAD */}
+        <div className="p-4 rounded-2xl border border-blue-500/20 dark:border-blue-500/30 bg-gradient-to-br from-blue-500/[0.08] via-white dark:via-[#0f121a] to-white dark:to-[#0f121a] shadow-xs hover:shadow-md hover:shadow-blue-500/5 hover:border-blue-500/40 transition-all flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30 flex items-center justify-center shrink-0 shadow-xs">
             <FileCode size={18} />
           </div>
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-neutral-400">Drawings & CAD</div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-blue-600/80 dark:text-blue-400/80">Drawings & CAD</div>
             <div className="text-xl font-extrabold text-neutral-900 dark:text-white leading-none mt-1">
               {metrics.drawings}
             </div>
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs flex items-center gap-3.5">
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center shrink-0">
+        {/* Commercial & Tax */}
+        <div className="p-4 rounded-2xl border border-emerald-500/20 dark:border-emerald-500/30 bg-gradient-to-br from-emerald-500/[0.08] via-white dark:via-[#0f121a] to-white dark:to-[#0f121a] shadow-xs hover:shadow-md hover:shadow-emerald-500/5 hover:border-emerald-500/40 transition-all flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center justify-center shrink-0 shadow-xs">
             <ShieldCheck size={18} />
           </div>
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-neutral-400">Commercial & Tax</div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-600/80 dark:text-emerald-400/80">Commercial & Tax</div>
             <div className="text-xl font-extrabold text-neutral-900 dark:text-white leading-none mt-1">
               {metrics.invoices}
             </div>
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs flex items-center gap-3.5 col-span-2 sm:col-span-1">
-          <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 flex items-center justify-center shrink-0">
+        {/* Vault Storage */}
+        <div className="p-4 rounded-2xl border border-purple-500/20 dark:border-purple-500/30 bg-gradient-to-br from-purple-500/[0.08] via-white dark:via-[#0f121a] to-white dark:to-[#0f121a] shadow-xs hover:shadow-md hover:shadow-purple-500/5 hover:border-purple-500/40 transition-all flex items-center gap-3.5 col-span-2 sm:col-span-1">
+          <div className="w-10 h-10 rounded-xl bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30 flex items-center justify-center shrink-0 shadow-xs">
             <Sparkles size={18} />
           </div>
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-neutral-400">Vault Storage</div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-purple-600/80 dark:text-purple-400/80">Vault Storage</div>
             <div className="text-xl font-extrabold text-neutral-900 dark:text-white leading-none mt-1">
               {formatBytes(metrics.totalBytes)}
             </div>
@@ -480,7 +485,7 @@ export default function DocumentsPage() {
                 className={cn(
                   "px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all border shrink-0 cursor-pointer flex items-center gap-1.5",
                   isSelected
-                    ? "bg-[var(--color-primary)] text-white border-orange-500 shadow-sm shadow-orange-500/20"
+                    ? "bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-500/20"
                     : "bg-white dark:bg-[#121520] text-neutral-600 dark:text-neutral-400 border-neutral-200/90 dark:border-white/10 hover:bg-neutral-50 dark:hover:bg-white/5"
                 )}
               >
@@ -510,7 +515,7 @@ export default function DocumentsPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by title, file name, order #, or standard..."
-              className="w-full pl-9 pr-9 py-2 text-xs rounded-xl border border-neutral-200 dark:border-white/10 bg-neutral-50 dark:bg-[#161a26] text-neutral-800 dark:text-white placeholder-neutral-400 outline-none focus:border-orange-500 transition-colors"
+              className="w-full pl-9 pr-9 py-2 text-xs rounded-xl border border-neutral-200 dark:border-white/10 bg-neutral-50 dark:bg-[#161a26] text-neutral-800 dark:text-white placeholder-neutral-400 outline-none focus:border-blue-500 transition-colors"
             />
             {search && (
               <button
@@ -529,7 +534,7 @@ export default function DocumentsPage() {
             <select
               value={selectedFileType}
               onChange={(e) => setSelectedFileType(e.target.value)}
-              className="px-3 py-2 text-xs rounded-xl border border-neutral-200 dark:border-white/10 bg-neutral-50 dark:bg-[#161a26] text-neutral-800 dark:text-white outline-none focus:border-orange-500 cursor-pointer font-medium"
+              className="px-3 py-2 text-xs rounded-xl border border-neutral-200 dark:border-white/10 bg-neutral-50 dark:bg-[#161a26] text-neutral-800 dark:text-white outline-none focus:border-blue-500 cursor-pointer font-medium"
             >
               <option value="All">All File Formats</option>
               <option value="pdf">PDF Documents</option>
@@ -543,7 +548,7 @@ export default function DocumentsPage() {
               <select
                 value={selectedOrder}
                 onChange={(e) => setSelectedOrder(e.target.value)}
-                className="px-3 py-2 text-xs rounded-xl border border-neutral-200 dark:border-white/10 bg-neutral-50 dark:bg-[#161a26] text-neutral-800 dark:text-white outline-none focus:border-orange-500 cursor-pointer font-medium max-w-[170px] truncate"
+                className="px-3 py-2 text-xs rounded-xl border border-neutral-200 dark:border-white/10 bg-neutral-50 dark:bg-[#161a26] text-neutral-800 dark:text-white outline-none focus:border-blue-500 cursor-pointer font-medium max-w-[170px] truncate"
               >
                 <option value="All">All Linked Orders</option>
                 {orders.map((o) => (
@@ -558,7 +563,7 @@ export default function DocumentsPage() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-              className="px-3 py-2 text-xs rounded-xl border border-neutral-200 dark:border-white/10 bg-neutral-50 dark:bg-[#161a26] text-neutral-800 dark:text-white outline-none focus:border-orange-500 cursor-pointer font-medium"
+              className="px-3 py-2 text-xs rounded-xl border border-neutral-200 dark:border-white/10 bg-neutral-50 dark:bg-[#161a26] text-neutral-800 dark:text-white outline-none focus:border-blue-500 cursor-pointer font-medium"
             >
               <option value="newest">Newest First</option>
               <option value="oldest">Oldest First</option>
@@ -585,7 +590,7 @@ export default function DocumentsPage() {
 
       {loading ? (
         <div className="py-24 text-center space-y-3">
-          <RefreshCw size={32} className="mx-auto animate-spin text-orange-500" />
+          <RefreshCw size={32} className="mx-auto animate-spin text-blue-600" />
           <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400">
             Accessing encrypted technical document vault...
           </p>
@@ -607,7 +612,7 @@ export default function DocumentsPage() {
       ) : filteredAndSortedDocs.length === 0 ? (
         /* Empty State */
         <div className="p-12 sm:p-16 rounded-3xl border border-dashed border-neutral-300 dark:border-white/15 bg-white/50 dark:bg-[#0f121a]/50 text-center space-y-4">
-          <div className="w-16 h-16 rounded-2xl bg-orange-500/10 text-orange-500 border border-orange-500/20 flex items-center justify-center mx-auto">
+          <div className="w-16 h-16 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 flex items-center justify-center mx-auto">
             <FilePlus size={28} />
           </div>
           <div className="space-y-1 max-w-md mx-auto">
@@ -633,7 +638,7 @@ export default function DocumentsPage() {
               <button
                 type="button"
                 onClick={() => setUploadModalOpen(true)}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold transition-all cursor-pointer shadow-md shadow-orange-500/20"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all cursor-pointer shadow-md shadow-blue-500/20"
               >
                 <UploadCloud size={15} />
                 <span>Upload Technical File</span>
@@ -652,7 +657,7 @@ export default function DocumentsPage() {
             return (
               <div
                 key={doc.id}
-                className="group relative rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] hover:border-orange-500/40 p-4.5 transition-all duration-200 hover:shadow-lg hover:shadow-orange-500/5 flex flex-col justify-between"
+                className="group relative rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] hover:border-blue-500/40 p-4.5 transition-all duration-200 hover:shadow-lg hover:shadow-blue-500/5 flex flex-col justify-between"
               >
                 <div className="space-y-3">
                   {/* Card Header: Category Badge + File Type Chip */}
@@ -678,7 +683,7 @@ export default function DocumentsPage() {
                   <div>
                     <h3
                       onClick={() => setPreviewDoc(doc)}
-                      className="text-sm font-bold text-neutral-900 dark:text-white group-hover:text-orange-500 transition-colors line-clamp-2 cursor-pointer m-0 leading-snug"
+                      className="text-sm font-bold text-neutral-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2 cursor-pointer m-0 leading-snug"
                       title={doc.title}
                     >
                       {doc.title}
@@ -737,7 +742,7 @@ export default function DocumentsPage() {
                     <button
                       type="button"
                       onClick={() => void handleDownload(doc)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
                       title="Download file"
                     >
                       <Download size={13} />
@@ -812,7 +817,7 @@ export default function DocumentsPage() {
                           <div className="min-w-0">
                             <div
                               onClick={() => setPreviewDoc(doc)}
-                              className="font-bold text-sm text-neutral-900 dark:text-white hover:text-orange-500 cursor-pointer truncate max-w-sm"
+                              className="font-bold text-sm text-neutral-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer truncate max-w-sm"
                               title={doc.title}
                             >
                               {doc.title}
@@ -885,7 +890,7 @@ export default function DocumentsPage() {
                           <button
                             type="button"
                             onClick={() => void handleDownload(doc)}
-                            className="p-1.5 rounded-lg hover:bg-orange-500/10 text-neutral-500 hover:text-orange-500 transition-colors cursor-pointer"
+                            className="p-1.5 rounded-lg hover:bg-blue-500/10 text-neutral-500 hover:text-blue-600 transition-colors cursor-pointer"
                             title="Download document"
                           >
                             <Download size={15} />
@@ -1047,7 +1052,7 @@ function DocumentPreviewModal({
             <button
               type="button"
               onClick={onDownload}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
             >
               <Download size={13} />
               <span className="hidden sm:inline">Download</span>
@@ -1092,7 +1097,7 @@ function DocumentPreviewModal({
               <button
                 type="button"
                 onClick={onDownload}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold transition-all shadow-md shadow-orange-500/20 cursor-pointer mt-2"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-md shadow-blue-500/20 cursor-pointer mt-2"
               >
                 <Download size={15} />
                 <span>Download {doc.fileName}</span>
@@ -1205,7 +1210,7 @@ function UploadDocumentModal({
       >
         <div className="flex items-center justify-between border-b border-neutral-100 dark:border-white/5 pb-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 flex items-center justify-center">
               <UploadCloud size={20} />
             </div>
             <div>
@@ -1244,10 +1249,10 @@ function UploadDocumentModal({
             className={cn(
               "border-2 border-dashed rounded-2xl p-6 text-center transition-all cursor-pointer",
               dragOver
-                ? "border-orange-500 bg-orange-500/10"
+                ? "border-blue-500 bg-blue-500/10"
                 : file
                 ? "border-emerald-500/50 bg-emerald-500/5"
-                : "border-neutral-200 dark:border-white/10 hover:border-orange-500/40 bg-neutral-50 dark:bg-white/[0.02]"
+                : "border-neutral-200 dark:border-white/10 hover:border-blue-500/40 bg-neutral-50 dark:bg-white/[0.02]"
             )}
           >
             <input
@@ -1267,9 +1272,9 @@ function UploadDocumentModal({
               </div>
             ) : (
               <div className="space-y-1">
-                <UploadCloud size={28} className="mx-auto text-orange-500/80" />
+                <UploadCloud size={28} className="mx-auto text-blue-600 dark:text-blue-400" />
                 <div className="text-xs font-bold text-neutral-800 dark:text-neutral-200">
-                  Drag & drop file here, or <span className="text-orange-500 underline">browse</span>
+                  Drag & drop file here, or <span className="text-blue-600 dark:text-blue-400 underline">browse</span>
                 </div>
                 <div className="text-[11px] text-neutral-400">
                   PDF, CAD (DWG, STEP), Photos, Docs up to 25 MB
@@ -1289,7 +1294,7 @@ function UploadDocumentModal({
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Pump Impeller Casting Pattern 2D Drawing Rev B"
               required
-              className="w-full px-3.5 py-2 text-xs rounded-xl border border-neutral-200 dark:border-white/10 bg-neutral-50 dark:bg-[#161a26] text-neutral-900 dark:text-white placeholder-neutral-400 outline-none focus:border-orange-500"
+              className="w-full px-3.5 py-2 text-xs rounded-xl border border-neutral-200 dark:border-white/10 bg-neutral-50 dark:bg-[#161a26] text-neutral-900 dark:text-white placeholder-neutral-400 outline-none focus:border-blue-500"
             />
           </div>
 
@@ -1302,7 +1307,7 @@ function UploadDocumentModal({
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full px-3 py-2 text-xs rounded-xl border border-neutral-200 dark:border-white/10 bg-neutral-50 dark:bg-[#161a26] text-neutral-900 dark:text-white outline-none focus:border-orange-500"
+                className="w-full px-3 py-2 text-xs rounded-xl border border-neutral-200 dark:border-white/10 bg-neutral-50 dark:bg-[#161a26] text-neutral-900 dark:text-white outline-none focus:border-blue-500"
               >
                 <option value="Drawing">Drawing & CAD Spec</option>
                 <option value="Inspection Report">Inspection & QA Report</option>
@@ -1321,7 +1326,7 @@ function UploadDocumentModal({
               <select
                 value={orderId}
                 onChange={(e) => setOrderId(e.target.value)}
-                className="w-full px-3 py-2 text-xs rounded-xl border border-neutral-200 dark:border-white/10 bg-neutral-50 dark:bg-[#161a26] text-neutral-900 dark:text-white outline-none focus:border-orange-500"
+                className="w-full px-3 py-2 text-xs rounded-xl border border-neutral-200 dark:border-white/10 bg-neutral-50 dark:bg-[#161a26] text-neutral-900 dark:text-white outline-none focus:border-blue-500"
               >
                 <option value="">None (Company Vault)</option>
                 {orders.map((o) => (
@@ -1346,7 +1351,7 @@ function UploadDocumentModal({
             <button
               type="submit"
               disabled={busy || !file || !title.trim()}
-              className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white text-xs font-bold transition-all shadow-sm shadow-orange-500/20 cursor-pointer"
+              className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-bold transition-all shadow-sm shadow-blue-500/20 cursor-pointer"
             >
               <UploadCloud size={14} className={busy ? "animate-spin" : ""} />
               <span>{busy ? "Uploading File..." : "Upload File"}</span>

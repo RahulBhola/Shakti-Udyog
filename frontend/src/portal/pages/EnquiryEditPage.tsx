@@ -5,7 +5,7 @@ import { enquiryProductTypes } from "../../api/publicApi";
 import { config } from "../../config";
 import { tokenStorage } from "../../auth/tokenStorage";
 import { EmptyState, Loading } from "../../components/ui";
-import { ArrowLeft, Loader2, AlertCircle, ChevronRight, Upload, FileText, X, GripVertical, Send } from "lucide-react";
+import { ArrowLeft, Loader2, AlertCircle, Upload, FileText, X, GripVertical, Send } from "lucide-react";
 
 const allowedExtensions = ["pdf", "dwg", "dxf", "step", "stp", "iges", "igs", "jpg", "jpeg", "png", "zip"];
 const maxFileMb = 10;
@@ -229,10 +229,6 @@ export default function EnquiryEditPage() {
             <ArrowLeft size={15} />
           </button>
           <div>
-            <div className="flex items-center gap-2 text-[12px] text-[var(--text-muted)] mb-0.5">
-              <span>Home</span><ChevronRight size={12} /><span>Enquiry</span><ChevronRight size={12} />
-              <span className="text-[var(--text-primary)] font-medium">Edit Draft</span>
-            </div>
             <h1 className="text-xl font-bold text-[var(--text-primary)]">Edit Draft Enquiry</h1>
           </div>
         </div>

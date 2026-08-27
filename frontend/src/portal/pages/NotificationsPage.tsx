@@ -239,7 +239,7 @@ export default function NotificationsPage() {
             className="inline-flex items-center gap-1.5 px-3.5 h-9 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#121520] hover:bg-neutral-50 dark:hover:bg-white/5 text-xs font-bold text-neutral-700 dark:text-neutral-300 transition-all shadow-2xs cursor-pointer"
             title="Refresh notifications"
           >
-            <RefreshCw size={13} className={isLoading ? "animate-spin text-orange-500" : ""} />
+            <RefreshCw size={13} className={isLoading ? "animate-spin text-blue-600" : ""} />
             <span>{isLoading ? "Refreshing..." : "Refresh"}</span>
           </button>
 

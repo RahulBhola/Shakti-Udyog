@@ -7,41 +7,298 @@ import {
   IndianRupee, Truck, Banknote, CalendarDays, FileText, Package,
   ScrollText, MessageSquareText, CheckCircle, XCircle, Loader2, Send,
   Phone, Mail, Download, Printer, Share2, Clock, MessageSquare,
+  Search, RefreshCw, ChevronRight, ArrowUpRight,
 } from "lucide-react";
+import { cn } from "../../lib/utils";
 
 export function QuotationListPage() {
   const [quotations, setQuotations] = useState<QuotationListItem[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
+
+  const loadQuotations = () => {
+    setLoading(true);
+    setError(null);
+    customerApi
+      .quotations()
+      .then(setQuotations)
+      .catch((e: Error) => setError(e.message))
+      .finally(() => setLoading(false));
+  };
 
   useEffect(() => {
-    customerApi.quotations().then(setQuotations).catch((e: Error) => setError(e.message));
+    loadQuotations();
   }, []);
 
+  const filteredQuotations = (quotations || []).filter((q) => {
+    const matchesSearch =
+      q.quotationNumber.toLowerCase().includes(search.toLowerCase()) ||
+      q.productType.toLowerCase().includes(search.toLowerCase()) ||
+      (q.companyName && q.companyName.toLowerCase().includes(search.toLowerCase()));
+
+    if (!matchesSearch) return false;
+    if (statusFilter === "All") return true;
+    if (statusFilter === "Pending") return ["Issued", "Pending Approval", "Viewed"].includes(q.status);
+    if (statusFilter === "Accepted") return ["Accepted", "Approved"].includes(q.status);
+    if (statusFilter === "Negotiating") return q.status === "Negotiating";
+    if (statusFilter === "Closed") return ["Declined", "Expired"].includes(q.status);
+    return q.status.toLowerCase() === statusFilter.toLowerCase();
+  });
+
+  const totalQuotes = quotations?.length || 0;
+  const pendingQuotes = (quotations || []).filter((q) => ["Issued", "Pending Approval", "Viewed"].includes(q.status)).length;
+  const acceptedQuotes = (quotations || []).filter((q) => ["Accepted", "Approved"].includes(q.status)).length;
+  const totalValue = (quotations || []).reduce((sum, q) => sum + (q.total || 0), 0);
+
   return (
-    <>
-      <h1>Quotes</h1>
-      {error && <EmptyState title="Quotes unavailable" text={error} />}
-      {!quotations && !error && <Loading label="Loading quotations" />}
-      {quotations && quotations.length === 0 && <EmptyState title="No quotations yet" />}
-      {quotations && quotations.length > 0 && (
-        <div className="list-rows">
-          {quotations.map((q) => (
-            <Link key={q.id} to={`/customer/quotations/${q.id}`} className="row-link">
-              <div className="list-row">
-                <div className="list-row__main">
-                  <div className="list-row__title">{q.quotationNumber} — {q.productType}</div>
-                  <div className="list-row__meta">
-                    {formatMoney(q.total, q.currency)} · issued {formatDate(q.createdAtUtc)}
-                    {q.validUntilUtc && ` · valid until ${formatDate(q.validUntilUtc)}`}
-                  </div>
-                </div>
-                <StatusBadge status={q.status} />
-              </div>
-            </Link>
+    <div className="flex flex-col gap-6">
+      {/* 1. HERO HEADER */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="p-1.5 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400">
+              <FileText size={18} />
+            </span>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-neutral-900 dark:text-white m-0">
+              Quotations & Commercial Proposals
+            </h1>
+          </div>
+          <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 mt-1 m-0">
+            Review detailed price quotations, tooling costs, GST breakdowns, payment terms, and delivery lead times.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-center">
+          <button
+            type="button"
+            onClick={loadQuotations}
+            disabled={loading}
+            className="inline-flex items-center gap-1.5 px-3.5 h-9 rounded-xl text-xs font-bold bg-white dark:bg-[#121520] border border-neutral-200 dark:border-white/10 hover:bg-neutral-50 dark:hover:bg-white/5 text-neutral-700 dark:text-neutral-300 shadow-xs cursor-pointer transition-all"
+          >
+            <RefreshCw size={13} className={cn(loading && "animate-spin text-blue-600")} />
+            <span>Refresh</span>
+          </button>
+
+          <Link
+            to="/customer/enquiries/new"
+            className="inline-flex items-center gap-1.5 px-4 h-9 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-sm shadow-blue-500/20 no-underline cursor-pointer transition-all"
+          >
+            <span>Request New Quote</span>
+          </Link>
+        </div>
+      </div>
+
+      {/* 2. KPI METRIC CARDS (ADMIN ERP DESIGN SYSTEM GRADIENTS) */}
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+        {/* Total Quotations */}
+        <div className="p-4 rounded-2xl border border-blue-500/20 dark:border-blue-500/30 bg-gradient-to-br from-blue-500/[0.08] via-white dark:via-[#0f121a] to-white dark:to-[#0f121a] shadow-xs flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30 flex items-center justify-center shrink-0 shadow-xs">
+            <FileText size={18} />
+          </div>
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-blue-600/80 dark:text-blue-400/80">Total Proposals</div>
+            <div className="text-xl font-extrabold text-neutral-900 dark:text-white leading-none mt-1">
+              {totalQuotes}
+            </div>
+          </div>
+        </div>
+
+        {/* Pending Action */}
+        <div className="p-4 rounded-2xl border border-amber-500/20 dark:border-amber-500/30 bg-gradient-to-br from-amber-500/[0.08] via-white dark:via-[#0f121a] to-white dark:to-[#0f121a] shadow-xs flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 flex items-center justify-center shrink-0 shadow-xs">
+            <Clock size={18} />
+          </div>
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-amber-600/80 dark:text-amber-400/80">Awaiting Response</div>
+            <div className="text-xl font-extrabold text-neutral-900 dark:text-white leading-none mt-1">
+              {pendingQuotes}
+            </div>
+          </div>
+        </div>
+
+        {/* Accepted & Orders */}
+        <div className="p-4 rounded-2xl border border-emerald-500/20 dark:border-emerald-500/30 bg-gradient-to-br from-emerald-500/[0.08] via-white dark:via-[#0f121a] to-white dark:to-[#0f121a] shadow-xs flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center justify-center shrink-0 shadow-xs">
+            <CheckCircle size={18} />
+          </div>
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-600/80 dark:text-emerald-400/80">Accepted / Won</div>
+            <div className="text-xl font-extrabold text-neutral-900 dark:text-white leading-none mt-1">
+              {acceptedQuotes}
+            </div>
+          </div>
+        </div>
+
+        {/* Pipeline Value */}
+        <div className="p-4 rounded-2xl border border-purple-500/20 dark:border-purple-500/30 bg-gradient-to-br from-purple-500/[0.08] via-white dark:via-[#0f121a] to-white dark:to-[#0f121a] shadow-xs flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-xl bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30 flex items-center justify-center shrink-0 shadow-xs">
+            <IndianRupee size={18} />
+          </div>
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-purple-600/80 dark:text-purple-400/80">Pipeline Value</div>
+            <div className="text-xl font-extrabold text-neutral-900 dark:text-white leading-none mt-1">
+              {formatMoney(totalValue, "INR")}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. TOOLBAR: SEARCH & STATUS FILTER TABS */}
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        {/* Filter Pills */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {[
+            { id: "All", label: "All Proposals", count: totalQuotes },
+            { id: "Pending", label: "Awaiting Action", count: pendingQuotes },
+            { id: "Accepted", label: "Accepted", count: acceptedQuotes },
+            { id: "Closed", label: "Declined / Expired", count: totalQuotes - pendingQuotes - acceptedQuotes },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setStatusFilter(tab.id)}
+              className={cn(
+                "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border",
+                statusFilter === tab.id
+                  ? "bg-blue-600 text-white border-blue-600 shadow-xs"
+                  : "bg-white dark:bg-[#121520] text-neutral-600 dark:text-neutral-400 border-neutral-200 dark:border-white/10 hover:bg-neutral-50 dark:hover:bg-white/5"
+              )}
+            >
+              <span>{tab.label}</span>
+              <span
+                className={cn(
+                  "px-1.5 py-0.2 rounded-full text-[10px] font-extrabold",
+                  statusFilter === tab.id
+                    ? "bg-white/20 text-white"
+                    : "bg-neutral-100 dark:bg-white/10 text-neutral-500"
+                )}
+              >
+                {tab.count}
+              </span>
+            </button>
           ))}
         </div>
+
+        {/* Search Bar */}
+        <div className="relative min-w-[240px]">
+          <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by quote # or product..."
+            className="w-full h-9 pl-9 pr-3.5 rounded-xl bg-white dark:bg-[#121520] border border-neutral-200 dark:border-white/10 text-xs text-neutral-900 dark:text-white placeholder:text-neutral-400 focus:outline-none focus:border-blue-500"
+          />
+        </div>
+      </div>
+
+      {/* 4. LISTING / CARDS */}
+      {error && <EmptyState title="Quotations unavailable" text={error} />}
+
+      {loading && !error && (
+        <div className="py-12 flex justify-center">
+          <Loading label="Fetching commercial quotations..." />
+        </div>
       )}
-    </>
+
+      {!loading && !error && filteredQuotations.length === 0 && (
+        <div className="rounded-3xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] p-12 text-center space-y-4">
+          <div className="w-14 h-14 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 flex items-center justify-center mx-auto">
+            <FileText size={28} />
+          </div>
+          <div className="max-w-md mx-auto space-y-1">
+            <h3 className="text-base font-bold text-neutral-900 dark:text-white">
+              {search || statusFilter !== "All" ? "No matching quotations found" : "No quotations generated yet"}
+            </h3>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400">
+              {search || statusFilter !== "All"
+                ? "Try clearing your search query or switching the status filter tab."
+                : "Submit a new Request for Quotation (RFQ) with your casting specifications to receive an official proposal."}
+            </p>
+          </div>
+          <Link
+            to="/customer/enquiries/new"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-sm shadow-blue-500/20 no-underline"
+          >
+            <span>Submit New RFQ</span>
+            <ArrowUpRight size={14} />
+          </Link>
+        </div>
+      )}
+
+      {!loading && !error && filteredQuotations.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredQuotations.map((q) => {
+            const isPending = ["Issued", "Pending Approval", "Viewed"].includes(q.status);
+            return (
+              <div
+                key={q.id}
+                className="group relative rounded-3xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] hover:border-blue-500/40 p-5 transition-all duration-200 hover:shadow-lg hover:shadow-blue-500/5 flex flex-col justify-between space-y-4"
+              >
+                <div className="space-y-3">
+                  {/* Top Row: Quote Number + Status */}
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-extrabold font-mono text-neutral-900 dark:text-white px-2.5 py-1 rounded-lg bg-neutral-100 dark:bg-white/5 border border-neutral-200 dark:border-white/10">
+                      {q.quotationNumber}
+                    </span>
+                    <StatusBadge status={q.status} />
+                  </div>
+
+                  {/* Product Title */}
+                  <div>
+                    <h3 className="text-sm font-bold text-neutral-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-1">
+                      {q.productType}
+                    </h3>
+                    <div className="text-[11px] text-neutral-400 mt-0.5 flex items-center gap-2 flex-wrap">
+                      <span>Revision #{q.revisionNumber}</span>
+                      <span>•</span>
+                      <span>{q.itemCount || 1} line item{(q.itemCount || 1) > 1 ? "s" : ""}</span>
+                    </div>
+                  </div>
+
+                  {/* Value & Terms Box */}
+                  <div className="p-3 rounded-2xl bg-neutral-50 dark:bg-white/[0.02] border border-neutral-100 dark:border-white/5 space-y-2">
+                    <div className="flex items-baseline justify-between">
+                      <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Total Value</span>
+                      <span className="text-base font-extrabold text-neutral-900 dark:text-white">
+                        {formatMoney(q.total, q.currency)}
+                      </span>
+                    </div>
+
+                    <div className="pt-2 border-t border-neutral-200/60 dark:border-white/5 flex items-center justify-between text-[11px] text-neutral-500 dark:text-neutral-400">
+                      <span>Issued: {formatDate(q.createdAtUtc)}</span>
+                      {q.validUntilUtc && (
+                        <span className="font-medium text-amber-600 dark:text-amber-400">
+                          Valid: {formatDate(q.validUntilUtc)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Actions Row */}
+                <div className="pt-2 border-t border-neutral-100 dark:border-white/5 flex items-center justify-between gap-2">
+                  <Link
+                    to={`/customer/quotations/${q.id}`}
+                    className={cn(
+                      "flex-1 inline-flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold transition-all no-underline",
+                      isPending
+                        ? "bg-blue-600 hover:bg-blue-700 text-white shadow-xs shadow-blue-500/20"
+                        : "bg-neutral-100 dark:bg-white/5 hover:bg-neutral-200 dark:hover:bg-white/10 text-neutral-800 dark:text-neutral-200"
+                    )}
+                  >
+                    <span>{isPending ? "Review & Respond" : "View Proposal"}</span>
+                    <ChevronRight size={13} />
+                  </Link>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
 

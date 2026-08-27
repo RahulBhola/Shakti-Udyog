@@ -183,12 +183,12 @@ export function ProfileProgressBar({
 }) {
   const heightClass = size === "sm" ? "h-1.5" : size === "lg" ? "h-3" : "h-2";
 
-  // Dynamic gradient color
+  // Dynamic gradient color (Harmonized to Brand Blue)
   const getGradient = (pct: number) => {
-    if (pct >= 100) return "from-emerald-500 via-teal-400 to-emerald-500 shadow-emerald-500/20";
-    if (pct >= 75) return "from-emerald-500 to-teal-400";
-    if (pct >= 50) return "from-amber-500 to-orange-400";
-    return "from-rose-500 to-amber-500";
+    if (pct >= 100) return "from-blue-600 via-sky-500 to-blue-600 shadow-blue-500/20";
+    if (pct >= 75) return "from-blue-600 to-sky-500";
+    if (pct >= 50) return "from-blue-500 to-sky-400";
+    return "from-neutral-500 to-blue-500";
   };
 
   return (
@@ -225,15 +225,15 @@ export function ProfileCompletenessBadge({
 }) {
   const getBadgeStyle = (pct: number) => {
     if (pct >= 100) {
-      return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30";
+      return "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30";
     }
     if (pct >= 75) {
-      return "bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/30";
+      return "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30";
     }
     if (pct >= 50) {
-      return "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30";
+      return "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20";
     }
-    return "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30";
+    return "bg-neutral-500/10 text-neutral-600 dark:text-neutral-400 border-neutral-500/20";
   };
 
   if (compact) {
@@ -241,16 +241,7 @@ export function ProfileCompletenessBadge({
       <div className="inline-flex items-center gap-2" title={`Profile ${percentage}% complete`}>
         <div className="w-16 h-1.5 rounded-full bg-neutral-200 dark:bg-white/10 overflow-hidden">
           <div
-            className={cn(
-              "h-full rounded-full transition-all duration-300",
-              percentage >= 100
-                ? "bg-emerald-500"
-                : percentage >= 75
-                ? "bg-teal-500"
-                : percentage >= 50
-                ? "bg-amber-500"
-                : "bg-rose-500"
-            )}
+            className="h-full rounded-full bg-blue-600 transition-all duration-300"
             style={{ width: `${percentage}%` }}
           />
         </div>
@@ -269,13 +260,10 @@ export function ProfileCompletenessBadge({
       )}
     >
       {percentage >= 100 ? (
-        <Sparkles size={11} className="text-emerald-500 shrink-0" />
+        <Sparkles size={11} className="text-blue-500 shrink-0" />
       ) : (
         <span
-          className={cn(
-            "w-1.5 h-1.5 rounded-full shrink-0",
-            percentage >= 75 ? "bg-teal-500" : percentage >= 50 ? "bg-amber-500" : "bg-rose-500"
-          )}
+          className="w-1.5 h-1.5 rounded-full shrink-0 bg-blue-500"
         />
       )}
       <span className="font-mono">{percentage}%</span>
@@ -302,7 +290,7 @@ export function ProfileCompletionCard({
   return (
     <div
       className={cn(
-        "p-6 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs space-y-5 transition-all",
+        "p-6 rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] shadow-xs space-y-5 transition-all",
         className
       )}
     >
@@ -310,40 +298,22 @@ export function ProfileCompletionCard({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
           <div
-            className={cn(
-              "w-11 h-11 rounded-2xl border flex items-center justify-center shrink-0 shadow-2xs",
-              result.percentage >= 100
-                ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/30"
-                : result.percentage >= 75
-                ? "bg-teal-500/10 text-teal-500 border-teal-500/30"
-                : result.percentage >= 50
-                ? "bg-amber-500/10 text-amber-500 border-amber-500/30"
-                : "bg-rose-500/10 text-rose-500 border-rose-500/30"
-            )}
+            className="w-11 h-11 rounded-2xl border flex items-center justify-center shrink-0 shadow-2xs bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30"
           >
             {result.percentage >= 100 ? <ShieldCheck size={22} /> : <AlertCircle size={22} />}
           </div>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-base font-extrabold text-neutral-900 dark:text-white m-0">
+              <h2 className="text-base font-extrabold text-[var(--text-primary)] m-0">
                 Profile Completeness
               </h2>
               <span
-                className={cn(
-                  "px-2.5 py-0.5 rounded-full text-xs font-mono font-extrabold border",
-                  result.percentage >= 100
-                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
-                    : result.percentage >= 75
-                    ? "bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/30"
-                    : result.percentage >= 50
-                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30"
-                    : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30"
-                )}
+                className="px-2.5 py-0.5 rounded-full text-xs font-mono font-extrabold border bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30"
               >
                 {result.percentage}% • {result.statusLabel}
               </span>
             </div>
-            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 m-0">
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5 m-0">
               {result.percentage >= 100
                 ? "Your account and corporate profiles are fully verified and up to date."
                 : `Complete ${result.missingCount} remaining item${result.missingCount > 1 ? "s" : ""} to unlock fast quotation processing and instant invoicing.`}
@@ -365,7 +335,7 @@ export function ProfileCompletionCard({
 
       {/* Itemized Breakdown Checklist */}
       {expanded && (
-        <div className="pt-2 border-t border-neutral-100 dark:border-white/5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+        <div className="pt-2 border-t border-[var(--border-default)] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
           {result.items.map((item) => {
             const Icon = item.icon;
             return (
@@ -382,8 +352,8 @@ export function ProfileCompletionCard({
                   "p-3 rounded-xl border flex items-center justify-between gap-3 transition-all",
                   onNavigateTab && "cursor-pointer hover:shadow-2xs",
                   item.completed
-                    ? "bg-emerald-50/50 dark:bg-emerald-500/[0.03] border-emerald-200/80 dark:border-emerald-500/20"
-                    : "bg-neutral-50/80 dark:bg-white/[0.02] border-neutral-200/80 dark:border-white/10 hover:border-amber-400/60"
+                    ? "bg-blue-500/[0.04] dark:bg-blue-500/[0.05] border-blue-500/20"
+                    : "bg-neutral-50/80 dark:bg-white/[0.02] border-[var(--border-default)] hover:border-blue-400/60"
                 )}
               >
                 <div className="flex items-center gap-2.5 min-w-0">
@@ -391,17 +361,17 @@ export function ProfileCompletionCard({
                     className={cn(
                       "w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border",
                       item.completed
-                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-                        : "bg-neutral-200/70 dark:bg-white/5 text-neutral-400 border-neutral-300 dark:border-white/10"
+                        ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
+                        : "bg-neutral-200/70 dark:bg-white/5 text-neutral-400 border-[var(--border-default)]"
                     )}
                   >
                     <Icon size={14} />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs font-bold text-neutral-900 dark:text-white truncate m-0">
+                    <p className="text-xs font-bold text-[var(--text-primary)] truncate m-0">
                       {item.label}
                     </p>
-                    <p className="text-[10.5px] text-neutral-500 dark:text-neutral-400 truncate m-0">
+                    <p className="text-[10.5px] text-[var(--text-secondary)] truncate m-0">
                       +{item.points}% weight
                     </p>
                   </div>
@@ -409,11 +379,11 @@ export function ProfileCompletionCard({
 
                 <div className="shrink-0">
                   {item.completed ? (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 dark:text-blue-400">
                       <CheckCircle2 size={15} />
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-600 dark:text-amber-400 hover:underline">
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:underline">
                       <span>Add</span>
                       <ChevronRight size={12} />
                     </span>

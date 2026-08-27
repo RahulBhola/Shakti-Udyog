@@ -29,32 +29,32 @@ export function SidebarItem({
         return (
           <span
             className={cn(
-              "group relative flex items-center gap-3 rounded-xl px-3 h-11 text-sm font-medium w-full",
+              "group relative flex items-center gap-3 rounded-xl px-3.5 h-10.5 text-sm font-medium w-full",
               "transition-all duration-200",
-              "hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-sidebar-hover)]",
               active &&
-                "text-white bg-[var(--color-primary)] shadow-sm hover:bg-[var(--color-primary-hover)] hover:text-white",
-              !active && "text-[var(--text-sidebar)]",
+                "text-white bg-gradient-to-r from-blue-600 to-blue-700 border border-blue-500/30 shadow-sm shadow-blue-500/25 font-semibold",
+              !active &&
+                "text-slate-400 hover:text-white hover:bg-white/[0.05] border border-transparent",
               isCollapsed && "justify-center px-0",
             )}
           >
             <Icon
-              size={isCollapsed ? 22 : 20}
-              strokeWidth={1.5}
+              size={isCollapsed ? 20 : 18}
+              strokeWidth={1.75}
               className={cn(
                 "shrink-0 transition-colors duration-200",
-                active ? "text-white" : "group-hover:text-[var(--color-primary)]",
+                active ? "text-white" : "text-slate-400 group-hover:text-blue-400",
               )}
               aria-hidden="true"
             />
-            {!isCollapsed && <span>{label}</span>}
+            {!isCollapsed && <span className="truncate">{label}</span>}
 
             {isCollapsed && (
               <span
                 role="tooltip"
                 className={cn(
-                  "absolute left-full ml-3 px-2.5 py-1.5 rounded-lg text-xs font-medium",
-                  "bg-[var(--text-primary)] text-[var(--bg-app)] shadow-lg",
+                  "absolute left-full ml-3 px-2.5 py-1.5 rounded-lg text-xs font-semibold",
+                  "bg-[#111827] text-white border border-white/10 shadow-xl",
                   "opacity-0 invisible group-hover:opacity-100 group-hover:visible",
                   "transition-all duration-200",
                   "whitespace-nowrap z-50 pointer-events-none",

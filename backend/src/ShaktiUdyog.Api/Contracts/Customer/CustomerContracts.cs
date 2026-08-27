@@ -164,6 +164,21 @@ public record SupportRequestRequest(
     [Required, StringLength(200, MinimumLength = 3)] string Subject,
     [Required, StringLength(4000, MinimumLength = 10)] string Message);
 
+public record CreateGeneralSupportRequest(
+    [Required, StringLength(200, MinimumLength = 3)] string Subject,
+    [Required, StringLength(4000, MinimumLength = 10)] string Message,
+    Guid? OrderId = null,
+    string? Category = null);
+
+public record SupportRequestListItemDto(
+    Guid Id,
+    Guid? OrderId,
+    string? OrderNumber,
+    string Subject,
+    string Message,
+    string Status,
+    DateTimeOffset CreatedAtUtc);
+
 // ---- Invoices & payments ----------------------------------------------------
 
 public record InvoiceListItemDto(
@@ -225,7 +240,7 @@ public record UpdateProfileRequest(
     [StringLength(150)] string? FullName,
     [StringLength(30)] string? PhoneNumber,
     [StringLength(4000)] string? DeliveryAddresses,
-    [StringLength(2000)] string? AvatarUrl = null);
+    [StringLength(5_000_000)] string? AvatarUrl = null);
 
 public record ChangePasswordRequest(
     [Required] string CurrentPassword,

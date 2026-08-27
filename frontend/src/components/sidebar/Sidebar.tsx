@@ -113,16 +113,16 @@ export function Sidebar({ sections, onLogout }: SidebarProps) {
       {/* Logo + collapse button */}
       <div
         className={cn(
-          "flex items-center shrink-0",
+          "flex items-center shrink-0 border-b border-[var(--border-default)]",
           collapsed ? "justify-center h-16" : "justify-between px-4 h-16",
         )}
       >
         {!collapsed && (
-          <a href="/" className="flex items-baseline gap-0 no-underline hover:no-underline">
+          <a href="/" className="flex items-baseline gap-0.5 no-underline hover:no-underline">
             <span className="text-lg font-extrabold tracking-tight text-[var(--text-primary)]">
               Shakti
             </span>
-            <span className="text-lg font-extrabold tracking-tight text-[var(--color-primary)]">
+            <span className="text-lg font-extrabold tracking-tight text-blue-500">
               Udyog
             </span>
           </a>
@@ -132,9 +132,9 @@ export function Sidebar({ sections, onLogout }: SidebarProps) {
           type="button"
           onClick={() => setCollapsed((c) => !c)}
           className={cn(
-            "flex items-center justify-center rounded-lg",
-            "text-[var(--text-sidebar)] hover:text-[var(--text-sidebar-hover)] hover:bg-[var(--bg-surface-hover)]",
-            "transition-all duration-200",
+            "flex items-center justify-center rounded-xl",
+            "text-slate-400 hover:text-white hover:bg-white/[0.06]",
+            "transition-all duration-200 cursor-pointer",
             "focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--color-primary)]",
             collapsed ? "w-9 h-9 mx-auto" : "w-8 h-8",
           )}
@@ -147,12 +147,11 @@ export function Sidebar({ sections, onLogout }: SidebarProps) {
       {/* Scrollable nav area */}
       <nav
         className={cn(
-          "flex-1 overflow-y-auto overflow-x-hidden sidebar-scroll",
-          collapsed ? "px-3 py-4" : "px-4 pb-4",
+          "flex-1 overflow-y-auto overflow-x-hidden sidebar-scroll py-2",
+          collapsed ? "px-2.5" : "px-3.5",
         )}
         aria-label="Primary navigation"
       >
-
         {sections.map((section) => (
           <div key={section.label ?? "__root__"} className="flex flex-col gap-1">
             {section.label && (
@@ -175,13 +174,13 @@ export function Sidebar({ sections, onLogout }: SidebarProps) {
       <div
         className={cn(
           "shrink-0 border-t border-[var(--border-default)]",
-          collapsed ? "p-2" : "p-4 pt-3",
+          collapsed ? "p-2" : "p-3.5",
         )}
       >
         <div
           className={cn(
-            "rounded-xl transition-all duration-200",
-            "bg-[var(--bg-surface)] border border-[var(--border-default)]",
+            "rounded-2xl transition-all duration-200",
+            "bg-[var(--bg-card)] border border-[var(--border-default)] shadow-xs",
             collapsed ? "p-2" : "p-3",
           )}
         >
@@ -196,7 +195,7 @@ export function Sidebar({ sections, onLogout }: SidebarProps) {
 
             {!collapsed && (
               <div className="flex-1 min-w-0 text-left">
-                <div className="text-sm font-semibold text-[var(--text-primary)] truncate">
+                <div className="text-xs font-bold text-[var(--text-primary)] truncate">
                   {displayName}
                 </div>
                 <div className="text-[11px] font-medium text-[var(--text-secondary)] truncate">
@@ -210,11 +209,11 @@ export function Sidebar({ sections, onLogout }: SidebarProps) {
             <button
               type="button"
               onClick={() => void handleLogout()}
-              className="flex items-center gap-2 w-full mt-2 px-2 py-1.5 rounded-lg text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--color-danger)] hover:bg-[var(--bg-surface-hover)] transition-all duration-200"
+              className="flex items-center gap-2 w-full mt-2.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-[var(--text-secondary)] hover:text-red-400 hover:bg-red-500/10 transition-all duration-150 cursor-pointer"
               aria-label="Sign out"
             >
               <LogOut size={13} />
-              Sign out
+              <span>Sign out</span>
             </button>
           )}
         </div>

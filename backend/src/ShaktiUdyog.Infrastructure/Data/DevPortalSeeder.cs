@@ -133,6 +133,35 @@ public static class DevPortalSeeder
             }
         );
 
+        if (!await db.SupportRequests.AnyAsync(sr => sr.CompanyId == company.Id))
+        {
+            var firstOrder = await db.Orders.FirstOrDefaultAsync(o => o.CompanyId == company.Id);
+            db.SupportRequests.AddRange(
+                new SupportRequest
+                {
+                    Id = Guid.NewGuid(),
+                    CompanyId = company.Id,
+                    OrderId = firstOrder?.Id,
+                    RaisedByUserId = user.Id,
+                    Subject = "[Quality & Metallurgy] Request for Raw Material Spectro Test Certificate (Batch #401)",
+                    Message = "Hi Team, kindly provide the certified chemical spectrometer test certificate and microstructure report for the latest lot of CI cast housings.",
+                    Status = "In Progress",
+                    CreatedAtUtc = now.AddDays(-3),
+                },
+                new SupportRequest
+                {
+                    Id = Guid.NewGuid(),
+                    CompanyId = company.Id,
+                    OrderId = firstOrder?.Id,
+                    RaisedByUserId = user.Id,
+                    Subject = "[Logistics & Dispatch] Advance Shipment Notice & E-Way Bill Copy",
+                    Message = "Please share the transporter LR copy and vehicle driver contact number once the consignment is dispatched from Ludhiana foundry unit.",
+                    Status = "Resolved",
+                    CreatedAtUtc = now.AddDays(-8),
+                }
+            );
+        }
+
         await db.SaveChangesAsync();
         logger.LogInformation("Seeded DEVELOPMENT demo customer '{Email}'. Do not use in production.", CustomerEmail);
     }

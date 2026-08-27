@@ -247,6 +247,16 @@ export interface DocumentItem {
   orderId?: string | null;
 }
 
+export interface SupportRequestItem {
+  id: string;
+  orderId: string | null;
+  orderNumber: string | null;
+  subject: string;
+  message: string;
+  status: "Open" | "In Progress" | "Resolved" | "Closed" | string;
+  createdAtUtc: string;
+}
+
 export interface EnquiryTimelineEntry {
   fromStatus: string;
   toStatus: string;
@@ -527,8 +537,16 @@ export const customerApi = {
   orderComments: (id: string) => apiGet<OrderComment[]>(`${base}/orders/${id}/comments`),
   addOrderComment: (id: string, message: string) =>
     apiPost<{ message: string }>(`${base}/orders/${id}/comments`, { message }),
-  createSupportRequest: (orderId: string, subject: string, message: string) =>
-    apiPost<{ id: string }>(`${base}/orders/${orderId}/support-requests`, { subject, message }),
+  createSupportRequest: (
+    orderIdOrPayload: string | { subject: string; message: string; orderId?: string; category?: string },
+    subject?: string,
+    message?: string
+  ) => {
+    if (typeof orderIdOrPayload === "string") {
+      return apiPost<{ id: string }>(`${base}/orders/${orderIdOrPayload}/support-requests`, { subject, message });
+    }
+    return apiPost<{ id: string; message: string }>(`${base}/support-requests`, orderIdOrPayload);
+  },
 
   invoices: () => apiGet<InvoiceListItem[]>(`${base}/invoices`),
   invoice: (id: string) => apiGet<InvoiceDetail>(`${base}/invoices/${id}`),
@@ -582,6 +600,9 @@ export const customerApi = {
     apiPatch<{ message: string }>(`${base}/profile`, payload),
   changePassword: (currentPassword: string, newPassword: string) =>
     apiPost<{ message: string }>(`${base}/profile/change-password`, { currentPassword, newPassword }),
+
+  // ---- Support Requests -------------------------------------------------------
+  supportRequests: () => apiGet<SupportRequestItem[]>(`${base}/support-requests`),
 
   // ---- Company ---------------------------------------------------------------
 

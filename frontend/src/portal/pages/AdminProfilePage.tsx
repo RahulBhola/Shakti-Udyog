@@ -18,10 +18,12 @@ import {
   Bell,
   RefreshCw,
   Clock,
+  Calendar,
   Copy,
   Check,
   ChevronDown,
   ChevronUp,
+  ChevronRight,
   XCircle,
   X,
 } from "lucide-react";
@@ -260,6 +262,16 @@ export default function AdminProfilePage() {
 
   const isDirty = isPersonalDirty || isCompanyDirty || isNotificationsDirty;
 
+  const [adminProfileUpdatedAt, setAdminProfileUpdatedAt] = useState<string>(() => {
+    return localStorage.getItem("su_admin_profile_updated_at") || "";
+  });
+
+  const recordAdminProfileUpdate = () => {
+    const now = new Date().toISOString();
+    setAdminProfileUpdatedAt(now);
+    localStorage.setItem("su_admin_profile_updated_at", now);
+  };
+
   async function handleSaveAll() {
     setSaving(true);
     try {
@@ -312,6 +324,7 @@ export default function AdminProfilePage() {
         employeeId,
       });
 
+      recordAdminProfileUpdate();
       showToast("Profile & Staff Details updated successfully.", "success");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to save profile changes.";
@@ -627,22 +640,35 @@ export default function AdminProfilePage() {
               </span>
 
               <span className="flex items-center gap-1.5">
-                <Clock size={13} className="text-neutral-400" />
-                Joined {profile?.createdAtUtc ? formatDate(profile.createdAtUtc) : "Active"}
+                <Calendar size={13} className="text-teal-500" />
+                Account Since: {profile?.createdAtUtc ? formatDate(profile.createdAtUtc) : "Active"}
+              </span>
+
+              <span className="flex items-center gap-1.5">
+                <Clock size={13} className="text-emerald-500" />
+                Profile Updated: {adminProfileUpdatedAt ? formatDate(adminProfileUpdatedAt) : (profile?.createdAtUtc ? formatDate(profile.createdAtUtc) : "Recently")}
               </span>
             </div>
           </div>
         </div>
 
         {/* Quick Stat Chips */}
-        <div className="flex items-center gap-2.5 self-start md:self-center shrink-0">
+        <div className="flex items-center gap-2.5 self-start md:self-center shrink-0 flex-wrap">
           <div className="p-3 rounded-xl border border-neutral-200/80 dark:border-white/10 bg-neutral-50 dark:bg-white/[0.02] text-center min-w-[105px]">
             <div className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">Department</div>
             <div className="text-xs font-extrabold text-neutral-900 dark:text-white mt-0.5">{department}</div>
           </div>
           <div className="p-3 rounded-xl border border-neutral-200/80 dark:border-white/10 bg-neutral-50 dark:bg-white/[0.02] text-center min-w-[105px]">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">Staff Code</div>
-            <div className="text-xs font-extrabold text-[var(--color-primary)] mt-0.5 font-mono">{employeeId}</div>
+            <div className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">Account Since</div>
+            <div className="text-xs font-extrabold text-neutral-900 dark:text-white mt-0.5">
+              {profile?.createdAtUtc ? formatDate(profile.createdAtUtc) : "Active"}
+            </div>
+          </div>
+          <div className="p-3 rounded-xl border border-neutral-200/80 dark:border-white/10 bg-neutral-50 dark:bg-white/[0.02] text-center min-w-[105px]">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">Profile Updated</div>
+            <div className="text-xs font-extrabold text-neutral-900 dark:text-white mt-0.5">
+              {adminProfileUpdatedAt ? formatDate(adminProfileUpdatedAt) : "Recently"}
+            </div>
           </div>
         </div>
       </div>
@@ -660,78 +686,169 @@ export default function AdminProfilePage() {
       />
 
       {/* ================================================================= */}
-      {/* 4. NAVIGATION TABS                                                */}
+      {/* 4. MOBILE / TABLET TAB GRID (Hidden on Desktop lg:!hidden)         */}
       {/* ================================================================= */}
-      <div className="flex items-center gap-2 border-b border-neutral-200/80 dark:border-white/10 pb-2 overflow-x-auto">
-        {TABS.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveTab(tab.id as any)}
-              className={cn(
-                "inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer select-none whitespace-nowrap",
-                isActive
-                  ? "bg-[var(--color-primary)] text-white shadow-sm"
-                  : "bg-neutral-100 dark:bg-white/5 border border-neutral-200/80 dark:border-white/10 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-200/60 dark:hover:bg-white/10"
-              )}
-            >
-              <Icon size={14} />
-              <span>{tab.shortTitle}</span>
-            </button>
-          );
-        })}
+      <div className="block lg:!hidden mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          {TABS.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id as any)}
+                className={cn(
+                  "flex items-center gap-2.5 p-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer border text-left",
+                  isActive
+                    ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)] shadow-sm shadow-[var(--color-primary)]/20"
+                    : "bg-white dark:bg-[#0f121a] border-neutral-200/80 dark:border-white/10 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-white/5"
+                )}
+              >
+                <div
+                  className={cn(
+                    "w-7 h-7 rounded-xl flex items-center justify-center shrink-0 border transition-colors",
+                    isActive
+                      ? "bg-white/20 text-white border-white/20"
+                      : cn(tab.badgeBg, tab.badgeText, tab.badgeBorder)
+                  )}
+                >
+                  <Icon size={14} />
+                </div>
+                <span className="truncate">{tab.shortTitle}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* ================================================================= */}
-      {/* 5. ACTIVE TAB BANNER                                              */}
+      {/* 5. TWO-COLUMN VERTICAL NAVIGATION & CONTENT LAYOUT (Desktop)       */}
       {/* ================================================================= */}
-      <div className="p-5 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3.5">
-          <div
-            className={cn(
-              "w-11 h-11 rounded-2xl flex items-center justify-center border shadow-xs shrink-0",
-              activeTabMeta.badgeBg,
-              activeTabMeta.badgeText,
-              activeTabMeta.badgeBorder
-            )}
-          >
-            <activeTabMeta.icon size={20} />
-          </div>
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-base font-extrabold text-neutral-900 dark:text-white m-0">
-                {activeTabMeta.title}
-              </h2>
-              <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-neutral-100 dark:bg-white/10 text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-white/10">
-                {activeTabMeta.groupCount} {activeTabMeta.groupCount === 1 ? "Section" : "Sections"}
-              </span>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left Column: Vertical Navigation Sidebar (Desktop only) */}
+        <div className="hidden lg:block lg:col-span-4 xl:col-span-3 space-y-4 lg:sticky lg:top-4">
+          <div className="rounded-3xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] p-3 shadow-xs space-y-1.5">
+            <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-neutral-400">
+              Account Sections
             </div>
-            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 m-0">
-              {activeTabMeta.description}
-            </p>
+            {TABS.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className={cn(
+                    "w-full flex items-center justify-between p-3 rounded-2xl text-xs font-bold transition-all cursor-pointer select-none text-left border",
+                    isActive
+                      ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)] shadow-md shadow-[var(--color-primary)]/20"
+                      : "bg-white dark:bg-transparent border-transparent text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-white/5 hover:border-neutral-200/60 dark:hover:border-white/5"
+                  )}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div
+                      className={cn(
+                        "w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border transition-colors",
+                        isActive
+                          ? "bg-white/20 text-white border-white/20"
+                          : cn(tab.badgeBg, tab.badgeText, tab.badgeBorder)
+                      )}
+                    >
+                      <Icon size={16} />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="block truncate">{tab.shortTitle}</span>
+                      <span
+                        className={cn(
+                          "block text-[10px] font-normal truncate mt-0.5",
+                          isActive ? "text-white/80" : "text-neutral-400"
+                        )}
+                      >
+                        {tab.groupCount} {tab.groupCount === 1 ? "Section" : "Sections"}
+                      </span>
+                    </div>
+                  </div>
+                  <ChevronRight
+                    size={15}
+                    className={cn(
+                      "shrink-0 transition-transform",
+                      isActive ? "text-white translate-x-0.5" : "text-neutral-400 opacity-50"
+                    )}
+                  />
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Quick Account Identity Snapshot in Sidebar */}
+          <div className="rounded-3xl border border-neutral-200/90 dark:border-white/10 bg-gradient-to-br from-neutral-50 dark:from-white/[0.02] to-white dark:to-[#0f121a] p-4 text-xs space-y-3 shadow-xs">
+            <div className="flex items-center gap-2 font-bold text-neutral-900 dark:text-white">
+              <ShieldCheck size={16} className="text-emerald-500" />
+              <span>Identity & Access</span>
+            </div>
+            <div className="space-y-2 text-[11px] text-neutral-500 dark:text-neutral-400">
+              <div className="flex items-center justify-between">
+                <span>Access Level</span>
+                <span className="font-bold text-neutral-900 dark:text-white font-mono">{roleLabel}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Account Status</span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400">Active</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Staff ID</span>
+                <span className="font-bold text-[var(--color-primary)] font-mono">{employeeId}</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={toggleAllActiveGroups}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-white/5 hover:bg-neutral-50 dark:hover:bg-white/10 text-xs font-bold text-neutral-700 dark:text-neutral-300 transition-all shadow-2xs cursor-pointer shrink-0 self-start sm:self-center"
-          title={areAllActiveCollapsed ? "View all sections in this tab" : "Hide all sections in this tab"}
-        >
-          {areAllActiveCollapsed ? <Eye size={13} className="text-blue-500" /> : <EyeOff size={13} className="text-neutral-500" />}
-          <span>{areAllActiveCollapsed ? "View All Sections" : "Hide All Sections"}</span>
-        </button>
-      </div>
+        {/* Right Column: Active Tab Content Area */}
+        <div className="lg:col-span-8 xl:col-span-9 space-y-6">
+          {/* Active Tab Banner */}
+          <div className="p-5 rounded-3xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5">
+              <div
+                className={cn(
+                  "w-11 h-11 rounded-2xl flex items-center justify-center border shadow-xs shrink-0",
+                  activeTabMeta.badgeBg,
+                  activeTabMeta.badgeText,
+                  activeTabMeta.badgeBorder
+                )}
+              >
+                <activeTabMeta.icon size={20} />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-base font-extrabold text-neutral-900 dark:text-white m-0">
+                    {activeTabMeta.title}
+                  </h2>
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-neutral-100 dark:bg-white/10 text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-white/10">
+                    {activeTabMeta.groupCount} {activeTabMeta.groupCount === 1 ? "Section" : "Sections"}
+                  </span>
+                </div>
+                <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 m-0">
+                  {activeTabMeta.description}
+                </p>
+              </div>
+            </div>
 
-      {/* ================================================================= */}
-      {/* 6. TAB CONTENT PANELS                                             */}
-      {/* ================================================================= */}
+            <button
+              type="button"
+              onClick={toggleAllActiveGroups}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-white/5 hover:bg-neutral-50 dark:hover:bg-white/10 text-xs font-bold text-neutral-700 dark:text-neutral-300 transition-all shadow-2xs cursor-pointer shrink-0 self-start sm:self-center"
+              title={areAllActiveCollapsed ? "View all sections in this tab" : "Hide all sections in this tab"}
+            >
+              {areAllActiveCollapsed ? <Eye size={13} className="text-blue-500" /> : <EyeOff size={13} className="text-neutral-500" />}
+              <span>{areAllActiveCollapsed ? "View All Sections" : "Hide All Sections"}</span>
+            </button>
+          </div>
 
-      {/* ── TAB 1: Personal Staff Details ── */}
-      {activeTab === "personal" && (
+          {/* TAB CONTENT PANELS */}
+          {/* ── TAB 1: Personal Staff Details ── */}
+          {activeTab === "personal" && (
         <div className="space-y-4">
           <div className="rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-2xs transition-all overflow-hidden">
             <div
@@ -1615,6 +1732,8 @@ export default function AdminProfilePage() {
           </div>
         </div>
       )}
+        </div>
+      </div>
 
       {/* ================================================================= */}
       {/* 7. STICKY FLOATING ACTION BAR ON UNSAVED CHANGES                  */}

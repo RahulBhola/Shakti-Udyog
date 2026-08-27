@@ -42,6 +42,7 @@ import {
   X,
   ZoomIn,
 } from "lucide-react";
+import { cn } from "../../lib/utils";
 import "./erpListView.css";
 
 /* ── Status Stepper Definitions ───────────────────────────────────── */
@@ -56,32 +57,34 @@ const STEPPER_STAGES = [
   { key: "Accepted", label: "Accepted", desc: "Order confirmed & scheduled" },
 ];
 
-function statusTone(status: string): string {
-  switch (status) {
-    case "Accepted":
-    case "Approved":
-      return "green";
-    case "Rejected":
-    case "Cancelled":
-    case "Declined":
-      return "red";
-    case "Under Review":
-    case "UnderReview":
-      return "orange";
-    case "Quoted":
-      return "purple";
-    case "Draft":
-    case "Submitted":
-    case "Received":
-      return "blue";
-    default:
-      return "gray";
-  }
-}
+const statusConfig: Record<string, { bg: string; text: string; dot: string }> = {
+  draft: { bg: "bg-neutral-500/10 border-neutral-500/20", text: "text-neutral-600 dark:text-neutral-400", dot: "bg-neutral-400" },
+  submitted: { bg: "bg-blue-500/10 border-blue-500/20", text: "text-blue-600 dark:text-blue-400", dot: "bg-blue-500" },
+  received: { bg: "bg-blue-500/10 border-blue-500/20", text: "text-blue-600 dark:text-blue-400", dot: "bg-blue-500" },
+  under_review: { bg: "bg-amber-500/10 border-amber-500/20", text: "text-amber-600 dark:text-amber-400", dot: "bg-amber-500" },
+  underreview: { bg: "bg-amber-500/10 border-amber-500/20", text: "text-amber-600 dark:text-amber-400", dot: "bg-amber-500" },
+  approved: { bg: "bg-emerald-500/10 border-emerald-500/20", text: "text-emerald-600 dark:text-emerald-400", dot: "bg-emerald-500" },
+  accepted: { bg: "bg-emerald-500/10 border-emerald-500/20", text: "text-emerald-600 dark:text-emerald-400", dot: "bg-emerald-500" },
+  quoted: { bg: "bg-purple-500/10 border-purple-500/20", text: "text-purple-600 dark:text-purple-400", dot: "bg-purple-500" },
+  rejected: { bg: "bg-rose-500/10 border-rose-500/20", text: "text-rose-600 dark:text-rose-400", dot: "bg-rose-500" },
+  cancelled: { bg: "bg-rose-500/10 border-rose-500/20", text: "text-rose-600 dark:text-rose-400", dot: "bg-rose-500" },
+  declined: { bg: "bg-rose-500/10 border-rose-500/20", text: "text-rose-600 dark:text-rose-400", dot: "bg-rose-500" },
+};
 
 function StatusBadge({ status }: { status: string }) {
-  const norm = status === "UnderReview" ? "Under Review" : status;
-  return <span className={`inv-badge inv-badge--${statusTone(norm)}`}>{norm}</span>;
+  const normKey = status.toLowerCase().replace(/\s+/g, "_");
+  const c = statusConfig[normKey] ?? {
+    bg: "bg-neutral-500/10 border-neutral-500/20",
+    text: "text-neutral-600 dark:text-neutral-400",
+    dot: "bg-neutral-400",
+  };
+  const display = (status === "UnderReview" ? "Under Review" : status).replace(/_/g, " ");
+  return (
+    <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border", c.bg, c.text)}>
+      <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", c.dot)} />
+      <span>{display}</span>
+    </span>
+  );
 }
 
 function formatBytes(bytes: number): string {
@@ -450,71 +453,53 @@ export default function EnquiryDetailPage() {
         </div>
       )}
 
-      {/* ── Breadcrumb & Top Action Header ─────────────────────────── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[var(--border-default)]">
+      {/* ── Top Action Header ─────────────────────────── */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-neutral-200/90 dark:border-white/10">
         <div>
-          <div className="flex items-center gap-2 text-xs text-[var(--text-muted)] mb-1.5">
-            <Link
-              to="/customer/dashboard"
-              className="hover:text-[var(--color-primary)] transition-colors no-underline text-[var(--text-muted)]"
-            >
-              Dashboard
-            </Link>
-            <span>/</span>
-            <Link
-              to="/customer/enquiries"
-              className="hover:text-[var(--color-primary)] transition-colors no-underline text-[var(--text-muted)]"
-            >
-              My Enquiries
-            </Link>
-            <span>/</span>
-            <span className="font-mono font-semibold text-[var(--text-secondary)]">{enqRef}</span>
-          </div>
-
           <div className="flex items-center flex-wrap gap-3">
-            <h1 className="text-2xl font-extrabold tracking-tight text-[var(--text-primary)] m-0">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-neutral-900 dark:text-white m-0">
               {partTitle}
             </h1>
-            <span className="font-mono text-xs px-2.5 py-0.5 rounded-md bg-[var(--bg-surface)] border border-[var(--border-default)] text-[var(--text-secondary)] font-semibold">
+            <span className="font-mono text-xs px-2.5 py-0.5 rounded-lg bg-neutral-100 dark:bg-white/5 border border-neutral-200 dark:border-white/10 text-neutral-600 dark:text-neutral-300 font-semibold">
               {enqRef}
             </span>
             <StatusBadge status={isDraft ? "Draft" : enquiry.status} />
           </div>
 
-          <p className="text-xs text-[var(--text-secondary)] mt-1.5 mb-0">
+          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1.5 mb-0">
             Submitted on {formatDate(enquiry.createdAtUtc)} · Category:{" "}
-            <strong>{enquiry.productType}</strong>
+            <strong className="text-neutral-800 dark:text-neutral-200">{enquiry.productType}</strong>
             {enquiry.partNumber ? ` · Part No: ${enquiry.partNumber}` : ""}
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 flex-wrap">
+        <div className="flex items-center gap-2.5 flex-wrap shrink-0">
           <button
             type="button"
             onClick={() => navigate("/customer/enquiries")}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all duration-200"
+            className="inline-flex items-center gap-1.5 px-3.5 h-9 rounded-xl text-xs font-bold border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#121520] text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-white/5 transition-all shadow-xs cursor-pointer"
           >
             <ChevronLeft size={14} />
-            Back to List
+            <span>Back to List</span>
           </button>
 
           {isDraft && (
             <>
               <Link
                 to={`/customer/enquiries/${id}/edit`}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all duration-200 no-underline"
+                className="inline-flex items-center gap-1.5 px-3.5 h-9 rounded-xl text-xs font-bold border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#121520] text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-white/5 transition-all no-underline shadow-xs"
               >
                 <FileEdit size={14} />
-                Edit Draft
+                <span>Edit Draft</span>
               </Link>
               <button
                 type="button"
                 disabled={submitting}
                 onClick={submitDraft}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)] shadow-sm hover:shadow-md transition-all duration-200"
+                className="inline-flex items-center gap-1.5 px-4 h-9 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-sm shadow-blue-500/20 transition-all cursor-pointer disabled:opacity-50"
               >
                 {submitting ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-                Submit Enquiry
+                <span>Submit Enquiry</span>
               </button>
             </>
           )}
@@ -522,10 +507,10 @@ export default function EnquiryDetailPage() {
           {quotation && ["Quoted", "Accepted", "Declined"].includes(normStatus) && (
             <Link
               to={`/customer/quotations/${quotation.id}`}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)] shadow-sm hover:shadow-md transition-all duration-200 no-underline"
+              className="inline-flex items-center gap-1.5 px-4 h-9 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-sm shadow-blue-500/20 transition-all no-underline"
             >
               <FileText size={14} />
-              View Commercial Quotation
+              <span>View Commercial Quotation</span>
             </Link>
           )}
         </div>

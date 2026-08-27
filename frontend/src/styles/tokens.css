@@ -6,6 +6,7 @@
    the VALUES are remapped to the Glacier palette.
 --------------------------------------------------------------------------- */
 :root {
+  color-scheme: dark;
   /* Base + text */
   --c-bg: #0a0e1a;                       /* deep navy-black page base */
   --c-ink: #e0e8f0;                      /* primary text */
@@ -87,6 +88,7 @@
 
 /* ---- Light theme overrides (data-theme="light") ----------------------- */
 [data-theme="light"] {
+  color-scheme: light;
   --c-bg: #f4f6fa;
   --c-ink: #1a1e2e;
   --c-ink-soft: #4a5068;

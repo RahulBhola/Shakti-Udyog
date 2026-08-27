@@ -1,9 +1,11 @@
 import { useEffect, useState, useRef, type FormEvent, type ReactNode } from "react";
-import { customerApi, type Profile, type CompanyDetail, type ContactPerson, type CompanyAddress, type CompanyDocument, type SecurityInfo } from "../../api/customerApi";
+import { customerApi, type Profile, type CompanyDetail, type ContactPerson, type CompanyAddress, type CompanyDocument } from "../../api/customerApi";
+import { useAuth } from "../../auth/AuthContext";
 import { formatDate } from "../shared";
 import { DevicesSessionsCard } from "../components/DevicesSessionsCard";
 import { ProfileCompletionCard } from "../components/ProfileCompletion";
 import { UserAvatar } from "../../components/ui";
+import { cn } from "../../lib/utils";
 
 // ── Icons (inline SVG for reliable availability) ──────────────────────────
 
@@ -26,6 +28,7 @@ function IconUpload() { return <svg width="16" height="16" viewBox="0 0 24 24" f
 function IconToggleOn() { return <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1"><rect x="2" y="6" width="20" height="12" rx="6"/><circle cx="16" cy="12" r="4" fill="#fff"/></svg>; }
 function IconToggleOff() { return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="6" width="20" height="12" rx="6"/><circle cx="8" cy="12" r="4" fill="currentColor"/></svg>; }
 function IconStar() { return <svg width="14" height="14" viewBox="0 0 24 24" fill="#F59E0B" stroke="#F59E0B" strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>; }
+function IconChevronRight() { return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>; }
 
 // ── Design Tokens ──────────────────────────────────────────────────────────
 
@@ -239,6 +242,8 @@ const documentTypeOptions = [
 // ── Main Component ─────────────────────────────────────────────────────────
 
 export default function ProfilePage() {
+  const { user, refreshUser } = useAuth();
+
   // Tab state
   const [activeTab, setActiveTab] = useState("personal");
 
@@ -248,13 +253,31 @@ export default function ProfilePage() {
   const [contacts, setContacts] = useState<ContactPerson[]>([]);
   const [addresses, setAddresses] = useState<CompanyAddress[]>([]);
   const [documents, setDocuments] = useState<CompanyDocument[]>([]);
-  const [securityInfo, setSecurityInfo] = useState<SecurityInfo | null>(null);
 
   // UI state
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const avatarFileInputRef = useRef<HTMLInputElement>(null);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+
+  // Profile update timestamp tracking
+  const [profileUpdatedAt, setProfileUpdatedAt] = useState<string>(() => {
+    return localStorage.getItem("su_customer_profile_updated_at") || "";
+  });
+
+  const recordProfileUpdate = () => {
+    const now = new Date().toISOString();
+    setProfileUpdatedAt(now);
+    localStorage.setItem("su_customer_profile_updated_at", now);
+  };
+
+  // Effective avatar URL (fallback to user session if profile endpoint has not populated it yet)
+  const effectiveAvatarUrl =
+    profile?.avatarUrl !== undefined && profile?.avatarUrl !== null && profile.avatarUrl !== ""
+      ? profile.avatarUrl
+      : (user?.avatarUrl || null);
 
   // ── Data Loading ─────────────────────────────────────────────────────────
 
@@ -287,6 +310,93 @@ export default function ProfilePage() {
     setToast({ message, type });
   }
 
+  // ── Avatar Photo Upload & Removal ─────────────────────────────────────────
+
+  async function handleAvatarFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      showToast("Please select a valid image file (JPG, PNG, WebP, SVG).", "error");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      showToast("Image size must be less than 5 MB.", "error");
+      return;
+    }
+
+    setUploadingAvatar(true);
+    try {
+      // Compress and convert to high-resolution square preview data URL
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement("canvas");
+            const maxDim = 400;
+            let { width, height } = img;
+            if (width > height) {
+              if (width > maxDim) {
+                height = Math.round((height * maxDim) / width);
+                width = maxDim;
+              }
+            } else {
+              if (height > maxDim) {
+                width = Math.round((width * maxDim) / height);
+                height = maxDim;
+              }
+            }
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext("2d");
+            if (ctx) {
+              ctx.drawImage(img, 0, 0, width, height);
+              resolve(canvas.toDataURL("image/jpeg", 0.9));
+            } else {
+              resolve(reader.result as string);
+            }
+          };
+          img.onerror = () => resolve(reader.result as string);
+          img.src = reader.result as string;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      await customerApi.updateProfile({ avatarUrl: dataUrl });
+      setProfile((prev) => (prev ? { ...prev, avatarUrl: dataUrl } : prev));
+      recordProfileUpdate();
+      await refreshUser();
+      showToast("Profile picture updated successfully.", "success");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to update profile picture.";
+      showToast(msg, "error");
+    } finally {
+      setUploadingAvatar(false);
+      if (avatarFileInputRef.current) {
+        avatarFileInputRef.current.value = "";
+      }
+    }
+  }
+
+  async function handleRemoveAvatar() {
+    setUploadingAvatar(true);
+    try {
+      await customerApi.updateProfile({ avatarUrl: "" });
+      setProfile((prev) => (prev ? { ...prev, avatarUrl: null } : prev));
+      recordProfileUpdate();
+      await refreshUser();
+      showToast("Profile picture removed.", "success");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to remove profile picture.";
+      showToast(msg, "error");
+    } finally {
+      setUploadingAvatar(false);
+    }
+  }
+
   // ── Personal Tab ─────────────────────────────────────────────────────────
 
   async function handleSavePersonal(e: FormEvent) {
@@ -300,8 +410,10 @@ export default function ProfilePage() {
         deliveryAddresses: (data.get("deliveryAddresses") as string)?.trim() || undefined,
       });
       showToast("Personal information updated.", "success");
+      recordProfileUpdate();
       const p = await customerApi.profile();
       setProfile(p);
+      await refreshUser();
     } catch {
       showToast("Could not update personal information.", "error");
     } finally { setBusy(false); }
@@ -340,6 +452,7 @@ export default function ProfilePage() {
         preferredLanguage: (data.get("preferredLanguage") as string) || undefined,
       });
       showToast("Company information updated.", "success");
+      recordProfileUpdate();
       const c = await customerApi.companyDetail();
       setCompany(c);
     } catch {
@@ -567,23 +680,6 @@ export default function ProfilePage() {
     } finally { setBusy(false); }
   }
 
-  async function handleToggleMfa() {
-    setBusy(true);
-    try {
-      if (securityInfo?.mfaEnabled) {
-        await customerApi.disableMfa();
-        showToast("MFA disabled.", "success");
-      } else {
-        await customerApi.enableMfa();
-        showToast("MFA enabled.", "success");
-      }
-      const s = await customerApi.securityInfo().catch(() => null);
-      if (s) setSecurityInfo(s);
-    } catch {
-      showToast("Could not update MFA.", "error");
-    } finally { setBusy(false); }
-  }
-
   // ── Render Helpers ───────────────────────────────────────────────────────
 
   function renderField(field: FieldDef, value: string | undefined, onChange?: (v: string) => void) {
@@ -637,7 +733,7 @@ export default function ProfilePage() {
   // ── Main Render ─────────────────────────────────────────────────────────
 
   return (
-    <div style={{ background: colors.bg, minHeight: "100vh", padding: "24px 32px", fontFamily: "Inter, system-ui, sans-serif" }}>
+    <div className="min-h-screen p-4 sm:p-6 lg:p-8" style={{ background: colors.bg, fontFamily: "Inter, system-ui, sans-serif" }}>
       {toast && <MessageToast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
       {deleteConfirm && (
         <ConfirmDialog
@@ -653,32 +749,50 @@ export default function ProfilePage() {
       )}
 
       {/* ── Page Header ─────────────────────────────────────────────────── */}
-      <div style={{ marginBottom: 28 }}>
+      <div style={{ marginBottom: 24 }}>
         {/* Title Row */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16 }}>
           <div>
-            <h1 style={{ fontSize: 32, fontWeight: 800, color: colors.text, margin: 0, lineHeight: 1.2 }}>Profile</h1>
-            <p style={{ fontSize: 15, color: colors.textSecondary, margin: "6px 0 0", maxWidth: 480, lineHeight: 1.5 }}>
-              Manage your personal, company and account settings.
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 dark:text-white m-0 tracking-tight">
+              Customer Profile & Account
+            </h1>
+            <p style={{ fontSize: 14, color: colors.textSecondary, margin: "4px 0 0", maxWidth: 520, lineHeight: 1.5 }}>
+              Manage your personal credentials, company profile, authorized representatives, delivery hubs, and vault documents.
             </p>
           </div>
-          {/* Account Since Card */}
-          <div style={{ ...cardStyle, padding: "12px 20px", display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: colors.primaryLight, display: "flex", alignItems: "center", justifyContent: "center", color: colors.primary }}>
-              <IconBuilding />
+          {/* Account Since & Profile Updated Badges */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", flexShrink: 0 }}>
+            {/* Account Since Card */}
+            <div style={{ ...cardStyle, padding: "10px 16px", display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: colors.primaryLight, display: "flex", alignItems: "center", justifyContent: "center", color: colors.primary }}>
+                <IconBuilding />
+              </div>
+              <div>
+                <p style={{ margin: 0, fontSize: 10, color: colors.textSecondary, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px" }}>Account Since</p>
+                <p style={{ margin: "2px 0 0", fontSize: 13, color: colors.text, fontWeight: 700 }}>
+                  {profile?.accountCreatedAtUtc ? formatDate(profile.accountCreatedAtUtc) : "—"}
+                </p>
+              </div>
             </div>
-            <div>
-              <p style={{ margin: 0, fontSize: 11, color: colors.textSecondary, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.5px" }}>Account Since</p>
-              <p style={{ margin: "2px 0 0", fontSize: 14, color: colors.text, fontWeight: 700 }}>
-                {profile?.accountCreatedAtUtc ? formatDate(profile.accountCreatedAtUtc) : "—"}
-              </p>
+
+            {/* Latest Profile Updated Card */}
+            <div style={{ ...cardStyle, padding: "10px 16px", display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: colors.primaryLight, display: "flex", alignItems: "center", justifyContent: "center", color: colors.primary }}>
+                <IconCheck />
+              </div>
+              <div>
+                <p style={{ margin: 0, fontSize: 10, color: colors.textSecondary, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px" }}>Profile Updated</p>
+                <p style={{ margin: "2px 0 0", fontSize: 13, color: colors.text, fontWeight: 700 }}>
+                  {profileUpdatedAt ? formatDate(profileUpdatedAt) : profile?.accountCreatedAtUtc ? formatDate(profile.accountCreatedAtUtc) : "Recently"}
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* ── Profile Completion Status Bar & Checklist ────────────────────── */}
-      <div style={{ marginBottom: 24 }}>
+      <div style={{ marginBottom: 20 }}>
         <ProfileCompletionCard
           profileData={profile}
           onNavigateTab={(tabKey) => {
@@ -689,34 +803,122 @@ export default function ProfilePage() {
         />
       </div>
 
-      {/* ── Tab Navigation ──────────────────────────────────────────────── */}
-      <div style={{ display: "flex", gap: 0, flexWrap: "wrap", borderBottom: `2px solid ${colors.border}`, marginBottom: 24 }}>
-        {tabs.map(tab => {
-          const isActive = activeTab === tab.key;
-          return (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              style={{
-                display: "inline-flex", alignItems: "center", gap: 6,
-                padding: "10px 16px",
-                fontSize: 13, fontWeight: isActive ? 600 : 500,
-                color: isActive ? colors.primary : colors.textSecondary,
-                background: "none", border: "none", borderBottom: `2px solid ${isActive ? colors.primary : "transparent"}`,
-                marginBottom: -2, cursor: "pointer", whiteSpace: "nowrap",
-                transition: "color 0.15s ease, border-color 0.15s ease",
-              }}
-            >
-              <span style={{ width: 16, height: 16, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <tab.icon />
-              </span>
-              {tab.label}
-            </button>
-          );
-        })}
+      {/* ── Mobile / Tablet Tab Grid (Hidden on Desktop lg:!hidden) ────────── */}
+      <div className="block lg:!hidden mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+          {tabs.map((tab) => {
+            const isActive = activeTab === tab.key;
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setActiveTab(tab.key)}
+                className={cn(
+                  "flex items-center gap-2.5 p-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer border text-left",
+                  isActive
+                    ? "bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-500/20"
+                    : "bg-white dark:bg-[#0f121a] border-neutral-200/80 dark:border-white/10 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-white/5"
+                )}
+              >
+                <div
+                  className={cn(
+                    "w-7 h-7 rounded-xl flex items-center justify-center shrink-0 border transition-colors",
+                    isActive
+                      ? "bg-white/20 text-white border-white/20"
+                      : "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
+                  )}
+                >
+                  <tab.icon />
+                </div>
+                <span className="truncate">{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* ── Tab Content ─────────────────────────────────────────────────── */}
+      {/* ── Two-Column Vertical Navigation & Content Layout (Desktop) ─────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left Column: Vertical Navigation Sidebar (Desktop only) */}
+        <div className="hidden lg:flex lg:col-span-4 xl:col-span-3 flex-col gap-4 lg:sticky lg:top-4">
+          <div style={{ ...cardStyle, padding: 12, display: "flex", flexDirection: "column", gap: 6 }}>
+            <div style={{ padding: "8px 12px 4px", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", color: colors.textMuted }}>
+              Profile Navigation
+            </div>
+            {tabs.map((tab) => {
+              const isActive = activeTab === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => setActiveTab(tab.key)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "10px 14px",
+                    borderRadius: 12,
+                    fontSize: 13,
+                    fontWeight: isActive ? 700 : 500,
+                    color: isActive ? "#ffffff" : colors.text,
+                    background: isActive ? colors.primary : "transparent",
+                    border: isActive ? `1px solid ${colors.primary}` : "1px solid transparent",
+                    boxShadow: isActive ? "0 4px 12px rgba(59, 130, 246, 0.25)" : "none",
+                    cursor: "pointer",
+                    textAlign: "left",
+                    transition: "all 0.15s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.background = colors.borderLight;
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.background = "transparent";
+                    }
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <span
+                      style={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: 8,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        background: isActive ? "rgba(255, 255, 255, 0.2)" : colors.borderLight,
+                        color: isActive ? "#ffffff" : colors.primary,
+                        flexShrink: 0,
+                      }}
+                    >
+                      <tab.icon />
+                    </span>
+                    <span>{tab.label}</span>
+                  </div>
+                  <span style={{ color: isActive ? "#ffffff" : colors.textMuted, opacity: isActive ? 1 : 0.6 }}>
+                    <IconChevronRight />
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Quick Client Account Snapshot */}
+          <div style={{ ...cardStyle, padding: 16, background: "linear-gradient(135deg, rgba(249, 115, 22, 0.05), rgba(59, 130, 246, 0.05))" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, fontWeight: 700, color: colors.text, marginBottom: 8 }}>
+              <span style={{ width: 8, height: 8, borderRadius: "50%", background: colors.success }} />
+              <span>Enterprise Client Account</span>
+            </div>
+            <p style={{ margin: 0, fontSize: 11, color: colors.textSecondary, lineHeight: 1.4 }}>
+              Need custom casting metallurgy or account updates? Contact our Ludhiana foundry desk at <strong>+91 98765 43210</strong>.
+            </p>
+          </div>
+        </div>
+
+        {/* Right Column: Tab Content Area */}
+        <div className="w-full lg:col-span-8 xl:col-span-9 flex flex-col gap-6 min-w-0">
 
       {/* ═══ Personal Tab ═══ */}
       {activeTab === "personal" && (
@@ -724,8 +926,8 @@ export default function ProfilePage() {
           <div style={cardStyle}>
             <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20, paddingBottom: 16, borderBottom: `1px solid ${colors.border}` }}>
               <UserAvatar
-                avatarUrl={profile?.avatarUrl}
-                displayName={profile?.fullName || profile?.email}
+                avatarUrl={effectiveAvatarUrl}
+                displayName={profile?.fullName || profile?.email || user?.fullName}
                 size="2xl"
                 shape="rounded"
               />
@@ -736,9 +938,9 @@ export default function ProfilePage() {
                 <p style={{ margin: "4px 0 0", fontSize: 13, color: colors.textSecondary }}>
                   {profile?.email}
                 </p>
-                {profile?.avatarUrl && (
+                {effectiveAvatarUrl && (
                   <span style={{ display: "inline-flex", alignItems: "center", gap: 4, marginTop: 6, padding: "2px 8px", borderRadius: 12, fontSize: 11, fontWeight: 600, background: "rgba(59, 130, 246, 0.12)", color: "#3B82F6" }}>
-                    ✓ Linked via Google Account
+                    ✓ Profile Photo Active
                   </span>
                 )}
               </div>
@@ -800,12 +1002,67 @@ export default function ProfilePage() {
           <div style={cardStyle}>
             <h2 style={{ fontSize: 18, fontWeight: 700, color: colors.text, margin: "0 0 16px" }}>Profile Picture</h2>
             <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-              <div style={{ width: 80, height: 80, borderRadius: "50%", background: colors.primaryLight, display: "flex", alignItems: "center", justifyContent: "center", color: colors.primary, fontSize: 32, fontWeight: 700 }}>
-                {(profile?.fullName ?? profile?.email ?? "U").charAt(0).toUpperCase()}
+              <div className="relative">
+                <UserAvatar
+                  avatarUrl={effectiveAvatarUrl}
+                  displayName={profile?.fullName || profile?.email || user?.fullName}
+                  size="2xl"
+                  shape="rounded"
+                  className="w-20 h-20 text-3xl shadow-sm border border-neutral-200 dark:border-white/10"
+                />
               </div>
-              <div>
-                <p style={{ margin: "0 0 4px", fontSize: 13, color: colors.textSecondary }}>JPG, PNG or SVG. Max 2 MB.</p>
-                <button style={btnSecondary}>Change Photo</button>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <p style={{ margin: 0, fontSize: 13, color: colors.textSecondary }}>
+                  JPG, PNG, WebP or SVG. Max 5 MB.
+                </p>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                  <input
+                    ref={avatarFileInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml"
+                    onChange={handleAvatarFileSelect}
+                    style={{ display: "none" }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => avatarFileInputRef.current?.click()}
+                    disabled={uploadingAvatar}
+                    style={{
+                      ...btnPrimary,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                      padding: "8px 16px",
+                      fontSize: 13,
+                      opacity: uploadingAvatar ? 0.6 : 1,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <IconUpload />
+                    <span>{uploadingAvatar ? "Updating Photo..." : "Change Photo"}</span>
+                  </button>
+
+                  {effectiveAvatarUrl && (
+                    <button
+                      type="button"
+                      onClick={handleRemoveAvatar}
+                      disabled={uploadingAvatar}
+                      style={{
+                        ...btnSecondary,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        padding: "8px 16px",
+                        fontSize: 13,
+                        color: colors.danger,
+                        cursor: "pointer",
+                      }}
+                    >
+                      <IconTrash2 />
+                      <span>Remove Photo</span>
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -1138,38 +1395,65 @@ export default function ProfilePage() {
       {activeTab === "documents" && (
         <div style={{ display: "grid", gap: 24 }}>
           <div style={cardStyle}>
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: colors.text, margin: "0 0 20px" }}>Documents</h2>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: colors.text, margin: "0 0 20px" }}>Company Verification Documents</h2>
             {/* Upload Section */}
-            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20, padding: 16, background: colors.bg, borderRadius: 12, border: `1px solid ${colors.border}` }}>
-              <select value={uploadingDocType} onChange={e => setUploadingDocType(e.target.value)} style={{ ...inputStyle, width: "auto", minWidth: 180 }}>
-                {documentTypeOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
-              <input ref={fileInputRef} type="file" onChange={e => { const f = e.target.files?.[0]; if (f) handleUploadDocument(f); }} style={{ display: "none" }} accept=".pdf,.jpg,.jpeg,.png,.svg,.doc,.docx,.xls,.xlsx" />
-              <button onClick={() => fileInputRef.current?.click()} disabled={busy} style={{ ...btnPrimary, display: "flex", alignItems: "center", gap: 6, opacity: busy ? 0.6 : 1 }}><IconUpload /> Upload Document</button>
-              <span style={{ fontSize: 12, color: colors.textMuted }}>PDF, images, Office docs. Max 11 MB.</span>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-2xl border border-neutral-200 dark:border-white/10 bg-neutral-50 dark:bg-white/[0.02] mb-5">
+              <div className="flex-1 min-w-[180px]">
+                <select
+                  value={uploadingDocType}
+                  onChange={(e) => setUploadingDocType(e.target.value)}
+                  style={{ ...inputStyle, width: "100%" }}
+                >
+                  {documentTypeOptions.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUploadDocument(f); }}
+                style={{ display: "none" }}
+                accept=".pdf,.jpg,.jpeg,.png,.svg,.doc,.docx,.xls,.xlsx"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={busy}
+                style={{ ...btnPrimary, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, opacity: busy ? 0.6 : 1, flexShrink: 0 }}
+              >
+                <IconUpload />
+                <span>Upload Document</span>
+              </button>
+              <span style={{ fontSize: 11, color: colors.textMuted }}>PDF, images, Office (Max 11 MB)</span>
             </div>
 
             {/* Document List */}
             {documents.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "24px 16px", color: colors.textMuted, fontSize: 14 }}>
-                No documents uploaded yet. Upload your GST Certificate, PAN Card, and other verification documents.
+              <div style={{ textAlign: "center", padding: "28px 16px", color: colors.textMuted, fontSize: 14 }}>
+                No documents uploaded yet. Upload your GST Certificate, PAN Card, MSME or ISO certificates.
               </div>
             ) : (
-              <div style={{ display: "grid", gap: 8 }}>
-                {documents.map(d => (
-                  <div key={d.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", borderRadius: 10, border: `1px solid ${colors.border}`, background: colors.bg }}>
+              <div style={{ display: "grid", gap: 10 }}>
+                {documents.map((d) => (
+                  <div
+                    key={d.id}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#121520]"
+                  >
                     <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0, flex: 1 }}>
-                      <div style={{ width: 36, height: 36, borderRadius: 8, background: colors.primaryLight, display: "flex", alignItems: "center", justifyContent: "center", color: colors.primary, flexShrink: 0 }}>
+                      <div style={{ width: 38, height: 38, borderRadius: 10, background: colors.primaryLight, display: "flex", alignItems: "center", justifyContent: "center", color: colors.primary, flexShrink: 0 }}>
                         <IconFile />
                       </div>
                       <div style={{ minWidth: 0 }}>
-                        <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: colors.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{d.fileName}</p>
-                        <p style={{ margin: "2px 0 0", fontSize: 12, color: colors.textMuted }}>
+                        <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: colors.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          {d.fileName}
+                        </p>
+                        <p style={{ margin: "2px 0 0", fontSize: 11, color: colors.textMuted }}>
                           {d.documentType} · {formatDate(d.uploadedAtUtc)} · {d.sizeBytes > 1024 ? `${(d.sizeBytes / 1024).toFixed(1)} KB` : `${d.sizeBytes} B`}
                         </p>
                       </div>
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0, flexWrap: "wrap" }}>
                       {/* Status badge */}
                       <span style={{
                         display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 10px", borderRadius: 12, fontSize: 11, fontWeight: 600,
@@ -1179,8 +1463,12 @@ export default function ProfilePage() {
                         {d.status === "Verified" ? <IconCheck /> : d.status === "Rejected" ? <IconX /> : <IconAlertCircle />}
                         {d.status}
                       </span>
-                      <a href={customerApi.downloadCompanyDocument(d.id)} download style={{ ...btnSecondary, padding: "6px 10px", fontSize: 11, display: "inline-flex", alignItems: "center", gap: 4, textDecoration: "none" }}><IconDownload /> Download</a>
-                      <button onClick={() => setDeleteConfirm({ type: "document", id: d.id, label: d.fileName })} style={{ ...btnDanger, padding: "6px 10px", fontSize: 11, display: "flex", alignItems: "center", gap: 4 }}><IconTrash2 /> Delete</button>
+                      <a href={customerApi.downloadCompanyDocument(d.id)} download style={{ ...btnSecondary, padding: "6px 12px", fontSize: 11, display: "inline-flex", alignItems: "center", gap: 4, textDecoration: "none" }}>
+                        <IconDownload /> Download
+                      </a>
+                      <button onClick={() => setDeleteConfirm({ type: "document", id: d.id, label: d.fileName })} style={{ ...btnDanger, padding: "6px 12px", fontSize: 11, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                        <IconTrash2 /> Delete
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -1304,20 +1592,6 @@ export default function ProfilePage() {
             </form>
           </div>
 
-          {/* Two-Factor Authentication */}
-          <div style={cardStyle}>
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: colors.text, margin: "0 0 16px" }}>Two-Factor Authentication</h2>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div>
-                <p style={{ margin: "0 0 4px", fontSize: 14, color: colors.text, fontWeight: 500 }}>{securityInfo?.mfaEnabled ? "MFA is enabled" : "MFA is disabled"}</p>
-                <p style={{ margin: 0, fontSize: 13, color: colors.textSecondary }}>Add an extra layer of security to your account.</p>
-              </div>
-              <button onClick={handleToggleMfa} disabled={busy} style={securityInfo?.mfaEnabled ? { ...btnDanger } : { ...btnPrimary }}>
-                {busy ? "..." : securityInfo?.mfaEnabled ? "Disable MFA" : "Enable MFA"}
-              </button>
-            </div>
-          </div>
-
           {/* Devices & Sessions */}
           <DevicesSessionsCard />
 
@@ -1328,12 +1602,19 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
+        </div>
+      </div>
 
-      {/* ── Style tag for animations ── */}
+      {/* ── Style tag for animations and responsive grid ── */}
       <style>{`
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
         input:focus, select:focus, textarea:focus { border-color: ${colors.primary} !important; box-shadow: 0 0 0 3px ${colors.primaryLight}; }
         button:active { transform: scale(0.98); }
+        @media (max-width: 960px) {
+          .profile-layout-grid {
+            grid-template-columns: 1fr !important;
+          }
+        }
       `}</style>
     </div>
   );

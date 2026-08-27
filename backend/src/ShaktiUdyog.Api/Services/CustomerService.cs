@@ -43,6 +43,8 @@ public interface ICustomerService
     Task<IReadOnlyList<OrderCommentResponseDto>?> GetOrderCommentsAsync(CustomerContext ctx, Guid orderId);
     Task<bool?> AddOrderCommentAsync(CustomerContext ctx, Guid orderId, string message, string? ip);
     Task<Guid?> CreateSupportRequestAsync(CustomerContext ctx, Guid orderId, SupportRequestRequest request, string? ip);
+    Task<IReadOnlyList<SupportRequestListItemDto>> GetSupportRequestsAsync(CustomerContext ctx);
+    Task<Guid?> CreateGeneralSupportRequestAsync(CustomerContext ctx, CreateGeneralSupportRequest request, string? ip);
     Task<bool?> SubmitAdvancePaymentAsync(CustomerContext ctx, Guid orderId, AdvancePaymentRequest request, string? ip);
 
     Task<IReadOnlyList<InvoiceListItemDto>> GetInvoicesAsync(CustomerContext ctx);
@@ -685,6 +687,73 @@ public class CustomerService(
             RaisedByUserId = ctx.UserId,
             Subject = request.Subject.Trim(),
             Message = request.Message.Trim(),
+        };
+
+        db.SupportRequests.Add(support);
+        await db.SaveChangesAsync();
+        await audit.WriteAsync("customer.support_request.created", ctx.UserId, "SupportRequest", support.Id.ToString(), ip);
+        return support.Id;
+    }
+
+    public async Task<IReadOnlyList<SupportRequestListItemDto>> GetSupportRequestsAsync(CustomerContext ctx)
+    {
+        return await db.SupportRequests
+            .AsNoTracking()
+            .Where(sr => ctx.CompanyIds.Contains(sr.CompanyId))
+            .OrderByDescending(sr => sr.CreatedAtUtc)
+            .Select(sr => new SupportRequestListItemDto(
+                sr.Id,
+                sr.OrderId,
+                sr.Order != null ? sr.Order.OrderNumber : null,
+                sr.Subject,
+                sr.Message,
+                sr.Status,
+                sr.CreatedAtUtc))
+            .ToListAsync();
+    }
+
+    public async Task<Guid?> CreateGeneralSupportRequestAsync(
+        CustomerContext ctx, CreateGeneralSupportRequest request, string? ip)
+    {
+        Guid companyId;
+        Guid? orderId = null;
+
+        if (request.OrderId.HasValue && request.OrderId.Value != Guid.Empty)
+        {
+            var order = await db.Orders.SingleOrDefaultAsync(o =>
+                o.Id == request.OrderId.Value && ctx.CompanyIds.Contains(o.CompanyId));
+            if (order is null) return null;
+            companyId = order.CompanyId;
+            orderId = order.Id;
+        }
+        else
+        {
+            var comp = ctx.CompanyIds.FirstOrDefault();
+            if (comp == Guid.Empty)
+            {
+                var userComp = await db.Companies.FirstOrDefaultAsync(c => c.IsActive);
+                companyId = userComp?.Id ?? Guid.Empty;
+            }
+            else
+            {
+                companyId = comp;
+            }
+        }
+
+        var subject = string.IsNullOrWhiteSpace(request.Category)
+            ? request.Subject.Trim()
+            : $"[{request.Category}] {request.Subject.Trim()}";
+
+        var support = new SupportRequest
+        {
+            Id = Guid.NewGuid(),
+            CompanyId = companyId,
+            OrderId = orderId,
+            RaisedByUserId = ctx.UserId,
+            Subject = subject,
+            Message = request.Message.Trim(),
+            Status = "Open",
+            CreatedAtUtc = DateTimeOffset.UtcNow,
         };
 
         db.SupportRequests.Add(support);

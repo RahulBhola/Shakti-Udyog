@@ -11,9 +11,9 @@ export function SidebarSection({ label, isCollapsed }: SidebarSectionProps) {
   return (
     <div
       className={cn(
-        "text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)]",
-        "select-none mt-6 first:mt-0",
-        "px-3",
+        "text-[10.5px] font-extrabold uppercase tracking-wider text-slate-400/90 dark:text-slate-400/80",
+        "select-none mt-5 first:mt-1",
+        "px-3.5 py-1",
       )}
       aria-hidden="true"
     >

@@ -552,10 +552,19 @@ function EngineerDetailsDrawer({
 
             <div className="flex items-center justify-between py-2 border-b border-neutral-100 dark:border-white/5">
               <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400 flex items-center gap-1.5">
-                <Calendar size={13} className="text-teal-500" /> Onboarded Date
+                <Calendar size={13} className="text-teal-500" /> Account Since
               </span>
               <span className="text-xs font-bold text-neutral-900 dark:text-white">
                 {formatDate(user.createdAtUtc)}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between py-2 border-b border-neutral-100 dark:border-white/5">
+              <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400 flex items-center gap-1.5">
+                <Clock size={13} className="text-emerald-500" /> Profile Updated
+              </span>
+              <span className="text-xs font-bold text-neutral-900 dark:text-white">
+                {user.lastLoginAtUtc ? formatDate(user.lastLoginAtUtc) : formatDate(user.createdAtUtc)}
               </span>
             </div>
 

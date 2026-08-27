@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { customerApi } from "../../api/customerApi";
 import { enquiryProductTypes } from "../../api/publicApi";
-import { Upload, FileText, X, ChevronRight, Loader2, AlertCircle, GripVertical } from "lucide-react";
+import { Upload, FileText, X, Loader2, AlertCircle, GripVertical } from "lucide-react";
 
 /* ── Constants ──────────────────────────────────────────────── */
 
@@ -166,13 +166,6 @@ export default function EnquiryNewPage() {
       {/* ── Header ──────────────────────────────────────────── */}
       <div className="flex items-center justify-between">
         <div>
-          <div className="flex items-center gap-2 text-[12px] text-[var(--text-muted)] mb-1">
-            <span>Home</span>
-            <ChevronRight size={12} />
-            <span>Enquiry</span>
-            <ChevronRight size={12} />
-            <span className="text-[var(--text-primary)] font-medium">New Enquiry</span>
-          </div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight">New Enquiry</h1>
           <p className="text-[13px] text-[var(--text-muted)] mt-0.5">
             Provide details about your requirement. Our engineering team will review it and prepare the quotation.

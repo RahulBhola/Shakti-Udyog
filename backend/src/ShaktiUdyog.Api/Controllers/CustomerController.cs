@@ -296,6 +296,30 @@ public class CustomerController(
         return supportId is null ? NotFound() : StatusCode(StatusCodes.Status201Created, new { id = supportId });
     }
 
+    [HttpGet("support-requests")]
+    [ProducesResponseType<IReadOnlyList<SupportRequestListItemDto>>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetSupportRequests()
+    {
+        var (ctx, failure) = await RequireContextAsync();
+        if (failure is not null) return failure;
+        var requests = await customerService.GetSupportRequestsAsync(ctx!);
+        return Ok(requests);
+    }
+
+    [HttpPost("support-requests")]
+    [EnableRateLimiting("public")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> CreateGeneralSupportRequest(CreateGeneralSupportRequest request)
+    {
+        var (ctx, failure) = await RequireContextAsync();
+        if (failure is not null) return failure;
+        var supportId = await customerService.CreateGeneralSupportRequestAsync(ctx!, request, ClientIp);
+        return supportId is null
+            ? BadRequest(new { message = "Unable to create support request. Please verify order details if specified." })
+            : StatusCode(StatusCodes.Status201Created, new { id = supportId, message = "Support ticket created successfully." });
+    }
+
     // ---- Invoices -----------------------------------------------------------
 
     [HttpGet("invoices")]

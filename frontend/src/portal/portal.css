@@ -1,13 +1,15 @@
 /* ── Shakti Udyog Admin Portal — Theme Variables ── */
 
 /* Dark theme (default — matches original design) */
-.admin-portal-layout {
+.admin-portal-layout,
+[data-theme="dark"] .admin-portal-layout {
+  color-scheme: dark;
   --bg-app: #0a0e1a;
   --bg-surface: #111827;
   --bg-surface-hover: rgba(255, 255, 255, 0.06);
   --bg-card: #111827;
-  --bg-header: rgba(10, 14, 26, 0.72);
-  --bg-sidebar: #0B1220;
+  --bg-header: rgba(10, 14, 26, 0.85);
+  --bg-sidebar: #0a0e1a;
   --bg-input: rgba(15, 21, 36, 0.55);
 
   --text-primary: #F8FAFC;
@@ -16,11 +18,11 @@
   --text-sidebar: #94A3B8;
   --text-sidebar-hover: #ffffff;
 
-  --border-default: rgba(255, 255, 255, 0.06);
+  --border-default: rgba(255, 255, 255, 0.08);
   --border-input: rgba(255, 255, 255, 0.12);
 
-  --color-primary: #3B82F6;
-  --color-primary-hover: #2563EB;
+  --color-primary: #2563EB;
+  --color-primary-hover: #1D4ED8;
   --color-primary-text: #ffffff;
 
   --color-success: #22C55E;
@@ -53,6 +55,7 @@
 
 /* Light theme */
 [data-theme="light"] .admin-portal-layout {
+  color-scheme: light;
   --bg-app: #F8FAFC;
   --bg-surface: #FFFFFF;
   --bg-surface-hover: #F1F5F9;

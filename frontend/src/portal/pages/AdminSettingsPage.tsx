@@ -14,6 +14,7 @@ import {
   EyeOff,
   ChevronDown,
   ChevronUp,
+  ChevronRight,
   Search,
   Download,
   Upload,
@@ -930,36 +931,68 @@ export default function AdminSettingsPage() {
       </div>
 
       {/* ================================================================= */}
-      {/* 3. SEARCH & CATEGORY TOOLBAR                                      */}
+      {/* 3. MOBILE / TABLET CATEGORY GRID (< lg, Zero horizontal scroll)   */}
       {/* ================================================================= */}
-      <div className="p-4 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-2xs space-y-3.5">
-        {/* Global Search Input */}
-        <div className="relative">
-          <Search className="absolute left-3.5 top-3 w-4 h-4 text-neutral-400" />
-          <input
-            type="text"
-            placeholder="Search all 40+ system settings, GST rules, SMTP, passwords, modules..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-10 py-2.5 text-xs sm:text-sm rounded-xl border border-neutral-200 dark:border-white/10 bg-neutral-50 dark:bg-[#090b10] text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/10 transition-all"
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              onClick={() => setSearchQuery("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 dark:hover:text-white p-1 rounded-lg"
-            >
-              <X size={14} />
-            </button>
-          )}
-        </div>
+      <div className="block lg:!hidden mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          {SECTIONS.map((sec) => {
+            const Icon = sec.icon;
+            const isActive = activeTab === sec.id && !searchQuery;
+            const secDirtyCount = sec.groups
+              .flatMap((g) => g.fields)
+              .filter((f) => (values[f.key] ?? "") !== (originalValues[f.key] ?? "")).length;
 
-        {/* Category Segmented Tabs */}
-        {!searchResults && (
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+            return (
+              <button
+                key={sec.id}
+                type="button"
+                onClick={() => {
+                  setActiveTab(sec.id);
+                  setSearchQuery("");
+                }}
+                className={cn(
+                  "flex items-center gap-2.5 p-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer border text-left",
+                  isActive
+                    ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)] shadow-sm shadow-[var(--color-primary)]/20"
+                    : "bg-white dark:bg-[#0f121a] border-neutral-200/80 dark:border-white/10 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-white/5"
+                )}
+              >
+                <div
+                  className={cn(
+                    "w-7 h-7 rounded-xl flex items-center justify-center shrink-0 border transition-colors",
+                    isActive
+                      ? "bg-white/20 text-white border-white/20"
+                      : cn(sec.badgeBg, sec.badgeText, sec.badgeBorder)
+                  )}
+                >
+                  <Icon size={14} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <span className="block truncate">{sec.shortTitle}</span>
+                  {secDirtyCount > 0 && (
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse mt-0.5" />
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ================================================================= */}
+      {/* 4. TWO-COLUMN VERTICAL NAVIGATION & CONTENT LAYOUT (Desktop)       */}
+      {/* ================================================================= */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left Column: Vertical Navigation Sidebar (Desktop only) */}
+        <div className="hidden lg:block lg:col-span-4 xl:col-span-3 space-y-4 lg:sticky lg:top-4">
+          {/* Category Navigation Card */}
+          <div className="rounded-3xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] p-3 shadow-xs space-y-1.5">
+            <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-neutral-400">
+              Settings Categories
+            </div>
             {SECTIONS.map((sec) => {
               const Icon = sec.icon;
-              const isActive = activeTab === sec.id;
+              const isActive = activeTab === sec.id && !searchQuery;
               const secDirtyCount = sec.groups
                 .flatMap((g) => g.fields)
                 .filter((f) => (values[f.key] ?? "") !== (originalValues[f.key] ?? "")).length;
@@ -968,218 +1001,314 @@ export default function AdminSettingsPage() {
                 <button
                   key={sec.id}
                   type="button"
-                  onClick={() => setActiveTab(sec.id)}
+                  onClick={() => {
+                    setActiveTab(sec.id);
+                    setSearchQuery("");
+                  }}
                   className={cn(
-                    "px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shrink-0 select-none cursor-pointer",
+                    "w-full flex items-center justify-between p-3 rounded-2xl text-xs font-bold transition-all cursor-pointer select-none text-left border",
                     isActive
-                      ? "bg-[var(--color-primary)] text-white shadow-sm"
-                      : "bg-neutral-100 dark:bg-white/5 border border-neutral-200/80 dark:border-white/10 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-200/60 dark:hover:bg-white/10"
+                      ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)] shadow-md shadow-[var(--color-primary)]/20"
+                      : "bg-white dark:bg-transparent border-transparent text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-white/5 hover:border-neutral-200/60 dark:hover:border-white/5"
                   )}
                 >
-                  <Icon size={14} />
-                  <span>{sec.shortTitle}</span>
-                  {secDirtyCount > 0 && (
-                    <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-                  )}
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div
+                      className={cn(
+                        "w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border transition-colors",
+                        isActive
+                          ? "bg-white/20 text-white border-white/20"
+                          : cn(sec.badgeBg, sec.badgeText, sec.badgeBorder)
+                      )}
+                    >
+                      <Icon size={16} />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="block truncate">{sec.shortTitle}</span>
+                      <span
+                        className={cn(
+                          "block text-[10px] font-normal truncate mt-0.5",
+                          isActive ? "text-white/80" : "text-neutral-400"
+                        )}
+                      >
+                        {sec.groups.length} {sec.groups.length === 1 ? "Section" : "Sections"}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {secDirtyCount > 0 && (
+                      <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                    )}
+                    <ChevronRight
+                      size={15}
+                      className={cn(
+                        "transition-transform",
+                        isActive ? "text-white translate-x-0.5" : "text-neutral-400 opacity-50"
+                      )}
+                    />
+                  </div>
                 </button>
               );
             })}
           </div>
-        )}
-      </div>
 
-      {/* ================================================================= */}
-      {/* 4. ACTIVE SECTION OR SEARCH RESULTS                               */}
-      {/* ================================================================= */}
-      {searchResults ? (
-        /* Search Results View */
-        <div className="p-6 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-2xs space-y-6">
-          <div className="flex items-center justify-between border-b border-neutral-200/80 dark:border-white/10 pb-4">
-            <div>
-              <h2 className="text-base font-extrabold text-neutral-900 dark:text-white">
-                Search Results ({searchResults.length} matches)
-              </h2>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-                Showing all matching configuration fields across categories.
-              </p>
+          {/* System Sync Card */}
+          <div className="rounded-3xl border border-neutral-200/90 dark:border-white/10 bg-gradient-to-br from-neutral-50 dark:from-white/[0.02] to-white dark:to-[#0f121a] p-4 text-xs space-y-3 shadow-xs">
+            <div className="flex items-center gap-2 font-bold text-neutral-900 dark:text-white">
+              <Activity size={16} className="text-teal-500" />
+              <span>Environment & Config</span>
             </div>
-            <button
-              type="button"
-              onClick={() => setSearchQuery("")}
-              className="text-xs font-bold text-[var(--color-primary)] hover:underline cursor-pointer"
-            >
-              Clear Search
-            </button>
+            <div className="space-y-2 text-[11px] text-neutral-500 dark:text-neutral-400">
+              <div className="flex items-center justify-between">
+                <span>Config Engine</span>
+                <span className="font-bold text-neutral-900 dark:text-white font-mono">Dynamic EF Core</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Sync Status</span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400">Synchronized</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Active Flags</span>
+                <span className="font-bold text-neutral-900 dark:text-white font-mono">{activeFeaturesCount} / 6</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column: Main Content Area */}
+        <div className="w-full lg:col-span-8 xl:col-span-9 space-y-6 min-w-0">
+          {/* Global Search Input Bar */}
+          <div className="p-3.5 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-2xs">
+            <div className="relative">
+              <Search className="absolute left-3.5 top-3 w-4 h-4 text-neutral-400" />
+              <input
+                type="text"
+                placeholder="Search all 40+ system settings, GST rules, SMTP, passwords, modules..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-10 py-2 text-xs sm:text-sm rounded-xl border border-neutral-200 dark:border-white/10 bg-neutral-50 dark:bg-[#090b10] text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/10 transition-all"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 dark:hover:text-white p-1 rounded-lg"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
           </div>
 
-          {searchResults.length === 0 ? (
-            <div className="py-12 text-center text-xs text-neutral-400">
-              No configuration parameter matches "{searchQuery}".
+          {/* Active Section or Search Results View */}
+          {searchResults ? (
+            /* Search Results View */
+            <div className="p-6 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-2xs space-y-6">
+              <div className="flex items-center justify-between border-b border-neutral-200/80 dark:border-white/10 pb-4">
+                <div>
+                  <h2 className="text-base font-extrabold text-neutral-900 dark:text-white">
+                    Search Results ({searchResults.length} matches)
+                  </h2>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+                    Showing all matching configuration fields across categories.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="text-xs font-bold text-[var(--color-primary)] hover:underline cursor-pointer"
+                >
+                  Clear Search
+                </button>
+              </div>
+
+              {searchResults.length === 0 ? (
+                <div className="py-12 text-center text-xs text-neutral-400">
+                  No configuration parameter matches "{searchQuery}".
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {searchResults.map((field) => (
+                    <div
+                      key={field.key}
+                      className={cn(
+                        "p-4 rounded-xl border border-neutral-200/80 dark:border-white/10 bg-neutral-50/70 dark:bg-white/[0.02] space-y-2",
+                        (field.type === "multiline" || field.type === "list" || field.type === "boolean") &&
+                          "md:col-span-2"
+                      )}
+                    >
+                      <FieldRenderer
+                        field={field}
+                        value={values[field.key] ?? ""}
+                        onChange={(v) => updateField(field.key, v)}
+                        isDirty={(values[field.key] ?? "") !== (originalValues[field.key] ?? "")}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {searchResults.map((field) => (
-                <div
-                  key={field.key}
-                  className={cn(
-                    "p-4 rounded-xl border border-neutral-200/80 dark:border-white/10 bg-neutral-50/70 dark:bg-white/[0.02] space-y-2",
-                    (field.type === "multiline" || field.type === "list" || field.type === "boolean") &&
-                      "md:col-span-2"
-                  )}
-                >
-                  <FieldRenderer
-                    field={field}
-                    value={values[field.key] ?? ""}
-                    onChange={(v) => updateField(field.key, v)}
-                    isDirty={(values[field.key] ?? "") !== (originalValues[field.key] ?? "")}
-                  />
+            /* Category View */
+            <div className="space-y-6">
+              {/* Section Hero Banner Card */}
+              <div className="p-5 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-start gap-4 flex-1 min-w-0">
+                  <div
+                    className={cn(
+                      "w-12 h-12 rounded-2xl border flex items-center justify-center shrink-0 shadow-2xs",
+                      activeSection.badgeBg,
+                      activeSection.badgeText,
+                      activeSection.badgeBorder
+                    )}
+                  >
+                    <activeSection.icon size={24} />
+                  </div>
+                  <div className="space-y-1 flex-1 min-w-0">
+                    <div className="flex items-center gap-2.5 flex-wrap">
+                      <h2 className="text-lg font-extrabold text-neutral-900 dark:text-white tracking-tight m-0">
+                        {activeSection.title}
+                      </h2>
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-neutral-100 dark:bg-white/10 text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-white/10">
+                        {activeSection.groups.length} {activeSection.groups.length === 1 ? "Section" : "Sections"}
+                      </span>
+                    </div>
+                    <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed m-0">
+                      {activeSection.description}
+                    </p>
+                  </div>
                 </div>
-              ))}
+
+                {/* Global View / Hide All Toggle */}
+                <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                  <button
+                    type="button"
+                    onClick={toggleAllGroups}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-white/5 hover:bg-neutral-50 dark:hover:bg-white/10 text-xs font-bold text-neutral-700 dark:text-neutral-300 transition-all shadow-2xs cursor-pointer"
+                    title={areAllCollapsed ? "View all sections in this tab" : "Hide all sections in this tab"}
+                  >
+                    {areAllCollapsed ? <Eye size={13} className="text-blue-500" /> : <EyeOff size={13} className="text-neutral-500" />}
+                    <span>{areAllCollapsed ? "View All Sections" : "Hide All Sections"}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Render Groups in Section */}
+              <div className="space-y-4">
+                {activeSection.groups.map((group, gIdx) => {
+                  const groupId = `${activeSection.id}-${gIdx}`;
+                  const isHidden = !!collapsedGroups[groupId];
+                  const groupDirtyCount = group.fields.filter(
+                    (f) => (values[f.key] ?? "") !== (originalValues[f.key] ?? "")
+                  ).length;
+
+                  return (
+                    <div
+                      key={gIdx}
+                      className="rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-2xs transition-all overflow-hidden"
+                    >
+                      {/* Group Header with Click-to-Toggle & Hide/View Action */}
+                      <div
+                        onClick={() => toggleGroup(groupId)}
+                        className="p-5 flex items-center justify-between gap-4 cursor-pointer select-none hover:bg-neutral-50/70 dark:hover:bg-white/[0.02] transition-colors"
+                      >
+                        <div className="space-y-0.5 flex-1 min-w-0">
+                          <div className="flex items-center gap-2.5 flex-wrap">
+                            <h3 className="text-sm font-extrabold text-neutral-900 dark:text-white m-0">
+                              {group.title}
+                            </h3>
+                            <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-neutral-100 dark:bg-white/10 text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-white/10">
+                              {group.fields.length} {group.fields.length === 1 ? "Field" : "Fields"}
+                            </span>
+                            {groupDirtyCount > 0 && (
+                              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                                {groupDirtyCount} Modified
+                              </span>
+                            )}
+                          </div>
+                          {group.description && (
+                            <p className="text-xs text-neutral-500 dark:text-neutral-400 m-0">
+                              {group.description}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* View/Hide Status Badge & Chevron Icon */}
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span
+                            className={cn(
+                              "hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-colors",
+                              isHidden
+                                ? "bg-neutral-100 dark:bg-white/5 border-neutral-200 dark:border-white/10 text-neutral-500 dark:text-neutral-400"
+                                : "bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/20 text-blue-600 dark:text-blue-400"
+                            )}
+                          >
+                            {isHidden ? <Eye size={12} /> : <EyeOff size={12} />}
+                            <span>{isHidden ? "Hidden" : "Visible"}</span>
+                          </span>
+
+                          <div className="w-8 h-8 rounded-xl bg-neutral-100 dark:bg-white/5 flex items-center justify-center text-neutral-400 hover:text-neutral-700 dark:hover:text-white transition-colors">
+                            {isHidden ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Group Body (Collapsible) */}
+                      {!isHidden && (
+                        <div className="p-5 pt-0 border-t border-neutral-100 dark:border-white/5 space-y-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+                            {group.fields.map((field) => (
+                              <div
+                                key={field.key}
+                                className={cn(
+                                  "space-y-1.5",
+                                  (field.type === "multiline" || field.type === "list" || field.type === "boolean") &&
+                                    "md:col-span-2"
+                                )}
+                              >
+                                <FieldRenderer
+                                  field={field}
+                                  value={values[field.key] ?? ""}
+                                  onChange={(v) => updateField(field.key, v)}
+                                  isDirty={(values[field.key] ?? "") !== (originalValues[field.key] ?? "")}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Sticky Save Bar in Tab */}
+              <div className="p-4 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-2xs flex items-center justify-between gap-4">
+                <div className="text-xs text-neutral-500 dark:text-neutral-400">
+                  {isDirty ? (
+                    <span className="text-amber-600 dark:text-amber-400 font-bold flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                      Unsaved configuration changes pending
+                    </span>
+                  ) : (
+                    <span>All changes in this section are saved.</span>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="px-4 py-2 rounded-xl bg-[var(--color-primary)] hover:opacity-90 text-white text-xs font-bold flex items-center gap-1.5 shadow-md transition-all cursor-pointer"
+                >
+                  <Save size={14} className={saving ? "animate-spin" : ""} />
+                  <span>{saving ? "Saving..." : "Save Changes"}</span>
+                </button>
+              </div>
             </div>
           )}
         </div>
-      ) : (
-        /* Category View */
-        <div className="space-y-6">
-          {/* Section Hero Banner Card */}
-          <div className="p-5 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-start gap-4 flex-1 min-w-0">
-              <div
-                className={cn(
-                  "w-12 h-12 rounded-2xl border flex items-center justify-center shrink-0 shadow-2xs",
-                  activeSection.badgeBg,
-                  activeSection.badgeText,
-                  activeSection.badgeBorder
-                )}
-              >
-                <activeSection.icon size={24} />
-              </div>
-              <div className="space-y-1 flex-1 min-w-0">
-                <div className="flex items-center gap-2.5 flex-wrap">
-                  <h2 className="text-lg font-extrabold text-neutral-900 dark:text-white tracking-tight m-0">
-                    {activeSection.title}
-                  </h2>
-                  <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-neutral-100 dark:bg-white/10 text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-white/10">
-                    {activeSection.groups.length} {activeSection.groups.length === 1 ? "Section" : "Sections"}
-                  </span>
-                </div>
-                <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed m-0">
-                  {activeSection.description}
-                </p>
-              </div>
-            </div>
-
-            {/* Global View / Hide All Toggle */}
-            <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
-              <button
-                type="button"
-                onClick={toggleAllGroups}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-white/5 hover:bg-neutral-50 dark:hover:bg-white/10 text-xs font-bold text-neutral-700 dark:text-neutral-300 transition-all shadow-2xs cursor-pointer"
-                title={areAllCollapsed ? "View all sections in this tab" : "Hide all sections in this tab"}
-              >
-                {areAllCollapsed ? <Eye size={13} className="text-blue-500" /> : <EyeOff size={13} className="text-neutral-500" />}
-                <span>{areAllCollapsed ? "View All Sections" : "Hide All Sections"}</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Render Groups in Section */}
-          <div className="space-y-4">
-            {activeSection.groups.map((group, gIdx) => {
-              const groupId = `${activeSection.id}-${gIdx}`;
-              const isHidden = !!collapsedGroups[groupId];
-              const groupDirtyCount = group.fields.filter(
-                (f) => (values[f.key] ?? "") !== (originalValues[f.key] ?? "")
-              ).length;
-
-              return (
-                <div
-                  key={gIdx}
-                  className="rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-2xs transition-all overflow-hidden"
-                >
-                  {/* Group Header with Click-to-Toggle & Hide/View Action */}
-                  <div
-                    onClick={() => toggleGroup(groupId)}
-                    className="p-5 flex items-center justify-between gap-4 cursor-pointer select-none hover:bg-neutral-50/70 dark:hover:bg-white/[0.02] transition-colors"
-                  >
-                    <div className="space-y-0.5 flex-1 min-w-0">
-                      <div className="flex items-center gap-2.5 flex-wrap">
-                        <h3 className="text-sm font-extrabold text-neutral-900 dark:text-white m-0">
-                          {group.title}
-                        </h3>
-                        <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-neutral-100 dark:bg-white/10 text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-white/10">
-                          {group.fields.length} {group.fields.length === 1 ? "Field" : "Fields"}
-                        </span>
-                        {groupDirtyCount > 0 && (
-                          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center gap-1">
-                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                            {groupDirtyCount} Modified
-                          </span>
-                        )}
-                      </div>
-                      {group.description && (
-                        <p className="text-[11.5px] text-neutral-500 dark:text-neutral-400 m-0">
-                          {group.description}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Hide / View Toggle Action */}
-                    <div className="flex items-center gap-2 shrink-0">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleGroup(groupId);
-                        }}
-                        className={cn(
-                          "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-2xs cursor-pointer",
-                          isHidden
-                            ? "bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100"
-                            : "bg-neutral-100 dark:bg-white/5 border-neutral-200 dark:border-white/10 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-200/60"
-                        )}
-                        title={isHidden ? "View section fields" : "Hide section fields"}
-                      >
-                        {isHidden ? <Eye size={13} /> : <EyeOff size={13} />}
-                        <span>{isHidden ? "View Details" : "Hide Section"}</span>
-                        {isHidden ? <ChevronDown size={13} /> : <ChevronUp size={13} />}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Collapsible Content Body */}
-                  {!isHidden && (
-                    <div className="px-6 pb-6 pt-2 border-t border-neutral-100 dark:border-white/5 space-y-5 animate-in fade-in slide-in-from-top-1 duration-150">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3">
-                        {group.fields.map((field) => {
-                          const isFullWidth =
-                            field.type === "multiline" || field.type === "list" || field.type === "boolean";
-                          return (
-                            <div
-                              key={field.key}
-                              className={cn(
-                                "space-y-1.5",
-                                isFullWidth && "md:col-span-2"
-                              )}
-                            >
-                              <FieldRenderer
-                                field={field}
-                                value={values[field.key] ?? ""}
-                                onChange={(v) => updateField(field.key, v)}
-                                isDirty={(values[field.key] ?? "") !== (originalValues[field.key] ?? "")}
-                              />
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+      </div>
 
       {/* ================================================================= */}
       {/* 5. STICKY FLOATING BAR ON UNSAVED CHANGES                         */}

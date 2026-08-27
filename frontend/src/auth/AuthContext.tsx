@@ -17,6 +17,7 @@ interface AuthContextValue {
   login: (email: string, password: string) => Promise<boolean>;
   loginWithProvider: (provider: OAuthProvider) => void;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<AuthUser | null>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -24,6 +25,16 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const refreshUser = useCallback(async () => {
+    try {
+      const me = await authService.me();
+      setUser(me);
+      return me;
+    } catch {
+      return null;
+    }
+  }, []);
 
   // Session bootstrap: try to renew via the HttpOnly refresh cookie so a
   // page reload does not sign the user out (access token is memory-only).
@@ -60,8 +71,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ user, isLoading, login, loginWithProvider, logout }),
-    [user, isLoading, login, loginWithProvider, logout],
+    () => ({ user, isLoading, login, loginWithProvider, logout, refreshUser }),
+    [user, isLoading, login, loginWithProvider, logout, refreshUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

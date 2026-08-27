@@ -20,9 +20,11 @@ import {
   Paperclip,
   CheckCircle2,
   Package,
+  ArrowUpRight,
 } from "lucide-react";
 import { tokenStorage } from "../../auth/tokenStorage";
 import { config } from "../../config";
+import { cn } from "../../lib/utils";
 import "./erpListView.css";
 
 const STATUS_FILTERS = [
@@ -46,30 +48,34 @@ function enquiryNo(id: string): string {
   return `ENQ-${id.slice(0, 8).toUpperCase()}`;
 }
 
-function statusTone(status: string): string {
-  switch (status) {
-    case "Accepted":
-    case "Approved":
-      return "green";
-    case "Rejected":
-    case "Cancelled":
-    case "Declined":
-      return "red";
-    case "Under Review":
-      return "orange";
-    case "Quoted":
-      return "purple";
-    case "Draft":
-    case "Submitted":
-    case "Received":
-      return "blue";
-    default:
-      return "gray";
-  }
-}
+const statusConfig: Record<string, { bg: string; text: string; dot: string }> = {
+  draft: { bg: "bg-neutral-500/10 border-neutral-500/20", text: "text-neutral-600 dark:text-neutral-400", dot: "bg-neutral-400" },
+  submitted: { bg: "bg-blue-500/10 border-blue-500/20", text: "text-blue-600 dark:text-blue-400", dot: "bg-blue-500" },
+  received: { bg: "bg-blue-500/10 border-blue-500/20", text: "text-blue-600 dark:text-blue-400", dot: "bg-blue-500" },
+  under_review: { bg: "bg-amber-500/10 border-amber-500/20", text: "text-amber-600 dark:text-amber-400", dot: "bg-amber-500" },
+  underreview: { bg: "bg-amber-500/10 border-amber-500/20", text: "text-amber-600 dark:text-amber-400", dot: "bg-amber-500" },
+  approved: { bg: "bg-emerald-500/10 border-emerald-500/20", text: "text-emerald-600 dark:text-emerald-400", dot: "bg-emerald-500" },
+  accepted: { bg: "bg-emerald-500/10 border-emerald-500/20", text: "text-emerald-600 dark:text-emerald-400", dot: "bg-emerald-500" },
+  quoted: { bg: "bg-purple-500/10 border-purple-500/20", text: "text-purple-600 dark:text-purple-400", dot: "bg-purple-500" },
+  rejected: { bg: "bg-rose-500/10 border-rose-500/20", text: "text-rose-600 dark:text-rose-400", dot: "bg-rose-500" },
+  cancelled: { bg: "bg-rose-500/10 border-rose-500/20", text: "text-rose-600 dark:text-rose-400", dot: "bg-rose-500" },
+  declined: { bg: "bg-rose-500/10 border-rose-500/20", text: "text-rose-600 dark:text-rose-400", dot: "bg-rose-500" },
+};
 
 function EnquiryBadge({ status }: { status: string }) {
-  return <span className={`inv-badge inv-badge--${statusTone(status)}`}>{status}</span>;
+  const normKey = status.toLowerCase().replace(/\s+/g, "_");
+  const c = statusConfig[normKey] ?? {
+    bg: "bg-neutral-500/10 border-neutral-500/20",
+    text: "text-neutral-600 dark:text-neutral-400",
+    dot: "bg-neutral-400",
+  };
+  const display = status.replace(/_/g, " ");
+  return (
+    <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border", c.bg, c.text)}>
+      <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", c.dot)} />
+      <span>{display}</span>
+    </span>
+  );
 }
 
 /* ── CSV Export ───────────────────────────────────────────────────── */
@@ -309,28 +315,30 @@ export default function EnquiryListPage() {
       )}
 
       {/* ── Top Header ────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1">
-            Procurement & RFQs
+          <div className="flex items-center gap-2">
+            <span className="p-1.5 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400">
+              <FileText size={18} />
+            </span>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-neutral-900 dark:text-white m-0">
+              My Enquiries & RFQs
+            </h1>
           </div>
-          <h1 className="text-[24px] font-bold tracking-tight text-[var(--text-primary)] m-0">
-            My Enquiries
-          </h1>
-          <p className="text-xs text-[var(--text-secondary)] mt-1 mb-0">
+          <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 mt-1 m-0">
             Track casting requirement feasibility, engineering reviews, and commercial quotation status.
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-center">
           {data && data.items.length > 0 && (
             <button
               type="button"
               onClick={() => exportToCsv(data.items)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all duration-200"
+              className="inline-flex items-center gap-1.5 px-3.5 h-9 rounded-xl text-xs font-bold bg-white dark:bg-[#121520] border border-neutral-200 dark:border-white/10 hover:bg-neutral-50 dark:hover:bg-white/5 text-neutral-700 dark:text-neutral-300 shadow-xs cursor-pointer transition-all"
             >
               <Download size={14} />
-              Export CSV
+              <span>Export CSV</span>
             </button>
           )}
 
@@ -338,103 +346,82 @@ export default function EnquiryListPage() {
             type="button"
             onClick={load}
             disabled={refreshing}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all duration-200"
+            className="inline-flex items-center gap-1.5 px-3.5 h-9 rounded-xl text-xs font-bold bg-white dark:bg-[#121520] border border-neutral-200 dark:border-white/10 hover:bg-neutral-50 dark:hover:bg-white/5 text-neutral-700 dark:text-neutral-300 shadow-xs cursor-pointer transition-all"
             aria-label="Refresh list"
           >
-            <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} />
-            Refresh
+            <RefreshCw size={13} className={cn(refreshing && "animate-spin text-blue-600")} />
+            <span>Refresh</span>
           </button>
 
           <Link
             to="/customer/enquiries/new"
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)] shadow-sm hover:shadow-md transition-all duration-200 no-underline"
+            className="inline-flex items-center gap-1.5 px-4 h-9 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-sm shadow-blue-500/20 no-underline cursor-pointer transition-all"
           >
             <Plus size={15} />
-            New Enquiry
+            <span>New Enquiry</span>
           </Link>
         </div>
       </div>
 
       {/* ── Summary KPI Cards ──────────────────────────────────────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
-        <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-[var(--text-secondary)]">Total Enquiries</span>
-            <span className="p-2 rounded-lg bg-blue-500/10 text-blue-500">
-              <FileText size={16} />
-            </span>
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+        {/* Total Enquiries */}
+        <div className="p-4 rounded-2xl border border-blue-500/20 dark:border-blue-500/30 bg-gradient-to-br from-blue-500/[0.08] via-white dark:via-[#0f121a] to-white dark:to-[#0f121a] shadow-xs flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30 flex items-center justify-center shrink-0 shadow-xs">
+            <FileText size={18} />
           </div>
-          <div className="text-2xl font-extrabold text-[var(--text-primary)] mt-2">
-            {metrics.total}
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-blue-600/80 dark:text-blue-400/80">Total Enquiries</div>
+            <div className="text-xl font-extrabold text-neutral-900 dark:text-white leading-none mt-1">
+              {metrics.total}
+            </div>
           </div>
-          <div className="text-[11px] text-[var(--text-muted)] mt-0.5">Submitted RFQ records</div>
         </div>
 
-        <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-[var(--text-secondary)]">Under Review</span>
-            <span className="p-2 rounded-lg bg-amber-500/10 text-amber-500">
-              <Clock size={16} />
-            </span>
+        {/* Under Review */}
+        <div className="p-4 rounded-2xl border border-amber-500/20 dark:border-amber-500/30 bg-gradient-to-br from-amber-500/[0.08] via-white dark:via-[#0f121a] to-white dark:to-[#0f121a] shadow-xs flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 flex items-center justify-center shrink-0 shadow-xs">
+            <Clock size={18} />
           </div>
-          <div className="text-2xl font-extrabold text-[var(--text-primary)] mt-2">
-            {metrics.underReview}
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-amber-600/80 dark:text-amber-400/80">Under Review</div>
+            <div className="text-xl font-extrabold text-neutral-900 dark:text-white leading-none mt-1">
+              {metrics.underReview}
+            </div>
           </div>
-          <div className="text-[11px] text-[var(--text-muted)] mt-0.5">In foundry engineering check</div>
         </div>
 
-        <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-[var(--text-secondary)]">Quotes Issued</span>
-            <span className="p-2 rounded-lg bg-purple-500/10 text-purple-500">
-              <Layers size={16} />
-            </span>
+        {/* Quotes Issued */}
+        <div className="p-4 rounded-2xl border border-purple-500/20 dark:border-purple-500/30 bg-gradient-to-br from-purple-500/[0.08] via-white dark:via-[#0f121a] to-white dark:to-[#0f121a] shadow-xs flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-xl bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30 flex items-center justify-center shrink-0 shadow-xs">
+            <Layers size={18} />
           </div>
-          <div className="text-2xl font-extrabold text-[var(--text-primary)] mt-2">
-            {metrics.quoted}
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-purple-600/80 dark:text-purple-400/80">Quotes Issued</div>
+            <div className="text-xl font-extrabold text-neutral-900 dark:text-white leading-none mt-1">
+              {metrics.quoted}
+            </div>
           </div>
-          <div className="text-[11px] text-[var(--text-muted)] mt-0.5">Commercial proposal ready</div>
         </div>
 
-        <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-[var(--text-secondary)]">Approved / Active</span>
-            <span className="p-2 rounded-lg bg-emerald-500/10 text-emerald-500">
-              <CheckCircle2 size={16} />
-            </span>
+        {/* Approved / Active */}
+        <div className="p-4 rounded-2xl border border-emerald-500/20 dark:border-emerald-500/30 bg-gradient-to-br from-emerald-500/[0.08] via-white dark:via-[#0f121a] to-white dark:to-[#0f121a] shadow-xs flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center justify-center shrink-0 shadow-xs">
+            <CheckCircle2 size={18} />
           </div>
-          <div className="text-2xl font-extrabold text-[var(--text-primary)] mt-2">
-            {metrics.approved}
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-600/80 dark:text-emerald-400/80">Approved / Active</div>
+            <div className="text-xl font-extrabold text-neutral-900 dark:text-white leading-none mt-1">
+              {metrics.approved}
+            </div>
           </div>
-          <div className="text-[11px] text-[var(--text-muted)] mt-0.5">Accepted & converted</div>
         </div>
       </div>
 
       {/* ── Filter & Search Bar ────────────────────────────────────── */}
-      <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] p-3 shadow-sm flex flex-col md:flex-row items-center justify-between gap-3">
-        {/* Search */}
-        <div className="relative w-full md:w-80">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
-          <input
-            type="text"
-            placeholder="Search by part, grade or ID..."
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            className="w-full pl-9 pr-8 py-1.5 text-xs rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--color-primary)] transition-all"
-          />
-          {searchInput && (
-            <button
-              type="button"
-              onClick={() => setSearchInput("")}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-            >
-              <X size={13} />
-            </button>
-          )}
-        </div>
-
-        {/* Status Filter Chips */}
-        <div className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-1 md:pb-0 scrollbar-thin">
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        {/* Filter Pills */}
+        <div className="flex items-center gap-1.5 flex-wrap">
           {STATUS_FILTERS.map((s) => (
             <button
               key={s}
@@ -443,15 +430,37 @@ export default function EnquiryListPage() {
                 setStatusFilter(s);
                 setPage(1);
               }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all duration-150 ${
+              className={cn(
+                "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border",
                 statusFilter === s
-                  ? "bg-[var(--color-primary)] text-white shadow-sm"
-                  : "bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] border border-[var(--border-default)]"
-              }`}
+                  ? "bg-blue-600 text-white border-blue-600 shadow-xs"
+                  : "bg-white dark:bg-[#121520] text-neutral-600 dark:text-neutral-400 border-neutral-200 dark:border-white/10 hover:bg-neutral-50 dark:hover:bg-white/5"
+              )}
             >
-              {s}
+              <span>{s}</span>
             </button>
           ))}
+        </div>
+
+        {/* Search Bar */}
+        <div className="relative min-w-[240px]">
+          <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" />
+          <input
+            type="text"
+            placeholder="Search by part, grade or ID..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            className="w-full h-9 pl-9 pr-8 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#121520] text-xs text-neutral-900 dark:text-white placeholder:text-neutral-400 focus:outline-none focus:border-blue-500 shadow-xs"
+          />
+          {searchInput && (
+            <button
+              type="button"
+              onClick={() => setSearchInput("")}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 dark:hover:text-white"
+            >
+              <X size={13} />
+            </button>
+          )}
         </div>
       </div>
 
@@ -459,40 +468,43 @@ export default function EnquiryListPage() {
       {error && <EmptyState title="Enquiries unavailable" text={error} />}
 
       {!data && !error && (
-        <div className="flex items-center justify-center min-h-[300px]">
-          <Loading label="Loading your enquiries" />
+        <div className="py-12 flex justify-center">
+          <Loading label="Fetching RFQ enquiries..." />
         </div>
       )}
 
       {data && data.items.length === 0 && (
-        <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] p-12 text-center shadow-sm">
-          <div className="w-14 h-14 rounded-2xl bg-[var(--color-primary)]/10 text-[var(--color-primary)] flex items-center justify-center mx-auto mb-4">
+        <div className="rounded-3xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] p-12 text-center space-y-4 shadow-xs">
+          <div className="w-14 h-14 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 flex items-center justify-center mx-auto">
             <FileText size={28} />
           </div>
-          <h3 className="text-base font-bold text-[var(--text-primary)] mb-1">
-            {search || statusFilter !== "All" ? "No matching enquiries found" : "No enquiries yet"}
-          </h3>
-          <p className="text-xs text-[var(--text-secondary)] max-w-md mx-auto mb-5">
-            {search || statusFilter !== "All"
-              ? "Try adjusting your search terms or status filters."
-              : "Submit your casting drawings, quantity, and grade specifications to receive an itemized manufacturing quotation."}
-          </p>
+          <div className="max-w-md mx-auto space-y-1">
+            <h3 className="text-base font-bold text-neutral-900 dark:text-white">
+              {search || statusFilter !== "All" ? "No matching enquiries found" : "No enquiries generated yet"}
+            </h3>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400">
+              {search || statusFilter !== "All"
+                ? "Try adjusting your search terms or status filters."
+                : "Submit your casting drawings, quantity, and grade specifications to receive an itemized manufacturing quotation."}
+            </p>
+          </div>
           <Link
             to="/customer/enquiries/new"
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)] no-underline transition-all"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-sm shadow-blue-500/20 no-underline"
           >
             <Plus size={14} />
-            Submit Your First RFQ
+            <span>Submit Your First RFQ</span>
+            <ArrowUpRight size={14} />
           </Link>
         </div>
       )}
 
       {data && data.items.length > 0 && (
-        <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] shadow-sm overflow-hidden">
+        <div className="rounded-3xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left border-collapse min-w-[800px]">
               <thead>
-                <tr className="border-b border-[var(--border-default)] bg-[var(--bg-surface)] text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                <tr className="border-b border-neutral-200/80 dark:border-white/10 bg-neutral-50/80 dark:bg-white/[0.02] text-[10px] font-bold uppercase tracking-wider text-neutral-400">
                   <th className="py-3.5 px-4 w-14 text-center">Image</th>
                   <th className="py-3.5 px-4">Enquiry & Part</th>
                   <th className="py-3.5 px-4">Category</th>
@@ -503,14 +515,14 @@ export default function EnquiryListPage() {
                   <th className="py-3.5 px-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[var(--border-default)]">
+              <tbody className="divide-y divide-neutral-100 dark:divide-white/5">
                 {data.items.map((r) => {
                   const partDisplay = r.partName || r.productType;
                   return (
                     <tr
                       key={r.id}
                       onClick={() => navigate(`/customer/enquiries/${r.id}`)}
-                      className="hover:bg-[var(--bg-surface-hover)] cursor-pointer transition-colors duration-150 group"
+                      className="hover:bg-neutral-50/60 dark:hover:bg-white/[0.02] cursor-pointer transition-colors duration-150 group"
                     >
                       {/* Image Thumbnail Column */}
                       <td className="py-3 px-4 w-14 text-center">
@@ -528,10 +540,10 @@ export default function EnquiryListPage() {
                       {/* Part Name & Reference */}
                       <td className="py-3 px-4">
                         <div className="flex flex-col">
-                          <span className="text-xs font-bold text-[var(--text-primary)] group-hover:text-[var(--color-primary)] transition-colors">
+                          <span className="text-xs font-bold text-neutral-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                             {partDisplay}
                           </span>
-                          <span className="text-[11px] text-[var(--text-muted)] font-mono">
+                          <span className="text-[11px] text-neutral-400 font-mono">
                             {enquiryNo(r.id)} {r.partNumber ? `· Part: ${r.partNumber}` : ""}
                           </span>
                         </div>
@@ -539,14 +551,14 @@ export default function EnquiryListPage() {
 
                       {/* Product Type */}
                       <td className="py-3 px-4">
-                        <span className="text-xs text-[var(--text-secondary)] font-medium">
+                        <span className="text-xs text-neutral-600 dark:text-neutral-300 font-medium">
                           {r.productType}
                         </span>
                       </td>
 
                       {/* Quantity */}
                       <td className="py-3 px-4">
-                        <span className="text-xs font-bold text-[var(--text-primary)]">
+                        <span className="text-xs font-bold text-neutral-900 dark:text-white font-mono">
                           {r.quantity}
                         </span>
                       </td>
@@ -554,18 +566,18 @@ export default function EnquiryListPage() {
                       {/* Attachments */}
                       <td className="py-3 px-4">
                         {r.fileCount > 0 ? (
-                          <span className="inline-flex items-center gap-1 text-xs text-[var(--color-primary)] font-semibold">
+                          <span className="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 font-semibold">
                             <Paperclip size={12} />
                             {r.fileCount} {r.fileCount === 1 ? "file" : "files"}
                           </span>
                         ) : (
-                          <span className="text-[11px] text-[var(--text-muted)]">—</span>
+                          <span className="text-[11px] text-neutral-400">—</span>
                         )}
                       </td>
 
                       {/* Submitted Date */}
                       <td className="py-3 px-4">
-                        <span className="text-xs text-[var(--text-secondary)]">
+                        <span className="text-xs text-neutral-500 dark:text-neutral-400">
                           {formatDate(r.createdAtUtc)}
                         </span>
                       </td>
@@ -580,28 +592,28 @@ export default function EnquiryListPage() {
                         <div className="flex items-center justify-end gap-1.5">
                           <Link
                             to={`/customer/enquiries/${r.id}`}
-                            className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-[var(--color-primary)] hover:bg-[var(--bg-surface)] transition-colors"
+                            className="p-2 rounded-xl border border-neutral-200/80 dark:border-white/10 bg-white dark:bg-[#121520] text-neutral-600 dark:text-neutral-300 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-500/30 transition-all inline-flex items-center justify-center"
                             title="View Technical Details"
                           >
-                            <Eye size={15} />
+                            <Eye size={14} />
                           </Link>
 
                           {r.isDraft && r.status === "Draft" && (
                             <>
                               <Link
                                 to={`/customer/enquiries/${r.id}/edit`}
-                                className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-[var(--color-primary)] hover:bg-[var(--bg-surface)] transition-colors"
+                                className="p-2 rounded-xl border border-neutral-200/80 dark:border-white/10 bg-white dark:bg-[#121520] text-neutral-600 dark:text-neutral-300 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-500/30 transition-all inline-flex items-center justify-center"
                                 title="Edit Draft"
                               >
-                                <FileEdit size={15} />
+                                <FileEdit size={14} />
                               </Link>
                               <button
                                 type="button"
                                 onClick={() => void cancelDraft(r.id)}
-                                className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-[var(--color-danger)] hover:bg-[var(--bg-surface)] transition-colors"
+                                className="p-2 rounded-xl border border-rose-200/80 dark:border-rose-500/20 bg-white dark:bg-[#121520] text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all inline-flex items-center justify-center cursor-pointer"
                                 title="Delete Draft"
                               >
-                                <Trash2 size={15} />
+                                <Trash2 size={14} />
                               </button>
                             </>
                           )}
@@ -615,16 +627,16 @@ export default function EnquiryListPage() {
           </div>
 
           {/* ── Pagination Footer ────────────────────────────────────── */}
-          <div className="flex items-center justify-between flex-wrap gap-3 px-4 py-3 border-t border-[var(--border-default)] bg-[var(--bg-surface)]/40">
+          <div className="flex items-center justify-between flex-wrap gap-3 px-6 py-4 border-t border-neutral-100 dark:border-white/5 bg-neutral-50/50 dark:bg-white/[0.01]">
             <div className="flex items-center gap-2">
-              <span className="text-xs text-[var(--text-muted)]">Show</span>
+              <span className="text-xs text-neutral-400">Show</span>
               <select
                 value={pageSize}
                 onChange={(e) => {
                   setPageSize(Number(e.target.value));
                   setPage(1);
                 }}
-                className="px-2 py-1 text-xs rounded-md border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-primary)]"
+                className="px-2 py-1 text-xs font-bold rounded-lg border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#121520] text-neutral-900 dark:text-white"
               >
                 {PAGE_SIZES.map((sz) => (
                   <option key={sz} value={sz}>
@@ -632,7 +644,7 @@ export default function EnquiryListPage() {
                   </option>
                 ))}
               </select>
-              <span className="text-xs text-[var(--text-muted)]">
+              <span className="text-xs text-neutral-400">
                 per page · Showing {data.items.length} of {data.totalCount} enquiries
               </span>
             </div>
@@ -642,13 +654,13 @@ export default function EnquiryListPage() {
                 type="button"
                 disabled={page <= 1}
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="p-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                className="p-2 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#121520] text-neutral-600 dark:text-neutral-300 hover:text-blue-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                 aria-label="Previous page"
               >
-                <ChevronLeft size={15} />
+                <ChevronLeft size={14} />
               </button>
 
-              <span className="text-xs font-semibold text-[var(--text-primary)] px-2">
+              <span className="text-xs font-bold text-neutral-900 dark:text-white px-2">
                 Page {page} of {totalPages}
               </span>
 
@@ -656,10 +668,10 @@ export default function EnquiryListPage() {
                 type="button"
                 disabled={page >= totalPages}
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                className="p-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                className="p-2 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#121520] text-neutral-600 dark:text-neutral-300 hover:text-blue-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                 aria-label="Next page"
               >
-                <ChevronRight size={15} />
+                <ChevronRight size={14} />
               </button>
             </div>
           </div>
