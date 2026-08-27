@@ -1,8 +1,19 @@
-import { useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import { customerApi } from "../../api/customerApi";
+import { useState, useRef, useEffect, useMemo } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { customerApi, type Profile } from "../../api/customerApi";
 import { enquiryProductTypes } from "../../api/publicApi";
-import { Upload, FileText, X, Loader2, AlertCircle, GripVertical } from "lucide-react";
+import { calculateProfileCompleteness } from "../components/ProfileCompletion";
+import {
+  Upload,
+  FileText,
+  X,
+  Loader2,
+  AlertCircle,
+  GripVertical,
+  ShieldAlert,
+  ArrowRight,
+  Lock,
+} from "lucide-react";
 
 /* ── Constants ──────────────────────────────────────────────── */
 
@@ -55,9 +66,43 @@ export default function EnquiryNewPage() {
   const [files, setFiles] = useState<File[]>([]);
   const [fileError, setFileError] = useState<string | null>(null);
   const [status, setStatus] = useState<"idle" | "submitting" | "uploading" | "error">("idle");
+  const [customError, setCustomError] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [dragFileIndex, setDragFileIndex] = useState<number | null>(null);
+
+  // ── Profile Gate State ─────────────────────────────────────
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    async function loadCustomerProfile() {
+      try {
+        const [p, addrs] = await Promise.allSettled([
+          customerApi.profile(),
+          customerApi.addresses(),
+        ]);
+        if (!mounted) return;
+        if (p.status === "fulfilled" && p.value) {
+          const prof = p.value;
+          if (addrs.status === "fulfilled" && Array.isArray(addrs.value)) {
+            (prof as unknown as Record<string, unknown>).addresses = addrs.value;
+          }
+          setProfile(prof);
+        }
+      } catch (e) {
+        console.error("Failed to fetch customer profile", e);
+      } finally {
+        if (mounted) setProfileLoading(false);
+      }
+    }
+    void loadCustomerProfile();
+    return () => { mounted = false; };
+  }, []);
+
+  const completeness = useMemo(() => calculateProfileCompleteness(profile), [profile]);
+  const isProfileComplete = completeness.percentage === 100;
 
   // ── Form fields ────────────────────────────────────────────
   const [productType, setProductType] = useState("");
@@ -109,6 +154,12 @@ export default function EnquiryNewPage() {
 
   // ── Submit ─────────────────────────────────────────────────
   async function submit(saveAsDraft: boolean) {
+    if (!isProfileComplete) {
+      setCustomError("Profile Incomplete: Please complete 100% of your profile (Full Name, Phone Number, Company, and Address) before submitting an enquiry.");
+      setStatus("error");
+      return;
+    }
+
     const nextErrors: Record<string, string> = {};
     if (!productType) nextErrors.productType = "Select a requirement type.";
     if (!partName) nextErrors.partName = "Enter the part name.";
@@ -118,6 +169,7 @@ export default function EnquiryNewPage() {
     if (Object.keys(nextErrors).length > 0) return;
 
     setStatus("submitting");
+    setCustomError(null);
     try {
       const { id } = await customerApi.createEnquiry({
         productType,
@@ -137,7 +189,7 @@ export default function EnquiryNewPage() {
         prototypeQuantity: prototypeQty || undefined,
         productionQuantity: productionQty || undefined,
         annualRequirement: annualReq || undefined,
-        expectedDeliveryDate: deliveryDate ? new Date(deliveryDate).toISOString() as any : undefined,
+        expectedDeliveryDate: deliveryDate ? new Date(deliveryDate).toISOString() as unknown as string : undefined,
         preferredDeliveryTerms: deliveryTerms || undefined,
         additionalRequirements: additionalReqs.length > 0 ? additionalReqs.join(", ") : undefined,
         remarks: remarks || undefined,
@@ -152,7 +204,9 @@ export default function EnquiryNewPage() {
       }
 
       navigate(`/customer/enquiries/${id}`);
-    } catch {
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Could not submit the Enquiry. Please try again.";
+      setCustomError(msg);
       setStatus("error");
     }
   }
@@ -164,31 +218,103 @@ export default function EnquiryNewPage() {
     <div className="space-y-6 pb-8">
 
       {/* ── Header ──────────────────────────────────────────── */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight">New Enquiry</h1>
           <p className="text-[13px] text-[var(--text-muted)] mt-0.5">
             Provide details about your requirement. Our engineering team will review it and prepare the quotation.
           </p>
         </div>
-        <div className="flex items-center gap-2 shrink-0 ml-4">
-          <button type="button" disabled={busy} onClick={() => void submit(true)}
-            className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg border border-[var(--border-default)] text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all disabled:opacity-50">
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            disabled={busy || (!profileLoading && !isProfileComplete)}
+            onClick={() => void submit(true)}
+            title={!isProfileComplete ? "Complete your profile to save drafts" : undefined}
+            className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg border border-[var(--border-default)] text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+          >
+            {!isProfileComplete && <Lock size={12} className="text-amber-500" />}
             Save as Draft
           </button>
-          <button type="button" disabled={busy} onClick={() => void submit(false)}
-            className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg bg-[var(--color-primary)] text-white text-[12px] font-semibold hover:bg-[var(--color-primary-hover)] transition-all disabled:opacity-50">
-            {busy ? <Loader2 size={14} className="animate-spin" /> : null}
+          <button
+            type="button"
+            disabled={busy || (!profileLoading && !isProfileComplete)}
+            onClick={() => void submit(false)}
+            title={!isProfileComplete ? "Complete your profile to submit enquiry" : undefined}
+            className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg bg-[var(--color-primary)] text-white text-[12px] font-semibold hover:bg-[var(--color-primary-hover)] transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-xs cursor-pointer"
+          >
+            {busy ? <Loader2 size={14} className="animate-spin" /> : (!isProfileComplete ? <Lock size={13} /> : null)}
             Submit Enquiry
           </button>
         </div>
       </div>
 
+      {/* ── Profile Completion Guard Banner ─────────────────── */}
+      {!profileLoading && !isProfileComplete && (
+        <div className="p-5 sm:p-6 rounded-2xl border-2 border-amber-500/30 dark:border-amber-500/40 bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent shadow-sm">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-5 pb-4 border-b border-amber-500/20">
+            <div className="flex items-start sm:items-center gap-3.5">
+              <div className="w-11 h-11 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/30 shadow-xs">
+                <ShieldAlert size={22} />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-sm sm:text-base font-bold text-neutral-900 dark:text-white m-0">
+                    Profile Completion Required to Submit Enquiries
+                  </h2>
+                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30">
+                    {completeness.percentage}% Complete
+                  </span>
+                </div>
+                <p className="text-xs text-neutral-600 dark:text-neutral-300 mt-1 max-w-2xl leading-relaxed m-0">
+                  To ensure accurate casting feasibility reviews, custom tooling estimates, and delivery logistics, all customer accounts must have a complete profile before creating RFQs.
+                </p>
+              </div>
+            </div>
+            <Link
+              to="/customer/profile"
+              className="inline-flex items-center gap-2 px-4.5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-md shadow-amber-500/20 no-underline cursor-pointer shrink-0 transition-all hover:scale-105 active:scale-95"
+            >
+              <span>Complete Profile Now</span>
+              <ArrowRight size={14} />
+            </Link>
+          </div>
+
+          {/* Missing Checklist Items */}
+          <div className="mt-4">
+            <div className="text-[11px] font-bold text-neutral-700 dark:text-neutral-300 mb-2 flex items-center gap-2">
+              <span>Required Details Pending:</span>
+              <span className="text-[11px] font-normal text-neutral-500 dark:text-neutral-400">
+                ({completeness.pendingItems.length} item{completeness.pendingItems.length > 1 ? "s" : ""} to fill)
+              </span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              {completeness.pendingItems.map((item) => (
+                <div
+                  key={item.key}
+                  className="flex items-center gap-2.5 p-2 rounded-xl bg-white/80 dark:bg-[#121520]/80 border border-amber-500/20 text-xs font-semibold text-neutral-800 dark:text-neutral-200"
+                >
+                  <span className="w-5 h-5 rounded-full bg-rose-500/15 text-rose-600 dark:text-rose-400 flex items-center justify-center text-[10px] font-black shrink-0">
+                    ✕
+                  </span>
+                  <span className="truncate">{item.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Error banner ── */}
       {status === "error" && (
-        <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400 text-[13px] font-medium">
-          <AlertCircle size={14} />
-          Could not submit the Enquiry. Please try again.
+        <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400 text-[13px] font-medium border border-red-200 dark:border-red-500/20">
+          <AlertCircle size={16} className="shrink-0" />
+          <span>{customError || "Could not submit the Enquiry. Please try again."}</span>
+          {!isProfileComplete && (
+            <Link to="/customer/profile" className="ml-auto text-xs font-bold text-red-700 dark:text-red-400 underline shrink-0">
+              Go to Profile →
+            </Link>
+          )}
         </div>
       )}
       {uploadProgress && (

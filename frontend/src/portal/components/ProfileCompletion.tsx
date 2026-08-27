@@ -63,12 +63,17 @@ export function calculateProfileCompleteness(data: any): CompletenessResult {
   const email = (data.email || "").trim();
   const phoneNumber = (data.phoneNumber || data.phone || "").trim();
   const designation = (data.designation || data.title || (data.roles && data.roles.length > 0 ? data.roles[0] : "") || (data.company?.name ? "Customer Representative" : "Customer")).trim();
-  const companyName = (data.company?.name || data.companyName || "").trim();
+  const companyName = (data.company?.name || data.company?.legalBusinessName || data.companyName || "").trim();
   const hasAddress = Boolean(
     data.company?.deliveryAddresses ||
+    data.company?.addressLine1 ||
+    data.company?.city ||
+    data.company?.registeredAddress ||
+    data.company?.factoryAddress ||
     data.addressLine1 ||
     data.city ||
     data.registeredAddress ||
+    data.factoryAddress ||
     (data.addresses && data.addresses.length > 0)
   );
   const isEmailVerified = data.emailConfirmed !== false && Boolean(email);

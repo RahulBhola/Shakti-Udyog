@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { customerApi, type Paged, type EnquiryListItem } from "../../api/customerApi";
+import { customerApi, type Paged, type EnquiryListItem, type Profile } from "../../api/customerApi";
 import { EmptyState, Loading } from "../../components/ui";
 import { formatDate } from "../shared";
+import { calculateProfileCompleteness } from "../components/ProfileCompletion";
 import {
   Search,
   RefreshCw,
@@ -21,6 +22,9 @@ import {
   CheckCircle2,
   Package,
   ArrowUpRight,
+  ShieldAlert,
+  ArrowRight,
+  Lock,
 } from "lucide-react";
 import { tokenStorage } from "../../auth/tokenStorage";
 import { config } from "../../config";
@@ -227,6 +231,39 @@ export default function EnquiryListPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [previewModalUrl, setPreviewModalUrl] = useState<string | null>(null);
 
+  // ── Profile Gate Status ──────────────────────────────────────────
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    async function checkProfile() {
+      try {
+        const [p, addrs] = await Promise.allSettled([
+          customerApi.profile(),
+          customerApi.addresses(),
+        ]);
+        if (!mounted) return;
+        if (p.status === "fulfilled" && p.value) {
+          const prof = p.value;
+          if (addrs.status === "fulfilled" && Array.isArray(addrs.value)) {
+            (prof as unknown as Record<string, unknown>).addresses = addrs.value;
+          }
+          setProfile(prof);
+        }
+      } catch (err) {
+        console.error("Failed to fetch customer profile in enquiry list", err);
+      } finally {
+        if (mounted) setProfileLoading(false);
+      }
+    }
+    void checkProfile();
+    return () => { mounted = false; };
+  }, []);
+
+  const completeness = useMemo(() => calculateProfileCompleteness(profile), [profile]);
+  const isProfileComplete = completeness.percentage === 100;
+
   const load = useCallback(() => {
     setRefreshing(true);
     setError(null);
@@ -357,11 +394,40 @@ export default function EnquiryListPage() {
             to="/customer/enquiries/new"
             className="inline-flex items-center gap-1.5 px-4 h-9 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-sm shadow-blue-500/20 no-underline cursor-pointer transition-all"
           >
-            <Plus size={15} />
+            {!profileLoading && !isProfileComplete ? <Lock size={13} className="text-amber-300" /> : <Plus size={15} />}
             <span>New Enquiry</span>
           </Link>
         </div>
       </div>
+
+      {/* ── Profile Incomplete Alert Banner ──────────────────────── */}
+      {!profileLoading && !isProfileComplete && (
+        <div className="p-4 rounded-2xl border border-amber-500/30 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 flex items-center justify-center shrink-0">
+              <ShieldAlert size={18} />
+            </div>
+            <div>
+              <div className="text-xs font-bold text-neutral-900 dark:text-white flex items-center gap-2">
+                <span>Profile Incomplete ({completeness.percentage}%)</span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-700 dark:text-amber-300">
+                  {completeness.pendingItems.length} required detail{completeness.pendingItems.length > 1 ? "s" : ""} pending
+                </span>
+              </div>
+              <p className="text-[11px] text-neutral-600 dark:text-neutral-300 mt-0.5 m-0">
+                Please complete 100% of your customer profile to submit new casting & machining RFQ enquiries.
+              </p>
+            </div>
+          </div>
+          <Link
+            to="/customer/profile"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-xs no-underline cursor-pointer shrink-0 transition-all self-start sm:self-center"
+          >
+            <span>Complete Profile</span>
+            <ArrowRight size={13} />
+          </Link>
+        </div>
+      )}
 
       {/* ── Summary KPI Cards ──────────────────────────────────────── */}
       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">

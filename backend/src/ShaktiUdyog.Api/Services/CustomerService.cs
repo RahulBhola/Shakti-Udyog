@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using ShaktiUdyog.Api.Contracts.Customer;
 using ShaktiUdyog.Domain.Constants;
 using ShaktiUdyog.Domain.Entities;
+using ShaktiUdyog.Domain.Exceptions;
 using ShaktiUdyog.Domain.Interfaces;
 using ShaktiUdyog.Infrastructure.Auditing;
 using ShaktiUdyog.Infrastructure.Data;
@@ -170,6 +171,31 @@ public class CustomerService(
             ?? throw new InvalidOperationException("Authenticated user not found.");
         var companyId = ctx.CompanyIds[0];
         var company = await db.Companies.SingleAsync(c => c.Id == companyId);
+
+        // Verify customer profile completion before allowing enquiry submission
+        var hasAddresses = !string.IsNullOrWhiteSpace(company.AddressLine1)
+            || !string.IsNullOrWhiteSpace(company.City)
+            || !string.IsNullOrWhiteSpace(company.RegisteredAddress)
+            || !string.IsNullOrWhiteSpace(company.DeliveryAddresses)
+            || await db.CompanyAddresses.AnyAsync(a => a.CompanyId == companyId);
+
+        var isProfileComplete = !string.IsNullOrWhiteSpace(user.FullName) && user.FullName.Trim().Length >= 2
+            && !string.IsNullOrWhiteSpace(user.PhoneNumber) && user.PhoneNumber.Trim().Length >= 7
+            && !string.IsNullOrWhiteSpace(company.Name)
+            && hasAddresses;
+
+        if (!isProfileComplete)
+        {
+            var missing = new List<string>();
+            if (string.IsNullOrWhiteSpace(user.FullName) || user.FullName.Trim().Length < 2) missing.Add("Full Name");
+            if (string.IsNullOrWhiteSpace(user.PhoneNumber) || user.PhoneNumber.Trim().Length < 7) missing.Add("Phone Number");
+            if (string.IsNullOrWhiteSpace(company.Name)) missing.Add("Company Name");
+            if (!hasAddresses) missing.Add("Delivery / Facility Address");
+
+            throw new DomainValidationException(
+                "ProfileIncomplete",
+                $"Please complete your profile before submitting an enquiry. Missing required details: {string.Join(", ", missing)}.");
+        }
 
         var now = DateTimeOffset.UtcNow;
         var enquiry = new Enquiry
