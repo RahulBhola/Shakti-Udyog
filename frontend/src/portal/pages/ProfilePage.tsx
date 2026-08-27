@@ -777,7 +777,7 @@ export default function ProfilePage() {
 
             {/* Latest Profile Updated Card */}
             <div style={{ ...cardStyle, padding: "10px 16px", display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{ width: 32, height: 32, borderRadius: 8, background: colors.primaryLight, display: "flex", alignItems: "center", justifyContent: "center", color: colors.primary }}>
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(34, 197, 94, 0.12)", display: "flex", alignItems: "center", justifyContent: "center", color: "#22C55E" }}>
                 <IconCheck />
               </div>
               <div>
