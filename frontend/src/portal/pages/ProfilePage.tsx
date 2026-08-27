@@ -292,6 +292,10 @@ export default function ProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const PERSONAL_DRAFT_KEY = "su_customer_personal_draft";
+  const COMPANY_DRAFT_KEY = "su_customer_company_draft";
+
+  // Avatar ref & toast
   const avatarFileInputRef = useRef<HTMLInputElement>(null);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
@@ -305,6 +309,59 @@ export default function ProfilePage() {
     setProfileUpdatedAt(now);
     localStorage.setItem("su_customer_profile_updated_at", now);
   };
+
+  // Unsaved changes change detection
+  const hasPersonalChanges = Boolean(
+    profile && (
+      personalFullName.trim() !== (profile.fullName || user?.fullName || "").trim() ||
+      personalPhone.trim() !== (profile.phoneNumber || "").trim() ||
+      personalDeliveryAddresses.trim() !== (profile.company?.deliveryAddresses || "").trim()
+    )
+  );
+
+  const hasCompanyChanges = Boolean(
+    company && Object.keys(companyForm).some(k => {
+      const formVal = ((companyForm as Record<string, string>)[k] || "").trim();
+      const serverVal = (((company as unknown as Record<string, string>)[k] || (k === "country" ? "India" : k === "preferredCurrency" ? "INR" : k === "preferredCommunication" ? "Email" : k === "preferredLanguage" ? "English" : "")) || "").trim();
+      return formVal !== serverVal;
+    })
+  );
+
+  // Auto-save drafts to localStorage
+  useEffect(() => {
+    if (loading || !profile) return;
+    if (hasPersonalChanges) {
+      localStorage.setItem(PERSONAL_DRAFT_KEY, JSON.stringify({
+        fullName: personalFullName,
+        phoneNumber: personalPhone,
+        countryCode: personalCountryCode,
+        preferredCommunication: personalPreferredComm,
+        deliveryAddresses: personalDeliveryAddresses,
+      }));
+    } else {
+      localStorage.removeItem(PERSONAL_DRAFT_KEY);
+    }
+  }, [hasPersonalChanges, personalFullName, personalPhone, personalCountryCode, personalPreferredComm, personalDeliveryAddresses, loading, profile]);
+
+  useEffect(() => {
+    if (loading || !company) return;
+    if (hasCompanyChanges) {
+      localStorage.setItem(COMPANY_DRAFT_KEY, JSON.stringify(companyForm));
+    } else {
+      localStorage.removeItem(COMPANY_DRAFT_KEY);
+    }
+  }, [hasCompanyChanges, companyForm, loading, company]);
+
+  // Warn user if reloading with unsaved changes
+  useEffect(() => {
+    if (!hasPersonalChanges && !hasCompanyChanges) return;
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [hasPersonalChanges, hasCompanyChanges]);
 
   // Effective avatar URL (fallback to user session if profile endpoint has not populated it yet)
   const effectiveAvatarUrl =
@@ -326,12 +383,31 @@ export default function ProfilePage() {
         customerApi.companyDocuments().catch<CompanyDocument[]>(() => []),
       ]);
       setProfile(p);
-      setPersonalFullName(p.fullName || user?.fullName || "");
-      setPersonalPhone(p.phoneNumber || "");
-      setPersonalDeliveryAddresses(p.company?.deliveryAddresses || "");
+
+      // Restore personal form (draft or server)
+      const savedPersonal = localStorage.getItem(PERSONAL_DRAFT_KEY);
+      if (savedPersonal) {
+        try {
+          const draft = JSON.parse(savedPersonal);
+          setPersonalFullName(draft.fullName ?? (p.fullName || user?.fullName || ""));
+          setPersonalPhone(draft.phoneNumber ?? (p.phoneNumber || ""));
+          setPersonalCountryCode(draft.countryCode ?? "+91");
+          setPersonalPreferredComm(draft.preferredCommunication ?? "Email");
+          setPersonalDeliveryAddresses(draft.deliveryAddresses ?? (p.company?.deliveryAddresses || ""));
+        } catch {
+          setPersonalFullName(p.fullName || user?.fullName || "");
+          setPersonalPhone(p.phoneNumber || "");
+          setPersonalDeliveryAddresses(p.company?.deliveryAddresses || "");
+        }
+      } else {
+        setPersonalFullName(p.fullName || user?.fullName || "");
+        setPersonalPhone(p.phoneNumber || "");
+        setPersonalDeliveryAddresses(p.company?.deliveryAddresses || "");
+      }
+
       setCompany(c);
       if (c) {
-        setCompanyForm({
+        const defaultCompanyForm = {
           legalBusinessName: c.legalBusinessName || "",
           businessType: c.businessType || "",
           industry: c.industry || "",
@@ -354,7 +430,19 @@ export default function ProfilePage() {
           preferredPaymentMethod: c.preferredPaymentMethod || "",
           preferredCommunication: c.preferredCommunication || "Email",
           preferredLanguage: c.preferredLanguage || "English",
-        });
+        };
+
+        const savedCompany = localStorage.getItem(COMPANY_DRAFT_KEY);
+        if (savedCompany) {
+          try {
+            const draft = JSON.parse(savedCompany);
+            setCompanyForm({ ...defaultCompanyForm, ...draft });
+          } catch {
+            setCompanyForm(defaultCompanyForm);
+          }
+        } else {
+          setCompanyForm(defaultCompanyForm);
+        }
       }
       setContacts(ct);
       setAddresses(a);
@@ -364,6 +452,16 @@ export default function ProfilePage() {
     } finally {
       setLoading(false);
     }
+  }
+
+  function handleDiscardPersonalDraft() {
+    localStorage.removeItem(PERSONAL_DRAFT_KEY);
+    if (profile) {
+      setPersonalFullName(profile.fullName || user?.fullName || "");
+      setPersonalPhone(profile.phoneNumber || "");
+      setPersonalDeliveryAddresses(profile.company?.deliveryAddresses || "");
+    }
+    showToast("Personal draft discarded.", "success");
   }
 
   useEffect(() => { loadAll(); }, []);
@@ -470,6 +568,7 @@ export default function ProfilePage() {
         phoneNumber: personalPhone.trim() || undefined,
         deliveryAddresses: personalDeliveryAddresses.trim() || undefined,
       });
+      localStorage.removeItem(PERSONAL_DRAFT_KEY);
       showToast("Personal information updated.", "success");
       recordProfileUpdate();
       const p = await customerApi.profile();
@@ -515,6 +614,7 @@ export default function ProfilePage() {
       });
       const c = await customerApi.companyDetail();
       setCompany(c);
+      localStorage.removeItem(COMPANY_DRAFT_KEY);
       showToast("Company information updated.", "success");
       recordProfileUpdate();
     } catch {
@@ -526,6 +626,7 @@ export default function ProfilePage() {
     try {
       const c = await customerApi.companyDetail();
       setCompany(c);
+      localStorage.removeItem(COMPANY_DRAFT_KEY);
       if (c) {
         setCompanyForm({
           legalBusinessName: c.legalBusinessName || "",
@@ -1073,6 +1174,21 @@ export default function ProfilePage() {
                 )}
               </div>
             </div>
+            {hasPersonalChanges && (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "10px 14px", marginBottom: 16, borderRadius: 10, background: "rgba(245, 158, 11, 0.12)", border: "1px solid rgba(245, 158, 11, 0.3)", color: "#D97706" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 600 }}>
+                  <IconAlertCircle />
+                  <span>Unsaved changes in Personal Information (draft auto-preserved across page reloads).</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleDiscardPersonalDraft}
+                  style={{ ...btnSecondary, padding: "4px 10px", fontSize: 11, background: "transparent", color: "inherit", borderColor: "currentColor" }}
+                >
+                  Discard Draft
+                </button>
+              </div>
+            )}
             <form onSubmit={handleSavePersonal} style={{ display: "grid", gap: 16 }}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                 <div>
@@ -1256,7 +1372,29 @@ export default function ProfilePage() {
 
           {/* Company Information Form */}
           <div style={cardStyle}>
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: colors.text, margin: "0 0 20px" }}>Company Information</h2>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 10 }}>
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: colors.text, margin: 0 }}>Company Information</h2>
+              {hasCompanyChanges && (
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 10px", borderRadius: 12, fontSize: 12, fontWeight: 600, background: "rgba(245, 158, 11, 0.12)", color: "#D97706" }}>
+                  <IconAlertCircle /> Draft Auto-Saved
+                </span>
+              )}
+            </div>
+            {hasCompanyChanges && (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "10px 14px", marginBottom: 16, borderRadius: 10, background: "rgba(245, 158, 11, 0.12)", border: "1px solid rgba(245, 158, 11, 0.3)", color: "#D97706" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 600 }}>
+                  <IconAlertCircle />
+                  <span>Unsaved changes in Company Information (draft auto-preserved across page reloads).</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleResetCompany}
+                  style={{ ...btnSecondary, padding: "4px 10px", fontSize: 11, background: "transparent", color: "inherit", borderColor: "currentColor" }}
+                >
+                  Discard Draft
+                </button>
+              </div>
+            )}
             <form onSubmit={handleSaveCompany} style={{ display: "grid", gap: 16 }}>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
                 {renderField({ key: "legalBusinessName", label: "Legal Business Name", type: "text", placeholder: "e.g. Shakti Udyog Pvt Ltd" }, companyForm.legalBusinessName)}
