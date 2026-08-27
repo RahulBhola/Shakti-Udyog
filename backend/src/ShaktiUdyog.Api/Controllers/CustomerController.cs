@@ -130,6 +130,24 @@ public class CustomerController(
         };
     }
 
+    /// <summary>Deletes an enquiry before it is acknowledged by the foundry (Draft or Submitted status only).</summary>
+    [HttpDelete("enquiries/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> DeleteEnquiry(Guid id)
+    {
+        var (ctx, failure) = await RequireContextAsync();
+        if (failure is not null) return failure;
+        var result = await customerService.DeleteEnquiryAsync(ctx!, id, ClientIp);
+        return result switch
+        {
+            null => NotFound(),
+            false => Conflict(new MessageResponse("This enquiry cannot be deleted because it has already been acknowledged or processed by the foundry team.")),
+            true => Ok(new MessageResponse("Enquiry deleted successfully.")),
+        };
+    }
+
     /// <summary>Uploads a drawing/specification to the caller's own Enquiry (multipart).</summary>
     [HttpPost("enquiries/{id:guid}/files")]
     [EnableRateLimiting("public")]

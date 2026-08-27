@@ -30,6 +30,7 @@ public interface ICustomerService
     Task<Guid> CreateEnquiryAsync(CustomerContext ctx, CreateEnquiryRequest request, string? ip);
     Task<EnquiryFileDto?> AttachEnquiryFileAsync(CustomerContext ctx, Guid enquiryId, IFormFile file, string? ip);
     Task<bool?> UpdateDraftEnquiryAsync(CustomerContext ctx, Guid enquiryId, UpdateEnquiryRequest request, string? ip);
+    Task<bool?> DeleteEnquiryAsync(CustomerContext ctx, Guid enquiryId, string? ip);
     Task<bool?> DeleteDraftEnquiryAsync(CustomerContext ctx, Guid enquiryId, string? ip);
     Task<bool?> SubmitDraftEnquiryAsync(CustomerContext ctx, Guid enquiryId, string? ip);
     Task<IReadOnlyList<EnquiryTimelineEntryDto>?> GetEnquiryTimelineAsync(CustomerContext ctx, Guid enquiryId);
@@ -175,7 +176,7 @@ public class CustomerService(
         // Verify customer profile completion before allowing enquiry submission
         var hasAddresses = !string.IsNullOrWhiteSpace(company.AddressLine1)
             || !string.IsNullOrWhiteSpace(company.City)
-            || !string.IsNullOrWhiteSpace(company.RegisteredAddress)
+            || !string.IsNullOrWhiteSpace(company.FactoryAddress)
             || !string.IsNullOrWhiteSpace(company.DeliveryAddresses)
             || await db.CompanyAddresses.AnyAsync(a => a.CompanyId == companyId);
 
@@ -335,33 +336,45 @@ public class CustomerService(
         return true;
     }
 
-    /// <returns>null = not found; false = not in draft state; true = deleted.</returns>
-    public async Task<bool?> DeleteDraftEnquiryAsync(CustomerContext ctx, Guid enquiryId, string? ip)
+    /// <summary>
+    /// Deletes an enquiry before it is acknowledged by the foundry (must be in Draft or Submitted status).
+    /// </summary>
+    /// <returns>null = not found; false = cannot delete (already acknowledged by foundry); true = deleted.</returns>
+    public async Task<bool?> DeleteEnquiryAsync(CustomerContext ctx, Guid enquiryId, string? ip)
     {
         var enquiry = await db.Enquiries.SingleOrDefaultAsync(r =>
             r.Id == enquiryId && r.CompanyId != null && ctx.CompanyIds.Contains(r.CompanyId.Value));
         if (enquiry is null) return null;
-        if (!enquiry.IsDraft || enquiry.Status != EnquiryStatuses.Draft) return false;
+
+        var canDelete = enquiry.IsDraft || enquiry.Status == EnquiryStatuses.Draft || enquiry.Status == EnquiryStatuses.Submitted;
+        if (!canDelete)
+        {
+            return false;
+        }
 
         enquiry.IsDeleted = true;
         enquiry.DeletedAtUtc = DateTimeOffset.UtcNow;
+        var prevStatus = enquiry.Status;
         enquiry.Status = EnquiryStatuses.Cancelled;
 
         db.EnquiryStatusHistories.Add(new EnquiryStatusHistory
         {
             Id = Guid.NewGuid(),
             EnquiryId = enquiry.Id,
-            FromStatus = EnquiryStatuses.Draft,
+            FromStatus = prevStatus,
             ToStatus = EnquiryStatuses.Cancelled,
             ChangedByUserId = ctx.UserId,
             ChangedByRole = "Customer",
-            Note = "Draft cancelled by customer",
+            Note = "Enquiry deleted by customer before foundry acknowledgment",
         });
 
         await db.SaveChangesAsync();
         await audit.WriteAsync("customer.enquiry.deleted", ctx.UserId, "Enquiry", enquiry.Id.ToString(), ip);
         return true;
     }
+
+    public Task<bool?> DeleteDraftEnquiryAsync(CustomerContext ctx, Guid enquiryId, string? ip) =>
+        DeleteEnquiryAsync(ctx, enquiryId, ip);
 
     /// <returns>null = not found; false = not a draft; true = submitted.</returns>
     public async Task<bool?> SubmitDraftEnquiryAsync(CustomerContext ctx, Guid enquiryId, string? ip)

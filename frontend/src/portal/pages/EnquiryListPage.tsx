@@ -25,6 +25,8 @@ import {
   ShieldAlert,
   ArrowRight,
   Lock,
+  AlertCircle,
+  Loader2,
 } from "lucide-react";
 import { tokenStorage } from "../../auth/tokenStorage";
 import { config } from "../../config";
@@ -305,18 +307,129 @@ export default function EnquiryListPage() {
     };
   }, [data]);
 
-  async function cancelDraft(id: string) {
-    if (!confirm("Cancel and delete this draft enquiry? This action cannot be undone.")) return;
+  const [deleteModalEnquiry, setDeleteModalEnquiry] = useState<EnquiryListItem | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  async function handleDeleteEnquiry() {
+    if (!deleteModalEnquiry) return;
+    setDeleting(true);
+    setDeleteError(null);
     try {
-      await customerApi.deleteEnquiry(id);
+      await customerApi.deleteEnquiry(deleteModalEnquiry.id);
+      setDeleteModalEnquiry(null);
       load();
-    } catch {
-      alert("Could not cancel the draft.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to delete enquiry. It may have already been acknowledged by the foundry.";
+      setDeleteError(msg);
+    } finally {
+      setDeleting(false);
     }
   }
 
   return (
     <div className="flex flex-col gap-6">
+      {/* ── Delete Enquiry Confirmation Modal Popup ────────────────── */}
+      {deleteModalEnquiry && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
+          style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0, 0, 0, 0.7)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+          onClick={() => !deleting && setDeleteModalEnquiry(null)}
+        >
+          <div
+            style={{ width: "100%", maxWidth: 440, background: "var(--bg-card)", borderRadius: 16, border: "1px solid var(--border-default)", overflow: "hidden", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)", padding: 20 }}
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+          >
+            {/* Modal Header */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: 14, borderBottom: "1px solid var(--border-default)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(239, 68, 68, 0.12)", color: "rgb(239, 68, 68)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700 }}>
+                  <Trash2 size={18} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)", margin: 0 }}>
+                    Delete Enquiry
+                  </h3>
+                  <span style={{ fontSize: 11, fontFamily: "monospace", color: "var(--text-muted)" }}>
+                    {enquiryNo(deleteModalEnquiry.id)}
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={() => setDeleteModalEnquiry(null)}
+                style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", padding: 4 }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div style={{ paddingTop: 14, paddingBottom: 14, display: "flex", flexDirection: "column", gap: 12 }}>
+              {/* Policy Callout Notice */}
+              <div style={{ padding: 12, borderRadius: 10, background: "rgba(245, 158, 11, 0.1)", border: "1px solid rgba(245, 158, 11, 0.25)", color: "#b45309", fontSize: 12, lineHeight: 1.5, display: "flex", alignItems: "flex-start", gap: 10 }}>
+                <AlertCircle size={16} style={{ color: "#d97706", flexShrink: 0, marginTop: 2 }} />
+                <div>
+                  <strong style={{ display: "block", marginBottom: 2, fontWeight: 700 }}>Foundry Policy Notice</strong>
+                  Enquiries can only be deleted <strong>before they are acknowledged / received</strong> by the foundry engineering team. Once acknowledged, the enquiry enters review and cannot be deleted.
+                </div>
+              </div>
+
+              {/* Enquiry Item Details Card */}
+              <div style={{ padding: 12, borderRadius: 10, background: "var(--bg-surface)", border: "1px solid var(--border-default)", fontSize: 12, display: "flex", flexDirection: "column", gap: 6 }}>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "var(--text-muted)" }}>Part / Requirement:</span>
+                  <span style={{ fontWeight: 700, color: "var(--text-primary)" }}>{deleteModalEnquiry.partName || deleteModalEnquiry.productType}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "var(--text-muted)" }}>Category:</span>
+                  <span style={{ fontWeight: 500, color: "var(--text-primary)" }}>{deleteModalEnquiry.productType}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "var(--text-muted)" }}>Quantity:</span>
+                  <span style={{ fontWeight: 700, fontFamily: "monospace", color: "var(--text-primary)" }}>{deleteModalEnquiry.quantity}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "var(--text-muted)" }}>Current Status:</span>
+                  <span style={{ fontWeight: 600, color: "#2563eb" }}>{deleteModalEnquiry.isDraft ? "Draft" : deleteModalEnquiry.status}</span>
+                </div>
+              </div>
+
+              {deleteError && (
+                <p style={{ fontSize: 12, color: "#ef4444", fontWeight: 600, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
+                  <AlertCircle size={14} />
+                  {deleteError}
+                </p>
+              )}
+            </div>
+
+            {/* Modal Footer Actions */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10, paddingTop: 12, borderTop: "1px solid var(--border-default)" }}>
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={() => setDeleteModalEnquiry(null)}
+                style={{ padding: "8px 16px", borderRadius: 10, fontSize: 12, fontWeight: 600, border: "1px solid var(--border-default)", background: "var(--bg-surface)", color: "var(--text-secondary)", cursor: "pointer" }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={() => void handleDeleteEnquiry()}
+                style={{ padding: "8px 16px", borderRadius: 10, fontSize: 12, fontWeight: 700, background: "#ef4444", color: "#ffffff", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, opacity: deleting ? 0.6 : 1 }}
+              >
+                {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                <span>{deleting ? "Deleting..." : "Yes, Delete Enquiry"}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Lightbox Drawing Modal ──────────────────────────────────── */}
       {previewModalUrl && (
         <div
@@ -665,23 +778,28 @@ export default function EnquiryListPage() {
                           </Link>
 
                           {r.isDraft && r.status === "Draft" && (
-                            <>
-                              <Link
-                                to={`/customer/enquiries/${r.id}/edit`}
-                                className="p-2 rounded-xl border border-neutral-200/80 dark:border-white/10 bg-white dark:bg-[#121520] text-neutral-600 dark:text-neutral-300 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-500/30 transition-all inline-flex items-center justify-center"
-                                title="Edit Draft"
-                              >
-                                <FileEdit size={14} />
-                              </Link>
-                              <button
-                                type="button"
-                                onClick={() => void cancelDraft(r.id)}
-                                className="p-2 rounded-xl border border-rose-200/80 dark:border-rose-500/20 bg-white dark:bg-[#121520] text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all inline-flex items-center justify-center cursor-pointer"
-                                title="Delete Draft"
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            </>
+                            <Link
+                              to={`/customer/enquiries/${r.id}/edit`}
+                              className="p-2 rounded-xl border border-neutral-200/80 dark:border-white/10 bg-white dark:bg-[#121520] text-neutral-600 dark:text-neutral-300 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-500/30 transition-all inline-flex items-center justify-center"
+                              title="Edit Draft"
+                            >
+                              <FileEdit size={14} />
+                            </Link>
+                          )}
+
+                          {/* Allow deletion before acknowledged by foundry (Draft or Submitted status) */}
+                          {(r.isDraft || r.status === "Draft" || r.status === "Submitted") && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setDeleteError(null);
+                                setDeleteModalEnquiry(r);
+                              }}
+                              className="p-2 rounded-xl border border-rose-200/80 dark:border-rose-500/20 bg-white dark:bg-[#121520] text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all inline-flex items-center justify-center cursor-pointer"
+                              title="Delete Enquiry (Available before foundry acknowledgment)"
+                            >
+                              <Trash2 size={14} />
+                            </button>
                           )}
                         </div>
                       </td>
