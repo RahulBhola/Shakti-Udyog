@@ -276,7 +276,6 @@ export default function ProfilePage() {
   const [personalPhone, setPersonalPhone] = useState("");
   const [personalCountryCode, setPersonalCountryCode] = useState("+91");
   const [personalPreferredComm, setPersonalPreferredComm] = useState("Email");
-  const [personalDeliveryAddresses, setPersonalDeliveryAddresses] = useState("");
 
   // Company form controlled state (preserves changes across tab navigation)
   const [companyForm, setCompanyForm] = useState({
@@ -354,8 +353,7 @@ export default function ProfilePage() {
   const hasPersonalChanges = Boolean(
     profile && (
       personalFullName.trim() !== (profile.fullName || user?.fullName || "").trim() ||
-      personalPhone.trim() !== (profile.phoneNumber || "").trim() ||
-      personalDeliveryAddresses.trim() !== (profile.company?.deliveryAddresses || "").trim()
+      personalPhone.trim() !== (profile.phoneNumber || "").trim()
     )
   );
 
@@ -382,12 +380,11 @@ export default function ProfilePage() {
         phoneNumber: personalPhone,
         countryCode: personalCountryCode,
         preferredCommunication: personalPreferredComm,
-        deliveryAddresses: personalDeliveryAddresses,
       }));
     } else {
       localStorage.removeItem(PERSONAL_DRAFT_KEY);
     }
-  }, [hasPersonalChanges, personalFullName, personalPhone, personalCountryCode, personalPreferredComm, personalDeliveryAddresses, loading, profile]);
+  }, [hasPersonalChanges, personalFullName, personalPhone, personalCountryCode, personalPreferredComm, loading, profile]);
 
   useEffect(() => {
     if (loading || !company) return;
@@ -439,16 +436,13 @@ export default function ProfilePage() {
           setPersonalPhone(draft.phoneNumber ?? (p.phoneNumber || ""));
           setPersonalCountryCode(draft.countryCode ?? "+91");
           setPersonalPreferredComm(draft.preferredCommunication ?? "Email");
-          setPersonalDeliveryAddresses(draft.deliveryAddresses ?? (p.company?.deliveryAddresses || ""));
         } catch {
           setPersonalFullName(p.fullName || user?.fullName || "");
           setPersonalPhone(p.phoneNumber || "");
-          setPersonalDeliveryAddresses(p.company?.deliveryAddresses || "");
         }
       } else {
         setPersonalFullName(p.fullName || user?.fullName || "");
         setPersonalPhone(p.phoneNumber || "");
-        setPersonalDeliveryAddresses(p.company?.deliveryAddresses || "");
       }
 
       setCompany(c);
@@ -507,7 +501,6 @@ export default function ProfilePage() {
     if (profile) {
       setPersonalFullName(profile.fullName || user?.fullName || "");
       setPersonalPhone(profile.phoneNumber || "");
-      setPersonalDeliveryAddresses(profile.company?.deliveryAddresses || "");
     }
     showToast("Personal draft discarded.", "success");
   }
@@ -614,7 +607,6 @@ export default function ProfilePage() {
       await customerApi.updateProfile({
         fullName: personalFullName.trim() || undefined,
         phoneNumber: personalPhone.trim() || undefined,
-        deliveryAddresses: personalDeliveryAddresses.trim() || undefined,
       });
       localStorage.removeItem(PERSONAL_DRAFT_KEY);
       showToast("Personal information updated.", "success");
@@ -623,7 +615,6 @@ export default function ProfilePage() {
       setProfile(p);
       setPersonalFullName(p.fullName || user?.fullName || "");
       setPersonalPhone(p.phoneNumber || "");
-      setPersonalDeliveryAddresses(p.company?.deliveryAddresses || "");
       await refreshUser();
     } catch {
       showToast("Could not update personal information.", "error");
@@ -1411,16 +1402,6 @@ export default function ProfilePage() {
                   <option value="Phone">Phone</option>
                   <option value="WhatsApp">WhatsApp</option>
                 </select>
-              </div>
-              <div>
-                <label style={labelStyle}>Delivery Addresses</label>
-                <textarea
-                  name="deliveryAddresses"
-                  value={personalDeliveryAddresses}
-                  onChange={e => setPersonalDeliveryAddresses(e.target.value)}
-                  placeholder="One address per line"
-                  style={{ ...inputStyle, minHeight: 80, resize: "vertical" as const }}
-                />
               </div>
               <div style={{ display: "flex", gap: 10, paddingTop: 8 }}>
                 <button type="submit" disabled={busy} style={{ ...btnPrimary, opacity: busy ? 0.6 : 1 }}>{busy ? "Saving..." : "Save Personal Information"}</button>
