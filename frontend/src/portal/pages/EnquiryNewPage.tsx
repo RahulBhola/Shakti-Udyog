@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { customerApi, type Profile } from "../../api/customerApi";
+import { customerApi, type Profile, type CompanyDetail, type CompanyAddress } from "../../api/customerApi";
 import { enquiryProductTypes } from "../../api/publicApi";
 import { calculateProfileCompleteness } from "../components/ProfileCompletion";
 import {
@@ -13,7 +13,14 @@ import {
   ShieldAlert,
   ArrowRight,
   Lock,
+  Building2,
+  MapPin,
+  Sparkles,
+  Check,
+  User,
+  Phone,
 } from "lucide-react";
+import { cn } from "../../lib/utils";
 
 /* ── Constants ──────────────────────────────────────────────── */
 
@@ -71,38 +78,12 @@ export default function EnquiryNewPage() {
   const [dragOver, setDragOver] = useState(false);
   const [dragFileIndex, setDragFileIndex] = useState<number | null>(null);
 
-  // ── Profile Gate State ─────────────────────────────────────
+  // ── Profile & Company State ────────────────────────────────
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [company, setCompany] = useState<CompanyDetail | null>(null);
+  const [savedAddresses, setSavedAddresses] = useState<CompanyAddress[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string>("default");
   const [profileLoading, setProfileLoading] = useState(true);
-
-  useEffect(() => {
-    let mounted = true;
-    async function loadCustomerProfile() {
-      try {
-        const [p, addrs] = await Promise.allSettled([
-          customerApi.profile(),
-          customerApi.addresses(),
-        ]);
-        if (!mounted) return;
-        if (p.status === "fulfilled" && p.value) {
-          const prof = p.value;
-          if (addrs.status === "fulfilled" && Array.isArray(addrs.value)) {
-            (prof as unknown as Record<string, unknown>).addresses = addrs.value;
-          }
-          setProfile(prof);
-        }
-      } catch (e) {
-        console.error("Failed to fetch customer profile", e);
-      } finally {
-        if (mounted) setProfileLoading(false);
-      }
-    }
-    void loadCustomerProfile();
-    return () => { mounted = false; };
-  }, []);
-
-  const completeness = useMemo(() => calculateProfileCompleteness(profile), [profile]);
-  const isProfileComplete = completeness.percentage === 100;
 
   // ── Form fields ────────────────────────────────────────────
   const [productType, setProductType] = useState("");
@@ -123,6 +104,96 @@ export default function EnquiryNewPage() {
   const [deliveryTerms, setDeliveryTerms] = useState("");
   const [additionalReqs, setAdditionalReqs] = useState<string[]>([]);
   const [remarks, setRemarks] = useState("");
+
+  useEffect(() => {
+    let mounted = true;
+    async function loadCustomerProfile() {
+      try {
+        const [pRes, cRes, addrsRes] = await Promise.allSettled([
+          customerApi.profile(),
+          customerApi.companyDetail(),
+          customerApi.addresses(),
+        ]);
+        if (!mounted) return;
+        let prof: Profile | null = null;
+        let comp: CompanyDetail | null = null;
+        let addrs: CompanyAddress[] = [];
+
+        if (pRes.status === "fulfilled" && pRes.value) {
+          prof = pRes.value;
+        }
+        if (cRes.status === "fulfilled" && cRes.value) {
+          comp = cRes.value;
+          setCompany(comp);
+        }
+        if (addrsRes.status === "fulfilled" && Array.isArray(addrsRes.value)) {
+          addrs = addrsRes.value;
+          setSavedAddresses(addrs);
+        }
+        if (prof) {
+          (prof as unknown as Record<string, unknown>).addresses = addrs;
+          setProfile(prof);
+        }
+
+        // ── Auto-populate fields from Customer Profile & Company ──────
+        // 1. Delivery Location
+        const primaryAddr = addrs.find((a) => a.isPrimary) || addrs[0];
+        let autoLoc = "";
+        if (primaryAddr) {
+          autoLoc = [primaryAddr.address, primaryAddr.city, primaryAddr.state, primaryAddr.pinCode].filter(Boolean).join(", ");
+          setSelectedAddressId(primaryAddr.id);
+        } else if (comp?.factoryAddress) {
+          autoLoc = [comp.factoryAddress, comp.city, comp.state, comp.pinCode].filter(Boolean).join(", ");
+        } else if (comp?.registeredAddress || comp?.city) {
+          autoLoc = [comp.registeredAddress, comp.city, comp.state, comp.pinCode].filter(Boolean).join(", ");
+        } else if (prof?.company?.deliveryAddresses || prof?.company?.addressLine1) {
+          autoLoc = [prof.company.addressLine1, prof.company.city, prof.company.state, prof.company.postalCode].filter(Boolean).join(", ");
+        }
+        if (autoLoc) {
+          setDeliveryLocation((prev) => prev || autoLoc);
+        }
+
+        // 2. Industry
+        const rawIndustry = comp?.industry || "";
+        if (rawIndustry) {
+          const match = industries.find((i) => i.toLowerCase() === rawIndustry.toLowerCase());
+          if (match) {
+            setIndustry((prev) => prev || match);
+          } else {
+            setIndustry((prev) => prev || "Other");
+          }
+        }
+
+        // 3. Preferred Delivery Terms
+        setDeliveryTerms((prev) => prev || "Door Delivery");
+
+        // 4. Default Expected Delivery Date (30 days from now)
+        const d = new Date();
+        d.setDate(d.getDate() + 30);
+        const dateStr = d.toISOString().split("T")[0];
+        setDeliveryDate((prev) => prev || dateStr);
+      } catch (e) {
+        console.error("Failed to fetch customer profile", e);
+      } finally {
+        if (mounted) setProfileLoading(false);
+      }
+    }
+    void loadCustomerProfile();
+    return () => { mounted = false; };
+  }, []);
+
+  const completeness = useMemo(() => calculateProfileCompleteness(profile), [profile]);
+  const isProfileComplete = completeness.percentage === 100;
+
+  function handleSelectSavedAddress(addr: CompanyAddress | "custom") {
+    if (addr === "custom") {
+      setSelectedAddressId("custom");
+      return;
+    }
+    setSelectedAddressId(addr.id);
+    const loc = [addr.address, addr.city, addr.state, addr.pinCode].filter(Boolean).join(", ");
+    setDeliveryLocation(loc);
+  }
 
   // ── File handlers ──────────────────────────────────────────
   function handleFiles(list: FileList | null) {
@@ -330,6 +401,41 @@ export default function EnquiryNewPage() {
         {/* ══ LEFT COLUMN ══ */}
         <div className="flex-1 min-w-0 space-y-5">
 
+          {/* ── Auto-fetched Enterprise Requester Card ──────────────── */}
+          <div className="rounded-xl border border-blue-500/20 bg-gradient-to-br from-blue-500/[0.06] via-white dark:via-[#0f121a] to-white dark:to-[#0f121a] p-4 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[var(--border-default)]">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold shrink-0">
+                  <Building2 size={16} />
+                </div>
+                <div>
+                  <h4 className="text-[13px] font-bold text-[var(--text-primary)] m-0 flex items-center gap-2">
+                    <span>{company?.legalBusinessName || company?.name || profile?.company?.name || "Enterprise Requester"}</span>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                      <Check size={10} /> Auto-Fetched
+                    </span>
+                  </h4>
+                  <p className="text-[11px] text-[var(--text-muted)] m-0 mt-0.5">
+                    GSTIN: {company?.gstNumber || profile?.company?.gstNumber || "Not provided"} • {company?.city ? `${company.city}, ${company.state || ""}` : "Registered Entity"}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 text-[11px] text-[var(--text-secondary)]">
+                <span className="flex items-center gap-1"><User size={12} className="text-[var(--color-primary)]" /> {profile?.fullName || "Representative"}</span>
+                <span className="flex items-center gap-1"><Phone size={12} className="text-[var(--color-primary)]" /> {profile?.phoneNumber || company?.companyPhone || "—"}</span>
+              </div>
+            </div>
+            <div className="pt-2.5 flex items-center justify-between text-[11px] text-[var(--text-muted)]">
+              <span className="flex items-center gap-1.5">
+                <Sparkles size={13} className="text-amber-500" />
+                Industry, primary delivery hub, and corporate terms have been auto-populated below from your profile.
+              </span>
+              <Link to="/customer/profile" className="text-blue-600 dark:text-blue-400 hover:underline font-medium text-[11px] shrink-0">
+                Manage Profile →
+              </Link>
+            </div>
+          </div>
+
           {/* SECTION 1: Basic Information */}
           <Section number={1} title="Basic Information">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -348,7 +454,7 @@ export default function EnquiryNewPage() {
                 <input type="text" value={partNumber} onChange={(e) => setPartNumber(e.target.value)} placeholder="e.g. MH-1002"
                   className="w-full h-10 px-3 rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--color-primary)]" />
               </Field>
-              <Field label="Industry" hint="Optional">
+              <Field label="Industry" hint={company?.industry ? "Auto-selected from your company profile" : "Optional"}>
                 <select value={industry} onChange={(e) => setIndustry(e.target.value)}
                   className="w-full h-10 px-3 rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] text-[13px] text-[var(--text-primary)] outline-none focus:border-[var(--color-primary)]">
                   <option value="">Select industry</option>
@@ -427,16 +533,58 @@ export default function EnquiryNewPage() {
 
           {/* SECTION 4: Delivery Details */}
           <Section number={4} title="Delivery Details">
+            {savedAddresses.length > 0 && (
+              <div className="mb-4 p-3 rounded-lg bg-[var(--bg-surface-hover)] border border-[var(--border-default)]">
+                <label className="text-[11px] font-bold text-[var(--text-secondary)] uppercase tracking-wider block mb-2">
+                  Select from Saved Addresses
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {savedAddresses.map((addr) => {
+                    const isSelected = selectedAddressId === addr.id;
+                    return (
+                      <button
+                        key={addr.id}
+                        type="button"
+                        onClick={() => handleSelectSavedAddress(addr)}
+                        className={cn(
+                          "px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1.5",
+                          isSelected
+                            ? "bg-blue-600 text-white border-blue-600 shadow-xs"
+                            : "bg-[var(--bg-card)] text-[var(--text-primary)] border-[var(--border-default)] hover:border-blue-400"
+                        )}
+                      >
+                        <MapPin size={12} />
+                        <span>{addr.addressType} {addr.city ? `(${addr.city})` : ""}</span>
+                        {addr.isPrimary && <span className={cn("text-[10px] px-1.5 py-0.2 rounded font-bold", isSelected ? "bg-white/20 text-white" : "bg-emerald-500/15 text-emerald-600")}>Primary</span>}
+                      </button>
+                    );
+                  })}
+                  <button
+                    type="button"
+                    onClick={() => handleSelectSavedAddress("custom")}
+                    className={cn(
+                      "px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer",
+                      selectedAddressId === "custom"
+                        ? "bg-blue-600 text-white border-blue-600 shadow-xs"
+                        : "bg-[var(--bg-card)] text-[var(--text-secondary)] border-[var(--border-default)] hover:border-blue-400"
+                    )}
+                  >
+                    Custom Location
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <Field label="Delivery Location" hint="Optional">
-                <input type="text" value={deliveryLocation} onChange={(e) => setDeliveryLocation(e.target.value)} placeholder="City, State"
+              <Field label="Delivery Location" hint="Auto-filled from your delivery profile; editable as needed">
+                <input type="text" value={deliveryLocation} onChange={(e) => { setDeliveryLocation(e.target.value); setSelectedAddressId("custom"); }} placeholder="City, State, Full Address"
                   className="w-full h-10 px-3 rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--color-primary)]" />
               </Field>
-              <Field label="Expected Delivery Date" hint="Optional">
+              <Field label="Expected Delivery Date" hint="Auto-set to standard 30-day manufacturing lead time">
                 <input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)}
                   className="w-full h-10 px-3 rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] text-[13px] text-[var(--text-primary)] outline-none focus:border-[var(--color-primary)]" />
               </Field>
-              <Field label="Preferred Delivery Terms" hint="Optional">
+              <Field label="Preferred Delivery Terms" hint="Auto-selected based on standard terms">
                 <select value={deliveryTerms} onChange={(e) => setDeliveryTerms(e.target.value)}
                   className="w-full h-10 px-3 rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] text-[13px] text-[var(--text-primary)] outline-none focus:border-[var(--color-primary)]">
                   <option value="">Select terms</option>
