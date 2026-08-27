@@ -186,6 +186,15 @@ interface FieldDef {
   colSpan?: 1 | 2 | 3;
 }
 
+const standardBusinessTypes = [
+  "Private Limited",
+  "Public Limited",
+  "Partnership",
+  "Proprietorship",
+  "LLP",
+  "Government",
+];
+
 const businessTypeOptions = [
   { value: "", label: "Select..." },
   { value: "Private Limited", label: "Private Limited" },
@@ -196,6 +205,13 @@ const businessTypeOptions = [
   { value: "Government", label: "Government" },
   { value: "Other", label: "Other" },
 ];
+
+function parseBusinessType(bt: string | null | undefined): { businessType: string; customBusinessType: string } {
+  const raw = (bt || "").trim();
+  if (!raw) return { businessType: "", customBusinessType: "" };
+  if (standardBusinessTypes.includes(raw)) return { businessType: raw, customBusinessType: "" };
+  return { businessType: "Other", customBusinessType: raw === "Other" ? "" : raw };
+}
 
 const currencyOptions = [
   { value: "", label: "Select..." },
@@ -265,6 +281,7 @@ export default function ProfilePage() {
   const [companyForm, setCompanyForm] = useState({
     legalBusinessName: "",
     businessType: "",
+    customBusinessType: "",
     industry: "",
     website: "",
     companyEmail: "",
@@ -321,6 +338,12 @@ export default function ProfilePage() {
 
   const hasCompanyChanges = Boolean(
     company && Object.keys(companyForm).some(k => {
+      if (k === "customBusinessType") return false;
+      if (k === "businessType") {
+        const effectiveFormVal = (companyForm.businessType === "Other" ? (companyForm.customBusinessType.trim() || "Other") : companyForm.businessType.trim());
+        const serverVal = (company.businessType || "").trim();
+        return effectiveFormVal !== serverVal;
+      }
       const formVal = ((companyForm as Record<string, string>)[k] || "").trim();
       const serverVal = (((company as unknown as Record<string, string>)[k] || (k === "country" ? "India" : k === "preferredCurrency" ? "INR" : k === "preferredCommunication" ? "Email" : k === "preferredLanguage" ? "English" : "")) || "").trim();
       return formVal !== serverVal;
@@ -407,9 +430,11 @@ export default function ProfilePage() {
 
       setCompany(c);
       if (c) {
+        const btParsed = parseBusinessType(c.businessType);
         const defaultCompanyForm = {
           legalBusinessName: c.legalBusinessName || "",
-          businessType: c.businessType || "",
+          businessType: btParsed.businessType,
+          customBusinessType: btParsed.customBusinessType,
           industry: c.industry || "",
           website: c.website || "",
           companyEmail: c.companyEmail || "",
@@ -588,9 +613,14 @@ export default function ProfilePage() {
     e.preventDefault();
     setBusy(true);
     try {
+      const effectiveBusinessType =
+        companyForm.businessType === "Other"
+          ? (companyForm.customBusinessType.trim() || "Other")
+          : (companyForm.businessType.trim() || undefined);
+
       await customerApi.updateCompany({
         legalBusinessName: companyForm.legalBusinessName.trim() || undefined,
-        businessType: companyForm.businessType || undefined,
+        businessType: effectiveBusinessType,
         industry: companyForm.industry.trim() || undefined,
         website: companyForm.website.trim() || undefined,
         companyEmail: companyForm.companyEmail.trim() || undefined,
@@ -628,9 +658,11 @@ export default function ProfilePage() {
       setCompany(c);
       localStorage.removeItem(COMPANY_DRAFT_KEY);
       if (c) {
+        const btParsed = parseBusinessType(c.businessType);
         setCompanyForm({
           legalBusinessName: c.legalBusinessName || "",
-          businessType: c.businessType || "",
+          businessType: btParsed.businessType,
+          customBusinessType: btParsed.customBusinessType,
           industry: c.industry || "",
           website: c.website || "",
           companyEmail: c.companyEmail || "",
@@ -1396,9 +1428,38 @@ export default function ProfilePage() {
               </div>
             )}
             <form onSubmit={handleSaveCompany} style={{ display: "grid", gap: 16 }}>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+              <div style={{ display: "grid", gridTemplateColumns: companyForm.businessType === "Other" ? "repeat(4, 1fr)" : "repeat(3, 1fr)", gap: 16 }}>
                 {renderField({ key: "legalBusinessName", label: "Legal Business Name", type: "text", placeholder: "e.g. Shakti Udyog Pvt Ltd" }, companyForm.legalBusinessName)}
-                {renderField({ key: "businessType", label: "Business Type", type: "select", required: true, options: businessTypeOptions }, companyForm.businessType)}
+                {renderField(
+                  { key: "businessType", label: "Business Type", type: "select", required: true, options: businessTypeOptions },
+                  companyForm.businessType,
+                  (val) => {
+                    setCompanyForm(p => ({
+                      ...p,
+                      businessType: val,
+                      customBusinessType: val === "Other" ? p.customBusinessType : "",
+                    }));
+                  }
+                )}
+                {companyForm.businessType === "Other" && (
+                  <div>
+                    <label htmlFor="field-customBusinessType" style={labelStyle}>
+                      Specify Business Type <span style={{ color: colors.danger, marginLeft: 2 }}>*</span>
+                    </label>
+                    <input
+                      id="field-customBusinessType"
+                      name="customBusinessType"
+                      type="text"
+                      value={companyForm.customBusinessType}
+                      onChange={e => setCompanyForm(p => ({ ...p, customBusinessType: e.target.value }))}
+                      placeholder="e.g. Joint Venture, Society, Trust"
+                      required
+                      style={inputStyle}
+                      onFocus={e => { e.target.style.borderColor = colors.primary; }}
+                      onBlur={e => { e.target.style.borderColor = colors.border; }}
+                    />
+                  </div>
+                )}
                 {renderField({ key: "industry", label: "Industry", type: "text", placeholder: "e.g. Iron Casting" }, companyForm.industry)}
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
