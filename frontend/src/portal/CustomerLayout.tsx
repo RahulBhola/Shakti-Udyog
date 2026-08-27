@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { User, LogOut, ExternalLink, Sun, Moon, HelpCircle } from "lucide-react";
 import { useAuth } from "../auth/AuthContext";
 import { useTheme } from "../auth/ThemeContext";
+import { customerApi } from "../api/customerApi";
 import { PortalNotificationBell } from "../components/notifications/PortalNotificationBell";
 import { Sidebar } from "../components/sidebar/Sidebar";
 import type { NavSection } from "../components/sidebar/Sidebar";
@@ -131,6 +132,7 @@ function CustomerProfileAvatar({ initials, displayName }: { initials: string; di
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [open, setOpen] = useState(false);
+  const [compositeProfile, setCompositeProfile] = useState<Record<string, unknown> | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
   const handleLogout = useCallback(async () => {
@@ -145,6 +147,66 @@ function CustomerProfileAvatar({ initials, displayName }: { initials: string; di
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
+
+  const loadProfileCompleteness = useCallback(async () => {
+    try {
+      const [pRes, cRes, aRes] = await Promise.allSettled([
+        customerApi.profile(),
+        customerApi.companyDetail(),
+        customerApi.addresses(),
+      ]);
+
+      let prof: any = null;
+      let comp: any = null;
+      let addrs: any[] = [];
+
+      if (pRes.status === "fulfilled" && pRes.value) prof = pRes.value;
+      if (cRes.status === "fulfilled" && cRes.value) comp = cRes.value;
+      if (aRes.status === "fulfilled" && Array.isArray(aRes.value)) addrs = aRes.value;
+
+      const compName = (comp?.legalBusinessName || comp?.name || prof?.company?.name || "").trim();
+      const regAddr = (comp?.registeredAddress || prof?.company?.addressLine1 || comp?.addressLine1 || "").trim();
+      const facAddr = (comp?.factoryAddress || "").trim();
+      const city = (comp?.city || prof?.company?.city || "").trim();
+      const deliveryAddrs = (prof?.company?.deliveryAddresses || comp?.deliveryAddresses || "").trim();
+
+      const composite = {
+        fullName: (prof?.fullName || user?.fullName || "").trim(),
+        email: (prof?.email || user?.email || "").trim(),
+        phoneNumber: (prof?.phoneNumber || "").trim(),
+        designation: "Customer Representative",
+        companyName: compName,
+        company: {
+          name: compName,
+          legalBusinessName: compName,
+          registeredAddress: regAddr,
+          factoryAddress: facAddr,
+          addressLine1: regAddr,
+          city: city,
+          deliveryAddresses: deliveryAddrs,
+        },
+        addresses: addrs,
+        emailConfirmed: prof?.emailConfirmed ?? true,
+        roles: user?.roles || ["Customer"],
+      };
+
+      setCompositeProfile(composite);
+    } catch {
+      // fallback to basic user
+    }
+  }, [user]);
+
+  useEffect(() => {
+    void loadProfileCompleteness();
+    window.addEventListener("profile-updated", loadProfileCompleteness);
+    return () => window.removeEventListener("profile-updated", loadProfileCompleteness);
+  }, [loadProfileCompleteness]);
+
+  useEffect(() => {
+    if (open) {
+      void loadProfileCompleteness();
+    }
+  }, [open, loadProfileCompleteness]);
 
   return (
     <div ref={ref} className="relative">
@@ -184,7 +246,7 @@ function CustomerProfileAvatar({ initials, displayName }: { initials: string; di
               <div className="mt-2.5 pt-2 border-t border-[var(--border-default)]">
                 <Link to="/customer/profile" onClick={() => setOpen(false)} className="block no-underline hover:no-underline">
                   <ProfileProgressBar
-                    percentage={calculateProfileCompleteness(user).percentage}
+                    percentage={calculateProfileCompleteness(compositeProfile || user).percentage}
                     size="sm"
                     showLabel
                   />

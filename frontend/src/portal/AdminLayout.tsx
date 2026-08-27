@@ -3,6 +3,8 @@ import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { User, Settings, LogOut, ExternalLink, Sun, Moon } from "lucide-react";
 import { useAuth } from "../auth/AuthContext";
 import { useTheme } from "../auth/ThemeContext";
+import { apiGet } from "../api/client";
+import { adminApi } from "../api/adminApi";
 import { Sidebar } from "../components/sidebar/Sidebar";
 import type { NavSection } from "../components/sidebar/Sidebar";
 import { PortalNotificationBell } from "../components/notifications/PortalNotificationBell";
@@ -151,6 +153,7 @@ function ProfileAvatar({ initials, displayName }: { initials: string; displayNam
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [open, setOpen] = useState(false);
+  const [compositeProfile, setCompositeProfile] = useState<Record<string, unknown> | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
   const handleLogout = useCallback(async () => {
@@ -165,6 +168,54 @@ function ProfileAvatar({ initials, displayName }: { initials: string; displayNam
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
+
+  const loadProfileCompleteness = useCallback(async () => {
+    try {
+      const [profileRes, settingsRes] = await Promise.allSettled([
+        apiGet<any>("/api/v1/admin/profile"),
+        adminApi.settings(),
+      ]);
+
+      let prof: any = null;
+      let s: any = null;
+
+      if (profileRes.status === "fulfilled" && profileRes.value) prof = profileRes.value;
+      if (settingsRes.status === "fulfilled" && settingsRes.value) s = settingsRes.value;
+
+      const compName = s?.["company.name"] || prof?.companyName || "Shakti Udyog";
+      const compAddress = s?.["company.factoryAddress"] || s?.["company.registeredAddress"] || "Foundry Cluster, Focal Point Phase V, Ludhiana";
+      const dept = s?.["admin.department"] || "Operations & Plant Administration";
+
+      const composite = {
+        fullName: prof?.fullName || user?.fullName || "",
+        email: prof?.email || user?.email || "",
+        phoneNumber: prof?.phoneNumber || "+91 98765 43210",
+        designation: dept,
+        companyName: compName,
+        company: {
+          name: compName,
+          deliveryAddresses: compAddress,
+        },
+        roles: prof?.roles || user?.roles || ["Admin"],
+      };
+
+      setCompositeProfile(composite);
+    } catch {
+      // fallback
+    }
+  }, [user]);
+
+  useEffect(() => {
+    void loadProfileCompleteness();
+    window.addEventListener("profile-updated", loadProfileCompleteness);
+    return () => window.removeEventListener("profile-updated", loadProfileCompleteness);
+  }, [loadProfileCompleteness]);
+
+  useEffect(() => {
+    if (open) {
+      void loadProfileCompleteness();
+    }
+  }, [open, loadProfileCompleteness]);
 
   const roleLabel =
     user?.roles.includes("Admin") ? "Administrator"
@@ -209,7 +260,7 @@ function ProfileAvatar({ initials, displayName }: { initials: string; displayNam
               <div className="mt-2.5 pt-2 border-t border-[var(--border-default)]">
                 <Link to="/admin/profile" onClick={() => setOpen(false)} className="block no-underline hover:no-underline">
                   <ProfileProgressBar
-                    percentage={calculateProfileCompleteness(user).percentage}
+                    percentage={calculateProfileCompleteness(compositeProfile || user).percentage}
                     size="sm"
                     showLabel
                   />

@@ -107,6 +107,9 @@ export default function AdminProfilePage() {
 
   const showToast = (message: string, type: "success" | "error" = "success") => {
     setToast({ message, type });
+    if (type === "success") {
+      window.dispatchEvent(new CustomEvent("profile-updated"));
+    }
     setTimeout(() => setToast(null), 4000);
   };
 

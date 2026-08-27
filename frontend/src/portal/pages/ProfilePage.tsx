@@ -515,6 +515,9 @@ export default function ProfilePage() {
 
   function showToast(message: string, type: "success" | "error") {
     setToast({ message, type });
+    if (type === "success") {
+      window.dispatchEvent(new CustomEvent("profile-updated"));
+    }
   }
 
   // ── Avatar Photo Upload & Removal ─────────────────────────────────────────
