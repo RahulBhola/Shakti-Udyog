@@ -299,6 +299,8 @@ export interface Profile {
   mfaEnabled: boolean;
   accountCreatedAtUtc: string | null;
   avatarUrl?: string | null;
+  emailConfirmed?: boolean;
+  phoneNumberConfirmed?: boolean;
 }
 
 // ---- Profile: Company -------------------------------------------------------
@@ -600,6 +602,10 @@ export const customerApi = {
     apiPatch<{ message: string }>(`${base}/profile`, payload),
   changePassword: (currentPassword: string, newPassword: string) =>
     apiPost<{ message: string }>(`${base}/profile/change-password`, { currentPassword, newPassword }),
+  sendPhoneOtp: (phoneNumber?: string) =>
+    apiPost<{ message: string; demoOtp?: string; expiresAtUtc: string }>(`${base}/profile/send-phone-otp`, { phoneNumber }),
+  verifyPhoneOtp: (phoneNumber: string, otp: string) =>
+    apiPost<{ message: string }>(`${base}/profile/verify-phone-otp`, { phoneNumber, otp }),
 
   // ---- Support Requests -------------------------------------------------------
   supportRequests: () => apiGet<SupportRequestItem[]>(`${base}/support-requests`),

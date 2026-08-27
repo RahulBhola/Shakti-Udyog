@@ -230,7 +230,9 @@ public record ProfileDto(
     string Email, string? FullName, string? PhoneNumber,
     CompanyProfileDto? Company, bool MfaEnabled,
     DateTimeOffset? AccountCreatedAtUtc = null,
-    string? AvatarUrl = null);
+    string? AvatarUrl = null,
+    bool EmailConfirmed = true,
+    bool PhoneNumberConfirmed = false);
 
 public record CompanyProfileDto(
     string Name, string? AddressLine1, string? City, string? State,
@@ -245,6 +247,12 @@ public record UpdateProfileRequest(
 public record ChangePasswordRequest(
     [Required] string CurrentPassword,
     [Required, MinLength(12)] string NewPassword);
+
+public record SendPhoneOtpRequest(string? PhoneNumber);
+
+public record SendPhoneOtpResponse(string Message, string? DemoOtp, DateTimeOffset ExpiresAtUtc);
+
+public record VerifyPhoneOtpRequest([Required] string PhoneNumber, [Required] string Otp);
 
 // ---- Expanded Company -------------------------------------------------------
 

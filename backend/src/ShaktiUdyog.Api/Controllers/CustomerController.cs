@@ -543,6 +543,29 @@ public class CustomerController(
             : BadRequest(new MessageResponse(error ?? "Password change failed."));
     }
 
+    [HttpPost("profile/send-phone-otp")]
+    [EnableRateLimiting("auth")]
+    [ProducesResponseType<SendPhoneOtpResponse>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> SendPhoneOtp(SendPhoneOtpRequest request)
+    {
+        var (ctx, failure) = await RequireContextAsync();
+        if (failure is not null) return failure;
+        var result = await profileService.SendPhoneOtpAsync(ctx!, request, ClientIp);
+        return Ok(result);
+    }
+
+    [HttpPost("profile/verify-phone-otp")]
+    [EnableRateLimiting("auth")]
+    [ProducesResponseType<MessageResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> VerifyPhoneOtp(VerifyPhoneOtpRequest request)
+    {
+        var (ctx, failure) = await RequireContextAsync();
+        if (failure is not null) return failure;
+        var (succeeded, message) = await profileService.VerifyPhoneOtpAsync(ctx!, request, ClientIp);
+        return succeeded ? Ok(new MessageResponse(message)) : BadRequest(new MessageResponse(message));
+    }
+
     // ---- Company ---------------------------------------------------------------
 
     [HttpGet("company")]
