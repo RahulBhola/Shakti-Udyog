@@ -323,7 +323,6 @@ export default function ProfilePage() {
   const [phoneOtpSending, setPhoneOtpSending] = useState(false);
   const [phoneOtpVerifying, setPhoneOtpVerifying] = useState(false);
   const [phoneOtpTimer, setPhoneOtpTimer] = useState(0);
-  const [phoneOtpDemoCode, setPhoneOtpDemoCode] = useState<string | null>(null);
 
   useEffect(() => {
     if (phoneOtpTimer <= 0) return;
@@ -638,16 +637,13 @@ export default function ProfilePage() {
     }
     setShowPhoneVerifyModal(true);
     setPhoneOtp("");
-    setPhoneOtpDemoCode(null);
     setPhoneOtpSending(true);
     try {
       const fullPhone = `${personalCountryCode} ${personalPhone.trim()}`;
       const res = await customerApi.sendPhoneOtp(fullPhone);
-      setPhoneOtpDemoCode(res.demoOtp || "123456");
       setPhoneOtpTimer(60);
       showToast(res.message || `OTP sent to ${fullPhone}`, "success");
     } catch {
-      setPhoneOtpDemoCode("123456");
       setPhoneOtpTimer(60);
       showToast(`Verification code sent to ${personalCountryCode} ${personalPhone.trim()}`, "success");
     } finally {
@@ -660,11 +656,9 @@ export default function ProfilePage() {
     try {
       const fullPhone = `${personalCountryCode} ${personalPhone.trim()}`;
       const res = await customerApi.sendPhoneOtp(fullPhone);
-      setPhoneOtpDemoCode(res.demoOtp || "123456");
       setPhoneOtpTimer(60);
-      showToast("Verification code resent.", "success");
+      showToast(res.message || "Verification code resent.", "success");
     } catch {
-      setPhoneOtpDemoCode("123456");
       setPhoneOtpTimer(60);
       showToast("Verification code resent.", "success");
     } finally {
@@ -2124,19 +2118,6 @@ export default function ProfilePage() {
                   style={{ ...inputStyle, textAlign: "center", letterSpacing: "8px", fontSize: 22, fontWeight: 700, padding: "10px 14px" }}
                 />
               </div>
-
-              {phoneOtpDemoCode && (
-                <div style={{ padding: "8px 12px", borderRadius: 8, background: "rgba(34, 197, 94, 0.1)", border: "1px solid rgba(34, 197, 94, 0.2)", fontSize: 12, color: "#16A34A", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <span>Demo Verification Code: <strong>{phoneOtpDemoCode}</strong></span>
-                  <button
-                    type="button"
-                    onClick={() => setPhoneOtp(phoneOtpDemoCode)}
-                    style={{ background: "none", border: "none", color: "inherit", fontWeight: 700, cursor: "pointer", textDecoration: "underline", fontSize: 11 }}
-                  >
-                    Auto-Fill
-                  </button>
-                </div>
-              )}
 
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12 }}>
                 <span style={{ color: colors.textSecondary }}>

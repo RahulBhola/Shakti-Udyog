@@ -64,9 +64,11 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         // Infrastructure Services
+        services.AddHttpClient();
         services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<IPasswordResetService, PasswordResetService>();
         services.AddScoped<IEmailSender, NoOpEmailSender>();
+        services.AddScoped<ISmsService, SmsService>();
         services.AddScoped<IAuditWriter, AuditWriter>();
         services.AddSingleton<IFileStorageService, LocalFileStorageService>();
 

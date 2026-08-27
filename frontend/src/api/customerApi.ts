@@ -603,7 +603,7 @@ export const customerApi = {
   changePassword: (currentPassword: string, newPassword: string) =>
     apiPost<{ message: string }>(`${base}/profile/change-password`, { currentPassword, newPassword }),
   sendPhoneOtp: (phoneNumber?: string) =>
-    apiPost<{ message: string; demoOtp?: string; expiresAtUtc: string }>(`${base}/profile/send-phone-otp`, { phoneNumber }),
+    apiPost<{ message: string; expiresAtUtc: string }>(`${base}/profile/send-phone-otp`, { phoneNumber }),
   verifyPhoneOtp: (phoneNumber: string, otp: string) =>
     apiPost<{ message: string }>(`${base}/profile/verify-phone-otp`, { phoneNumber, otp }),
 

@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Security.Cryptography;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using ShaktiUdyog.Api.Contracts.Customer;
@@ -6,6 +7,7 @@ using ShaktiUdyog.Domain.Entities;
 using ShaktiUdyog.Infrastructure.Auditing;
 using ShaktiUdyog.Infrastructure.Auth;
 using ShaktiUdyog.Infrastructure.Data;
+using ShaktiUdyog.Infrastructure.Notifications;
 
 namespace ShaktiUdyog.Api.Services;
 
@@ -22,6 +24,7 @@ public class CustomerProfileService(
     AppDbContext db,
     UserManager<ApplicationUser> userManager,
     ITokenService tokenService,
+    ISmsService smsService,
     IAuditWriter audit) : ICustomerProfileService
 {
     private static readonly ConcurrentDictionary<string, (string Otp, DateTimeOffset ExpiresAt)> PhoneOtpStore = new();
@@ -119,16 +122,20 @@ public class CustomerProfileService(
 
         if (string.IsNullOrWhiteSpace(phone))
         {
-            return new SendPhoneOtpResponse("Please provide a valid phone number.", null, DateTimeOffset.UtcNow);
+            return new SendPhoneOtpResponse("Please provide a valid phone number.", DateTimeOffset.UtcNow);
         }
 
-        var otp = "123456";
+        // Generate genuine cryptographically random 6-digit OTP
+        var otp = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
         var expiresAt = DateTimeOffset.UtcNow.AddMinutes(10);
         var key = $"{ctx.UserId}:{phone}";
         PhoneOtpStore[key] = (otp, expiresAt);
 
+        // Dispatch real SMS via configured SMS gateway (Fast2SMS / Twilio / MSG91 / Console logger)
+        await smsService.SendOtpAsync(phone, otp);
+
         await audit.WriteAsync("customer.phone_otp.sent", ctx.UserId, "User", phone, ip);
-        return new SendPhoneOtpResponse($"OTP sent to {phone}.", otp, expiresAt);
+        return new SendPhoneOtpResponse($"OTP sent to {phone}.", expiresAt);
     }
 
     public async Task<(bool Succeeded, string Message)> VerifyPhoneOtpAsync(CustomerContext ctx, VerifyPhoneOtpRequest request, string? ip)
@@ -142,10 +149,6 @@ public class CustomerProfileService(
         {
             valid = true;
             PhoneOtpStore.TryRemove(key, out _);
-        }
-        else if (otp == "123456" || otp == "789012")
-        {
-            valid = true;
         }
 
         if (!valid)

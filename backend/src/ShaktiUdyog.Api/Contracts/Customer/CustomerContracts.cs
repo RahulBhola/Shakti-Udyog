@@ -250,7 +250,7 @@ public record ChangePasswordRequest(
 
 public record SendPhoneOtpRequest(string? PhoneNumber);
 
-public record SendPhoneOtpResponse(string Message, string? DemoOtp, DateTimeOffset ExpiresAtUtc);
+public record SendPhoneOtpResponse(string Message, DateTimeOffset ExpiresAtUtc);
 
 public record VerifyPhoneOtpRequest([Required] string PhoneNumber, [Required] string Otp);
 
