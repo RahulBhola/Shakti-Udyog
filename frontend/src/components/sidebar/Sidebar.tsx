@@ -133,7 +133,7 @@ export function Sidebar({ sections, onLogout }: SidebarProps) {
           onClick={() => setCollapsed((c) => !c)}
           className={cn(
             "flex items-center justify-center rounded-xl",
-            "text-slate-400 hover:text-white hover:bg-white/[0.06]",
+            "text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/[0.06]",
             "transition-all duration-200 cursor-pointer",
             "focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--color-primary)]",
             collapsed ? "w-9 h-9 mx-auto" : "w-8 h-8",
@@ -209,7 +209,7 @@ export function Sidebar({ sections, onLogout }: SidebarProps) {
             <button
               type="button"
               onClick={() => void handleLogout()}
-              className="flex items-center gap-2 w-full mt-2.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-[var(--text-secondary)] hover:text-red-400 hover:bg-red-500/10 transition-all duration-150 cursor-pointer"
+              className="flex items-center gap-2 w-full mt-2.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-slate-500 dark:text-[var(--text-secondary)] hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all duration-150 cursor-pointer"
               aria-label="Sign out"
             >
               <LogOut size={13} />

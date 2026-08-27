@@ -34,7 +34,7 @@ export function SidebarItem({
               active &&
                 "text-white bg-gradient-to-r from-blue-600 to-blue-700 border border-blue-500/30 shadow-sm shadow-blue-500/25 font-semibold",
               !active &&
-                "text-slate-400 hover:text-white hover:bg-white/[0.05] border border-transparent",
+                "text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/[0.06] border border-transparent hover:border-slate-200/60 dark:hover:border-white/5",
               isCollapsed && "justify-center px-0",
             )}
           >
@@ -43,7 +43,9 @@ export function SidebarItem({
               strokeWidth={1.75}
               className={cn(
                 "shrink-0 transition-colors duration-200",
-                active ? "text-white" : "text-slate-400 group-hover:text-blue-400",
+                active
+                  ? "text-white"
+                  : "text-slate-500 group-hover:text-blue-600 dark:text-slate-400 dark:group-hover:text-blue-400",
               )}
               aria-hidden="true"
             />
@@ -54,7 +56,7 @@ export function SidebarItem({
                 role="tooltip"
                 className={cn(
                   "absolute left-full ml-3 px-2.5 py-1.5 rounded-lg text-xs font-semibold",
-                  "bg-[#111827] text-white border border-white/10 shadow-xl",
+                  "bg-slate-900 text-white border border-slate-800 dark:bg-[#111827] dark:text-white dark:border-white/10 shadow-xl",
                   "opacity-0 invisible group-hover:opacity-100 group-hover:visible",
                   "transition-all duration-200",
                   "whitespace-nowrap z-50 pointer-events-none",
