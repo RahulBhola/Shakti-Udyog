@@ -598,25 +598,23 @@ function OrderCard({
         </div>
       </div>
 
-      {/* 3. Prominent Assigned Engineer Banner */}
-      <div className="p-2.5 rounded-xl bg-blue-50/70 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 flex items-center justify-between gap-2">
+      {/* 3. Unique Engineer Avatar & Name Tag */}
+      <div className="flex items-center justify-between gap-2 p-2 rounded-xl bg-neutral-50 dark:bg-white/[0.03] border border-neutral-200/70 dark:border-white/10">
         <div className="flex items-center gap-2 min-w-0">
-          <div className="w-5 h-5 rounded-lg bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
-            <User size={12} className="stroke-[2.2]" />
+          <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-extrabold text-[10.5px] shadow-2xs shrink-0">
+            {(order.assignedToUserName || "E").charAt(0).toUpperCase()}
           </div>
-          <div className="min-w-0">
-            <span className="text-[9.5px] font-extrabold text-neutral-400 uppercase tracking-wider block leading-none">
-              Assigned Engineer
-            </span>
-            <span className="text-[11.5px] font-extrabold text-blue-700 dark:text-blue-300 truncate block mt-0.5">
-              {order.assignedToUserName || "Primary Staff Engineer"}
-            </span>
-          </div>
+          <span className="text-xs font-bold text-neutral-900 dark:text-neutral-100 truncate">
+            {order.assignedToUserName || "Primary Staff Engineer"}
+          </span>
         </div>
+        <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-md shrink-0">
+          Engineer
+        </span>
       </div>
 
       {/* 4. Milestone & Logistics Metadata */}
-      <div className="space-y-1.5 pt-1 text-[11px]">
+      <div className="space-y-1.5 pt-0.5 text-[11px]">
         {order.advancePaid && (
           <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10.5px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
             <CheckCircle2 size={12} className="stroke-[2.2]" />
@@ -640,57 +638,57 @@ function OrderCard({
         </div>
       </div>
 
-      {/* 5. Order Story & Comments Button (Opens RHS Drawer) */}
-      <button
-        type="button"
-        onClick={onOpenStory}
-        className="w-full py-1.5 px-2.5 rounded-xl text-[11px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50/80 dark:bg-blue-500/10 hover:bg-blue-100 dark:hover:bg-blue-500/20 border border-blue-200/60 dark:border-blue-500/20 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
-      >
-        <MessageSquare size={12} />
-        <span>Order Story & Comments</span>
-        <History size={11} className="text-blue-400 ml-0.5" />
-      </button>
+      {/* 5. Stage Movement Actions: Dedicated Full-Width Row to Prevent Truncation */}
+      {(prevColumn || nextColumn) && (
+        <div className="pt-1 flex items-center gap-2">
+          {prevColumn && colIndex > 0 && (
+            <button
+              type="button"
+              title={`Move back to ${prevColumn.label}`}
+              onClick={onRegress}
+              disabled={isMoving}
+              className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl text-xs font-bold text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-white/5 hover:bg-amber-500/10 hover:text-amber-600 dark:hover:text-amber-400 transition-colors shadow-xs disabled:opacity-50 cursor-pointer whitespace-nowrap"
+            >
+              <ArrowLeft size={12} className="shrink-0" />
+              <span>{prevColumn.shortLabel}</span>
+            </button>
+          )}
 
-      {/* 6. Responsive Stage Action Controls (No Overflow / Overflow-Safe) */}
-      <div className="pt-2 border-t border-neutral-100 dark:border-white/5 grid grid-cols-3 gap-1.5">
-        {prevColumn && colIndex > 0 ? (
-          <button
-            type="button"
-            title={`Move back to ${prevColumn.label}`}
-            onClick={onRegress}
-            disabled={isMoving}
-            className="inline-flex items-center justify-center gap-1 py-1.5 px-1.5 rounded-xl text-[10px] font-bold text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-white/5 hover:bg-amber-500/10 hover:text-amber-600 dark:hover:text-amber-400 transition-colors shadow-xs disabled:opacity-50 cursor-pointer truncate min-w-0"
-          >
-            <ArrowLeft size={10} className="shrink-0" />
-            <span className="truncate">{prevColumn.shortLabel}</span>
-          </button>
-        ) : (
-          <div />
-        )}
+          {nextColumn && colIndex < 4 && (
+            <button
+              type="button"
+              title={`Advance to ${nextColumn.label}`}
+              onClick={onAdvance}
+              disabled={isMoving}
+              className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-xs disabled:opacity-50 cursor-pointer whitespace-nowrap"
+            >
+              <span>{isMoving ? "Moving..." : nextColumn.shortLabel}</span>
+              <ArrowRight size={12} className="shrink-0" />
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* 6. Secondary Actions: Order Story & Full Details */}
+      <div className="pt-2 border-t border-neutral-100 dark:border-white/5 flex items-center justify-between gap-2">
+        <button
+          type="button"
+          onClick={onOpenStory}
+          className="flex-1 py-2 px-2.5 rounded-xl text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50/80 dark:bg-blue-500/10 hover:bg-blue-100 dark:hover:bg-blue-500/20 border border-blue-200/60 dark:border-blue-500/20 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+        >
+          <MessageSquare size={13} />
+          <span>Order Story & Notes</span>
+        </button>
 
         <button
           type="button"
           onClick={onView}
-          className="inline-flex items-center justify-center gap-1 py-1.5 px-1.5 rounded-xl text-[10.5px] font-bold text-neutral-600 dark:text-neutral-400 bg-neutral-100 dark:bg-white/5 hover:bg-neutral-200 dark:hover:bg-white/10 transition-colors cursor-pointer truncate min-w-0"
+          className="px-3 py-2 rounded-xl text-xs font-bold text-neutral-600 dark:text-neutral-400 bg-neutral-100 dark:bg-white/5 hover:bg-neutral-200 dark:hover:bg-white/10 transition-colors cursor-pointer flex items-center gap-1 shrink-0"
+          title="View Full Order"
         >
           <span>Details</span>
-          <ExternalLink size={10} className="shrink-0" />
+          <ExternalLink size={12} />
         </button>
-
-        {nextColumn && colIndex < 4 ? (
-          <button
-            type="button"
-            title={`Advance to ${nextColumn.label}`}
-            onClick={onAdvance}
-            disabled={isMoving}
-            className="inline-flex items-center justify-center gap-1 py-1.5 px-1.5 rounded-xl text-[10px] font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-xs disabled:opacity-50 cursor-pointer truncate min-w-0"
-          >
-            <span className="truncate">{isMoving ? "..." : nextColumn.shortLabel}</span>
-            <ArrowRight size={10} className="shrink-0" />
-          </button>
-        ) : (
-          <div />
-        )}
       </div>
     </div>
   );
@@ -852,20 +850,20 @@ function OrderStoryDrawer({
                       className="p-3.5 rounded-2xl bg-neutral-50 dark:bg-white/[0.03] border border-neutral-200/70 dark:border-white/5 space-y-1.5 shadow-2xs"
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <div className={`w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold ${
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-extrabold text-white shadow-2xs shrink-0 ${
                             isAdminRole
-                              ? "bg-purple-500/15 text-purple-600 dark:text-purple-400"
+                              ? "bg-gradient-to-tr from-purple-600 to-indigo-600"
                               : isEngineerRole
-                              ? "bg-blue-500/15 text-blue-600 dark:text-blue-400"
-                              : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                              ? "bg-gradient-to-tr from-blue-600 to-cyan-600"
+                              : "bg-gradient-to-tr from-emerald-600 to-teal-600"
                           }`}>
-                            {c.authorName ? c.authorName.charAt(0).toUpperCase() : "U"}
+                            {(c.authorName || c.authorRole || "U").charAt(0).toUpperCase()}
                           </div>
                           <span className="text-xs font-extrabold text-neutral-900 dark:text-white truncate">
                             {c.authorName || c.authorRole || "User"}
                           </span>
-                          <span className={`px-1.5 py-0.2 rounded-md text-[9.5px] font-extrabold uppercase ${
+                          <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-extrabold uppercase ${
                             isAdminRole
                               ? "bg-purple-500/10 text-purple-600 dark:text-purple-400"
                               : isEngineerRole
@@ -879,7 +877,7 @@ function OrderStoryDrawer({
                           {formatDate(c.createdAtUtc)}
                         </span>
                       </div>
-                      <p className="text-xs text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap leading-relaxed m-0">
+                      <p className="text-xs text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap leading-relaxed m-0 pl-8">
                         {c.message}
                       </p>
                     </div>
@@ -900,11 +898,11 @@ function OrderStoryDrawer({
           ) : (
             /* Order Story (Timeline) */
             <div className="space-y-4">
-              <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-neutral-200 dark:before:bg-white/10">
+              <div className="relative pl-6 space-y-5 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-neutral-200 dark:before:bg-white/10">
                 {history.map((h, idx) => (
                   <div key={idx} className="relative">
                     <div className="absolute -left-6 top-1 w-3 h-3 rounded-full bg-blue-600 ring-4 ring-white dark:ring-[#10131d]" />
-                    <div className="p-3.5 rounded-2xl bg-neutral-50 dark:bg-white/[0.03] border border-neutral-200/70 dark:border-white/5 space-y-1">
+                    <div className="p-3.5 rounded-2xl bg-neutral-50 dark:bg-white/[0.03] border border-neutral-200/70 dark:border-white/5 space-y-1.5 shadow-2xs">
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-xs font-extrabold text-neutral-900 dark:text-white">
                           {h.toStatus.replace(/_/g, " ").toUpperCase()}
@@ -918,8 +916,13 @@ function OrderStoryDrawer({
                           {h.note}
                         </p>
                       )}
-                      <div className="text-[10px] font-semibold text-blue-600 dark:text-blue-400 pt-0.5">
-                        By {h.changedByRole || "System"}
+                      <div className="flex items-center gap-1.5 pt-0.5 text-[10.5px]">
+                        <div className="w-4 h-4 rounded-full bg-blue-500/15 text-blue-600 dark:text-blue-400 font-extrabold flex items-center justify-center text-[9px]">
+                          {(h.changedByRole || "S").charAt(0).toUpperCase()}
+                        </div>
+                        <span className="font-semibold text-neutral-600 dark:text-neutral-400">
+                          {h.changedByRole || "System"}
+                        </span>
                       </div>
                     </div>
                   </div>
