@@ -27,9 +27,24 @@ export function Panel({ title, children, actions }: { title?: string; children: 
   );
 }
 
-export function formatDate(value: string | null | undefined): string {
+export function formatDate(value: string | null | undefined, includeTime = false): string {
   if (!value) return "—";
-  return new Date(value).toLocaleDateString("en-IN", { year: "numeric", month: "short", day: "numeric" });
+  try {
+    const d = new Date(value);
+    if (isNaN(d.getTime())) return value;
+    return d.toLocaleString("en-IN", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      ...(includeTime && { hour: "2-digit", minute: "2-digit", hour12: true }),
+    });
+  } catch {
+    return value;
+  }
+}
+
+export function formatDateTime(value: string | null | undefined): string {
+  return formatDate(value, true);
 }
 
 export function formatMoney(value: number | null | undefined, currency = "INR"): string {

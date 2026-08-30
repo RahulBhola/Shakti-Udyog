@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { apiGet, apiPatch, apiPost } from "../../api/client";
 import { useAuth } from "../../auth/AuthContext";
 import { connectRealtime, getRealtimeConnection, type StageChangedPayload } from "../../realtime/signalR";
-import { formatDate } from "../shared";
+import { formatDate, formatDateTime } from "../shared";
 import {
   Layers,
   Flame,
@@ -634,7 +634,7 @@ function OrderCard({
         )}
 
         <div className="text-[10px] text-neutral-400">
-          {order.stageUpdatedAt ? `Updated ${formatDate(order.stageUpdatedAt)}` : `Placed ${formatDate(order.placedAtUtc)}`}
+          {order.stageUpdatedAt ? `Updated ${formatDateTime(order.stageUpdatedAt)}` : `Placed ${formatDateTime(order.placedAtUtc)}`}
         </div>
       </div>
 
@@ -874,7 +874,7 @@ function OrderStoryDrawer({
                           </span>
                         </div>
                         <span className="text-[10px] text-neutral-400 shrink-0">
-                          {formatDate(c.createdAtUtc)}
+                          {formatDateTime(c.createdAtUtc)}
                         </span>
                       </div>
                       <p className="text-xs text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap leading-relaxed m-0 pl-8">
@@ -908,7 +908,7 @@ function OrderStoryDrawer({
                           {h.toStatus.replace(/_/g, " ").toUpperCase()}
                         </span>
                         <span className="text-[10px] text-neutral-400">
-                          {formatDate(h.createdAtUtc)}
+                          {formatDateTime(h.createdAtUtc)}
                         </span>
                       </div>
                       {h.note && (
