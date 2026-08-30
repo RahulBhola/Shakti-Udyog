@@ -87,13 +87,35 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function Field({ label, required, hint, children }: { label: string; required?: boolean; hint?: string; children: React.ReactNode }) {
+function Field({
+  label,
+  required,
+  hint,
+  counter,
+  minMaxHint,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  hint?: string;
+  counter?: React.ReactNode;
+  minMaxHint?: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="space-y-1.5">
-      <label className="text-[12px] font-medium text-[var(--text-primary)] flex items-center gap-1">
-        {label}
-        {required && <span className="text-red-500">*</span>}
-      </label>
+      <div className="flex items-center justify-between gap-2">
+        <label className="text-[12px] font-medium text-[var(--text-primary)] flex items-center gap-1">
+          {label}
+          {required && <span className="text-red-500">*</span>}
+        </label>
+        {(counter || minMaxHint) && (
+          <div className="text-[11px] text-[var(--text-muted)] font-mono flex items-center gap-2">
+            {counter}
+            {minMaxHint && <span className="text-[10px] text-neutral-400 font-sans">{minMaxHint}</span>}
+          </div>
+        )}
+      </div>
       {children}
       {hint && <p className="text-[11px] text-[var(--text-muted)] m-0">{hint}</p>}
     </div>
@@ -323,13 +345,36 @@ export default function EnquiryEditPage() {
                 {enquiryProductTypes.map((t) => <option key={t} value={t}>{t}</option>)}
               </select>
             </Field>
-            <Field label="Part Name" required>
-              <input type="text" value={partName} onChange={(e) => setPartName(e.target.value)} placeholder="e.g. Motor Housing"
-                className="w-full h-10 px-3 rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--color-primary)]" />
+            <Field
+              label="Part Name"
+              required
+              minMaxHint="Min 2 · Max 200 chars"
+              counter={partName.length > 0 ? `${partName.length}/200` : undefined}
+              hint="Component name (min 2 to max 200 characters)"
+            >
+              <input
+                type="text"
+                value={partName}
+                maxLength={200}
+                minLength={2}
+                onChange={(e) => setPartName(e.target.value)}
+                placeholder="e.g. Motor Housing"
+                className="w-full h-10 px-3 rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--color-primary)]"
+              />
             </Field>
-            <Field label="Part Number" hint="Optional">
-              <input type="text" value={partNumber} onChange={(e) => setPartNumber(e.target.value)} placeholder="e.g. MH-1002"
-                className="w-full h-10 px-3 rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--color-primary)]" />
+            <Field
+              label="Part Number"
+              hint="Optional · Max 100 characters"
+              minMaxHint="Max 100 chars"
+            >
+              <input
+                type="text"
+                value={partNumber}
+                maxLength={100}
+                onChange={(e) => setPartNumber(e.target.value)}
+                placeholder="e.g. MH-1002"
+                className="w-full h-10 px-3 rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--color-primary)]"
+              />
             </Field>
             <Field label="Industry" hint="Optional">
               <select value={industry} onChange={(e) => setIndustry(e.target.value)}
@@ -340,14 +385,48 @@ export default function EnquiryEditPage() {
             </Field>
           </div>
           <div className="mt-5">
-            <Field label="Application / End Use" required>
-              <textarea value={application} onChange={(e) => setApplication(e.target.value)} rows={3}
-                className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2.5 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--color-primary)] resize-none" />
+            <Field
+              label="Application / End Use"
+              required
+              minMaxHint="Min 10 · Max 8,000 chars"
+              counter={
+                <span className={application.length > 0 && application.length < 10 ? "text-amber-500 font-bold" : ""}>
+                  {application.length} / 8,000
+                </span>
+              }
+              hint="Describe how the part will be used, its function, operating conditions, mechanical load, or operating environment (min 10 to max 8,000 characters)."
+            >
+              <textarea
+                value={application}
+                onChange={(e) => setApplication(e.target.value)}
+                rows={3}
+                minLength={10}
+                maxLength={8000}
+                placeholder="Describe how the part will be used, its function, and operating conditions..."
+                className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2.5 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--color-primary)] resize-none"
+              />
             </Field>
             <div className="mt-5">
-              <Field label="Requirement Details" required>
-                <textarea value={requirementDetails} onChange={(e) => setRequirementDetails(e.target.value)} rows={4}
-                  className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2.5 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--color-primary)] resize-none" />
+              <Field
+                label="Requirement Details"
+                required
+                minMaxHint="Min 10 · Max 8,000 chars"
+                counter={
+                  <span className={requirementDetails.length > 0 && requirementDetails.length < 10 ? "text-amber-500 font-bold" : ""}>
+                    {requirementDetails.length} / 8,000
+                  </span>
+                }
+                hint="Detailed technical requirements, tolerances, standard references, or specifications (min 10 to max 8,000 characters)."
+              >
+                <textarea
+                  value={requirementDetails}
+                  onChange={(e) => setRequirementDetails(e.target.value)}
+                  rows={4}
+                  minLength={10}
+                  maxLength={8000}
+                  placeholder="Provide any specific technical details, tolerances, test conditions, etc."
+                  className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2.5 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--color-primary)] resize-none"
+                />
               </Field>
             </div>
           </div>
@@ -356,12 +435,12 @@ export default function EnquiryEditPage() {
         {/* Section 2: Material Details */}
         <Section title="2. Material Details">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <Field label="Material Grade" hint="Optional">
-              <input type="text" value={materialGrade} onChange={(e) => setMaterialGrade(e.target.value)} placeholder="e.g. EN-GJL-250"
+            <Field label="Material Grade" hint="Optional · Max 200 characters (e.g. EN-GJL-250, FG 260)">
+              <input type="text" maxLength={200} value={materialGrade} onChange={(e) => setMaterialGrade(e.target.value)} placeholder="e.g. EN-GJL-250"
                 className="w-full h-10 px-3 rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--color-primary)]" />
             </Field>
-            <Field label="Material Standard" hint="Optional">
-              <input type="text" value={materialStandard} onChange={(e) => setMaterialStandard(e.target.value)} placeholder="e.g. ASTM A536"
+            <Field label="Material Standard" hint="Optional · Max 200 characters (e.g. ASTM A536, IS 210, EN 1561)">
+              <input type="text" maxLength={200} value={materialStandard} onChange={(e) => setMaterialStandard(e.target.value)} placeholder="e.g. ASTM A536"
                 className="w-full h-10 px-3 rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--color-primary)]" />
             </Field>
             <Field label="Approx Weight per Piece" hint="Optional">
@@ -397,16 +476,16 @@ export default function EnquiryEditPage() {
         {/* Section 3: Quantity */}
         <Section title="3. Quantity">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-            <Field label="Prototype Quantity" hint="Optional">
-              <input type="text" value={prototypeQty} onChange={(e) => setPrototypeQty(e.target.value)} placeholder="e.g. 5"
+            <Field label="Prototype Quantity" hint="Optional · Max 100 characters">
+              <input type="text" maxLength={100} value={prototypeQty} onChange={(e) => setPrototypeQty(e.target.value)} placeholder="e.g. 5"
                 className="w-full h-10 px-3 rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] text-[13px] text-[var(--text-primary)] outline-none focus:border-[var(--color-primary)]" />
             </Field>
-            <Field label="Production Quantity" required>
-              <input type="text" value={productionQty} onChange={(e) => setProductionQty(e.target.value)} placeholder="e.g. 1000"
+            <Field label="Production Quantity" required hint="Required · Max 100 characters">
+              <input type="text" maxLength={100} value={productionQty} onChange={(e) => setProductionQty(e.target.value)} placeholder="e.g. 1000"
                 className="w-full h-10 px-3 rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] text-[13px] text-[var(--text-primary)] outline-none focus:border-[var(--color-primary)]" />
             </Field>
-            <Field label="Annual Requirement" hint="Optional">
-              <input type="text" value={annualReq} onChange={(e) => setAnnualReq(e.target.value)} placeholder="e.g. 5000/year"
+            <Field label="Annual Requirement" hint="Optional · Max 100 characters">
+              <input type="text" maxLength={100} value={annualReq} onChange={(e) => setAnnualReq(e.target.value)} placeholder="e.g. 5000/year"
                 className="w-full h-10 px-3 rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] text-[13px] text-[var(--text-primary)] outline-none focus:border-[var(--color-primary)]" />
             </Field>
           </div>
@@ -464,9 +543,10 @@ export default function EnquiryEditPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <Field
               label="Delivery Location"
+              minMaxHint="Max 300 chars"
               hint={
                 selectedAddressId === "custom"
-                  ? "Enter custom delivery destination, site address or PIN code"
+                  ? "Enter custom delivery destination, site address or PIN code (Max 300 characters)"
                   : "Auto-filled from saved profile address; click Custom Location or type to change"
               }
             >
@@ -474,6 +554,7 @@ export default function EnquiryEditPage() {
                 <input
                   ref={deliveryLocationInputRef}
                   type="text"
+                  maxLength={300}
                   value={deliveryLocation}
                   onChange={(e) => {
                     setDeliveryLocation(e.target.value);
@@ -586,8 +667,21 @@ export default function EnquiryEditPage() {
 
         {/* Section 7: Remarks */}
         <Section title="7. Remarks">
-          <textarea value={remarks} onChange={(e) => setRemarks(e.target.value)} rows={3} placeholder="Additional information..."
-            className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2.5 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--color-primary)] resize-none" />
+          <Field
+            label="Additional Notes / Remarks"
+            minMaxHint="Optional · Max 2,000 chars"
+            counter={remarks.length > 0 ? `${remarks.length} / 2,000` : undefined}
+            hint="Mention any additional instructions, tolerances, tooling expectations, or custom packaging (Max 2,000 characters)."
+          >
+            <textarea
+              value={remarks}
+              maxLength={2000}
+              onChange={(e) => setRemarks(e.target.value)}
+              rows={3}
+              placeholder="Additional information..."
+              className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2.5 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--color-primary)] resize-none"
+            />
+          </Field>
         </Section>
       </form>
 

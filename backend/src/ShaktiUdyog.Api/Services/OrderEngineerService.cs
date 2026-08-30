@@ -1,12 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using ShaktiUdyog.Api.Contracts.Customer;
+using ShaktiUdyog.Api.Hubs;
 using ShaktiUdyog.Domain.Constants;
 using ShaktiUdyog.Domain.Entities;
 using ShaktiUdyog.Infrastructure.Auditing;
 using ShaktiUdyog.Infrastructure.Data;
 using ShaktiUdyog.Infrastructure.Notifications;
 using ShaktiUdyog.Infrastructure.Storage;
-
 using ShaktiUdyog.Domain.Exceptions;
 
 namespace ShaktiUdyog.Api.Services;
@@ -38,7 +38,8 @@ public class OrderEngineerService(
     AppDbContext db,
     IFileStorageService storage,
     INotificationService notifications,
-    IAuditWriter audit) : IOrderEngineerService
+    IAuditWriter audit,
+    IPortalPush push) : IOrderEngineerService
 {
     /// <summary>Admins manage any order; engineers only the orders assigned to them.</summary>
     private static bool CanManage(Order o, Guid callerUserId, bool callerIsAdmin)
@@ -63,7 +64,9 @@ public class OrderEngineerService(
         var total = await query.CountAsync();
         var items = await query.OrderByDescending(o => o.PlacedAtUtc).Skip((page - 1) * pageSize).Take(pageSize)
             .Select(o => new OrderListItemDto(o.Id, o.OrderNumber, o.Status, o.Status, o.PlacedAtUtc, o.PromisedDispatchDateUtc, o.Items.Sum(i => i.QuantityOrdered), o.LastUpdatedAtUtc, o.Company.Name, o.Quotation!.Enquiry!.ProductType,
-                o.AssignedToUserId, o.AssignedToUser != null ? o.AssignedToUser.FullName : null))
+                o.AssignedToUserId, o.AssignedToUser != null ? o.AssignedToUser.FullName : null,
+                o.ManufacturingStage ?? (ManufacturingStages.Workflow.Contains(o.Status) ? o.Status : ManufacturingStages.PatternDevelopment),
+                o.StageUpdatedAt))
             .ToListAsync();
         return new PagedResult<OrderListItemDto>(items, page, pageSize, total);
     }
@@ -95,6 +98,8 @@ public class OrderEngineerService(
             .Select(d => new DocumentListItemDto(d.Id, d.Title, d.Category, d.FileName, d.SizeBytes, o.OrderNumber, d.CreatedAtUtc, d.ContentType, d.OrderId))
             .ToListAsync();
 
+        var effectiveStage = o.ManufacturingStage ?? (ManufacturingStages.Workflow.Contains(o.Status) ? o.Status : (o.Status == OrderStatuses.Dispatched || o.Status == OrderStatuses.Delivered ? ManufacturingStages.ReadyToDispatch : ManufacturingStages.PatternDevelopment));
+
         return new OrderDetailDto(o.Id, o.OrderNumber, o.PurchaseOrderReference, o.Status, label, desc,
             o.PlacedAtUtc, o.PromisedDispatchDateUtc, o.DeliveryAddress, o.LastUpdatedAtUtc,
             o.Items.Select(i => new OrderItemDto(i.Id, i.PartNumber, i.Description, i.MaterialGrade,
@@ -107,7 +112,9 @@ public class OrderEngineerService(
             o.AdvancePaymentRef, o.AdvanceVerifiedAtUtc,
             o.QuotationTotal, o.PaymentTerms, o.QuotationId,
             o.Milestones.Select(m => new OrderMilestoneDto(m.Id, m.StatusCode, m.CustomerMessage, m.OccurredAtUtc)).ToList(),
-            o.AssignedToUserId, o.AssignedToUser != null ? o.AssignedToUser.FullName : null);
+            o.AssignedToUserId, o.AssignedToUser != null ? o.AssignedToUser.FullName : null,
+            effectiveStage,
+            o.StageUpdatedAt);
     }
 
     public async Task<bool?> UpdateMilestoneAsync(Guid id, MilestoneRequest request, Guid userId, bool callerIsAdmin, string? ip)
@@ -115,15 +122,42 @@ public class OrderEngineerService(
         var o = await db.Orders.Include(x => x.Milestones).SingleOrDefaultAsync(x => x.Id == id);
         if (o is null) return null;
         if (!CanManage(o, userId, callerIsAdmin)) throw new OrderAccessException();
-        if (!OrderStatuses.IsValidTransition(o.Status, request.StatusCode)) return false;
+        if (!OrderStatuses.IsValidTransition(o.Status, request.StatusCode) && !ManufacturingStages.IsValidTransition(o.ManufacturingStage ?? o.Status, request.StatusCode)) return false;
         var from = o.Status;
+        var now = DateTimeOffset.UtcNow;
         o.Status = request.StatusCode;
-        o.LastUpdatedAtUtc = DateTimeOffset.UtcNow;
-        var milestone = new OrderMilestone { Id = Guid.NewGuid(), OrderId = o.Id, StatusCode = request.StatusCode, CustomerMessage = request.CustomerMessage, InternalNote = request.InternalNote, ActorType = "Engineer", IsCustomerVisible = true };
+        if (ManufacturingStages.SortOrder.ContainsKey(request.StatusCode))
+        {
+            o.ManufacturingStage = request.StatusCode;
+            o.StageUpdatedAt = now;
+        }
+        o.LastUpdatedAtUtc = now;
+        var milestone = new OrderMilestone
+        {
+            Id = Guid.NewGuid(),
+            OrderId = o.Id,
+            StatusCode = request.StatusCode,
+            CustomerMessage = request.CustomerMessage ?? (ManufacturingStages.CustomerNotification.TryGetValue(request.StatusCode, out var msg) ? msg : OrderStatuses.ProgressionLabels.GetValueOrDefault(request.StatusCode, request.StatusCode)),
+            InternalNote = request.InternalNote,
+            ActorType = callerIsAdmin ? "Admin" : "Engineer",
+            IsCustomerVisible = true,
+            OccurredAtUtc = now
+        };
         db.OrderMilestones.Add(milestone);
-        db.OrderStatusHistories.Add(new OrderStatusHistory { Id = Guid.NewGuid(), OrderId = o.Id, FromStatus = from, ToStatus = request.StatusCode, ChangedByUserId = userId, ChangedByRole = "Engineer", Note = request.CustomerMessage });
+        db.OrderStatusHistories.Add(new OrderStatusHistory
+        {
+            Id = Guid.NewGuid(),
+            OrderId = o.Id,
+            FromStatus = from,
+            ToStatus = request.StatusCode,
+            ChangedByUserId = userId,
+            ChangedByRole = callerIsAdmin ? "Admin" : "Engineer",
+            Note = request.CustomerMessage ?? request.InternalNote,
+            CreatedAtUtc = now
+        });
         await db.SaveChangesAsync();
         await notifications.NotifyOrderStatusChangedAsync(o, from, request.StatusCode);
+        await push.StageChangedAsync(o.Id, o.OrderNumber, from, request.StatusCode);
         await audit.WriteAsync("engineer.order.milestone_updated", userId, "Order", o.Id.ToString(), ip);
         return true;
     }

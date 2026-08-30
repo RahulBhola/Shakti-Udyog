@@ -29,7 +29,7 @@ export default function EngineerOrderDetailPage() {
   if (missing) return <EmptyState title="Order not found" />;
   if (!order) return <Loading label="Loading order" />;
 
-  const milestones = ["confirmed", "pattern_development", "production", "quality_check", "packed", "ready_to_dispatch", "dispatched", "delivered"];
+  const milestones = ["pattern_development", "production", "quality_check", "packed", "ready_to_dispatch"];
 
   return (
     <>

@@ -38,6 +38,7 @@ public interface ICustomerService
     Task<IReadOnlyList<QuotationListItemDto>> GetQuotationsAsync(CustomerContext ctx);
     Task<QuotationDetailDto?> GetQuotationAsync(CustomerContext ctx, Guid quotationId);
     Task<bool?> RespondToQuotationAsync(CustomerContext ctx, Guid quotationId, QuotationResponseRequest request, string? ip);
+    Task<bool?> SubmitQuotationAdvancePaymentAsync(CustomerContext ctx, Guid quotationId, AdvancePaymentRequest request, string? ip);
 
     Task<IReadOnlyList<OrderListItemDto>> GetOrdersAsync(CustomerContext ctx);
     Task<OrderDetailDto?> GetOrderAsync(CustomerContext ctx, Guid orderId);
@@ -71,7 +72,8 @@ public class CustomerService(
     UserManager<ApplicationUser> userManager,
     IFileStorageService storage,
     INotificationDeliveryService notifications,
-    IAuditWriter audit) : ICustomerService
+    IAuditWriter audit,
+    ILogger<CustomerService> logger) : ICustomerService
 {
     // ---- Dashboard ----------------------------------------------------------
 
@@ -455,6 +457,8 @@ public class CustomerService(
         var q = await db.Quotations
             .Where(x => x.Id == quotationId && ctx.CompanyIds.Contains(x.CompanyId) && x.Status != QuotationStatuses.Draft)
             .Include(x => x.Items)
+            .Include(x => x.Company)
+            .Include(x => x.Enquiry)
             .SingleOrDefaultAsync();
         if (q is null) return null;
 
@@ -462,6 +466,23 @@ public class CustomerService(
             .Where(o => o.QuotationId == q.Id)
             .Select(o => new { o.Id, o.OrderNumber })
             .FirstOrDefaultAsync();
+
+        string? advanceRef = null;
+        DateTimeOffset? advancePaidAt = null;
+        if (!string.IsNullOrEmpty(q.CustomerResponseComment) && q.CustomerResponseComment.Contains("[Payment UTR:"))
+        {
+            var start = q.CustomerResponseComment.IndexOf("[Payment UTR:") + 13;
+            var end = q.CustomerResponseComment.IndexOf(']', start);
+            if (end > start)
+            {
+                advanceRef = q.CustomerResponseComment[start..end].Trim();
+                advancePaidAt = q.CustomerRespondedAtUtc;
+            }
+        }
+
+        var advancePercent = PaymentTermsHelper.ExtractAdvancePercent(q.PaymentTerms);
+        var advanceAmount = PaymentTermsHelper.CalculateAdvanceAmount(q.Total, q.PaymentTerms);
+        var hasAdvance = !string.IsNullOrEmpty(advanceRef);
 
         return new QuotationDetailDto(
             q.Id, q.QuotationNumber, q.RevisionNumber, q.EnquiryId, q.Enquiry?.ProductType ?? "",
@@ -473,7 +494,68 @@ public class CustomerService(
             order?.Id, order?.OrderNumber,
             q.Items.OrderBy(i => i.LineNumber).Select(i => new QuotationItemDto(
                 i.LineNumber, i.PartNumber, i.Description, i.MaterialGrade,
-                i.Quantity, i.Unit, i.UnitPrice, i.TaxPercent, i.LineTotal)).ToList());
+                i.Quantity, i.Unit, i.UnitPrice, i.TaxPercent, i.LineTotal)).ToList(),
+            advanceAmount, advanceRef, advancePaidAt, hasAdvance, q.Company?.Name,
+            advancePercent);
+    }
+
+    public async Task<bool?> SubmitQuotationAdvancePaymentAsync(
+        CustomerContext ctx, Guid quotationId, AdvancePaymentRequest request, string? ip)
+    {
+        var quotation = await db.Quotations
+            .Include(q => q.Company)
+            .SingleOrDefaultAsync(q => q.Id == quotationId && ctx.CompanyIds.Contains(q.CompanyId));
+        if (quotation is null) return null;
+        if (quotation.Status != QuotationStatuses.Accepted && quotation.Status != QuotationStatuses.Issued)
+        {
+            return false;
+        }
+
+        var cleanRef = request.PaymentRef.Trim();
+        var previousStatus = quotation.Status;
+        quotation.Status = QuotationStatuses.Accepted;
+        
+        var existingComment = quotation.CustomerResponseComment ?? "";
+        if (!existingComment.Contains("[Payment UTR:"))
+        {
+            quotation.CustomerResponseComment = $"[Payment UTR: {cleanRef}] {existingComment}".Trim();
+        }
+        else
+        {
+            quotation.CustomerResponseComment = $"[Payment UTR: {cleanRef}]";
+        }
+        quotation.CustomerRespondedAtUtc = DateTimeOffset.UtcNow;
+        quotation.RespondedByUserId = ctx.UserId;
+
+        db.QuotationStatusHistories.Add(new QuotationStatusHistory
+        {
+            Id = Guid.NewGuid(),
+            QuotationId = quotation.Id,
+            FromStatus = previousStatus,
+            ToStatus = QuotationStatuses.Accepted,
+            ChangedByUserId = ctx.UserId,
+            ChangedByRole = "Customer",
+            Note = $"Advance payment proof submitted by customer (UTR / Ref: {cleanRef})",
+            CreatedAtUtc = DateTimeOffset.UtcNow,
+        });
+
+        await db.SaveChangesAsync();
+        await audit.WriteAsync("customer.quotation.advance_submitted", ctx.UserId, "Quotation", quotation.Id.ToString(), ip);
+
+        try
+        {
+            await notifications.NotifyAdminsAndEngineersAsync(
+                NotificationTypes.Quotation,
+                $"Advance Payment Received for Quotation {quotation.QuotationNumber}",
+                $"Customer submitted advance payment (UTR / Ref: {cleanRef}) for Quotation {quotation.QuotationNumber}. Please verify and create order.",
+                $"/admin/quotations/{quotation.Id}");
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to send advance payment notification for quotation {QuotationId}", quotation.Id);
+        }
+
+        return true;
     }
 
     /// <returns>null = not found/not visible; false = not in a respondable state; true = recorded.</returns>
@@ -576,13 +658,16 @@ public class CustomerService(
             {
                 o.Id, o.OrderNumber, o.Status, o.PlacedAtUtc, o.PromisedDispatchDateUtc,
                 TotalQuantity = o.Items.Sum(i => i.QuantityOrdered), o.LastUpdatedAtUtc,
+                o.ManufacturingStage, o.StageUpdatedAt,
             })
             .ToListAsync();
 
         return orders.Select(o => new OrderListItemDto(
             o.Id, o.OrderNumber, o.Status,
             OrderStatuses.Labels.TryGetValue(o.Status, out var l) ? l.Label : o.Status,
-            o.PlacedAtUtc, o.PromisedDispatchDateUtc, o.TotalQuantity, o.LastUpdatedAtUtc, null, null, null, null)).ToList();
+            o.PlacedAtUtc, o.PromisedDispatchDateUtc, o.TotalQuantity, o.LastUpdatedAtUtc, null, null, null, null,
+            o.ManufacturingStage ?? (ManufacturingStages.Workflow.Contains(o.Status) ? o.Status : ManufacturingStages.PatternDevelopment),
+            o.StageUpdatedAt)).ToList();
     }
 
     public async Task<OrderDetailDto?> GetOrderAsync(CustomerContext ctx, Guid orderId)
@@ -590,6 +675,7 @@ public class CustomerService(
         var order = await db.Orders
             .Include(o => o.Items)
             .Include(o => o.Shipments)
+            .Include(o => o.Milestones)
             .SingleOrDefaultAsync(o => o.Id == orderId && ctx.CompanyIds.Contains(o.CompanyId));
         if (order is null)
         {
@@ -609,6 +695,8 @@ public class CustomerService(
 
         var (label, description) = OrderStatuses.Labels.TryGetValue(order.Status, out var l)
             ? l : (order.Status, string.Empty);
+
+        var effectiveStage = order.ManufacturingStage ?? (ManufacturingStages.Workflow.Contains(order.Status) ? order.Status : (order.Status == OrderStatuses.Dispatched || order.Status == OrderStatuses.Delivered ? ManufacturingStages.ReadyToDispatch : ManufacturingStages.PatternDevelopment));
 
         return new OrderDetailDto(
             order.Id, order.OrderNumber, order.PurchaseOrderReference,
@@ -630,7 +718,9 @@ public class CustomerService(
             order.QuotationTotal, order.PaymentTerms, order.QuotationId,
             order.Milestones.Select(m => new OrderMilestoneDto(
                 m.Id, m.StatusCode, m.CustomerMessage, m.OccurredAtUtc)).ToList(),
-            null, null);
+            null, null,
+            effectiveStage,
+            order.StageUpdatedAt);
     }
 
     public async Task<IReadOnlyList<TimelineEntryDto>?> GetOrderTimelineAsync(CustomerContext ctx, Guid orderId)

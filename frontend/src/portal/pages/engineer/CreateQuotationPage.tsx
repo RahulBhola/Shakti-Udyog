@@ -5,8 +5,9 @@ import { adminApi } from "../../../api/adminApi";
 import {
   ArrowLeft, Building2, Mail, Phone, Package, Calendar, Clock,
   FileText, Paperclip, Plus, Trash2, Save, Send,
-  Loader2, AlertCircle, CheckCircle, User,
+  Loader2, AlertCircle, CheckCircle, User, Banknote,
 } from "lucide-react";
+import { extractAdvancePercent } from "../../../utils/paymentTerms";
 
 /* ── Types ────────────────────────────────────────────────────── */
 
@@ -20,6 +21,18 @@ interface QuotationLineItem {
   gstPercent: number;
   amount: number;
 }
+
+const standardPaymentTerms = [
+  "30% advance, 70% before dispatch",
+  "50% advance, 50% on delivery",
+  "100% advance with Purchase Order",
+  "100% against Proforma Invoice before dispatch",
+  "Net 30 Days from invoice date",
+  "Net 45 Days from delivery",
+  "Net 60 Days from invoice date",
+  "Letter of Credit (LC) at sight",
+  "Other",
+];
 
 /* ── Helpers ──────────────────────────────────────────────────── */
 
@@ -84,7 +97,9 @@ export default function CreateQuotationPage() {
 
   // Form fields
   const [validUntil, setValidUntil] = useState("");
-  const [paymentTerms, setPaymentTerms] = useState("");
+  const [paymentTermsOption, setPaymentTermsOption] = useState("30% advance, 70% before dispatch");
+  const [customPaymentTerms, setCustomPaymentTerms] = useState("");
+  const [paymentTermsError, setPaymentTermsError] = useState<string | null>(null);
   const [deliveryTerms, setDeliveryTerms] = useState("");
   const [deliveryTime, setDeliveryTime] = useState("");
   const [warranty, setWarranty] = useState("");
@@ -109,7 +124,21 @@ export default function CreateQuotationPage() {
         setEnquiry(enquiryData);
         // Pre-fill form fields from existing quotation
         setValidUntil(q.validUntilUtc ? q.validUntilUtc.slice(0, 10) : "");
-        setPaymentTerms(q.paymentTerms ?? "");
+        if (q.paymentTerms) {
+          const matched = standardPaymentTerms.find(
+            (t) => t.toLowerCase() === q.paymentTerms?.trim().toLowerCase()
+          );
+          if (matched && matched !== "Other") {
+            setPaymentTermsOption(matched);
+            setCustomPaymentTerms("");
+          } else {
+            setPaymentTermsOption("Other");
+            setCustomPaymentTerms(q.paymentTerms);
+          }
+        } else {
+          setPaymentTermsOption("30% advance, 70% before dispatch");
+          setCustomPaymentTerms("");
+        }
         setDeliveryTerms(q.deliveryTerms ?? "");
         setDeliveryTime(q.deliveryTime ?? "");
         setWarranty(q.warranty ?? "");
@@ -164,6 +193,21 @@ export default function CreateQuotationPage() {
     return { subtotal, discountAmt, gstAmt, lineTotal, grandTotal };
   }, [calculatedItems, freight, packing]);
 
+  const effectivePaymentTerms =
+    paymentTermsOption === "Other" ? customPaymentTerms : paymentTermsOption;
+  const calculatedAdvancePct = useMemo(
+    () => extractAdvancePercent(effectivePaymentTerms),
+    [effectivePaymentTerms]
+  );
+  const calculatedAdvanceAmt = useMemo(
+    () => Math.round(totals.grandTotal * (calculatedAdvancePct / 100) * 100) / 100,
+    [totals.grandTotal, calculatedAdvancePct]
+  );
+  const balancePayableAmt = useMemo(
+    () => Math.max(0, Math.round((totals.grandTotal - calculatedAdvanceAmt) * 100) / 100),
+    [totals.grandTotal, calculatedAdvanceAmt]
+  );
+
   // ── Item management ───────────────────────────────────────────
   function updateItem(id: string, field: keyof QuotationLineItem, value: number | string) {
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, [field]: value } : i)));
@@ -182,6 +226,15 @@ export default function CreateQuotationPage() {
     if (!enquiry) return;
     setSaving(true);
     setSaveMsg(null);
+    const effectivePaymentTerms =
+      paymentTermsOption === "Other" ? customPaymentTerms.trim() : paymentTermsOption.trim();
+    if (!effectivePaymentTerms) {
+      setPaymentTermsError("Payment Terms are compulsory. Please select or specify terms.");
+      setSaveMsg("Payment terms are compulsory. Please select from dropdown or specify custom terms.");
+      setSaving(false);
+      return;
+    }
+
     try {
       // Resolve companyId if missing (Enquiry may not have a linked company)
       let companyId = enquiry.companyId;
@@ -205,7 +258,7 @@ export default function CreateQuotationPage() {
         discount: totals.discountAmt,
         total: totals.grandTotal,
         validUntilUtc: validUntil || undefined,
-        paymentTerms: paymentTerms || undefined,
+        paymentTerms: effectivePaymentTerms,
         deliveryTerms: deliveryTerms || undefined,
         deliveryTime: deliveryTime || undefined,
         warranty: warranty || undefined,
@@ -538,10 +591,87 @@ export default function CreateQuotationPage() {
                   <option value="INR">INR (₹)</option><option value="USD">USD ($)</option><option value="EUR">EUR (€)</option>
                 </select>
               </div>
-              <div>
-                <label className="text-[11px] font-medium text-[var(--text-muted)] block mb-1">Payment Terms</label>
-                <input type="text" value={paymentTerms} onChange={(e) => setPaymentTerms(e.target.value)} placeholder="e.g. 30% advance, 70% on delivery"
-                  className="w-full h-9 px-3 rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--color-primary)]" />
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-medium text-[var(--text-primary)] flex items-center gap-1">
+                    Payment Terms <span className="text-red-500 font-bold">*</span>
+                  </label>
+                  <span className="text-[10px] font-mono text-[var(--text-muted)]">Compulsory</span>
+                </div>
+                <select
+                  value={paymentTermsOption}
+                  onChange={(e) => {
+                    setPaymentTermsOption(e.target.value);
+                    setPaymentTermsError(null);
+                  }}
+                  className={`w-full h-9 px-3 rounded-lg border bg-[var(--bg-surface)] text-[13px] text-[var(--text-primary)] outline-none transition-all ${
+                    paymentTermsError ? "border-red-500 focus:border-red-500" : "border-[var(--border-default)] focus:border-[var(--color-primary)]"
+                  }`}
+                >
+                  <option value="">-- Select Payment Terms * --</option>
+                  {standardPaymentTerms.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
+
+                {paymentTermsOption === "Other" && (
+                  <div className="pt-1 space-y-1 animate-in fade-in duration-150">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[10.5px] font-medium text-[var(--text-secondary)]">
+                        Specify Custom Payment Terms <span className="text-red-500">*</span>
+                      </label>
+                      <span className="text-[10px] text-[var(--text-muted)] font-mono">
+                        {customPaymentTerms.length}/200
+                      </span>
+                    </div>
+                    <input
+                      type="text"
+                      value={customPaymentTerms}
+                      maxLength={200}
+                      onChange={(e) => {
+                        setCustomPaymentTerms(e.target.value);
+                        setPaymentTermsError(null);
+                      }}
+                      placeholder="e.g. 20% advance with PO, 80% on dispatch"
+                      className={`w-full h-9 px-3 rounded-lg border bg-[var(--bg-surface)] text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none transition-all ${
+                        paymentTermsError ? "border-red-500 focus:border-red-500" : "border-[var(--border-default)] focus:border-[var(--color-primary)]"
+                      }`}
+                    />
+                  </div>
+                )}
+
+                {paymentTermsError && (
+                  <p className="text-[11px] text-red-500 flex items-center gap-1 m-0">
+                    <AlertCircle size={12} /> {paymentTermsError}
+                  </p>
+                )}
+
+                {/* Live Payment Amount Calculation */}
+                {totals.grandTotal > 0 && (
+                  <div className="pt-1.5">
+                    <div className="p-2.5 rounded-lg bg-blue-50/80 dark:bg-blue-500/10 border border-blue-200/80 dark:border-blue-500/25 space-y-1">
+                      <div className="flex items-center justify-between text-[11.5px]">
+                        <span className="font-semibold text-blue-900 dark:text-blue-200 flex items-center gap-1.5">
+                          <Banknote size={13} className="text-blue-600 dark:text-blue-400" />
+                          Payable Advance ({calculatedAdvancePct}%):
+                        </span>
+                        <span className="font-mono font-extrabold text-blue-700 dark:text-blue-300">
+                          ₹{calculatedAdvanceAmt.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                      {calculatedAdvancePct < 100 && (
+                        <div className="flex items-center justify-between text-[10.5px] text-[var(--text-muted)] pt-1 border-t border-blue-200/50 dark:border-blue-500/15">
+                          <span>Balance on Dispatch/Delivery ({100 - calculatedAdvancePct}%):</span>
+                          <span className="font-mono">
+                            ₹{balancePayableAmt.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
               <div>
                 <label className="text-[11px] font-medium text-[var(--text-muted)] block mb-1">Delivery Terms</label>

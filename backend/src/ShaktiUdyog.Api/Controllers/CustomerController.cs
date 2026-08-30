@@ -236,6 +236,25 @@ public class CustomerController(
         };
     }
 
+    /// <summary>Submit advance payment proof for an accepted quotation.</summary>
+    [HttpPost("quotations/{id:guid}/pay-advance")]
+    [ProducesResponseType<MessageResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> PayQuotationAdvance(Guid id, [FromBody] AdvancePaymentRequest request)
+    {
+        var (ctx, failure) = await RequireContextAsync();
+        if (failure is not null) return failure;
+
+        var result = await customerService.SubmitQuotationAdvancePaymentAsync(ctx!, id, request, ClientIp);
+        return result switch
+        {
+            null => NotFound(),
+            false => BadRequest(new { message = "Cannot accept payment in current quotation state." }),
+            _ => Ok(new { message = "Advance payment details submitted. Awaiting admin verification." })
+        };
+    }
+
     // ---- Orders -------------------------------------------------------------
 
     [HttpGet("orders")]

@@ -568,46 +568,53 @@ public static class DevAdminSeeder
         }
 
         // Ensure attachments exist for all products
-        var allPms = await db.ProductMasters.Include(p => p.Attachments).ToListAsync();
-        var attachmentsAdded = 0;
-        foreach (var p in allPms)
+        var existingAttachmentProductIds = await db.ProductMasterAttachments
+            .Select(a => a.ProductMasterId)
+            .Distinct()
+            .ToListAsync();
+        var existingAttachmentSet = new HashSet<Guid>(existingAttachmentProductIds);
+
+        var pmsWithoutAttachments = await db.ProductMasters
+            .Where(p => !existingAttachmentSet.Contains(p.Id))
+            .AsNoTracking()
+            .ToListAsync();
+
+        if (pmsWithoutAttachments.Count > 0)
         {
-            var seedItem = seedItems.FirstOrDefault(s => string.Equals(s.Code, p.ProductCode, StringComparison.OrdinalIgnoreCase));
-            var darkImg = p.ImageUrl ?? seedItem?.Image ?? "/images/Industrial Iron Casting.png";
-            var lightImg = p.LightImageUrl ?? (darkImg.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ? darkImg[..^4] + " light mode.png" : darkImg);
-
-            p.ImageUrl = darkImg;
-            p.LightImageUrl = lightImg;
-
-            if (p.Attachments.Count == 0)
+            var newAttachments = new List<ProductMasterAttachment>();
+            foreach (var p in pmsWithoutAttachments)
             {
-                p.Attachments.Add(new ProductMasterAttachment
+                var seedItem = seedItems.FirstOrDefault(s => string.Equals(s.Code, p.ProductCode, StringComparison.OrdinalIgnoreCase));
+                var darkImg = p.ImageUrl ?? seedItem?.Image ?? "/images/Industrial Iron Casting.png";
+                var lightImg = p.LightImageUrl ?? (darkImg.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ? darkImg[..^4] + " light mode.png" : darkImg);
+
+                newAttachments.Add(new ProductMasterAttachment
                 {
                     Id = Guid.NewGuid(),
                     ProductMasterId = p.Id,
                     FileName = $"{p.ProductName} (Dark Mode 3D Studio Render).png",
                     ContentType = "image/png",
                     SizeBytes = 684200,
-                    StorageKey = darkImg.TrimStart('/'),
+                    StorageKey = $"products/{p.ProductCode}/dark.png",
                     Description = "Official 3D CAD Foundry Studio Render (Dark Theme)",
                     UploadedByUserId = adminUserId,
                     UploadedAtUtc = DateTimeOffset.UtcNow.AddDays(-15),
                 });
 
-                p.Attachments.Add(new ProductMasterAttachment
+                newAttachments.Add(new ProductMasterAttachment
                 {
                     Id = Guid.NewGuid(),
                     ProductMasterId = p.Id,
                     FileName = $"{p.ProductName} (Light Mode 3D Studio Render).png",
                     ContentType = "image/png",
                     SizeBytes = 642100,
-                    StorageKey = lightImg.TrimStart('/'),
+                    StorageKey = $"products/{p.ProductCode}/light.png",
                     Description = "Official 3D CAD Foundry Studio Render (Light Theme)",
                     UploadedByUserId = adminUserId,
                     UploadedAtUtc = DateTimeOffset.UtcNow.AddDays(-15),
                 });
 
-                p.Attachments.Add(new ProductMasterAttachment
+                newAttachments.Add(new ProductMasterAttachment
                 {
                     Id = Guid.NewGuid(),
                     ProductMasterId = p.Id,
@@ -619,14 +626,11 @@ public static class DevAdminSeeder
                     UploadedByUserId = adminUserId,
                     UploadedAtUtc = DateTimeOffset.UtcNow.AddDays(-20),
                 });
-                attachmentsAdded += 3;
             }
-        }
 
-        if (attachmentsAdded > 0)
-        {
+            db.ProductMasterAttachments.AddRange(newAttachments);
             await db.SaveChangesAsync();
-            logger.LogInformation("Seeded {Count} attachments for product masters.", attachmentsAdded);
+            logger.LogInformation("Seeded {Count} attachments for product masters.", newAttachments.Count);
         }
     }
 

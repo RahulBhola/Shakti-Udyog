@@ -20,7 +20,7 @@ namespace ShaktiUdyog.Api.Controllers;
 [ApiController]
 [Route("api/v1/admin")]
 [Authorize(Policy = AuthPolicies.AdminOnly)]
-public class AdminController(IAdminService adminService, IOrderAdminService orderAdminService, AppDbContext db, UserManager<ApplicationUser> userManager) : ControllerBase
+public class AdminController(IAdminService adminService, IOrderAdminService orderAdminService, IOrderEngineerService orderEngineerService, AppDbContext db, UserManager<ApplicationUser> userManager) : ControllerBase
 {
     private string? ClientIp => HttpContext.Connection.RemoteIpAddress?.ToString();
 
@@ -703,6 +703,85 @@ public class AdminController(IAdminService adminService, IOrderAdminService orde
     }
 
     
+    // ---- Orders -------------------------------------------------------------
+
+    [HttpGet("orders")]
+    [ProducesResponseType<PagedResult<OrderListItemDto>>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetOrders(
+        [FromQuery] int page = 1, [FromQuery] int pageSize = 20,
+        [FromQuery] string? search = null, [FromQuery] string? status = null)
+    {
+        return Ok(await orderAdminService.GetOrdersAsync(page, pageSize, search, status));
+    }
+
+    [HttpGet("orders/{id:guid}")]
+    [ProducesResponseType<OrderDetailDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetOrder(Guid id)
+    {
+        var order = await orderAdminService.GetOrderAsync(id);
+        return order is null ? NotFound(new { message = "Order not found." }) : Ok(order);
+    }
+
+    [HttpPatch("orders/{id:guid}/approve-update")]
+    public async Task<IActionResult> ApproveOrderUpdate(Guid id)
+    {
+        var result = await orderAdminService.ApproveCustomerUpdateAsync(id, UserId, ClientIp);
+        return result is null ? NotFound() : Ok(new MessageResponse("Order update approved."));
+    }
+
+    [HttpPatch("orders/{id:guid}/override-status")]
+    public async Task<IActionResult> OverrideOrderStatus(Guid id, [FromBody] OverrideStatusRequest request)
+    {
+        var result = await orderAdminService.OverrideStatusAsync(id, request.NewStatus, request.Note, UserId, ClientIp);
+        return result switch
+        {
+            null => NotFound(),
+            _ => Ok(new MessageResponse("Status overridden.")),
+        };
+    }
+
+    [HttpPatch("orders/{id:guid}/cancel")]
+    public async Task<IActionResult> CancelOrder(Guid id, [FromBody] CancelOrderRequest request)
+    {
+        var result = await orderAdminService.CancelOrderAsync(id, request.Reason ?? "Cancelled by Admin", UserId, ClientIp);
+        return result switch
+        {
+            null => NotFound(),
+            false => BadRequest(new MessageResponse("Cannot cancel order in its current state.")),
+            _ => Ok(new MessageResponse("Order cancelled.")),
+        };
+    }
+
+    [HttpGet("orders/{id:guid}/history")]
+    [ProducesResponseType<IReadOnlyList<OrderStatusHistoryEntryDto>>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetOrderHistory(Guid id)
+    {
+        var history = await orderAdminService.GetHistoryAsync(id);
+        return Ok(history);
+    }
+
+    [HttpGet("orders/{id:guid}/comments")]
+    public async Task<IActionResult> GetOrderComments(Guid id)
+    {
+        var comments = await orderEngineerService.GetCommentsAsync(id);
+        return Ok(comments);
+    }
+
+    [HttpPost("orders/{id:guid}/comments")]
+    public async Task<IActionResult> AddOrderComment(Guid id, [FromBody] OrderCommentRequest request)
+    {
+        var result = await orderEngineerService.AddCommentAsync(id, request, UserId, Roles.Admin, true, ClientIp);
+        return result is null ? NotFound() : Ok(new MessageResponse("Comment added."));
+    }
+
+    [HttpPost("orders/{id:guid}/documents")]
+    public async Task<IActionResult> UploadOrderDocument(Guid id, IFormFile file, [FromForm] string category = "General")
+    {
+        await orderEngineerService.UploadDocumentAsync(id, file, category, UserId, true, ClientIp);
+        return Ok(new MessageResponse("Document uploaded."));
+    }
+
     // ---- Orders from Quotations ---------------------------------------------
 
     [HttpPost("quotations/{quotationId:guid}/create-order")]
@@ -955,6 +1034,8 @@ public class AdminController(IAdminService adminService, IOrderAdminService orde
 public record UpdateStageRequest(string StatusCode, string? Note);
 
 public record OverrideStatusRequest(string NewStatus, string? Note);
+
+public record CancelOrderRequest(string? Reason);
 
 public record ApproveUserRequest(string CompanyName, string? City = null, string? State = null, string? GstNumber = null);
 

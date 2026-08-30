@@ -26,7 +26,8 @@ public class EngineerManufacturingController(IEngineerManufacturingService servi
     private string? ClientIp => HttpContext.Connection.RemoteIpAddress?.ToString();
 
     /// <summary>Orders on the board — for an engineer, only their assigned orders.</summary>
-    [HttpGet("orders")]
+    [HttpGet("board/orders")]
+    [HttpGet("manufacturing-orders")]
     [ProducesResponseType<IReadOnlyList<EngineerOrderDto>>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetBoardOrders() =>
         Ok(await service.GetBoardOrdersAsync(UserId, IsAdmin));

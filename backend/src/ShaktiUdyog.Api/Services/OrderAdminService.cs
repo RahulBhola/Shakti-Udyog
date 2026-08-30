@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using ShaktiUdyog.Api.Contracts.Customer;
+using ShaktiUdyog.Api.Hubs;
 using ShaktiUdyog.Domain.Constants;
 using ShaktiUdyog.Domain.Entities;
 using ShaktiUdyog.Infrastructure.Auditing;
@@ -22,7 +23,7 @@ public interface IOrderAdminService
 
 public record OrderStatusHistoryEntryDto(string FromStatus, string ToStatus, string ChangedByRole, string? Note, DateTimeOffset OccurredAtUtc);
 
-public class OrderAdminService(AppDbContext db, IAuditWriter audit) : IOrderAdminService
+public class OrderAdminService(AppDbContext db, IAuditWriter audit, IPortalPush push) : IOrderAdminService
 {
     public async Task<PagedResult<OrderListItemDto>> GetOrdersAsync(int page, int pageSize, string? search, string? status)
     {
@@ -35,25 +36,51 @@ public class OrderAdminService(AppDbContext db, IAuditWriter audit) : IOrderAdmi
         var total = await query.CountAsync();
         var items = await query.OrderByDescending(o => o.PlacedAtUtc).Skip((page - 1) * pageSize).Take(pageSize)
             .Select(o => new OrderListItemDto(o.Id, o.OrderNumber, o.Status, o.Status, o.PlacedAtUtc, o.PromisedDispatchDateUtc, o.Items.Sum(i => i.QuantityOrdered), o.LastUpdatedAtUtc, o.Company!.Name, o.Quotation!.Enquiry!.ProductType,
-                o.AssignedToUserId, o.AssignedToUser != null ? o.AssignedToUser.FullName : null))
+                o.AssignedToUserId, o.AssignedToUser != null ? o.AssignedToUser.FullName : null,
+                o.ManufacturingStage ?? (ManufacturingStages.Workflow.Contains(o.Status) ? o.Status : ManufacturingStages.PatternDevelopment),
+                o.StageUpdatedAt))
             .ToListAsync();
         return new PagedResult<OrderListItemDto>(items, page, pageSize, total);
     }
 
     public async Task<OrderDetailDto?> GetOrderAsync(Guid id)
     {
-        var o = await db.Orders.IgnoreQueryFilters().Include(x => x.Items).Include(x => x.Shipments).Include(x => x.AssignedToUser).SingleOrDefaultAsync(x => x.Id == id);
+        var o = await db.Orders.IgnoreQueryFilters()
+            .Include(x => x.Items)
+            .Include(x => x.Shipments)
+            .Include(x => x.Milestones)
+            .Include(x => x.AssignedToUser)
+            .SingleOrDefaultAsync(x => x.Id == id);
         if (o is null) return null;
         var (label, desc) = OrderStatuses.Labels.TryGetValue(o.Status, out var l) ? l : (o.Status, "");
+
+        // Load commercial data from invoices
+        var latestInvoice = await db.Invoices
+            .Where(i => i.OrderId == id)
+            .OrderByDescending(i => i.IssueDateUtc)
+            .Select(i => new OrderCommercialDto(i.InvoiceNumber, i.IssueDateUtc, i.DueDateUtc, i.Total, i.AmountPaid, i.BalanceDue, i.Status))
+            .FirstOrDefaultAsync();
+
+        // Load order-linked documents
+        var documents = await db.Documents
+            .Where(d => d.OrderId == id && !d.IsDeleted && d.Category != "Invoice")
+            .OrderByDescending(d => d.CreatedAtUtc)
+            .Select(d => new DocumentListItemDto(d.Id, d.Title, d.Category, d.FileName, d.SizeBytes, o.OrderNumber, d.CreatedAtUtc, d.ContentType, d.OrderId))
+            .ToListAsync();
+
+        var effectiveStage = o.ManufacturingStage ?? (ManufacturingStages.Workflow.Contains(o.Status) ? o.Status : (o.Status == OrderStatuses.Dispatched || o.Status == OrderStatuses.Delivered ? ManufacturingStages.ReadyToDispatch : ManufacturingStages.PatternDevelopment));
+
         return new OrderDetailDto(o.Id, o.OrderNumber, o.PurchaseOrderReference, o.Status, label, desc, o.PlacedAtUtc, o.PromisedDispatchDateUtc, o.DeliveryAddress, o.LastUpdatedAtUtc,
             o.Items.Select(i => new OrderItemDto(i.Id, i.PartNumber, i.Description, i.MaterialGrade, i.DrawingRevision, i.Unit, i.QuantityOrdered, i.QuantityProduced, i.QuantityDispatched, i.UnitRate)).ToList(),
             o.Shipments.Select(s => new ShipmentDto(s.Id, s.Transporter, s.TrackingNumber, s.VehicleNumber, s.PhoneNumber, s.DispatchDateUtc, s.EstimatedArrivalUtc, s.DeliveredAtUtc, s.ProofOfDeliveryDocumentId != null)).ToList(),
-            null, [],
+            latestInvoice, documents,
             o.AdvancePercent, o.AdvanceAmount, o.AdvancePaid, o.AdvancePaidAtUtc,
             o.AdvancePaymentRef, o.AdvanceVerifiedAtUtc,
             o.QuotationTotal, o.PaymentTerms, o.QuotationId,
-            o.Milestones.Select(m => new OrderMilestoneDto(m.Id, m.StatusCode, m.CustomerMessage, m.OccurredAtUtc)).ToList(),
-            o.AssignedToUserId, o.AssignedToUser != null ? o.AssignedToUser.FullName : null);
+            o.Milestones.OrderBy(m => m.OccurredAtUtc).Select(m => new OrderMilestoneDto(m.Id, m.StatusCode, m.CustomerMessage, m.OccurredAtUtc)).ToList(),
+            o.AssignedToUserId, o.AssignedToUser != null ? o.AssignedToUser.FullName : null,
+            effectiveStage,
+            o.StageUpdatedAt);
     }
 
     public async Task<bool?> ApproveCustomerUpdateAsync(Guid id, Guid userId, string? ip)
@@ -72,10 +99,17 @@ public class OrderAdminService(AppDbContext db, IAuditWriter audit) : IOrderAdmi
         var o = await db.Orders.IgnoreQueryFilters().SingleOrDefaultAsync(x => x.Id == id);
         if (o is null) return null;
         var from = o.Status;
+        var now = DateTimeOffset.UtcNow;
         o.Status = newStatus;
-        o.LastUpdatedAtUtc = DateTimeOffset.UtcNow;
-        db.OrderStatusHistories.Add(new OrderStatusHistory { Id = Guid.NewGuid(), OrderId = o.Id, FromStatus = from, ToStatus = newStatus, ChangedByUserId = userId, ChangedByRole = "Admin", Note = note ?? $"Status override: {from} → {newStatus}" });
+        if (ManufacturingStages.SortOrder.ContainsKey(newStatus))
+        {
+            o.ManufacturingStage = newStatus;
+            o.StageUpdatedAt = now;
+        }
+        o.LastUpdatedAtUtc = now;
+        db.OrderStatusHistories.Add(new OrderStatusHistory { Id = Guid.NewGuid(), OrderId = o.Id, FromStatus = from, ToStatus = newStatus, ChangedByUserId = userId, ChangedByRole = "Admin", Note = note ?? $"Status override: {from} → {newStatus}", CreatedAtUtc = now });
         await db.SaveChangesAsync();
+        await push.StageChangedAsync(o.Id, o.OrderNumber, from, newStatus);
         await audit.WriteAsync("admin.order.status_overridden", userId, "Order", o.Id.ToString(), ip);
         return true;
     }

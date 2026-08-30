@@ -48,16 +48,19 @@ public static class ManufacturingStages
         };
 
     /// <summary>
-    /// Returns true only when <paramref name="to"/> is exactly one column ahead of
-    /// <paramref name="from"/> — the sole permitted transition. Skipping a stage or
-    /// moving backwards (or staying put) is rejected.
+    /// Returns true when both <paramref name="from"/> and <paramref name="to"/> are valid stages
+    /// and <paramref name="to"/> is a different stage in the workflow.
+    /// Supports both forward progression and backward rework/re-inspection transitions.
     /// </summary>
-    public static bool IsValidForwardTransition(string from, string to)
+    public static bool IsValidTransition(string from, string to)
     {
-        if (!SortOrder.TryGetValue(from, out var fromIndex)) return false;
-        if (!SortOrder.TryGetValue(to, out var toIndex)) return false;
-        return toIndex == fromIndex + 1;
+        if (!SortOrder.ContainsKey(from)) return false;
+        if (!SortOrder.ContainsKey(to)) return false;
+        return from != to;
     }
+
+    /// <summary>Backward-compatible alias allowing bidirectional movement.</summary>
+    public static bool IsValidForwardTransition(string from, string to) => IsValidTransition(from, to);
 
     /// <summary>Labels for the admin order detail page / stage summary.</summary>
     public static string LabelFor(string stage) =>

@@ -52,12 +52,31 @@ public class QuotationAdminService(
             .Select(o => new { o.Id, o.OrderNumber })
             .FirstOrDefaultAsync();
 
+        string? advanceRef = null;
+        DateTimeOffset? advancePaidAt = null;
+        if (!string.IsNullOrEmpty(q.CustomerResponseComment) && q.CustomerResponseComment.Contains("[Payment UTR:"))
+        {
+            var start = q.CustomerResponseComment.IndexOf("[Payment UTR:") + 13;
+            var end = q.CustomerResponseComment.IndexOf(']', start);
+            if (end > start)
+            {
+                advanceRef = q.CustomerResponseComment[start..end].Trim();
+                advancePaidAt = q.CustomerRespondedAtUtc;
+            }
+        }
+
+        var advancePercent = PaymentTermsHelper.ExtractAdvancePercent(q.PaymentTerms);
+        var advanceAmount = PaymentTermsHelper.CalculateAdvanceAmount(q.Total, q.PaymentTerms);
+        var hasAdvance = !string.IsNullOrEmpty(advanceRef);
+
         return new QuotationDetailDto(q.Id, q.QuotationNumber, q.RevisionNumber, q.EnquiryId, q.Enquiry?.ProductType ?? "",
             q.Subtotal, q.Tax, q.Discount, q.Total, q.Currency, q.PaymentTerms, q.DeliveryTerms, q.Freight, q.Packing, q.Remarks,
             q.DeliveryTime, q.Warranty,
             q.Status, q.CustomerResponseComment, q.CustomerRespondedAtUtc, q.ValidUntilUtc, q.DocumentId, q.CreatedAtUtc,
             order?.Id, order?.OrderNumber,
-            q.Items.Select(i => new QuotationItemDto(i.LineNumber, i.PartNumber, i.Description, i.MaterialGrade, i.Quantity, i.Unit, i.UnitPrice, i.TaxPercent, i.LineTotal)).ToList());
+            q.Items.Select(i => new QuotationItemDto(i.LineNumber, i.PartNumber, i.Description, i.MaterialGrade, i.Quantity, i.Unit, i.UnitPrice, i.TaxPercent, i.LineTotal)).ToList(),
+            advanceAmount, advanceRef, advancePaidAt, hasAdvance, q.Company?.Name,
+            advancePercent);
     }
 
     public async Task<bool?> UpdateQuotationAsync(Guid id, UpdateQuotationRequest request, Guid userId, string? ip)

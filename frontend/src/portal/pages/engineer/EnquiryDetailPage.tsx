@@ -9,75 +9,103 @@ import {
   ArrowLeft, Building2, Mail, Phone, Package,
   MapPinned, Calendar, Clock, Activity, MessageSquare, Paperclip,
   ChevronRight, FileText, Loader2,
-  CheckCircle, XCircle, AlertCircle, Download, FileEdit, User,
+  XCircle, AlertCircle, Download, FileEdit, User,
   ChevronDown, ChevronUp, Factory, Truck, CreditCard,
-  ChevronLeft,
+  ChevronLeft, CheckCircle2,
 } from "lucide-react";
 
 /* ------------------------------------------------------------------ */
-/*  Status badge                                                       */
+/*  Status Configuration & Badges                                      */
 /* ------------------------------------------------------------------ */
 
-const statusConfig: Record<string, { label: string; bg: string; text: string; dot: string; icon: any }> = {
-  Draft:           { label: "Draft",        bg: "bg-[#F1F5F9]",  text: "text-[#64748B]", dot: "bg-[#94A3B8]",  icon: FileText },
-  Received:        { label: "Received",     bg: "bg-[#EFF6FF]",  text: "text-[#2563EB]", dot: "bg-[#3B82F6]",  icon: Clock },
-  "Under Review":  { label: "Under Review", bg: "bg-[#FFF7ED]",  text: "text-[#F97316]", dot: "bg-[#F97316]",  icon: AlertCircle },
-  Approved:        { label: "Approved",     bg: "bg-[#F0FDF4]",  text: "text-[#22C55E]", dot: "bg-[#22C55E]",  icon: CheckCircle },
-  Quoted:          { label: "Quoted",       bg: "bg-[#EEF2FF]",  text: "text-[#6366F1]", dot: "bg-[#6366F1]",  icon: FileEdit },
-  Accepted:        { label: "Accepted",     bg: "bg-[#F0FDF4]",  text: "text-[#16A34A]", dot: "bg-[#16A34A]",  icon: CheckCircle },
-  Rejected:        { label: "Rejected",     bg: "bg-[#FEF2F2]",  text: "text-[#EF4444]", dot: "bg-[#EF4444]",  icon: XCircle },
-  Cancelled:       { label: "Cancelled",    bg: "bg-[#F8FAFC]",  text: "text-[#94A3B8]", dot: "bg-[#CBD5E1]",  icon: XCircle },
-  Expired:         { label: "Expired",      bg: "bg-[#F8FAFC]",  text: "text-[#94A3B8]", dot: "bg-[#CBD5E1]",  icon: Clock },
+const statusConfig: Record<string, { label: string; bg: string; text: string; dot: string; border: string; icon: any }> = {
+  Draft:           { label: "Draft",        bg: "bg-slate-100 dark:bg-slate-500/10", text: "text-slate-600 dark:text-slate-400", dot: "bg-slate-400", border: "border-slate-200 dark:border-slate-500/20", icon: FileText },
+  Submitted:       { label: "Submitted",    bg: "bg-blue-50 dark:bg-blue-500/10",    text: "text-blue-600 dark:text-blue-400",    dot: "bg-blue-500",  border: "border-blue-200 dark:border-blue-500/20",   icon: Clock },
+  Received:        { label: "Received",     bg: "bg-cyan-50 dark:bg-cyan-500/10",    text: "text-cyan-700 dark:text-cyan-400",    dot: "bg-cyan-500",  border: "border-cyan-200 dark:border-cyan-500/20",   icon: Clock },
+  "Under Review":  { label: "Under Review", bg: "bg-amber-50 dark:bg-amber-500/10",  text: "text-amber-700 dark:text-amber-400",  dot: "bg-amber-500", border: "border-amber-200 dark:border-amber-500/20", icon: AlertCircle },
+  Approved:        { label: "Approved",     bg: "bg-emerald-50 dark:bg-emerald-500/10", text: "text-emerald-700 dark:text-emerald-400", dot: "bg-emerald-500", border: "border-emerald-200 dark:border-emerald-500/20", icon: CheckCircle2 },
+  Quoted:          { label: "Quoted",       bg: "bg-indigo-50 dark:bg-indigo-500/10", text: "text-indigo-700 dark:text-indigo-400", dot: "bg-indigo-500", border: "border-indigo-200 dark:border-indigo-500/20", icon: FileEdit },
+  Accepted:        { label: "Accepted",     bg: "bg-emerald-50 dark:bg-emerald-500/10", text: "text-emerald-700 dark:text-emerald-400", dot: "bg-emerald-500", border: "border-emerald-200 dark:border-emerald-500/20", icon: CheckCircle2 },
+  Rejected:        { label: "Rejected",     bg: "bg-rose-50 dark:bg-rose-500/10",    text: "text-rose-700 dark:text-rose-400",    dot: "bg-rose-500",  border: "border-rose-200 dark:border-rose-500/20",   icon: XCircle },
+  Cancelled:       { label: "Cancelled",    bg: "bg-slate-100 dark:bg-slate-500/10", text: "text-slate-500 dark:text-slate-400", dot: "bg-slate-400", border: "border-slate-200 dark:border-slate-500/20", icon: XCircle },
+  Expired:         { label: "Expired",      bg: "bg-slate-100 dark:bg-slate-500/10", text: "text-slate-500 dark:text-slate-400", dot: "bg-slate-400", border: "border-slate-200 dark:border-slate-500/20", icon: Clock },
 };
 
 function getStatusConfig(status: string) {
-  return statusConfig[status] ?? { label: status, bg: "bg-[#F1F5F9]", text: "text-[#64748B]", dot: "bg-[#94A3B8]", icon: FileText };
+  return statusConfig[status] ?? {
+    label: status,
+    bg: "bg-slate-100 dark:bg-slate-500/10",
+    text: "text-slate-600 dark:text-slate-400",
+    dot: "bg-slate-400",
+    border: "border-slate-200 dark:border-slate-500/20",
+    icon: FileText,
+  };
 }
 
 function StatusBadge({ status, size = "sm" }: { status: string; size?: "sm" | "md" }) {
   const cfg = getStatusConfig(status);
   const Icon = cfg.icon;
-  const px = size === "md" ? "px-3 py-1 text-[12px]" : "px-2.5 py-0.5 text-[11px]";
+  const px = size === "md" ? "px-3 py-1 text-xs" : "px-2.5 py-0.5 text-[11px]";
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full font-semibold ${cfg.bg} ${cfg.text} ${px}`}>
-      <Icon size={size === "md" ? 13 : 11} />
+    <span className={`inline-flex items-center gap-1.5 rounded-full font-bold border ${cfg.bg} ${cfg.text} ${cfg.border} ${px} shadow-xs`}>
+      <Icon size={size === "md" ? 13 : 11} className="stroke-[2.2]" />
       {cfg.label}
     </span>
   );
 }
 
-/* ── Priority badge ────────────────────────────────────────────── */
+/* ── Priority Badge ────────────────────────────────────────────── */
 
 const priorityColors: Record<string, string> = {
-  Low: "bg-slate-100 text-slate-600 dark:bg-slate-500/10 dark:text-slate-400",
-  Medium: "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400",
-  High: "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400",
-  Urgent: "bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-300 ring-1 ring-red-300 dark:ring-red-500/30",
+  Low: "bg-slate-100 text-slate-700 dark:bg-slate-500/10 dark:text-slate-400 border-slate-200 dark:border-slate-500/20",
+  Medium: "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 border-amber-200 dark:border-amber-500/20",
+  High: "bg-orange-50 text-orange-700 dark:bg-orange-500/10 dark:text-orange-400 border-orange-200 dark:border-orange-500/20",
+  Urgent: "bg-rose-50 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300 border-rose-300 dark:border-rose-500/30 ring-1 ring-rose-300/50",
 };
 
 function PriorityBadge({ priority }: { priority: string }) {
   const c = priorityColors[priority] ?? priorityColors.Medium;
   return (
-    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${c}`}>
+    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold border shadow-xs ${c}`}>
       {priority}
     </span>
   );
 }
 
 /* ------------------------------------------------------------------ */
-/*  Info card                                                          */
+/*  Summary KPI Card                                                   */
 /* ------------------------------------------------------------------ */
 
-function InfoCard({ icon: Icon, label, value, sub, color }: { icon: any; label: string; value: string; sub?: string; color?: string }) {
+function InfoCard({
+  icon: Icon,
+  label,
+  value,
+  sub,
+  gradient,
+}: {
+  icon: any;
+  label: string;
+  value: string;
+  sub?: string;
+  gradient: string;
+}) {
   return (
-    <div className="flex items-center gap-4 rounded-[14px] border border-[var(--border-default)] bg-[var(--bg-card)] p-5 shadow-sm hover:shadow-md transition-all">
-      <span className={`flex items-center justify-center w-12 h-12 rounded-xl shrink-0 ${color ?? "bg-[var(--color-primary)]/10"}`}>
-        <Icon size={22} className={color?.replace("bg-", "text-") ?? "text-[var(--color-primary)]"} />
-      </span>
+    <div className="group relative flex items-center gap-3.5 rounded-2xl border border-neutral-200/80 dark:border-white/10 bg-white dark:bg-[#0f121a] p-4 sm:p-4.5 shadow-xs hover:shadow-md hover:border-neutral-300 dark:hover:border-white/20 transition-all duration-200">
+      <div className={`w-11 h-11 rounded-2xl ${gradient} text-white flex items-center justify-center shrink-0 shadow-sm group-hover:scale-105 transition-transform duration-200`}>
+        <Icon size={20} className="stroke-[2.2]" />
+      </div>
       <div className="flex-1 min-w-0">
-        <div className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider font-semibold mb-0.5">{label}</div>
-        <div className="text-[15px] font-bold text-[var(--text-primary)] truncate">{value}</div>
-        {sub && <div className="text-[12px] text-[var(--text-secondary)] mt-0.5 truncate">{sub}</div>}
+        <div className="text-[10px] text-neutral-400 dark:text-neutral-400 uppercase tracking-wider font-extrabold mb-0.5">
+          {label}
+        </div>
+        <div className="text-[14px] font-extrabold text-neutral-900 dark:text-white truncate">
+          {value}
+        </div>
+        {sub && (
+          <div className="text-[11.5px] text-neutral-500 dark:text-neutral-400 mt-0.5 truncate font-medium">
+            {sub}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -87,60 +115,109 @@ function InfoCard({ icon: Icon, label, value, sub, color }: { icon: any; label: 
 /*  Collapsible Section                                                */
 /* ------------------------------------------------------------------ */
 
-function Section({ icon: Icon, title, children, defaultOpen = true }: { icon: any; title: string; children: React.ReactNode; defaultOpen?: boolean }) {
+function Section({
+  icon: Icon,
+  title,
+  children,
+  defaultOpen = true,
+  badge,
+}: {
+  icon: any;
+  title: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+  badge?: string;
+}) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <section className="rounded-[16px] border border-[var(--border-default)] bg-[var(--bg-card)] shadow-sm overflow-hidden">
-      <button type="button" onClick={() => setOpen(!open)}
-        className="flex items-center justify-between w-full px-5 py-4 hover:bg-[var(--bg-surface-hover)] transition-all text-left">
-        <div className="flex items-center gap-2.5">
-          <Icon size={15} className="text-[var(--color-primary)]" />
-          <h2 className="text-sm font-semibold text-[var(--text-primary)] m-0">{title}</h2>
+    <section className="rounded-3xl border border-neutral-200/80 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs overflow-hidden transition-all">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="flex items-center justify-between w-full px-5 sm:px-6 py-4 hover:bg-neutral-50/70 dark:hover:bg-white/[0.02] transition-all text-left cursor-pointer border-b border-transparent"
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+            <Icon size={16} className="stroke-[2.2]" />
+          </div>
+          <div className="flex items-center gap-2.5 min-w-0">
+            <h2 className="text-[14.5px] font-bold text-neutral-900 dark:text-white m-0 tracking-tight">
+              {title}
+            </h2>
+            {badge && (
+              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-neutral-100 dark:bg-white/10 text-neutral-600 dark:text-neutral-300">
+                {badge}
+              </span>
+            )}
+          </div>
         </div>
-        {open ? <ChevronUp size={15} className="text-[var(--text-muted)]" /> : <ChevronDown size={15} className="text-[var(--text-muted)]" />}
+        <div className="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-neutral-600 dark:hover:text-white transition-colors">
+          {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+        </div>
       </button>
-      {open && <div className="px-5 pb-5">{children}</div>}
+      {open && (
+        <div className="px-5 sm:px-6 pb-6 pt-2 border-t border-neutral-100 dark:border-white/5">
+          {children}
+        </div>
+      )}
     </section>
   );
 }
 
 /* ------------------------------------------------------------------ */
-/*  Field                                                              */
+/*  Field Tile                                                         */
 /* ------------------------------------------------------------------ */
 
-function Field({ label, value, icon: Icon }: { label: string; value: string; icon?: any }) {
+function Field({ label, value, icon: Icon }: { label: string; value: string | React.ReactNode; icon?: any }) {
   return (
-    <div className="flex items-start gap-2.5">
-      {Icon && <Icon size={14} className="text-[var(--text-muted)] mt-0.5 shrink-0" />}
-      <div className="min-w-0">
-        <div className="text-[11px] text-[var(--text-muted)]">{label}</div>
-        <div className="text-[13px] font-medium text-[var(--text-primary)] truncate">{value}</div>
+    <div className="flex items-start gap-3 p-2.5 rounded-xl bg-neutral-50/60 dark:bg-white/[0.02] border border-neutral-100 dark:border-white/5">
+      {Icon && (
+        <div className="w-7 h-7 rounded-lg bg-neutral-200/60 dark:bg-white/5 flex items-center justify-center text-neutral-500 dark:text-neutral-400 shrink-0 mt-0.5">
+          <Icon size={14} />
+        </div>
+      )}
+      <div className="min-w-0 flex-1">
+        <div className="text-[10.5px] font-bold uppercase tracking-wide text-neutral-400 dark:text-neutral-400">
+          {label}
+        </div>
+        <div className="text-[13px] font-semibold text-neutral-800 dark:text-neutral-200 truncate mt-0.5">
+          {value || "—"}
+        </div>
       </div>
     </div>
   );
 }
 
 /* ------------------------------------------------------------------ */
-/*  Progress Step                                                      */
+/*  Workflow Steps (Connected Stepper UI)                              */
 /* ------------------------------------------------------------------ */
-
-/* ── Workflow Steps ──────────────────────────────────────────────── */
 
 const workflowSteps = ["Draft", "Submitted", "Received", "Under Review", "Approved", "Quoted"];
 const workflowIcons: Record<string, any> = {
-  Draft: FileText, Submitted: Clock, Received: Clock,
-  "Under Review": AlertCircle, Approved: CheckCircle,
+  Draft: FileText,
+  Submitted: Clock,
+  Received: Clock,
+  "Under Review": AlertCircle,
+  Approved: CheckCircle2,
   Quoted: FileEdit,
 };
 
 function getStepIndex(status: string): number {
   const map: Record<string, number> = {
-    Draft: 0, Submitted: 1, Received: 2, "Under Review": 3,
-    "Waiting for Customer": 3.5, Approved: 4, Quoted: 5,
-    Accepted: 6, Rejected: -1, Declined: -1, Expired: -1, Cancelled: -1,
+    Draft: 0,
+    Submitted: 1,
+    Received: 2,
+    "Under Review": 3,
+    "Waiting for Customer": 3.5,
+    Approved: 4,
+    Quoted: 5,
+    Accepted: 6,
+    Rejected: -1,
+    Declined: -1,
+    Expired: -1,
+    Cancelled: -1,
   };
   const idx = map[status];
-  // Show full timeline if status is beyond Quoted (e.g. Accepted from customer side)
   if (idx !== undefined && idx > 5) return 6;
   return idx !== undefined ? Math.max(0, idx) : 0;
 }
@@ -150,44 +227,88 @@ function WorkflowProgress({ currentStatus }: { currentStatus: string }) {
   if (currentIdx < 0) return null;
 
   return (
-    <div className="flex items-center justify-between gap-1 overflow-x-auto pb-1">
-      {workflowSteps.map((step, i) => {
-        const Icon = workflowIcons[step] ?? Clock;
-        const isComplete = Math.floor(currentIdx) > i;
-        const isCurrent = Math.floor(currentIdx) === i;
-        const isPartial = currentIdx > i && currentIdx < i + 1;
-        return (
-          <div key={step} className="flex items-center gap-0 flex-1 min-w-0">
-            <div className="flex flex-col items-center gap-1.5 min-w-0">
-              <div className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${
-                isComplete || isPartial ? "bg-emerald-500 text-white" :
-                isCurrent ? "bg-[var(--color-primary)] text-white ring-2 ring-[var(--color-primary)]/30" :
-                "bg-[var(--bg-surface-hover)] text-[var(--text-muted)]"
-              }`}>
-                <Icon size={15} />
+    <div className="space-y-3">
+      <div className="flex items-center justify-between border-b border-neutral-100 dark:border-white/5 pb-2.5">
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="text-xs font-bold text-neutral-800 dark:text-neutral-200">
+            Enquiry Review Lifecycle (6 Steps)
+          </span>
+        </div>
+        <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 font-mono">
+          Step {Math.min(6, Math.floor(currentIdx) + 1)} of 6 · {currentStatus}
+        </span>
+      </div>
+
+      <div className="flex items-center justify-between gap-0 overflow-x-auto py-2 px-1">
+        {workflowSteps.map((step, i) => {
+          const Icon = workflowIcons[step] ?? Clock;
+          const isComplete = Math.floor(currentIdx) > i;
+          const isCurrent = Math.floor(currentIdx) === i;
+          const isPastOrCurrent = isComplete || isCurrent;
+          const isLineActive = isComplete;
+          const isNextStep = i < workflowSteps.length - 1;
+
+          return (
+            <div key={step} className="flex items-center flex-1 min-w-0 last:flex-none">
+              {/* Step Node & Label */}
+              <div className="flex flex-col items-center gap-2 min-w-[85px] sm:min-w-[100px] select-none">
+                {/* Squircle Icon Badge */}
+                <div
+                  className={`w-10 h-10 sm:w-11 sm:h-11 rounded-2xl flex items-center justify-center transition-all ${
+                    isComplete
+                      ? "bg-emerald-500 text-white shadow-sm shadow-emerald-500/25"
+                      : isCurrent
+                      ? "bg-emerald-500 text-white ring-4 ring-emerald-500/20 shadow-md shadow-emerald-500/30 scale-105"
+                      : "bg-neutral-100 dark:bg-white/5 text-neutral-400 dark:text-neutral-400 border border-neutral-200/80 dark:border-white/10"
+                  }`}
+                >
+                  <Icon size={18} className="stroke-[2.2]" />
+                </div>
+
+                {/* Step Label */}
+                <div className="text-center">
+                  <div
+                    className={`text-[11.5px] tracking-tight transition-colors leading-tight ${
+                      isPastOrCurrent
+                        ? "text-emerald-600 dark:text-emerald-400 font-bold"
+                        : "text-neutral-400 dark:text-neutral-400 font-medium"
+                    }`}
+                  >
+                    {step}
+                  </div>
+                  <div className="text-[10px] text-neutral-400 dark:text-neutral-400 mt-0.5 hidden sm:block">
+                    {isCurrent ? (
+                      <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Active</span>
+                    ) : isComplete ? (
+                      "Completed"
+                    ) : (
+                      "Pending"
+                    )}
+                  </div>
+                </div>
               </div>
-              <span className={`text-[10px] font-medium text-center leading-tight max-w-[80px] ${
-                isCurrent ? "text-[var(--color-primary)]" :
-                isComplete || isPartial ? "text-emerald-600 dark:text-emerald-400" :
-                "text-[var(--text-muted)]"
-              }`}>
-                {step}
-              </span>
+
+              {/* Horizontal Connector Line */}
+              {isNextStep && (
+                <div
+                  className={`flex-1 h-0.5 mx-1.5 sm:mx-3 mt-[-22px] rounded-full transition-colors ${
+                    isLineActive
+                      ? "bg-emerald-400 dark:bg-emerald-500/70"
+                      : "bg-neutral-200 dark:bg-white/10"
+                  }`}
+                />
+              )}
             </div>
-            {i < workflowSteps.length - 1 && (
-              <div className={`flex-1 h-px mx-1 mt-[-20px] ${
-                (isComplete || isPartial) || (isCurrent && i < Math.floor(currentIdx)) ? "bg-emerald-400" : "bg-[var(--border-default)]"
-              }`} />
-            )}
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }
 
 /* ------------------------------------------------------------------ */
-/*  Auth-fetched image                                                 */
+/*  Auth-fetched Image Component                                       */
 /* ------------------------------------------------------------------ */
 
 function EnquiryImage({ enquiryId, fileId, fileName }: { enquiryId: string; fileId: string; fileName: string }) {
@@ -202,8 +323,8 @@ function EnquiryImage({ enquiryId, fileId, fileName }: { enquiryId: string; file
       .catch(() => {});
     return () => { cancelled = true; };
   }, [enquiryId, fileId]);
-  if (!url) return <div className="w-full aspect-[4/3] rounded-xl bg-[var(--bg-surface)] animate-pulse" />;
-  return <img src={url} alt={fileName} className="w-full h-full object-cover rounded-xl" />;
+  if (!url) return <div className="w-full aspect-[4/3] rounded-2xl bg-neutral-100 dark:bg-white/5 animate-pulse" />;
+  return <img src={url} alt={fileName} className="w-full h-full object-cover rounded-2xl" />;
 }
 
 /* ------------------------------------------------------------------ */
@@ -211,25 +332,37 @@ function EnquiryImage({ enquiryId, fileId, fileName }: { enquiryId: string; file
 /* ------------------------------------------------------------------ */
 
 function RelatedCard({ icon: Icon, label, status, href }: { icon: any; label: string; status: string; href: string }) {
-  const statusColor = status === "Generated" || status === "Approved" ? "text-[#22C55E] bg-[#F0FDF4]"
-    : status === "Pending" ? "text-[#F59E0B] bg-[#FFFBEB]"
-    : "text-[#64748B] bg-[#F1F5F9]";
+  const isGood = status === "Generated" || status === "Approved";
+  const isPending = status === "Pending";
+  const badgeStyle = isGood
+    ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20"
+    : isPending
+    ? "text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20"
+    : "text-neutral-500 dark:text-neutral-400 bg-neutral-100 dark:bg-white/5 border-neutral-200 dark:border-white/10";
+
   return (
-    <Link to={href} className="flex items-center gap-3 rounded-xl border border-[var(--border-default)] p-3.5 hover:bg-[var(--bg-surface-hover)] transition-all no-underline hover:no-underline">
-      <span className="flex items-center justify-center w-9 h-9 rounded-lg bg-[var(--color-primary)]/10 shrink-0">
-        <Icon size={16} className="text-[var(--color-primary)]" />
+    <Link
+      to={href}
+      className="flex items-center gap-3.5 rounded-2xl border border-neutral-200/80 dark:border-white/10 bg-white dark:bg-[#0f121a] p-4 hover:border-blue-500/40 dark:hover:border-blue-500/40 hover:shadow-xs transition-all no-underline group"
+    >
+      <span className="flex items-center justify-center w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 group-hover:scale-105 transition-transform shrink-0">
+        <Icon size={18} className="stroke-[2.2]" />
       </span>
       <div className="flex-1 min-w-0">
-        <div className="text-[12px] font-semibold text-[var(--text-primary)]">{label}</div>
-        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold mt-1 ${statusColor}`}>{status}</span>
+        <div className="text-[13px] font-bold text-neutral-900 dark:text-white truncate">
+          {label}
+        </div>
+        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold mt-1 border ${badgeStyle}`}>
+          {status}
+        </span>
       </div>
-      <ChevronRight size={14} className="text-[var(--text-muted)] shrink-0" />
+      <ChevronRight size={15} className="text-neutral-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors shrink-0" />
     </Link>
   );
 }
 
 /* ------------------------------------------------------------------ */
-/*  Main Page                                                          */
+/*  Main Page Component                                                */
 /* ------------------------------------------------------------------ */
 
 export default function EngineerEnquiryDetailPage() {
@@ -246,10 +379,17 @@ export default function EngineerEnquiryDetailPage() {
   }, [id]);
 
   async function updateStatus(newStatus: string, note?: string) {
-    setBusy(true); setMsg(null);
-    try { const r = await engineerApi.updateEnquiryStatus(id, newStatus, note); setMsg(r.message); setEnquiry(await engineerApi.enquiry(id)); }
-    catch { setMsg("Status update failed."); }
-    finally { setBusy(false); }
+    setBusy(true);
+    setMsg(null);
+    try {
+      const r = await engineerApi.updateEnquiryStatus(id, newStatus, note);
+      setMsg(r.message);
+      setEnquiry(await engineerApi.enquiry(id));
+    } catch {
+      setMsg("Status update failed.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   function downloadFile(fileId: string, fileName: string) {
@@ -257,364 +397,528 @@ export default function EngineerEnquiryDetailPage() {
     const url = `${config.apiBaseUrl}/api/v1/engineer/enquiries/${id}/files/${fileId}/download`;
     fetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {}, credentials: "include" })
       .then((r) => { if (!r.ok) throw new Error(); return r.blob(); })
-      .then((blob) => { const u = URL.createObjectURL(blob); const d = document.createElement("a"); d.href = u; d.download = fileName; d.click(); URL.revokeObjectURL(u); })
+      .then((blob) => {
+        const u = URL.createObjectURL(blob);
+        const d = document.createElement("a");
+        d.href = u;
+        d.download = fileName;
+        d.click();
+        URL.revokeObjectURL(u);
+      })
       .catch(() => setMsg("Download failed."));
   }
 
   if (missing) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px]">
-        <XCircle size={48} className="text-[var(--text-muted)] mb-4 opacity-40" />
-        <h2 className="text-lg font-semibold text-[var(--text-primary)] m-0">Enquiry not found</h2>
-        <p className="text-sm text-[var(--text-secondary)] mt-1 mb-4">This Enquiry may have been deleted or you may not have access.</p>
-        <Link to="/admin/enquiries" className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg bg-[var(--color-primary)] text-white text-xs font-semibold hover:bg-[var(--color-primary-hover)] transition-all no-underline hover:no-underline">
-          <ArrowLeft size={14} /> Back to Enquiries
+      <div className="flex flex-col items-center justify-center min-h-[400px] p-6 text-center">
+        <div className="w-16 h-16 rounded-3xl bg-rose-50 dark:bg-rose-500/10 text-rose-500 flex items-center justify-center mb-4">
+          <XCircle size={32} />
+        </div>
+        <h2 className="text-xl font-extrabold text-neutral-900 dark:text-white m-0">Enquiry Not Found</h2>
+        <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1 mb-6 max-w-sm">
+          This enquiry may have been removed or you do not have permission to view it.
+        </p>
+        <Link
+          to="/admin/enquiries"
+          className="inline-flex items-center gap-2 px-5 h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-sm shadow-blue-500/25 no-underline"
+        >
+          <ArrowLeft size={15} /> Back to Enquiries
         </Link>
       </div>
     );
   }
 
-  if (!enquiry) return <div className="py-10"><Loading label="Loading Enquiry" /></div>;
+  if (!enquiry) {
+    return (
+      <div className="py-16">
+        <Loading label="Loading Enquiry Specifications..." />
+      </div>
+    );
+  }
 
   const cfg = getStatusConfig(enquiry.status);
   const currentStepIdx = getStepIndex(enquiry.status);
 
   return (
-    <div className="flex flex-col min-h-[calc(100vh-100px)]">
-
-      {/* ── Sticky Header ── */}
-      <div className="shrink-0 bg-[var(--bg-card)] border-b border-[var(--border-default)] rounded-t-[16px] shadow-sm">
-        <div className="px-6 pt-5 pb-4">
-          {/* Back + breadcrumb */}
-          <div className="flex items-center gap-2 mb-3">
-            <Link to="/admin/enquiries" className="flex items-center justify-center w-8 h-8 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all no-underline">
+    <div className="space-y-6 pb-12">
+      {/* ── Top Navigation & Header Hero ────────────────────────────── */}
+      <div className="rounded-3xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] p-6 sm:p-7 shadow-xs space-y-6">
+        {/* Breadcrumb & Navigation */}
+        <div className="flex items-center justify-between gap-4 border-b border-neutral-100 dark:border-white/5 pb-4">
+          <div className="flex items-center gap-2">
+            <Link
+              to="/admin/enquiries"
+              className="flex items-center justify-center w-8 h-8 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#121520] text-neutral-600 dark:text-neutral-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all no-underline shadow-xs"
+            >
               <ChevronLeft size={16} />
             </Link>
-            <span className="text-[13px] text-[var(--text-muted)]">Back to Enquiries</span>
+            <span className="text-xs font-semibold text-neutral-400">Back to Enquiries</span>
           </div>
 
-          {/* Title row */}
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="flex items-center gap-3 mb-1.5">
-                <h1 className="text-[28px] font-bold tracking-tight text-[var(--text-primary)] m-0 leading-none">
-                  Enquiry — {enquiry.productType}
-                </h1>
-                <StatusBadge status={enquiry.status} size="md" />
-                {enquiry.isDraft && (
-                  <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-semibold bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20">
-                    DRAFT
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center gap-3 text-[13px] text-[var(--text-secondary)] flex-wrap">
-                <span className="font-mono text-[12px] font-medium text-[var(--color-primary)]">
-                  Enquiry-{enquiry.id.slice(0, 8).toUpperCase()}
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-xs font-bold px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+              ENQ-{enquiry.id.slice(0, 8).toUpperCase()}
+            </span>
+          </div>
+        </div>
+
+        {/* Title & Primary Action Controls */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+          <div className="space-y-2">
+            <div className="flex items-center gap-3 flex-wrap">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 dark:text-white tracking-tight m-0">
+                Enquiry — {enquiry.productType}
+              </h1>
+              <StatusBadge status={enquiry.status} size="md" />
+              {enquiry.isDraft && (
+                <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-extrabold bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20">
+                  DRAFT
                 </span>
-                <span className="w-1 h-1 rounded-full bg-[var(--border-default)]" />
-                <span className="flex items-center gap-1"><Building2 size={12} /> {enquiry.companyName}</span>
-                <span className="w-1 h-1 rounded-full bg-[var(--border-default)]" />
-                <span className="flex items-center gap-1"><Calendar size={12} /> Received {formatDate(enquiry.createdAtUtc)}</span>
-                {enquiry.assignedToUserId && (
-                  <>
-                    <span className="w-1 h-1 rounded-full bg-[var(--border-default)]" />
-                    <span className="flex items-center gap-1"><User size={12} /> Assigned</span>
-                  </>
-                )}
-                <span className="w-1 h-1 rounded-full bg-[var(--border-default)]" />
-                <span className="flex items-center gap-1"><AlertCircle size={12} /> <PriorityBadge priority={enquiry.priority} /></span>
-              </div>
+              )}
             </div>
 
-            {/* Actions */}
-            <div className="flex items-center gap-2 shrink-0 ml-4">
-              {!["Approved", "Quoted", "Accepted", "Rejected", "Declined", "Cancelled", "Expired"].includes(enquiry.status) && (
-                <button type="button" disabled={busy} onClick={() => {
+            {/* Metadata Badges */}
+            <div className="flex items-center gap-3 text-xs text-neutral-500 dark:text-neutral-400 flex-wrap">
+              <span className="flex items-center gap-1.5 font-semibold text-neutral-700 dark:text-neutral-300">
+                <Building2 size={13} className="text-blue-500" />
+                {enquiry.companyName}
+              </span>
+              <span className="w-1 h-1 rounded-full bg-neutral-300 dark:bg-neutral-700" />
+              <span className="flex items-center gap-1.5">
+                <Calendar size={13} className="text-neutral-400" />
+                Received {formatDate(enquiry.createdAtUtc)}
+              </span>
+              <span className="w-1 h-1 rounded-full bg-neutral-300 dark:bg-neutral-700" />
+              <PriorityBadge priority={enquiry.priority} />
+              {enquiry.assignedToUserId && (
+                <>
+                  <span className="w-1 h-1 rounded-full bg-neutral-300 dark:bg-neutral-700" />
+                  <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-neutral-100 dark:bg-white/5 text-neutral-600 dark:text-neutral-300 font-medium">
+                    <User size={11} /> Assigned
+                  </span>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center gap-2.5 shrink-0 self-start lg:self-center flex-wrap">
+            {!["Approved", "Quoted", "Accepted", "Rejected", "Declined", "Cancelled", "Expired"].includes(enquiry.status) && (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => {
                   const workflowOrder = ["Draft", "Submitted", "Received", "Under Review", "Approved"];
                   const idx = workflowOrder.indexOf(enquiry.status);
                   if (idx >= 0 && idx < workflowOrder.length - 1) void updateStatus(workflowOrder[idx + 1]);
                 }}
-                  className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg bg-[var(--color-primary)] text-white text-xs font-semibold hover:bg-[var(--color-primary-hover)] disabled:opacity-50 transition-all">
-                  <ChevronRight size={14} /> Advance Stage
-                </button>
-              )}
-              {enquiry.status === "Approved" && !enquiry.hasDraftQuotation && (
-                <button type="button" onClick={() => window.location.assign(`/admin/quotations/new?enquiryId=${enquiry.id}&companyName=${encodeURIComponent(enquiry.companyName)}`)}
-                  className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg bg-emerald-500 text-white text-xs font-semibold hover:bg-emerald-600 transition-all">
-                  <FileEdit size={15} /> Generate Quote
-                </button>
-              )}
-              {enquiry.hasDraftQuotation && (
-                <Link to={`/admin/quotations/${enquiry.draftQuotationId}`}
-                  className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg border border-amber-200 bg-amber-50 text-amber-700 text-xs font-semibold hover:bg-amber-100 transition-all no-underline hover:no-underline">
-                  <FileEdit size={15} /> {enquiry.status === "Approved" ? "View Draft" : "View Quote"}
-                </Link>
-              )}
-              {!["Draft", "Quoted", "Accepted", "Rejected", "Declined", "Cancelled", "Expired"].includes(enquiry.status) && (
-                <button type="button" disabled={busy} onClick={() => setShowRejectModal(true)}
-                  className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg border border-red-200 text-red-600 text-xs font-medium hover:bg-red-50 disabled:opacity-50 transition-all">
-                  <XCircle size={14} /> Reject
-                </button>
-              )}
-            </div>
+                className="inline-flex items-center gap-2 px-5 h-10 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold shadow-md shadow-blue-600/25 disabled:opacity-50 transition-all cursor-pointer"
+              >
+                {busy ? <Loader2 size={14} className="animate-spin" /> : <ChevronRight size={15} />}
+                <span>Advance Stage</span>
+              </button>
+            )}
+
+            {enquiry.status === "Approved" && !enquiry.hasDraftQuotation && (
+              <button
+                type="button"
+                onClick={() => window.location.assign(`/admin/quotations/new?enquiryId=${enquiry.id}&companyName=${encodeURIComponent(enquiry.companyName)}`)}
+                className="inline-flex items-center gap-2 px-5 h-10 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold shadow-md shadow-emerald-600/25 transition-all cursor-pointer"
+              >
+                <FileEdit size={15} />
+                <span>Generate Quotation</span>
+              </button>
+            )}
+
+            {enquiry.hasDraftQuotation && (
+              <Link
+                to={`/admin/quotations/${enquiry.draftQuotationId}`}
+                className="inline-flex items-center gap-2 px-4.5 h-10 rounded-xl border border-amber-300 dark:border-amber-500/40 bg-amber-50 dark:bg-amber-500/10 text-amber-800 dark:text-amber-300 text-xs font-bold hover:bg-amber-100 transition-all no-underline shadow-xs"
+              >
+                <FileEdit size={15} />
+                <span>{enquiry.status === "Approved" ? "View Draft Quote" : "View Quote"}</span>
+              </Link>
+            )}
+
+            {!["Draft", "Quoted", "Accepted", "Rejected", "Declined", "Cancelled", "Expired"].includes(enquiry.status) && (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => setShowRejectModal(true)}
+                className="inline-flex items-center gap-2 px-4 h-10 rounded-xl border border-rose-200 dark:border-rose-500/30 bg-rose-50/50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 text-xs font-bold hover:bg-rose-100/60 dark:hover:bg-rose-500/20 disabled:opacity-50 transition-all cursor-pointer"
+              >
+                <XCircle size={15} />
+                <span>Reject</span>
+              </button>
+            )}
           </div>
         </div>
 
-        {/* ── Workflow Progress ── */}
+        {/* ── Connected Horizontal Stepper ────────────────────────────── */}
         {currentStepIdx >= 0 && (
-          <div className="px-6 pb-5">
-            <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-app)] p-4">
-              <WorkflowProgress currentStatus={enquiry.status} />
-            </div>
+          <div className="pt-2 border-t border-neutral-100 dark:border-white/5">
+            <WorkflowProgress currentStatus={enquiry.status} />
           </div>
         )}
-
-        {/* ── Summary Cards ── */}
-        <div className="px-6 pb-5">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            <InfoCard icon={Building2} label="Customer" value={enquiry.companyName} sub={enquiry.fullName ? `Contact: ${enquiry.fullName}` : undefined} color="bg-[var(--color-primary)]/10" />
-            <InfoCard icon={Package} label="Product / Material" value={enquiry.productType} sub={enquiry.materialGrade ? `Grade: ${enquiry.materialGrade}` : undefined} color="bg-[#F0FDF4]" />
-            <InfoCard icon={MapPinned} label="Quantity / Delivery" value={enquiry.quantity} sub={enquiry.deliveryLocation ?? "No delivery location"} color="bg-[#EFF6FF]" />
-            <InfoCard icon={Activity} label="Status / Priority" value={cfg.label} sub={`Priority: ${enquiry.priority}`} color="bg-[#FFF7ED]" />
-          </div>
-        </div>
       </div>
 
-      {/* ── Status message ── */}
+      {/* ── Summary KPI Grid ────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+        <InfoCard
+          icon={Building2}
+          label="Customer"
+          value={enquiry.companyName}
+          sub={enquiry.fullName ? `Contact: ${enquiry.fullName}` : undefined}
+          gradient="bg-gradient-to-br from-blue-600 to-indigo-600 shadow-blue-500/20"
+        />
+        <InfoCard
+          icon={Package}
+          label="Product / Material"
+          value={enquiry.productType}
+          sub={enquiry.materialGrade ? `Grade: ${enquiry.materialGrade}` : undefined}
+          gradient="bg-gradient-to-br from-emerald-600 to-teal-600 shadow-emerald-500/20"
+        />
+        <InfoCard
+          icon={MapPinned}
+          label="Quantity / Delivery"
+          value={`${enquiry.quantity} Units`}
+          sub={enquiry.deliveryLocation ?? "No location specified"}
+          gradient="bg-gradient-to-br from-amber-500 to-orange-600 shadow-orange-500/20"
+        />
+        <InfoCard
+          icon={Activity}
+          label="Status / Priority"
+          value={cfg.label}
+          sub={`Priority: ${enquiry.priority}`}
+          gradient="bg-gradient-to-br from-violet-600 to-purple-600 shadow-purple-500/20"
+        />
+      </div>
+
+      {/* ── Status Flash Message ────────────────────────────────────── */}
       {msg && (
-        <div className={`mx-6 mt-4 rounded-xl px-4 py-3 text-xs font-medium flex items-center gap-2 ${
-          msg.includes("failed") ? "bg-red-50 text-red-600 border border-red-200" : "bg-green-50 text-green-700 border border-green-200"
-        }`}>
-          {msg.includes("failed") ? <XCircle size={14} /> : <CheckCircle size={14} />}
-          {msg}
+        <div
+          className={`rounded-2xl p-4 text-xs font-bold flex items-center justify-between border shadow-xs ${
+            msg.includes("failed") || msg.includes("Fail")
+              ? "bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-500/20"
+              : "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20"
+          }`}
+        >
+          <div className="flex items-center gap-2.5">
+            {msg.includes("failed") ? <XCircle size={16} /> : <CheckCircle2 size={16} />}
+            <span>{msg}</span>
+          </div>
+          <button type="button" onClick={() => setMsg(null)} className="opacity-70 hover:opacity-100">
+            <XCircle size={15} />
+          </button>
         </div>
       )}
 
-      {/* ── Two-Column Body ── */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6 px-6 py-6 items-start">
-
-        {/* ══ LEFT COLUMN ══ */}
+      {/* ── Main Two-Column Layout ──────────────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 items-start">
+        {/* ══ LEFT COLUMN (Accordion Specs) ══ */}
         <div className="space-y-5">
-
           {/* Customer Information */}
-          <Section icon={Building2} title="Customer Information">
-            <div className="flex items-center gap-4 mb-5 p-4 rounded-xl border border-[var(--border-default)] bg-[var(--bg-app)]">
-              <span className="flex items-center justify-center w-14 h-14 rounded-xl bg-[var(--color-primary)]/10 text-xl font-bold text-[var(--color-primary)] shrink-0">
-                {enquiry.companyName.charAt(0)}
-              </span>
-              <div>
-                <div className="text-base font-bold text-[var(--text-primary)]">{enquiry.companyName}</div>
-                <div className="text-[12px] text-[var(--text-secondary)]">Customer since N/A</div>
+          <Section icon={Building2} title="Customer Information" badge="Verified Account">
+            <div className="space-y-4">
+              <div className="flex items-center gap-4 p-4 rounded-2xl bg-neutral-50 dark:bg-white/[0.02] border border-neutral-100 dark:border-white/5">
+                <div className="w-13 h-13 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center font-black text-xl shadow-md shadow-blue-500/20 shrink-0">
+                  {enquiry.companyName.charAt(0)}
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-neutral-900 dark:text-white m-0">
+                    {enquiry.companyName}
+                  </h3>
+                  <p className="text-xs text-neutral-400 m-0 mt-0.5">Commercial Industrial Account</p>
+                </div>
               </div>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
-              <Field label="Contact Person" value={enquiry.fullName} icon={User} />
-              <Field label="Phone" value={enquiry.phone || "—"} icon={Phone} />
-              <Field label="Email" value={enquiry.email} icon={Mail} />
-              <Field label="Company" value={enquiry.companyName} icon={Building2} />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Field label="Contact Person" value={enquiry.fullName} icon={User} />
+                <Field label="Phone Number" value={enquiry.phone || "—"} icon={Phone} />
+                <Field label="Email Address" value={enquiry.email} icon={Mail} />
+                <Field label="Company Name" value={enquiry.companyName} icon={Building2} />
+              </div>
             </div>
           </Section>
 
           {/* Enquiry Information */}
-          <Section icon={FileText} title="Enquiry Information">
-            <div className="space-y-6">
-
+          <Section icon={FileText} title="Enquiry Technical Specifications">
+            <div className="space-y-6 pt-1">
               {/* Part Details */}
               <div>
-                <h4 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-3">Part Details</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
-                  <Field label="Part Name" value={enquiry.partName ?? "—"} />
-                  <Field label="Part Number" value={enquiry.partNumber ?? "—"} />
-                  <Field label="Application" value={enquiry.application ?? "—"} />
-                  <Field label="Industry" value={enquiry.industry ?? "—"} />
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                  <h4 className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 m-0">
+                    Part & Component Details
+                  </h4>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Field label="Part Name" value={enquiry.partName} />
+                  <Field label="Part Number" value={enquiry.partNumber} />
+                  <Field label="Target Application" value={enquiry.application} />
+                  <Field label="Industry Sector" value={enquiry.industry} />
                 </div>
               </div>
-              <div className="border-t border-[var(--border-default)]" />
 
               {/* Material Details */}
-              <div>
-                <h4 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-3">Material Details</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
-                  <Field label="Material Standard" value={enquiry.materialStandard ?? "—"} />
+              <div className="pt-4 border-t border-neutral-100 dark:border-white/5">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  <h4 className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 m-0">
+                    Metallurgy & Tooling
+                  </h4>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Field label="Material Standard" value={enquiry.materialStandard} />
                   <Field label="Approx Weight" value={enquiry.approxWeight != null ? `${enquiry.approxWeight} kg` : "—"} />
-                  <Field label="Machining Required" value={enquiry.machiningRequired ?? "—"} />
-                  <Field label="Pattern Availability" value={enquiry.patternAvailability ?? "—"} />
+                  <Field label="Machining Required" value={enquiry.machiningRequired} />
+                  <Field label="Pattern Availability" value={enquiry.patternAvailability} />
                 </div>
               </div>
-              <div className="border-t border-[var(--border-default)]" />
 
               {/* Quantity Details */}
-              <div>
-                <h4 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-3">Quantity Details</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-8 gap-y-4">
-                  <Field label="Prototype Quantity" value={enquiry.prototypeQuantity ?? "—"} />
-                  <Field label="Production Quantity" value={enquiry.productionQuantity ?? enquiry.quantity} />
-                  <Field label="Annual Requirement" value={enquiry.annualRequirement ?? "—"} />
+              <div className="pt-4 border-t border-neutral-100 dark:border-white/5">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                  <h4 className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 m-0">
+                    Volume & Production Schedule
+                  </h4>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <Field label="Prototype Qty" value={enquiry.prototypeQuantity} />
+                  <Field label="Production Qty" value={enquiry.productionQuantity ?? enquiry.quantity} />
+                  <Field label="Annual Requirement" value={enquiry.annualRequirement} />
                 </div>
               </div>
-              <div className="border-t border-[var(--border-default)]" />
 
               {/* Delivery Details */}
-              <div>
-                <h4 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-3">Delivery Details</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
-                  <Field label="Delivery Location" value={enquiry.deliveryLocation ?? "—"} />
+              <div className="pt-4 border-t border-neutral-100 dark:border-white/5">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="w-1.5 h-1.5 rounded-full bg-violet-500" />
+                  <h4 className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 m-0">
+                    Logistics & Delivery Terms
+                  </h4>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Field label="Delivery Location" value={enquiry.deliveryLocation} />
                   <Field label="Expected Delivery Date" value={enquiry.expectedDeliveryDate ? formatDate(enquiry.expectedDeliveryDate) : "—"} />
-                  <Field label="Preferred Delivery Terms" value={enquiry.preferredDeliveryTerms ?? "—"} />
+                  <Field label="Preferred Terms" value={enquiry.preferredDeliveryTerms} />
                 </div>
               </div>
 
               {/* Additional Requirements */}
               {enquiry.additionalRequirements && (
-                <>
-                  <div className="border-t border-[var(--border-default)]" />
-                  <div>
-                    <h4 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-3">Additional Requirements</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {enquiry.additionalRequirements.split(", ").filter(Boolean).map((r: string) => (
-                        <span key={r} className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium bg-white dark:bg-[var(--bg-surface)] border border-[var(--border-default)] text-[var(--text-primary)]">
-                          <CheckCircle size={12} className="text-emerald-500 shrink-0" />
-                          {r}
-                        </span>
-                      ))}
-                    </div>
+                <div className="pt-4 border-t border-neutral-100 dark:border-white/5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-500" />
+                    <h4 className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 m-0">
+                      Additional Certifications & Testing
+                    </h4>
                   </div>
-                </>
+                  <div className="flex flex-wrap gap-2">
+                    {enquiry.additionalRequirements.split(", ").filter(Boolean).map((r: string) => (
+                      <span
+                        key={r}
+                        className="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-800 dark:text-emerald-300 shadow-xs"
+                      >
+                        <CheckCircle2 size={13} className="text-emerald-500 shrink-0" />
+                        {r}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               )}
 
               {/* Remarks */}
               {enquiry.remarks && (
-                <>
-                  <div className="border-t border-[var(--border-default)]" />
-                  <div>
-                    <h4 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-3">Remarks</h4>
-                    <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-app)] px-4 py-3">
-                      <p className="text-[13px] text-[var(--text-primary)] leading-relaxed m-0 whitespace-pre-wrap">{enquiry.remarks}</p>
-                    </div>
+                <div className="pt-4 border-t border-neutral-100 dark:border-white/5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                    <h4 className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 m-0">
+                      Customer Special Remarks
+                    </h4>
                   </div>
-                </>
+                  <div className="rounded-2xl border border-neutral-200/80 dark:border-white/10 bg-neutral-50/70 dark:bg-white/[0.02] p-4">
+                    <p className="text-xs sm:text-[13px] text-neutral-800 dark:text-neutral-200 leading-relaxed m-0 whitespace-pre-wrap font-medium">
+                      {enquiry.remarks}
+                    </p>
+                  </div>
+                </div>
               )}
             </div>
           </Section>
 
           {/* Drawings & Attachments */}
-          <Section icon={Paperclip} title={`Drawings & Attachments${enquiry.files.length > 0 ? ` (${enquiry.files.length})` : ""}`}>
+          <Section
+            icon={Paperclip}
+            title="Drawings & CAD Attachments"
+            badge={`${enquiry.files.length} Attached`}
+          >
             {enquiry.files.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
                 {enquiry.files.map((f) => {
                   const isImage = f.contentType?.startsWith("image/");
                   return (
-                    <div key={f.id} className="group rounded-xl border border-[var(--border-default)] overflow-hidden bg-[var(--bg-app)] hover:shadow-md hover:border-[var(--color-primary)]/30 transition-all duration-200">
-                      {/* Preview area */}
-                      <div className="relative aspect-[4/3] bg-[var(--bg-surface)]">
+                    <div
+                      key={f.id}
+                      className="group rounded-2xl border border-neutral-200/80 dark:border-white/10 overflow-hidden bg-neutral-50/60 dark:bg-white/[0.02] hover:shadow-md hover:border-blue-500/40 transition-all duration-200"
+                    >
+                      {/* Preview */}
+                      <div className="relative aspect-[4/3] bg-neutral-100 dark:bg-white/5">
                         {isImage ? (
                           <EnquiryImage enquiryId={id} fileId={f.id} fileName={f.fileName} />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
-                            <FileText size={36} className="text-[var(--text-muted)] opacity-40" />
+                            <FileText size={36} className="text-neutral-400 opacity-40" />
                           </div>
                         )}
-                        {/* Download overlay */}
+                        {/* Download Overlay */}
                         <button
                           type="button"
                           onClick={() => downloadFile(f.id, f.fileName)}
-                          className="absolute top-2 right-2 flex items-center justify-center w-8 h-8 rounded-lg bg-black/50 text-white opacity-0 group-hover:opacity-100 hover:bg-[var(--color-primary)] transition-all duration-200"
+                          className="absolute top-2.5 right-2.5 flex items-center justify-center w-8 h-8 rounded-xl bg-black/60 backdrop-blur-xs text-white opacity-0 group-hover:opacity-100 hover:bg-blue-600 transition-all duration-200 shadow-sm cursor-pointer"
                           title="Download"
                         >
                           <Download size={14} />
                         </button>
                       </div>
-                      {/* Info bar */}
-                      <div className="px-3 py-2.5 border-t border-[var(--border-default)]">
-                        <div className="text-[12px] font-medium text-[var(--text-primary)] truncate leading-tight">{f.fileName}</div>
-                        <div className="text-[11px] text-[var(--text-muted)] mt-0.5">{(f.sizeBytes / 1024).toFixed(1)} KB</div>
+                      {/* Info */}
+                      <div className="p-3 border-t border-neutral-200/80 dark:border-white/10 bg-white dark:bg-[#0f121a]">
+                        <div className="text-xs font-bold text-neutral-900 dark:text-white truncate leading-tight">
+                          {f.fileName}
+                        </div>
+                        <div className="text-[11px] text-neutral-400 font-mono mt-0.5">
+                          {(f.sizeBytes / 1024).toFixed(1)} KB
+                        </div>
                       </div>
                     </div>
                   );
                 })}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center py-12 rounded-xl border border-dashed border-[var(--border-default)]">
-                <Paperclip size={36} className="text-[var(--text-muted)] opacity-30 mb-3" />
-                <p className="text-[13px] text-[var(--text-muted)] m-0">No drawings or attachments uploaded</p>
-                <button type="button" disabled className="mt-3 inline-flex items-center gap-1.5 px-4 h-8 rounded-lg border border-[var(--border-default)] text-xs font-medium text-[var(--text-muted)] opacity-50 cursor-not-allowed">
-                  <Download size={13} /> Upload Drawing
-                </button>
+              <div className="flex flex-col items-center justify-center py-12 rounded-2xl border border-dashed border-neutral-200 dark:border-white/10 text-center">
+                <Paperclip size={36} className="text-neutral-300 dark:text-neutral-700 mb-3" />
+                <p className="text-xs text-neutral-500 font-medium m-0">No technical drawings or CAD files uploaded</p>
               </div>
             )}
           </Section>
 
           {/* Related Records */}
-          <Section icon={Activity} title="Related Records" defaultOpen={false}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <RelatedCard icon={FileEdit} label="Quote" status={enquiry.status === "Approved" ? "Pending" : "Not Started"} href="/admin/quotations" />
-              <RelatedCard icon={Factory} label="Pattern / Tooling" status="Not Started" href="/admin/production" />
-              <RelatedCard icon={Truck} label="Dispatch" status="Pending" href="/admin/orders" />
-              <RelatedCard icon={CreditCard} label="Invoice" status="Pending" href="/admin/invoices" />
+          <Section icon={Activity} title="Related Workflow Records" defaultOpen={false}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <RelatedCard
+                icon={FileEdit}
+                label="Commercial Quotation"
+                status={enquiry.status === "Approved" ? "Pending Creation" : enquiry.hasDraftQuotation ? "Quotation Active" : "Not Started"}
+                href="/admin/quotations"
+              />
+              <RelatedCard
+                icon={Factory}
+                label="Foundry Production Board"
+                status="Awaiting Quotation"
+                href="/admin/production"
+              />
+              <RelatedCard
+                icon={Truck}
+                label="Dispatch & Logistics"
+                status="Pending Order"
+                href="/admin/orders"
+              />
+              <RelatedCard
+                icon={CreditCard}
+                label="Tax Invoicing"
+                status="Pending Delivery"
+                href="/admin/invoices"
+              />
             </div>
           </Section>
         </div>
 
-        {/* ══ RIGHT COLUMN ══ */}
+        {/* ══ RIGHT COLUMN (Status & Audit Timeline) ══ */}
         <div className="space-y-5 lg:sticky lg:top-6">
+          {/* Current Status Sidebar Card */}
+          <section className="rounded-3xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] p-5 sm:p-6 shadow-xs space-y-5">
+            <div className="flex items-center justify-between border-b border-neutral-100 dark:border-white/5 pb-3">
+              <h3 className="text-xs font-extrabold uppercase tracking-wider text-neutral-400 m-0">
+                Current Lifecycle State
+              </h3>
+              <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+            </div>
 
-          {/* Current Status */}
-          <section className="rounded-[16px] border border-[var(--border-default)] bg-[var(--bg-card)] p-5 shadow-sm">
-            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)] m-0 mb-4">Current Status</h3>
-            <div className="flex items-center gap-3 mb-4">
-              <span className={`flex items-center justify-center w-12 h-12 rounded-xl ${cfg.bg}`}>
+            <div className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-neutral-50 dark:bg-white/[0.02] border border-neutral-100 dark:border-white/5">
+              <span className={`flex items-center justify-center w-12 h-12 rounded-2xl ${cfg.bg} ${cfg.border} border shadow-xs`}>
                 <cfg.icon size={22} className={cfg.text} />
               </span>
               <div>
-                <div className={`text-base font-bold ${cfg.text}`}>{cfg.label}</div>
-                <div className="text-[12px] text-[var(--text-secondary)]">
-                  Updated {enquiry.statusHistory.length > 0 ? formatDate(enquiry.statusHistory[enquiry.statusHistory.length - 1].occurredAtUtc) : formatDate(enquiry.createdAtUtc)}
+                <div className={`text-base font-black ${cfg.text}`}>{cfg.label}</div>
+                <div className="text-[11px] text-neutral-400 font-medium">
+                  {enquiry.statusHistory.length > 0
+                    ? `Updated ${formatDate(enquiry.statusHistory[enquiry.statusHistory.length - 1].occurredAtUtc)}`
+                    : `Created ${formatDate(enquiry.createdAtUtc)}`}
                 </div>
               </div>
             </div>
-            <div className="space-y-3 text-[12px]">
-              <div className="flex items-center justify-between">
-                <span className="text-[var(--text-muted)]">Priority</span>
+
+            <div className="space-y-2.5 text-xs">
+              <div className="flex items-center justify-between py-1 border-b border-neutral-100 dark:border-white/5">
+                <span className="text-neutral-500">Evaluation Priority</span>
                 <PriorityBadge priority={enquiry.priority} />
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[var(--text-muted)]">Assigned Engineer</span>
-                <span className="text-[var(--text-primary)] font-medium">{enquiry.assignedToUserId ? "Assigned" : "Unassigned"}</span>
+              <div className="flex items-center justify-between py-1 border-b border-neutral-100 dark:border-white/5">
+                <span className="text-neutral-500">Assigned Engineer</span>
+                <span className="font-bold text-neutral-900 dark:text-white">
+                  {enquiry.assignedToUserId ? "Staff Engineer Assigned" : "Unassigned"}
+                </span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[var(--text-muted)]">Created</span>
-                <span className="text-[var(--text-primary)]">{formatDate(enquiry.createdAtUtc)}</span>
+              <div className="flex items-center justify-between py-1 border-b border-neutral-100 dark:border-white/5">
+                <span className="text-neutral-500">Created Timestamp</span>
+                <span className="font-mono text-neutral-700 dark:text-neutral-300">
+                  {formatDate(enquiry.createdAtUtc)}
+                </span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[var(--text-muted)]">Last Updated</span>
-                <span className="text-[var(--text-primary)]">
-                  {enquiry.statusHistory.length > 0 ? formatDate(enquiry.statusHistory[enquiry.statusHistory.length - 1].occurredAtUtc) : formatDate(enquiry.createdAtUtc)}
+              <div className="flex items-center justify-between py-1">
+                <span className="text-neutral-500">Last System Update</span>
+                <span className="font-mono text-neutral-700 dark:text-neutral-300">
+                  {enquiry.statusHistory.length > 0
+                    ? formatDate(enquiry.statusHistory[enquiry.statusHistory.length - 1].occurredAtUtc)
+                    : formatDate(enquiry.createdAtUtc)}
                 </span>
               </div>
             </div>
           </section>
 
-          {/* Status Timeline */}
+          {/* Audit Timeline Sidebar Card */}
           {enquiry.statusHistory.length > 0 && (
-            <section className="rounded-[16px] border border-[var(--border-default)] bg-[var(--bg-card)] p-5 shadow-sm">
-              <div className="flex items-center gap-2 mb-4">
-                <Clock size={14} className="text-[var(--text-muted)]" />
-                <h3 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)] m-0">Timeline</h3>
+            <section className="rounded-3xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] p-5 sm:p-6 shadow-xs space-y-4">
+              <div className="flex items-center gap-2 border-b border-neutral-100 dark:border-white/5 pb-3">
+                <Clock size={15} className="text-blue-500" />
+                <h3 className="text-xs font-extrabold uppercase tracking-wider text-neutral-400 m-0">
+                  Audit Progression History
+                </h3>
               </div>
-              <div className="space-y-0">
+
+              <div className="space-y-0 pt-1">
                 {enquiry.statusHistory.map((h, i) => {
                   const isLast = i === enquiry.statusHistory.length - 1;
                   const stepCfg = getStatusConfig(h.toStatus);
                   return (
                     <div key={i} className="flex gap-3">
                       <div className="flex flex-col items-center">
-                        <div className={`w-2.5 h-2.5 rounded-full mt-1 ring-2 ring-[var(--bg-card)] ${stepCfg.dot}`} />
-                        {!isLast && <div className="w-px flex-1 bg-[var(--border-default)]" />}
+                        <div className={`w-2.5 h-2.5 rounded-full mt-1.5 ring-4 ring-white dark:ring-[#0f121a] ${stepCfg.dot}`} />
+                        {!isLast && <div className="w-0.5 flex-1 bg-neutral-200 dark:bg-white/10 my-1" />}
                       </div>
-                      <div className={`${isLast ? "" : "pb-4"}`}>
-                        <div className="text-[12px] font-semibold text-[var(--text-primary)]">{h.fromStatus} → {h.toStatus}</div>
-                        <div className="text-[11px] text-[var(--text-muted)]">{formatDate(h.occurredAtUtc)} · {h.changedByRole}</div>
-                        {h.note && <div className="mt-1 text-[11px] text-[var(--text-secondary)] bg-[var(--bg-surface-hover)] rounded-lg px-2.5 py-1.5">{h.note}</div>}
+                      <div className={`${isLast ? "" : "pb-4"} flex-1 min-w-0`}>
+                        <div className="text-xs font-bold text-neutral-900 dark:text-white truncate">
+                          {h.fromStatus} → {h.toStatus}
+                        </div>
+                        <div className="text-[11px] text-neutral-400 font-mono mt-0.5">
+                          {formatDate(h.occurredAtUtc)} · <span className="font-sans font-bold text-neutral-500">{h.changedByRole}</span>
+                        </div>
+                        {h.note && (
+                          <div className="mt-1.5 text-xs text-neutral-700 dark:text-neutral-300 bg-neutral-50 dark:bg-white/[0.03] border border-neutral-100 dark:border-white/5 rounded-xl p-2.5">
+                            {h.note}
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
@@ -623,26 +927,26 @@ export default function EngineerEnquiryDetailPage() {
             </section>
           )}
 
-          {/* Activity */}
+          {/* Internal Comments Sidebar Card */}
           {enquiry.comments.length > 0 && (
-            <section className="rounded-[16px] border border-[var(--border-default)] bg-[var(--bg-card)] p-5 shadow-sm">
-              <div className="flex items-center gap-2 mb-4">
-                <MessageSquare size={14} className="text-[var(--text-muted)]" />
-                <h3 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)] m-0">Activity</h3>
+            <section className="rounded-3xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] p-5 sm:p-6 shadow-xs space-y-4">
+              <div className="flex items-center gap-2 border-b border-neutral-100 dark:border-white/5 pb-3">
+                <MessageSquare size={15} className="text-blue-500" />
+                <h3 className="text-xs font-extrabold uppercase tracking-wider text-neutral-400 m-0">
+                  Engineering Notes
+                </h3>
               </div>
-              <div className="space-y-4">
+
+              <div className="space-y-3">
                 {enquiry.comments.map((c) => (
-                  <div key={c.id} className="flex gap-3">
-                    <span className="flex items-center justify-center w-7 h-7 rounded-full bg-[var(--color-primary)]/10 text-[10px] font-bold text-[var(--color-primary)] shrink-0 mt-0.5">
-                      {c.authorRole.charAt(0)}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[12px] font-medium text-[var(--text-primary)]">{c.authorRole}</span>
-                        <span className="text-[11px] text-[var(--text-muted)]">{formatDate(c.createdAtUtc)}</span>
-                      </div>
-                      <p className="text-[12px] text-[var(--text-secondary)] mt-1 m-0">{c.message}</p>
+                  <div key={c.id} className="p-3 rounded-2xl bg-neutral-50 dark:bg-white/[0.02] border border-neutral-100 dark:border-white/5 space-y-1.5">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="font-bold text-blue-600 dark:text-blue-400">{c.authorRole}</span>
+                      <span className="text-neutral-400 font-mono">{formatDate(c.createdAtUtc)}</span>
                     </div>
+                    <p className="text-xs text-neutral-700 dark:text-neutral-300 m-0 leading-relaxed font-medium">
+                      {c.message}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -651,65 +955,91 @@ export default function EngineerEnquiryDetailPage() {
         </div>
       </div>
 
-      {/* ── Sticky Bottom Action Bar ── */}
-      <div className="shrink-0 border-t border-[var(--border-default)] bg-[var(--bg-card)] px-6 py-4 flex items-center gap-3">
-        {enquiry.hasDraftQuotation ? (
-          <Link to={`/admin/quotations/${enquiry.draftQuotationId}`}
-            className="inline-flex items-center gap-1.5 px-5 h-10 rounded-lg border border-amber-200 bg-amber-50 text-amber-700 text-xs font-semibold hover:bg-amber-100 transition-all no-underline hover:no-underline">
-            <FileEdit size={15} /> {enquiry.status === "Approved" ? "View Draft Quote" : "View Quote"}
-          </Link>
-        ) : enquiry.status === "Approved" ? (
-          <button type="button" onClick={() => window.location.assign(`/admin/quotations/new?enquiryId=${enquiry.id}&companyName=${encodeURIComponent(enquiry.companyName)}`)}
-            className="inline-flex items-center gap-1.5 px-5 h-10 rounded-lg bg-emerald-500 text-white text-xs font-semibold hover:bg-emerald-600 transition-all">
-            <FileEdit size={15} /> Generate Quote
-          </button>
-        ) : (
-          <span />
-        )}
-        <div className="flex-1" />
-        <Link to="/admin/enquiries"
-          className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all no-underline hover:no-underline">
-          <ArrowLeft size={14} /> Back to List
+      {/* ── Sticky Bottom Action Bar ────────────────────────────────── */}
+      <div className="rounded-3xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] p-4 sm:px-6 flex items-center justify-between shadow-xs">
+        <div className="flex items-center gap-3">
+          {enquiry.hasDraftQuotation ? (
+            <Link
+              to={`/admin/quotations/${enquiry.draftQuotationId}`}
+              className="inline-flex items-center gap-2 px-5 h-10 rounded-xl border border-amber-300 dark:border-amber-500/40 bg-amber-50 dark:bg-amber-500/10 text-amber-800 dark:text-amber-300 text-xs font-bold hover:bg-amber-100 transition-all no-underline shadow-xs"
+            >
+              <FileEdit size={15} />
+              <span>{enquiry.status === "Approved" ? "View Draft Quote" : "View Quote"}</span>
+            </Link>
+          ) : enquiry.status === "Approved" ? (
+            <button
+              type="button"
+              onClick={() => window.location.assign(`/admin/quotations/new?enquiryId=${enquiry.id}&companyName=${encodeURIComponent(enquiry.companyName)}`)}
+              className="inline-flex items-center gap-2 px-5 h-10 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold shadow-md shadow-emerald-600/25 transition-all cursor-pointer"
+            >
+              <FileEdit size={15} />
+              <span>Generate Quotation</span>
+            </button>
+          ) : null}
+        </div>
+
+        <Link
+          to="/admin/enquiries"
+          className="inline-flex items-center gap-2 px-4 h-9 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#121520] text-xs font-bold text-neutral-600 dark:text-neutral-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all no-underline shadow-xs"
+        >
+          <ArrowLeft size={14} /> Back to Enquiries
         </Link>
       </div>
 
-      {/* ── Reject Modal ── */}
+      {/* ── Reject Modal ────────────────────────────────────────────── */}
       {showRejectModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-md" onClick={() => { setShowRejectModal(false); setRejectReason(""); }} />
-          <div className="relative w-full max-w-sm mx-4 rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="h-1.5 bg-gradient-to-r from-red-500 to-red-400" />
-            <div className="p-6">
-              <div className="flex items-center gap-4 mb-5">
-                <span className="flex items-center justify-center w-12 h-12 rounded-2xl bg-red-50 dark:bg-red-500/10 text-red-500 shrink-0">
-                  <XCircle size={22} />
-                </span>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+            onClick={() => { setShowRejectModal(false); setRejectReason(""); }}
+          />
+          <div className="relative w-full max-w-md rounded-3xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="h-1.5 bg-gradient-to-r from-rose-500 to-rose-600" />
+            <div className="p-6 sm:p-7 space-y-5">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 border border-rose-200 dark:border-rose-500/20">
+                  <XCircle size={24} />
+                </div>
                 <div>
-                  <h3 className="text-[16px] font-bold text-[var(--text-primary)] m-0">Reject Enquiry</h3>
-                  <p className="text-[12px] text-[var(--text-muted)] m-0 mt-0.5">This will mark the Enquiry as rejected.</p>
+                  <h3 className="text-lg font-extrabold text-neutral-900 dark:text-white m-0">Reject Enquiry</h3>
+                  <p className="text-xs text-neutral-400 m-0 mt-0.5">Please provide a clear reason for administrative record.</p>
                 </div>
               </div>
 
-              <div className="mb-4">
-                <label className="text-[12px] font-medium text-[var(--text-primary)] block mb-1.5">Reason for Rejection</label>
-                <textarea value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} rows={3} placeholder="Explain why this Enquiry is being rejected..."
-                  className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2.5 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-red-500 resize-none" />
+              <div>
+                <label className="text-xs font-bold text-neutral-700 dark:text-neutral-300 block mb-1.5">
+                  Rejection Reason / Note
+                </label>
+                <textarea
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  rows={3}
+                  placeholder="e.g. Incompatible metallurgy standard or unsupported casting dimensions..."
+                  className="w-full rounded-2xl border border-neutral-200 dark:border-white/10 bg-neutral-50 dark:bg-[#121520] p-3.5 text-xs text-neutral-900 dark:text-white placeholder:text-neutral-400 outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 resize-none font-medium"
+                />
               </div>
 
-              <div className="border-t border-[var(--border-default)] mb-4" />
-              <div className="flex items-center justify-end gap-2.5">
-                <button type="button" disabled={busy} onClick={() => { setShowRejectModal(false); setRejectReason(""); }}
-                  className="px-4 h-9 rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all disabled:opacity-50">
+              <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-neutral-100 dark:border-white/5">
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => { setShowRejectModal(false); setRejectReason(""); }}
+                  className="px-4.5 h-10 rounded-xl border border-neutral-200 dark:border-white/10 text-xs font-bold text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-white/5 transition-all cursor-pointer"
+                >
                   Cancel
                 </button>
-                <button type="button" disabled={busy || !rejectReason.trim()} onClick={() => {
-                  void updateStatus("Rejected", rejectReason.trim());
-                  setShowRejectModal(false);
-                  setRejectReason("");
-                }}
-                  className="px-5 h-9 rounded-xl bg-red-500 text-white text-[12px] font-semibold hover:bg-red-600 disabled:opacity-50 transition-all flex items-center gap-1.5 shadow-sm">
+                <button
+                  type="button"
+                  disabled={busy || !rejectReason.trim()}
+                  onClick={() => {
+                    void updateStatus("Rejected", rejectReason.trim());
+                    setShowRejectModal(false);
+                    setRejectReason("");
+                  }}
+                  className="px-5 h-10 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white text-xs font-bold disabled:opacity-50 transition-all flex items-center gap-2 shadow-sm shadow-rose-500/20 cursor-pointer"
+                >
                   {busy ? <Loader2 size={14} className="animate-spin" /> : <XCircle size={14} />}
-                  {busy ? "Rejecting..." : "Reject Enquiry"}
+                  <span>{busy ? "Rejecting..." : "Confirm Rejection"}</span>
                 </button>
               </div>
             </div>

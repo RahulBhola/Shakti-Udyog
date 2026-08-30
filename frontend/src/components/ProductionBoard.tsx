@@ -180,8 +180,8 @@ export function ProductionBoard() {
         setJobs(mapped);
       }).catch(() => setJobs([])).finally(() => setLoading(false));
     } else {
-      apiGet<ProductionJob[]>("/api/v1/admin/production-board/jobs")
-        .then(setJobs)
+      apiGet<any>("/api/v1/admin/production-board/jobs")
+        .then((data) => setJobs(Array.isArray(data) ? data : (Array.isArray(data?.items) ? data.items : [])))
         .catch(() => setJobs([]))
         .finally(() => setLoading(false));
     }

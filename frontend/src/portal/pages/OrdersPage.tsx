@@ -1,5 +1,6 @@
-import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, useCallback, type FormEvent, type ReactNode } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
+import { connectRealtime, getRealtimeConnection, type StageChangedPayload } from "../../realtime/signalR";
 import {
   ArrowLeft,
   Calendar,
@@ -20,6 +21,9 @@ import {
   Loader2,
   ArrowUpRight,
   X,
+  Layers,
+  Flame,
+  PackageCheck,
 } from "lucide-react";
 import {
   customerApi,
@@ -35,6 +39,9 @@ import { cn } from "../../lib/utils";
 
 /* ── Status badge ─────────────────────────────────────────────── */
 const statusConfig: Record<string, { bg: string; text: string; dot: string }> = {
+  pending_advance: { bg: "bg-amber-500/10 border-amber-500/20", text: "text-amber-600 dark:text-amber-400", dot: "bg-amber-500" },
+  awaiting_approval: { bg: "bg-purple-500/10 border-purple-500/20", text: "text-purple-600 dark:text-purple-400", dot: "bg-purple-500" },
+  advance_paid: { bg: "bg-emerald-500/10 border-emerald-500/20", text: "text-emerald-600 dark:text-emerald-400", dot: "bg-emerald-500" },
   confirmed: { bg: "bg-blue-500/10 border-blue-500/20", text: "text-blue-600 dark:text-blue-400", dot: "bg-blue-500" },
   pattern_development: { bg: "bg-amber-500/10 border-amber-500/20", text: "text-amber-600 dark:text-amber-400", dot: "bg-amber-500" },
   production: { bg: "bg-orange-500/10 border-orange-500/20", text: "text-orange-600 dark:text-orange-400", dot: "bg-orange-500" },
@@ -65,19 +72,15 @@ function StatusBadge({ status, label }: { status: string; label?: string }) {
 
 /* ── Workflow stages ──────────────────────────────────────────── */
 const WORKFLOW = [
-  { key: "confirmed", label: "Confirmed", icon: CheckCircle2 },
-  { key: "pattern_development", label: "Pattern Dev", icon: FileText },
-  { key: "production", label: "Melting & Casting", icon: Package },
-  { key: "quality_check", label: "QA & Inspection", icon: Clock },
-  { key: "packed", label: "Packing", icon: Package },
-  { key: "ready_to_dispatch", label: "Ready to Dispatch", icon: Truck },
-  { key: "dispatched", label: "In Transit", icon: Truck },
-  { key: "delivered", label: "Delivered", icon: CheckCircle2 },
+  { key: "pattern_development", label: "Pattern Dev", icon: Layers, desc: "Tooling & CAD Design" },
+  { key: "production", label: "Melting & Casting", icon: Flame, desc: "Foundry Pouring" },
+  { key: "quality_check", label: "QA & Inspection", icon: ShieldCheck, desc: "Dimensional & CMM QA" },
+  { key: "packed", label: "Packing", icon: PackageCheck, desc: "Wooden Crate Packing" },
+  { key: "ready_to_dispatch", label: "Ready to Dispatch", icon: Truck, desc: "Staged for Logistics" },
 ];
 const WORKFLOW_ORDER = Object.fromEntries(WORKFLOW.map((s, i) => [s.key, i]));
 
 const trackingFlow = [
-  "confirmed",
   "pattern_development",
   "production",
   "quality_check",
@@ -611,11 +614,29 @@ export function OrderDetailPage() {
   const [supportOpen, setSupportOpen] = useState(false);
   const [supportMessage, setSupportMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
+  const loadOrder = useCallback(() => {
     customerApi.order(id).then(setOrder).catch(() => setMissing(true));
     customerApi.orderComments(id).then(setComments).catch(() => {});
   }, [id]);
+
+  useEffect(() => {
+    loadOrder();
+  }, [loadOrder]);
+
+  // Realtime SignalR sync
+  useEffect(() => {
+    void connectRealtime();
+    const conn = getRealtimeConnection();
+    const handler = (p: StageChangedPayload) => {
+      if (p.orderId === id) {
+        loadOrder();
+      }
+    };
+    conn.on("stageChanged", handler);
+    return () => {
+      conn.off("stageChanged", handler);
+    };
+  }, [id, loadOrder]);
 
   async function postComment() {
     const message = newComment.trim();
@@ -654,7 +675,9 @@ export function OrderDetailPage() {
   if (missing) return <EmptyState title="Order not found" text="The requested manufacturing order could not be loaded." />;
   if (!order) return <Loading label="Loading manufacturing order..." />;
 
-  const currentIndex = WORKFLOW_ORDER[order.status] ?? -1;
+  const STAGES = ["pattern_development", "production", "quality_check", "packed", "ready_to_dispatch"];
+  const currentStageKey = order.manufacturingStage ?? (STAGES.includes(order.status) ? order.status : (order.status === "dispatched" || order.status === "delivered" ? "ready_to_dispatch" : "pattern_development"));
+  const currentIndex = Math.max(0, STAGES.indexOf(currentStageKey));
 
   return (
     <div className="space-y-6 pb-8">
@@ -711,51 +734,76 @@ export function OrderDetailPage() {
         </div>
       )}
 
-      {/* ── 8-Stage Visual Timeline ─────────────────────────────────── */}
-      <div className="rounded-3xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] p-6 shadow-xs space-y-4">
+      {/* ── 5-Stage Visual Timeline (Connected Stepper UI) ─────────── */}
+      <div className="rounded-3xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] p-6 shadow-xs space-y-5">
         <div className="flex items-center justify-between border-b border-neutral-100 dark:border-white/5 pb-3">
-          <h3 className="text-sm font-bold text-neutral-900 dark:text-white m-0">Foundry Manufacturing Progress</h3>
-          <span className="text-xs font-bold text-blue-600 dark:text-blue-400 font-mono">Stage {currentIndex + 1} of {WORKFLOW.length}</span>
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <h3 className="text-sm font-bold text-neutral-900 dark:text-white m-0">Foundry Manufacturing Progress (5 Core Stages)</h3>
+          </div>
+          <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
+            Stage {currentIndex + 1} of {WORKFLOW.length} · {WORKFLOW[currentIndex]?.label ?? "In Progress"}
+          </span>
         </div>
 
-        <div className="flex items-center justify-between gap-1 overflow-x-auto pb-2">
+        {/* Connected Horizontal Stepper Bar */}
+        <div className="flex items-center justify-between gap-0 overflow-x-auto py-2 px-1">
           {WORKFLOW.map((stage, i) => {
             const Icon = stage.icon;
             const isCompleted = i < currentIndex;
             const isCurrent = i === currentIndex;
+            const isPastOrCurrent = i <= currentIndex;
+            const isNextStep = i < WORKFLOW.length - 1;
+            const isLineActive = i < currentIndex;
+
             return (
-              <div key={stage.key} className="flex items-center gap-0 flex-1 min-w-[75px]">
-                <div className="flex flex-col items-center gap-1.5 min-w-0 flex-1">
+              <div key={stage.key} className="flex items-center flex-1 min-w-0 last:flex-none">
+                {/* Step Node & Label */}
+                <div className="flex flex-col items-center gap-2 min-w-[90px] sm:min-w-[110px] select-none">
+                  {/* Squircle Icon Badge */}
                   <div
                     className={cn(
-                      "w-9 h-9 rounded-2xl flex items-center justify-center transition-all shadow-xs",
+                      "w-10 h-10 sm:w-11 sm:h-11 rounded-2xl flex items-center justify-center transition-all",
                       isCompleted
-                        ? "bg-emerald-500 text-white"
+                        ? "bg-emerald-500 text-white shadow-sm shadow-emerald-500/25"
                         : isCurrent
-                        ? "bg-blue-600 text-white ring-4 ring-blue-500/20"
-                        : "bg-neutral-100 dark:bg-white/5 text-neutral-400 border border-neutral-200 dark:border-white/10"
+                        ? "bg-emerald-500 text-white ring-4 ring-emerald-500/20 shadow-md shadow-emerald-500/30 scale-105"
+                        : "bg-neutral-100 dark:bg-white/5 text-neutral-400 dark:text-neutral-500 border border-neutral-200/80 dark:border-white/10"
                     )}
                   >
-                    <Icon size={16} />
+                    <Icon size={18} strokeWidth={2.2} />
                   </div>
-                  <span
-                    className={cn(
-                      "text-[10px] font-bold text-center leading-tight max-w-[80px]",
-                      isCurrent
-                        ? "text-blue-600 dark:text-blue-400"
-                        : isCompleted
-                        ? "text-emerald-600 dark:text-emerald-400"
-                        : "text-neutral-400"
-                    )}
-                  >
-                    {stage.label}
-                  </span>
+
+                  {/* Step Label & Subtitle */}
+                  <div className="text-center">
+                    <div
+                      className={cn(
+                        "text-[12px] tracking-tight transition-colors leading-tight",
+                        isPastOrCurrent
+                          ? "text-emerald-600 dark:text-emerald-400 font-bold"
+                          : "text-neutral-400 dark:text-neutral-500 font-medium"
+                      )}
+                    >
+                      {stage.label}
+                    </div>
+                    <div className="text-[10px] text-neutral-400 dark:text-neutral-500 mt-0.5 hidden sm:block line-clamp-1 max-w-[100px]">
+                      {isCurrent ? (
+                        <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Active</span>
+                      ) : (
+                        stage.desc
+                      )}
+                    </div>
+                  </div>
                 </div>
-                {i < WORKFLOW.length - 1 && (
+
+                {/* Horizontal Connector Line */}
+                {isNextStep && (
                   <div
                     className={cn(
-                      "flex-1 h-0.5 mx-1 mt-[-20px]",
-                      i < currentIndex ? "bg-emerald-400" : "bg-neutral-200 dark:bg-white/10"
+                      "flex-1 h-0.5 mx-1.5 sm:mx-3 mt-[-24px] rounded-full transition-colors",
+                      isLineActive
+                        ? "bg-emerald-400 dark:bg-emerald-500/70"
+                        : "bg-neutral-200 dark:bg-white/10"
                     )}
                   />
                 )}
@@ -763,6 +811,7 @@ export function OrderDetailPage() {
             );
           })}
         </div>
+
         {order.statusDescription && (
           <p className="text-xs text-neutral-500 dark:text-neutral-400 text-center m-0 pt-2 border-t border-neutral-100 dark:border-white/5">
             {order.statusDescription}

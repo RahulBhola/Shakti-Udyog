@@ -1,23 +1,27 @@
-import { useEffect, useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, Package, Calendar, MapPin, FileText, Truck, CheckCircle2, Clock, Loader2, MessageSquare, Download, Upload, Plus, ChevronDown, ChevronUp, X, UserCog, UserPlus, Pencil, Trash2 } from "lucide-react";
+import { useEffect, useState, useCallback } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { ArrowLeft, Package, Calendar, MapPin, FileText, Truck, CheckCircle2, Clock, Loader2, MessageSquare, Download, Upload, Plus, ChevronDown, ChevronUp, X, UserCog, UserPlus, Pencil, Trash2, Layers, Flame, ShieldCheck, PackageCheck } from "lucide-react";
 import { engineerApi } from "../../api/engineerApi";
 import { adminApi } from "../../api/adminApi";
 import { apiDownload } from "../../api/client";
 import { useAuth } from "../../auth/AuthContext";
 import { Roles } from "../../auth/roles";
+import { connectRealtime, getRealtimeConnection, type StageChangedPayload } from "../../realtime/signalR";
 import type { OrderDetail, InvoiceDetail, Shipment } from "../../api/customerApi";
 import { ConfirmActionModal } from "./orders/ConfirmModal";
 
 /* ── Status badge ──────────────────────────────────────────────── */
 
 const statusColors: Record<string, string> = {
+  pending_advance: "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400",
+  awaiting_approval: "bg-purple-50 text-purple-700 dark:bg-purple-500/10 dark:text-purple-400",
+  advance_paid: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400",
   confirmed: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400",
-  pattern_development: "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400",
+  pattern_development: "bg-purple-50 text-purple-700 dark:bg-purple-500/10 dark:text-purple-400",
   production: "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400",
-  quality_check: "bg-purple-50 text-purple-700 dark:bg-purple-500/10 dark:text-purple-400",
+  quality_check: "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400",
   packed: "bg-teal-50 text-teal-700 dark:bg-teal-500/10 dark:text-teal-400",
-  ready_to_dispatch: "bg-orange-50 text-orange-700 dark:bg-orange-500/10 dark:text-orange-400",
+  ready_to_dispatch: "bg-cyan-50 text-cyan-700 dark:bg-cyan-500/10 dark:text-cyan-400",
   dispatched: "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400",
   delivered: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400",
   on_hold: "bg-yellow-50 text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400",
@@ -25,10 +29,10 @@ const statusColors: Record<string, string> = {
 };
 
 function StatusBadge({ status, label }: { status: string; label?: string }) {
-  const c = statusColors[status] ?? "bg-[#F1F5F9] text-[#64748B]";
-  const display = label ?? status.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+  const color = statusColors[status] ?? "bg-slate-50 text-slate-700 dark:bg-slate-500/10 dark:text-slate-400";
+  const display = label ?? status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
   return (
-    <span className={`inline-flex items-center rounded-full px-3 py-1 text-[12px] font-semibold ${c}`}>
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${color}`}>
       {display}
     </span>
   );
@@ -36,9 +40,12 @@ function StatusBadge({ status, label }: { status: string; label?: string }) {
 
 /* ── Helper ────────────────────────────────────────────────────── */
 
-function formatDate(value: string | null | undefined): string {
-  if (!value) return "—";
-  return new Date(value).toLocaleDateString("en-IN", { year: "numeric", month: "short", day: "numeric" });
+function formatDate(dateStr?: string | null) {
+  if (!dateStr) return "—";
+  return new Date(dateStr).toLocaleDateString("en-IN", {
+    year: "numeric", month: "short", day: "numeric",
+    hour: "2-digit", minute: "2-digit",
+  });
 }
 
 function formatDateTime(value: string | null | undefined): string {
@@ -49,20 +56,15 @@ function formatDateTime(value: string | null | undefined): string {
   });
 }
 
-/* ── Workflow stages ───────────────────────────────────────────── */
+/* ── 5 Core Manufacturing Workflow stages ──────────────────────────── */
 
 const WORKFLOW = [
-  { key: "confirmed", label: "Confirmed", icon: CheckCircle2 },
-  { key: "pattern_development", label: "Pattern Dev.", icon: FileText },
-  { key: "production", label: "Production", icon: Package },
-  { key: "quality_check", label: "QC", icon: Clock },
-  { key: "packed", label: "Packed", icon: Package },
-  { key: "ready_to_dispatch", label: "Ready to Dispatch", icon: Truck },
-  { key: "dispatched", label: "Dispatched", icon: Truck },
-  { key: "delivered", label: "Delivered", icon: CheckCircle2 },
+  { key: "pattern_development", label: "Pattern Dev.", icon: Layers, desc: "Tooling & CAD Design" },
+  { key: "production", label: "Production", icon: Flame, desc: "Foundry Moulding & Pouring" },
+  { key: "quality_check", label: "QC", icon: ShieldCheck, desc: "Dimensional & CMM QA" },
+  { key: "packed", label: "Packed", icon: PackageCheck, desc: "Wooden Crate Packing" },
+  { key: "ready_to_dispatch", label: "Ready to Dispatch", icon: Truck, desc: "Staged for Logistics" },
 ];
-
-const WORKFLOW_ORDER = Object.fromEntries(WORKFLOW.map((s, i) => [s.key, i]));
 
 /* ── Section wrapper ───────────────────────────────────────────── */
 
@@ -260,17 +262,39 @@ export default function AdminOrderDetailPage() {
     }
   }
 
-  useEffect(() => {
+  const loadOrder = useCallback(() => {
     if (!id) return;
-    setLoading(true);
-    setError(null);
     engineerApi.order(id)
-      .then((o) => setOrder(o))
+      .then((o) => {
+        setOrder(o);
+        setError(null);
+      })
       .catch((e) => setError(e.message ?? "Order not found"))
       .finally(() => setLoading(false));
     engineerApi.getOrderComments(id).then(setOrderComments).catch(() => {});
     adminApi.orderInvoices(id).then(setOrderInvoices).catch(() => {});
   }, [id]);
+
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+    loadOrder();
+  }, [loadOrder]);
+
+  // Realtime SignalR sync for stage & milestone changes
+  useEffect(() => {
+    void connectRealtime();
+    const conn = getRealtimeConnection();
+    const handler = (p: StageChangedPayload) => {
+      if (p.orderId === id) {
+        loadOrder();
+      }
+    };
+    conn.on("stageChanged", handler);
+    return () => {
+      conn.off("stageChanged", handler);
+    };
+  }, [id, loadOrder]);
 
   // Load engineer list (admins only) for the assignment dropdown.
   useEffect(() => {
@@ -359,23 +383,45 @@ export default function AdminOrderDetailPage() {
 
   // Open milestone confirmation modal
   const handleAdvanceMilestone = () => {
-    const WORKFLOW_KEYS = ["confirmed", "pattern_development", "production", "quality_check", "packed", "ready_to_dispatch", "dispatched", "delivered"];
-    const currentIdx = WORKFLOW_KEYS.indexOf(order!.status);
-    if (currentIdx < 0 || currentIdx >= WORKFLOW_KEYS.length - 1) return;
-    const nextStatus = WORKFLOW_KEYS[currentIdx + 1];
+    const STAGES = ["pattern_development", "production", "quality_check", "packed", "ready_to_dispatch"];
+    const curStage = order!.manufacturingStage ?? (STAGES.includes(order!.status) ? order!.status : "pattern_development");
+    const currentIdx = STAGES.indexOf(curStage);
+    if (currentIdx < 0 || currentIdx >= STAGES.length - 1) return;
+    const nextStatus = STAGES[currentIdx + 1];
     setMilestoneModal({
       nextStatus,
       label: nextStatus.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
     });
   };
 
+  const handleRegressMilestone = () => {
+    const STAGES = ["pattern_development", "production", "quality_check", "packed", "ready_to_dispatch"];
+    const curStage = order!.manufacturingStage ?? (STAGES.includes(order!.status) ? order!.status : "pattern_development");
+    const currentIdx = STAGES.indexOf(curStage);
+    if (currentIdx <= 0) return;
+    const nextStatus = STAGES[currentIdx - 1];
+    setMilestoneModal({
+      nextStatus,
+      label: nextStatus.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+    });
+  };
+
+  const handleJumpToMilestone = (targetStatus: string) => {
+    if (order?.manufacturingStage === targetStatus || order?.status === targetStatus) return;
+    setMilestoneModal({
+      nextStatus: targetStatus,
+      label: targetStatus.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+    });
+  };
+
   const confirmMilestoneAdvance = async (customerMsg?: string) => {
     if (!milestoneModal) return;
+    const targetStatus = milestoneModal.nextStatus;
     setMilestoneModal(null);
     setActionBusy(true);
     setActionMsg(null);
     try {
-      await engineerApi.updateMilestone(id, milestoneModal.nextStatus, customerMsg);
+      await engineerApi.updateMilestone(id, targetStatus, customerMsg);
       const o = await engineerApi.order(id);
       setOrder(o);
       setActionMsg(`Status updated to ${milestoneModal.label}`);
@@ -412,7 +458,9 @@ export default function AdminOrderDetailPage() {
     );
   }
 
-  const currentIndex = WORKFLOW_ORDER[order.status] ?? -1;
+  const STAGES = ["pattern_development", "production", "quality_check", "packed", "ready_to_dispatch"];
+  const currentStageKey = order.manufacturingStage ?? (STAGES.includes(order.status) ? order.status : (order.status === "dispatched" || order.status === "delivered" ? "ready_to_dispatch" : "pattern_development"));
+  const currentIndex = STAGES.indexOf(currentStageKey);
   const isTerminal = ["cancelled", "delivered", "closed", "returned"].includes(order.status);
 
   return (
@@ -426,24 +474,35 @@ export default function AdminOrderDetailPage() {
           </button>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h1 className="text-lg font-bold text-[var(--text-primary)] truncate">{order.orderNumber}</h1>
-              <StatusBadge status={order.status} label={order.statusLabel} />
+              <h1 className="text-lg font-bold text-[var(--text-primary)] tracking-tight truncate m-0">{order.orderNumber}</h1>
+              <StatusBadge status={order.status} />
+              {order.advancePaid && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20">
+                  <CheckCircle2 size={10} /> Advance Paid
+                </span>
+              )}
             </div>
-            {order.purchaseOrderReference && (
-              <p className="text-[12px] text-[var(--text-muted)]">PO: {order.purchaseOrderReference}</p>
-            )}
+            <p className="text-[12px] text-[var(--text-muted)] truncate m-0">
+              {order.companyName ? `${order.companyName} · ` : ""}Placed on {formatDate(order.placedAtUtc)}
+            </p>
           </div>
         </div>
+
+        {/* Action buttons */}
         <div className="flex items-center gap-2 shrink-0">
-          {order.quotationId && (
-            <Link to={`/admin/quotations/${order.quotationId}`}
-              className="inline-flex items-center gap-1.5 px-4 h-8 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-secondary)] text-[12px] font-medium hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all no-underline hover:no-underline">
-              <FileText size={13} /> View Quote
-            </Link>
+          <button type="button" onClick={() => navigate("/admin/production")}
+            className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all">
+            <Package size={13} /> Manufacturing Board
+          </button>
+          {!isTerminal && currentIndex > 0 && (
+            <button type="button" onClick={handleRegressMilestone} disabled={actionBusy}
+              className="inline-flex items-center gap-1 px-3 h-8 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[12px] font-semibold text-[var(--text-secondary)] hover:text-amber-600 hover:border-amber-500/30 transition-all disabled:opacity-50 shadow-xs cursor-pointer">
+              ← Move Back
+            </button>
           )}
-          {!isTerminal && (
+          {!isTerminal && currentIndex < STAGES.length - 1 && (
             <button type="button" onClick={handleAdvanceMilestone} disabled={actionBusy}
-              className="inline-flex items-center gap-1.5 px-4 h-8 rounded-lg bg-[var(--color-primary)] text-white text-[12px] font-semibold hover:bg-[var(--color-primary-hover)] transition-all disabled:opacity-50">
+              className="inline-flex items-center gap-1.5 px-4 h-8 rounded-lg bg-[var(--color-primary)] text-white text-[12px] font-semibold hover:bg-[var(--color-primary-hover)] transition-all disabled:opacity-50 shadow-xs cursor-pointer">
               {actionBusy ? "Updating..." : "Advance Stage →"}
             </button>
           )}
@@ -461,35 +520,81 @@ export default function AdminOrderDetailPage() {
         </div>
       )}
 
-      {/* ── Workflow Timeline ───────────────────────────────── */}
-      <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] p-5">
-        <div className="flex items-center justify-between gap-1 overflow-x-auto pb-1">
+      {/* ── 5 Core Manufacturing Progression (Connected Stepper UI) ────── */}
+      <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] p-6 shadow-xs">
+        <div className="flex items-center justify-between gap-2 mb-6 pb-3 border-b border-[var(--border-default)]">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <h3 className="text-sm font-bold text-[var(--text-primary)] m-0">Manufacturing Progression (5 Core Stages)</h3>
+          </div>
+          <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
+            Step {Math.max(1, currentIndex + 1)} of 5 · {WORKFLOW[currentIndex]?.label ?? "In Progress"}
+          </span>
+        </div>
+
+        {/* Connected Horizontal Stepper Bar */}
+        <div className="flex items-center justify-between gap-0 overflow-x-auto py-2 px-1">
           {WORKFLOW.map((stage, i) => {
             const Icon = stage.icon;
             const isCompleted = i < currentIndex;
             const isCurrent = i === currentIndex;
+            const isPastOrCurrent = i <= currentIndex;
+            const isNextStep = i < WORKFLOW.length - 1;
+            const isLineActive = i < currentIndex;
+
             return (
-              <div key={stage.key} className="flex items-center gap-0 flex-1 min-w-0">
-                <div className="flex flex-col items-center gap-1.5 min-w-0">
-                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${
-                    isCompleted ? "bg-emerald-500 text-white" :
-                    isCurrent ? "bg-[var(--color-primary)] text-white ring-2 ring-[var(--color-primary)]/30" :
-                    "bg-[var(--bg-surface-hover)] text-[var(--text-muted)]"
-                  }`}>
-                    <Icon size={15} />
+              <div key={stage.key} className="flex items-center flex-1 min-w-0 last:flex-none">
+                {/* Step Node & Label */}
+                <div
+                  onClick={() => !isCurrent && !actionBusy && handleJumpToMilestone(stage.key)}
+                  className={`flex flex-col items-center gap-2 min-w-[90px] sm:min-w-[110px] select-none transition-all ${
+                    !isCurrent ? "cursor-pointer group hover:opacity-100" : ""
+                  }`}
+                  title={!isCurrent ? `Click to switch stage to ${stage.label}` : "Current active stage"}
+                >
+                  {/* Squircle Icon Badge */}
+                  <div
+                    className={`w-10 h-10 sm:w-11 sm:h-11 rounded-2xl flex items-center justify-center transition-all ${
+                      isCompleted
+                        ? "bg-emerald-500 text-white shadow-sm shadow-emerald-500/25 group-hover:scale-105"
+                        : isCurrent
+                        ? "bg-emerald-500 text-white ring-4 ring-emerald-500/20 shadow-md shadow-emerald-500/30 scale-105"
+                        : "bg-[var(--bg-surface-hover)] dark:bg-white/5 text-[var(--text-muted)] border border-[var(--border-default)] group-hover:border-emerald-500/40 group-hover:scale-105"
+                    }`}
+                  >
+                    <Icon size={18} strokeWidth={2.2} />
                   </div>
-                  <span className={`text-[10px] font-medium text-center leading-tight max-w-[80px] ${
-                    isCurrent ? "text-[var(--color-primary)]" :
-                    isCompleted ? "text-emerald-600 dark:text-emerald-400" :
-                    "text-[var(--text-muted)]"
-                  }`}>
-                    {stage.label}
-                  </span>
+
+                  {/* Step Label & Subtitle */}
+                  <div className="text-center">
+                    <div
+                      className={`text-[12px] tracking-tight transition-colors leading-tight ${
+                        isPastOrCurrent
+                          ? "text-emerald-600 dark:text-emerald-400 font-bold"
+                          : "text-[var(--text-muted)] group-hover:text-[var(--text-secondary)] font-medium"
+                      }`}
+                    >
+                      {stage.label}
+                    </div>
+                    <div className="text-[10px] text-[var(--text-muted)] mt-0.5 hidden sm:block line-clamp-1 max-w-[100px]">
+                      {isCurrent ? (
+                        <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Active</span>
+                      ) : (
+                        stage.desc
+                      )}
+                    </div>
+                  </div>
                 </div>
-                {i < WORKFLOW.length - 1 && (
-                  <div className={`flex-1 h-px mx-1 mt-[-20px] ${
-                    i < currentIndex ? "bg-emerald-400" : "bg-[var(--border-default)]"
-                  }`} />
+
+                {/* Horizontal Connector Line */}
+                {isNextStep && (
+                  <div
+                    className={`flex-1 h-0.5 mx-1.5 sm:mx-3 mt-[-24px] rounded-full transition-colors ${
+                      isLineActive
+                        ? "bg-emerald-400 dark:bg-emerald-500/70"
+                        : "bg-[var(--border-default)] dark:bg-white/10"
+                    }`}
+                  />
                 )}
               </div>
             );

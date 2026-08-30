@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using ShaktiUdyog.Api.Contracts.Auth;
 using ShaktiUdyog.Api.Contracts.Customer;
 using ShaktiUdyog.Api.Contracts.Engineer;
+using ShaktiUdyog.Api.Hubs;
 using ShaktiUdyog.Domain.Constants;
 using ShaktiUdyog.Domain.Entities;
 using ShaktiUdyog.Domain.Interfaces;
@@ -34,6 +35,7 @@ public class AdminService : IAdminService
     private readonly UserManager<ApplicationUser> userManager;
     private readonly RoleManager<ApplicationRole> roleManager;
     private readonly ILogger<AdminService> logger;
+    private readonly IPortalPush push;
 
     public AdminService(
         AppDbContext db,
@@ -41,7 +43,8 @@ public class AdminService : IAdminService
         IAuditWriter audit,
         UserManager<ApplicationUser> userManager,
         RoleManager<ApplicationRole> roleManager,
-        ILogger<AdminService> logger)
+        ILogger<AdminService> logger,
+        IPortalPush push)
     {
         this.db = db;
         this.uow = uow;
@@ -49,6 +52,7 @@ public class AdminService : IAdminService
         this.userManager = userManager;
         this.roleManager = roleManager;
         this.logger = logger;
+        this.push = push;
     }
 
     /// <summary>
@@ -232,9 +236,28 @@ public class AdminService : IAdminService
             .SingleOrDefaultAsync(q => q.Id == quotationId && q.Status == QuotationStatuses.Accepted);
         if (quotation is null) return null;
 
-        var advanceAmount = quotation.Total * 30m / 100m;
+        var advancePercent = PaymentTermsHelper.ExtractAdvancePercent(quotation.PaymentTerms);
+        var advanceAmount = PaymentTermsHelper.CalculateAdvanceAmount(quotation.Total, quotation.PaymentTerms);
         var enquiryShortId = quotation.EnquiryId.ToString("N")[..8].ToUpperInvariant();
         var number = $"ORD-{DateTimeOffset.UtcNow:yyyyMMdd}-{enquiryShortId}";
+
+        string? paymentRef = null;
+        DateTimeOffset? paymentPaidAt = null;
+        if (!string.IsNullOrEmpty(quotation.CustomerResponseComment) && quotation.CustomerResponseComment.Contains("[Payment UTR:"))
+        {
+            var start = quotation.CustomerResponseComment.IndexOf("[Payment UTR:") + 13;
+            var end = quotation.CustomerResponseComment.IndexOf(']', start);
+            if (end > start)
+            {
+                paymentRef = quotation.CustomerResponseComment[start..end].Trim();
+                paymentPaidAt = quotation.CustomerRespondedAtUtc ?? DateTimeOffset.UtcNow;
+            }
+        }
+
+        var isAdvancePaid = !string.IsNullOrEmpty(paymentRef);
+        var initialStatus = isAdvancePaid ? OrderStatuses.Confirmed : OrderStatuses.PendingAdvance;
+        var initialStage = isAdvancePaid ? ManufacturingStages.PatternDevelopment : null;
+        var now = DateTimeOffset.UtcNow;
 
         var order = new Order
         {
@@ -242,11 +265,20 @@ public class AdminService : IAdminService
             OrderNumber = number,
             CompanyId = quotation.CompanyId,
             QuotationId = quotation.Id,
-            Status = OrderStatuses.PendingAdvance,
-            AdvancePercent = 30,
+            Status = initialStatus,
+            ManufacturingStage = initialStage,
+            StageUpdatedAt = isAdvancePaid ? now : null,
+            AdvancePercent = advancePercent,
             AdvanceAmount = advanceAmount,
+            AdvancePaid = isAdvancePaid,
+            AdvancePaidAtUtc = paymentPaidAt,
+            AdvancePaymentRef = paymentRef,
+            AdvanceVerifiedAtUtc = isAdvancePaid ? now : null,
+            AdvanceVerifiedById = isAdvancePaid ? userId : null,
             QuotationTotal = quotation.Total,
             PaymentTerms = quotation.PaymentTerms,
+            PlacedAtUtc = now,
+            LastUpdatedAtUtc = now,
             Items = quotation.Items.Select(i => new OrderItem
             {
                 Id = Guid.NewGuid(),
@@ -260,11 +292,24 @@ public class AdminService : IAdminService
         };
 
         db.Orders.Add(order);
-        order.Milestones.Add(new OrderMilestone
+        if (isAdvancePaid)
         {
-            Id = Guid.NewGuid(), OrderId = order.Id, StatusCode = OrderStatuses.PendingAdvance,
-            CustomerMessage = "Order created. Advance payment required.", ActorType = "System",
-        });
+            order.Milestones.Add(new OrderMilestone
+            {
+                Id = Guid.NewGuid(), OrderId = order.Id, StatusCode = OrderStatuses.Confirmed,
+                CustomerMessage = $"Advance payment verified (Ref: {paymentRef}). Production order confirmed.", ActorType = "Admin",
+                OccurredAtUtc = now,
+            });
+        }
+        else
+        {
+            order.Milestones.Add(new OrderMilestone
+            {
+                Id = Guid.NewGuid(), OrderId = order.Id, StatusCode = OrderStatuses.PendingAdvance,
+                CustomerMessage = "Order created. Advance payment required.", ActorType = "System",
+                OccurredAtUtc = now,
+            });
+        }
 
         quotation.Status = QuotationStatuses.Converted;
         db.QuotationStatusHistories.Add(new QuotationStatusHistory
@@ -272,10 +317,15 @@ public class AdminService : IAdminService
             Id = Guid.NewGuid(), QuotationId = quotation.Id,
             FromStatus = QuotationStatuses.Accepted, ToStatus = QuotationStatuses.Converted,
             ChangedByUserId = userId, ChangedByRole = "Admin",
-            Note = "Order created from quotation",
+            Note = isAdvancePaid ? $"Order created with advance payment verified (Ref: {paymentRef})" : "Order created from quotation",
+            CreatedAtUtc = now,
         });
 
         await db.SaveChangesAsync();
+        if (isAdvancePaid)
+        {
+            await push.StageChangedAsync(order.Id, order.OrderNumber, "", ManufacturingStages.PatternDevelopment);
+        }
         await audit.WriteAsync("admin.order.created", userId, "Order", order.Id.ToString(), ip);
         return MapOrderDetail(order);
     }
@@ -284,18 +334,24 @@ public class AdminService : IAdminService
     {
         var order = await db.Orders.SingleOrDefaultAsync(o => o.Id == orderId);
         if (order is null) return null;
-        if (order.Status != OrderStatuses.AwaitingApproval) return false;
+        if (order.Status != OrderStatuses.AwaitingApproval && order.Status != OrderStatuses.PendingAdvance) return false;
         var from = order.Status;
+        var now = DateTimeOffset.UtcNow;
         order.Status = OrderStatuses.AdvancePaid;
         order.AdvancePaid = true;
-        order.AdvanceVerifiedAtUtc = DateTimeOffset.UtcNow;
+        order.AdvanceVerifiedAtUtc = now;
         order.AdvanceVerifiedById = userId;
+        order.ManufacturingStage ??= ManufacturingStages.PatternDevelopment;
+        order.StageUpdatedAt ??= now;
+        order.LastUpdatedAtUtc = now;
         order.Milestones.Add(new OrderMilestone
         {
             Id = Guid.NewGuid(), OrderId = order.Id, StatusCode = OrderStatuses.AdvancePaid,
             CustomerMessage = "Advance payment verified.", ActorType = "Admin",
+            OccurredAtUtc = now,
         });
         await db.SaveChangesAsync();
+        await push.StageChangedAsync(order.Id, order.OrderNumber, from, order.ManufacturingStage);
         await audit.WriteAsync("admin.order.advance_verified", userId, "Order", order.Id.ToString(), ip);
         return true;
     }
@@ -304,18 +360,31 @@ public class AdminService : IAdminService
     {
         var order = await db.Orders.SingleOrDefaultAsync(o => o.Id == orderId);
         if (order is null) return null;
-        if (!OrderStatuses.IsValidTransition(order.Status, newStage) && !OrderStatuses.IsValidTransition(newStage, order.Status)) return false;
+        if (!OrderStatuses.IsValidTransition(order.Status, newStage) && !ManufacturingStages.IsValidTransition(order.ManufacturingStage ?? order.Status, newStage)) return false;
         var from = order.Status;
+        var now = DateTimeOffset.UtcNow;
         order.Status = newStage;
-        order.LastUpdatedAtUtc = DateTimeOffset.UtcNow;
-        await db.SaveChangesAsync();
+        if (ManufacturingStages.SortOrder.ContainsKey(newStage))
+        {
+            order.ManufacturingStage = newStage;
+            order.StageUpdatedAt = now;
+        }
+        order.LastUpdatedAtUtc = now;
         db.OrderMilestones.Add(new OrderMilestone
         {
             Id = Guid.NewGuid(), OrderId = order.Id, StatusCode = newStage,
             CustomerMessage = OrderStatuses.ProgressionLabels.TryGetValue(newStage, out var label) ? label : newStage.Replace("_", " "),
             InternalNote = note, ActorType = "Admin",
+            OccurredAtUtc = now,
+        });
+        db.OrderStatusHistories.Add(new OrderStatusHistory
+        {
+            Id = Guid.NewGuid(), OrderId = order.Id, FromStatus = from, ToStatus = newStage,
+            ChangedByUserId = userId, ChangedByRole = "Admin", Note = note ?? $"Stage updated to {newStage}",
+            CreatedAtUtc = now,
         });
         await db.SaveChangesAsync();
+        await push.StageChangedAsync(order.Id, order.OrderNumber, from, newStage);
         await audit.WriteAsync("admin.order.stage_updated", userId, "Order", order.Id.ToString(), ip);
         return true;
     }
@@ -412,7 +481,9 @@ public class AdminService : IAdminService
         o.QuotationTotal, o.PaymentTerms, o.QuotationId,
         o.Milestones.Select(m => new OrderMilestoneDto(
             m.Id, m.StatusCode, m.CustomerMessage, m.OccurredAtUtc)).ToList(),
-        null, null);
+        null, null,
+        o.ManufacturingStage ?? (ManufacturingStages.Workflow.Contains(o.Status) ? o.Status : (o.Status == OrderStatuses.Dispatched || o.Status == OrderStatuses.Delivered ? ManufacturingStages.ReadyToDispatch : ManufacturingStages.PatternDevelopment)),
+        o.StageUpdatedAt);
 
     /// <summary>
     /// Creates a new engineer user account (admin only).

@@ -4,7 +4,8 @@ import { adminApi } from "../../api/adminApi";
 import { engineerApi } from "../../api/engineerApi";
 import type { QuotationDetail as QD, QuotationTimelineEntry } from "../../api/customerApi";
 import { formatDate, formatMoney } from "../shared";
-import { ArrowLeft, FileEdit, CheckCircle, Clock, Send, Eye, XCircle, Loader2, Calendar, Tag, Package, Info } from "lucide-react";
+import { ArrowLeft, FileEdit, CheckCircle, Clock, Send, Eye, XCircle, Loader2, Calendar, Tag, Package, Info, IndianRupee } from "lucide-react";
+import { extractAdvancePercent, calculateAdvanceAmount } from "../../utils/paymentTerms";
 
 /* ── Status colors ──────────────────────────────────────────── */
 
@@ -200,17 +201,26 @@ export default function AdminQuotationPage() {
               type="button"
               disabled={busy}
               onClick={async () => {
+                setBusy(true);
+                setMsg(null);
                 try {
                   const order: any = await adminApi.createOrder(id);
-                  if (order?.id) navigate(`/admin/orders/${order.id}`);
-                  else setMsg("Order created.");
-                } catch {
-                  setMsg("Failed to create order.");
+                  if (order?.id) {
+                    navigate(`/admin/orders/${order.id}`);
+                  } else {
+                    setMsg("Order created successfully.");
+                    void load();
+                  }
+                } catch (err: any) {
+                  setMsg(err?.message ?? "Failed to create order.");
+                } finally {
+                  setBusy(false);
                 }
               }}
-              className="inline-flex items-center gap-1.5 px-4 h-8 rounded-lg bg-emerald-500 text-white text-[12px] font-semibold hover:bg-emerald-600 disabled:opacity-50 transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-4 h-8 rounded-lg bg-emerald-600 text-white text-[12px] font-bold hover:bg-emerald-700 disabled:opacity-50 transition-all cursor-pointer shadow-xs"
             >
-              {busy ? <Loader2 size={13} className="animate-spin" /> : <Package size={13} />} Create Order
+              {busy ? <Loader2 size={13} className="animate-spin" /> : <Package size={13} />}
+              <span>{q.advancePaymentRef ? "Approve Payment & Create Order" : "Create Order"}</span>
             </button>
           )}
           {q.orderId && (
@@ -293,6 +303,97 @@ export default function AdminQuotationPage() {
           >
             <FileEdit size={13} /> Edit Quotation
           </button>
+        </div>
+      )}
+
+      {/* ── Quotation Accepted & Payment Verification Card (Admin) ── */}
+      {q.status === "Accepted" && (
+        <div className={`relative overflow-hidden rounded-2xl p-5 sm:p-6 shadow-sm border ${
+          q.advancePaymentRef
+            ? "border-emerald-300/80 dark:border-emerald-500/30 bg-gradient-to-br from-emerald-50 via-teal-50/50 to-white dark:from-[#0b1612] dark:via-[#0c1a16] dark:to-[#0f121a]"
+            : "border-amber-300/80 dark:border-amber-500/30 bg-gradient-to-br from-amber-50/90 via-amber-50/40 to-white dark:from-[#1c1509] dark:via-[#161208] dark:to-[#0f121a]"
+        }`}>
+          <div className="pointer-events-none absolute -right-10 -top-10 h-36 w-36 rounded-full bg-emerald-400/10 dark:bg-emerald-500/10 blur-2xl" />
+
+          <div className="relative flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+            <div className="flex items-start gap-4">
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-md ${
+                q.advancePaymentRef
+                  ? "bg-gradient-to-br from-emerald-600 to-teal-600 dark:from-emerald-500 dark:to-teal-500 text-white shadow-emerald-600/25"
+                  : "bg-gradient-to-br from-amber-500 to-amber-600 text-white shadow-amber-500/25"
+              }`}>
+                <IndianRupee size={24} className="stroke-[2.3]" />
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-extrabold uppercase tracking-wide shadow-xs ${
+                    q.advancePaymentRef
+                      ? "bg-emerald-600 text-white dark:bg-emerald-500/20 dark:text-emerald-300 dark:border dark:border-emerald-500/30"
+                      : "bg-amber-600 text-white dark:bg-amber-500/20 dark:text-amber-300 dark:border dark:border-amber-500/30"
+                  }`}>
+                    {q.advancePaymentRef ? (
+                      <>
+                        <span className="w-1.5 h-1.5 rounded-full bg-white dark:bg-emerald-400 animate-pulse" />
+                        Advance Payment Submitted
+                      </>
+                    ) : (
+                      "Quotation Accepted · Awaiting Payment"
+                    )}
+                  </span>
+                  {q.advancePaymentRef && (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-white dark:bg-black/50 text-neutral-800 dark:text-neutral-100 border border-emerald-200 dark:border-white/10 shadow-xs">
+                      <span className="text-neutral-400 font-sans text-[11px] font-semibold uppercase">UTR</span> {q.advancePaymentRef}
+                    </span>
+                  )}
+                  <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold shadow-xs ${
+                    q.advancePaymentRef
+                      ? "bg-emerald-100/90 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-200 border border-emerald-300/80 dark:border-emerald-800/60"
+                      : "bg-amber-100/90 dark:bg-amber-950/70 text-amber-800 dark:text-amber-200 border border-amber-300/80 dark:border-amber-800/60"
+                  }`}>
+                    <span>Advance ({q.advancePercent ?? extractAdvancePercent(q.paymentTerms)}%):</span>
+                    <span className="font-mono font-extrabold">₹{(q.advanceAmount ?? calculateAdvanceAmount(q.total, q.paymentTerms)).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                  </span>
+                </div>
+                <h2 className="text-base sm:text-lg font-extrabold text-neutral-900 dark:text-white tracking-tight m-0">
+                  {q.advancePaymentRef
+                    ? "Customer Advance Payment Received for Verification"
+                    : "Customer Confirmed Quote — Advance Payment Being Arranged"}
+                </h2>
+                <p className="text-xs sm:text-[13px] text-neutral-600 dark:text-neutral-300 m-0 max-w-2xl leading-relaxed">
+                  {q.advancePaymentRef
+                    ? `Customer submitted payment reference (${q.advancePaymentRef}) for quotation ${q.quotationNumber}. Please verify the credited funds in the bank account and click "Approve Payment & Create Order" to convert this proposal into an active production job order.`
+                    : (q.advancePercent ?? extractAdvancePercent(q.paymentTerms)) === 0
+                    ? `Customer has accepted quotation terms with approved credit terms (0% advance). You can approve and create the order directly to initiate manufacturing.`
+                    : `Customer has accepted quotation terms. Once customer transfers the ${q.advancePercent ?? extractAdvancePercent(q.paymentTerms)}% advance and enters their UTR/cheque reference, you can approve and initiate manufacturing.`}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={async () => {
+                setBusy(true);
+                setMsg(null);
+                try {
+                  const order: any = await adminApi.createOrder(id);
+                  if (order?.id) {
+                    navigate(`/admin/orders/${order.id}`);
+                  } else {
+                    setMsg("Order created successfully.");
+                    void load();
+                  }
+                } catch (err: any) {
+                  setMsg(err?.message ?? "Failed to create order.");
+                } finally {
+                  setBusy(false);
+                }
+              }}
+              className="inline-flex items-center gap-2 px-4.5 h-10 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-md shadow-emerald-600/25 shrink-0 cursor-pointer disabled:opacity-50"
+            >
+              {busy ? <Loader2 size={14} className="animate-spin" /> : <Package size={14} />}
+              <span>{q.advancePaymentRef ? "Approve Payment & Create Order" : "Create Order (Bypass Advance)"}</span>
+            </button>
+          </div>
         </div>
       )}
 

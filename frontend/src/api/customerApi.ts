@@ -99,6 +99,11 @@ export interface QuotationDetail extends QuotationListItem {
   orderId: string | null;
   orderNumber: string | null;
   items: QuotationItem[];
+  advanceAmount?: number | null;
+  advancePaymentRef?: string | null;
+  advancePaidAtUtc?: string | null;
+  advancePaid?: boolean;
+  advancePercent?: number | null;
 }
 
 export interface QuotationTimelineEntry {
@@ -129,6 +134,10 @@ export interface OrderDetail {
   orderNumber: string;
   purchaseOrderReference: string | null;
   quotationId: string | null;
+  companyName?: string | null;
+  manufacturingStage?: string | null;
+  advancePaid?: boolean;
+  advanceAmount?: number | null;
   status: string;
   statusLabel: string;
   statusDescription: string;
@@ -532,6 +541,8 @@ export const customerApi = {
   quotationTimeline: (id: string) => apiGet<QuotationTimelineEntry[]>(`${base}/quotations/${id}/timeline`),
   respondToQuotation: (id: string, response: "accept" | "decline" | "negotiate", comment?: string) =>
     apiPost<{ message: string }>(`${base}/quotations/${id}/response`, { response, comment }),
+  payQuotationAdvance: (id: string, paymentRef: string) =>
+    apiPost<{ message: string }>(`${base}/quotations/${id}/pay-advance`, { paymentRef }),
 
   orders: () => apiGet<OrderListItem[]>(`${base}/orders`),
   order: (id: string) => apiGet<OrderDetail>(`${base}/orders/${id}`),

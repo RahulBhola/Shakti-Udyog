@@ -90,6 +90,9 @@ public class QuotationEngineerService(
 
     public async Task<Guid> CreateQuotationAsync(CreateQuotationRequest request, Guid userId, string? ip)
     {
+        if (string.IsNullOrWhiteSpace(request.PaymentTerms))
+            throw new DomainValidationException("PaymentTerms", "Payment terms are compulsory.");
+
         var enquiry = await db.Enquiries.SingleOrDefaultAsync(r => r.Id == request.EnquiryId && (r.Status == EnquiryStatuses.Approved || r.Status == EnquiryStatuses.Quoted))
             ?? throw new NotFoundException("Enquiry not found or not approved.");
         var enquiryShortId = enquiry.Id.ToString("N")[..8].ToUpperInvariant();
@@ -158,7 +161,12 @@ public class QuotationEngineerService(
         q.Tax = request.Tax ?? q.Tax;
         q.Discount = request.Discount ?? q.Discount;
         q.Total = request.Total ?? q.Total;
-        if (request.PaymentTerms is not null) q.PaymentTerms = string.IsNullOrEmpty(request.PaymentTerms) ? null : request.PaymentTerms;
+        if (request.PaymentTerms is not null)
+        {
+            if (string.IsNullOrWhiteSpace(request.PaymentTerms))
+                throw new DomainValidationException("PaymentTerms", "Payment terms cannot be empty.");
+            q.PaymentTerms = request.PaymentTerms;
+        }
         if (request.DeliveryTerms is not null) q.DeliveryTerms = string.IsNullOrEmpty(request.DeliveryTerms) ? null : request.DeliveryTerms;
         if (request.Freight is not null) q.Freight = string.IsNullOrEmpty(request.Freight) ? null : request.Freight;
         if (request.Packing is not null) q.Packing = string.IsNullOrEmpty(request.Packing) ? null : request.Packing;
@@ -278,6 +286,23 @@ public class QuotationEngineerService(
             .Select(o => new { o.Id, o.OrderNumber })
             .FirstOrDefaultAsync();
 
+        string? advanceRef = null;
+        DateTimeOffset? advancePaidAt = null;
+        if (!string.IsNullOrEmpty(q.CustomerResponseComment) && q.CustomerResponseComment.Contains("[Payment UTR:"))
+        {
+            var start = q.CustomerResponseComment.IndexOf("[Payment UTR:") + 13;
+            var end = q.CustomerResponseComment.IndexOf(']', start);
+            if (end > start)
+            {
+                advanceRef = q.CustomerResponseComment[start..end].Trim();
+                advancePaidAt = q.CustomerRespondedAtUtc;
+            }
+        }
+
+        var advancePercent = PaymentTermsHelper.ExtractAdvancePercent(q.PaymentTerms);
+        var advanceAmount = PaymentTermsHelper.CalculateAdvanceAmount(q.Total, q.PaymentTerms);
+        var hasAdvance = !string.IsNullOrEmpty(advanceRef);
+
         return new QuotationDetailDto(
             q.Id, q.QuotationNumber, q.RevisionNumber, q.EnquiryId, q.Enquiry?.ProductType ?? "",
             q.Subtotal, q.Tax, q.Discount, q.Total,
@@ -288,6 +313,8 @@ public class QuotationEngineerService(
             order?.Id, order?.OrderNumber,
             q.Items.Select(i => new QuotationItemDto(
                 i.LineNumber, i.PartNumber, i.Description, i.MaterialGrade,
-                i.Quantity, i.Unit, i.UnitPrice, i.TaxPercent, i.LineTotal)).ToList());
+                i.Quantity, i.Unit, i.UnitPrice, i.TaxPercent, i.LineTotal)).ToList(),
+            advanceAmount, advanceRef, advancePaidAt, hasAdvance, q.Company?.Name,
+            advancePercent);
     }
 }

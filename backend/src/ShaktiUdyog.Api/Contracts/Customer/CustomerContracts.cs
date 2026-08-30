@@ -95,7 +95,13 @@ public record QuotationDetailDto(
     string Status, string? CustomerResponseComment, DateTimeOffset? CustomerRespondedAtUtc,
     DateTimeOffset? ValidUntilUtc, Guid? DocumentId, DateTimeOffset CreatedAtUtc,
     Guid? OrderId, string? OrderNumber,
-    IReadOnlyList<QuotationItemDto> Items);
+    IReadOnlyList<QuotationItemDto> Items,
+    decimal? AdvanceAmount = null,
+    string? AdvancePaymentRef = null,
+    DateTimeOffset? AdvancePaidAtUtc = null,
+    bool AdvancePaid = false,
+    string? CompanyName = null,
+    int? AdvancePercent = null);
 
 public record QuotationItemDto(
     int LineNumber, string PartNumber, string Description, string? MaterialGrade,
@@ -116,7 +122,9 @@ public record OrderListItemDto(
     DateTimeOffset PlacedAtUtc, DateTimeOffset? PromisedDispatchDateUtc,
     int TotalQuantity, DateTimeOffset LastUpdatedAtUtc,
     string? CompanyName, string? ProductType,
-    Guid? AssignedToUserId, string? AssignedToName);
+    Guid? AssignedToUserId, string? AssignedToName,
+    string? ManufacturingStage = null,
+    DateTimeOffset? StageUpdatedAt = null);
 
 public record OrderDetailDto(
     Guid Id, string OrderNumber, string? PurchaseOrderReference,
@@ -132,7 +140,9 @@ public record OrderDetailDto(
     DateTimeOffset? AdvanceVerifiedAtUtc,
     decimal? QuotationTotal, string? PaymentTerms, Guid? QuotationId,
     IReadOnlyList<OrderMilestoneDto> Milestones,
-    Guid? AssignedToUserId, string? AssignedToName);
+    Guid? AssignedToUserId, string? AssignedToName,
+    string? ManufacturingStage = null,
+    DateTimeOffset? StageUpdatedAt = null);
 
 public record OrderItemDto(
     Guid Id, string PartNumber, string Description, string? MaterialGrade, string? DrawingRevision,

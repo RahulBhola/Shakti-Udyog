@@ -146,7 +146,7 @@ export const engineerApi = {
   addOrderComment: (id: string, message: string) => apiPost<{ message: string }>(`${base}/orders/${id}/comments`, { message, isCustomerVisible: true }),
 
   // ---- Manufacturing Board ------------------------------------------------
-  ordersBoard: () => apiGet<EngineerOrder[]>(`${base}/orders`),
+  ordersBoard: () => apiGet<EngineerOrder[]>(`${base}/board/orders`),
   updateStage: (id: string, stage: string) => apiPatch<{ message: string }>(`${base}/orders/${id}/stage`, { stage }),
 
   // ---- Admin Engineer Creation ---------------------------------------------

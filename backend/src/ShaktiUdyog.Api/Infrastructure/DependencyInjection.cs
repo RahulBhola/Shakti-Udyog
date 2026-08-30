@@ -78,6 +78,7 @@ public static class DependencyInjection
         services.AddScoped<IInvoiceManagementService, InvoiceManagementService>();
         services.AddSingleton<INotificationService, PlaceholderNotificationService>();
         services.AddScoped<IOrderAdminService, OrderAdminService>();
+        services.AddScoped<IOrderEngineerService, OrderEngineerService>();
         services.AddScoped<IProductionBoardService, ProductionBoardService>();
         services.AddScoped<IProductMasterService, ProductMasterService>();
         services.AddScoped<IEngineerManufacturingService, EngineerManufacturingService>();

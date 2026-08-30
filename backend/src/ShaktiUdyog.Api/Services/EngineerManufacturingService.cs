@@ -9,8 +9,18 @@ namespace ShaktiUdyog.Api.Services;
 
 /// <summary>An order card on the engineer manufacturing Kanban.</summary>
 public record EngineerOrderDto(
-    Guid Id, string OrderNumber, string? CompanyName, string? ProductType,
-    int TotalQuantity, string ManufacturingStage, DateTimeOffset? StageUpdatedAt, DateTimeOffset PlacedAtUtc);
+    Guid Id,
+    string OrderNumber,
+    string? CompanyName,
+    string? ProductType,
+    int TotalQuantity,
+    string ManufacturingStage,
+    DateTimeOffset? StageUpdatedAt,
+    DateTimeOffset PlacedAtUtc,
+    DateTimeOffset? PromisedDispatchDateUtc = null,
+    string? Status = null,
+    bool AdvancePaid = false,
+    string? AssignedToUserName = null);
 
 /// <summary>Body for the engineer stage-move endpoint.</summary>
 public record EngineerStageRequest(string Stage);
@@ -50,9 +60,13 @@ public class EngineerManufacturingService(
                 o.Company.Name,
                 o.Quotation != null ? o.Quotation.Enquiry.ProductType : null,
                 o.Items.Sum(i => i.QuantityOrdered),
-                o.ManufacturingStage ?? ManufacturingStages.PatternDevelopment,
+                o.ManufacturingStage ?? (ManufacturingStages.Workflow.Contains(o.Status) ? o.Status : ManufacturingStages.PatternDevelopment),
                 o.StageUpdatedAt,
-                o.PlacedAtUtc))
+                o.PlacedAtUtc,
+                o.PromisedDispatchDateUtc,
+                o.Status,
+                o.AdvancePaid,
+                o.AssignedToUser != null ? (o.AssignedToUser.FullName ?? o.AssignedToUser.Email) : null))
             .ToListAsync();
     }
 
@@ -63,8 +77,8 @@ public class EngineerManufacturingService(
         if (!isAdmin && order.AssignedToUserId != null && order.AssignedToUserId != userId) return null;
         if (order.Status == OrderStatuses.Cancelled) return false;
 
-        var fromStage = order.ManufacturingStage ?? ManufacturingStages.PatternDevelopment;
-        if (!ManufacturingStages.IsValidForwardTransition(fromStage, targetStage)) return false;
+        var fromStage = order.ManufacturingStage ?? (ManufacturingStages.Workflow.Contains(order.Status) ? order.Status : ManufacturingStages.PatternDevelopment);
+        if (!ManufacturingStages.IsValidTransition(fromStage, targetStage)) return false;
 
         var now = DateTimeOffset.UtcNow;
         order.ManufacturingStage = targetStage;

@@ -22,6 +22,7 @@ namespace ShaktiUdyog.Api.Controllers;
 [Authorize(Policy = AuthPolicies.EngineerOnly)]
 public class EngineerController(
     IEngineerService updaterService,
+    IOrderEngineerService orderEngineerService,
     AppDbContext db,
     IFileStorageService storage) : ControllerBase
 {
@@ -34,6 +35,9 @@ public class EngineerController(
 
     private string UserRole =>
         HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "Engineer";
+
+    private bool IsAdmin =>
+        HttpContext.User.IsInRole(Roles.Admin);
 
     // ---- Dashboard ----------------------------------------------------------
 
@@ -121,5 +125,80 @@ public class EngineerController(
         if (stream is null) return NotFound();
 
         return File(stream, file.ContentType, file.FileName);
+    }
+
+    // ---- Orders -------------------------------------------------------------
+
+    [HttpGet("orders")]
+    [ProducesResponseType<PagedResult<OrderListItemDto>>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetOrders(
+        [FromQuery] int page = 1, [FromQuery] int pageSize = 20,
+        [FromQuery] string? search = null, [FromQuery] string? status = null,
+        [FromQuery] Guid? companyId = null, [FromQuery] bool? assigned = null)
+    {
+        return Ok(await orderEngineerService.GetOrdersAsync(page, pageSize, search, status, companyId, assigned, UserId, IsAdmin));
+    }
+
+    [HttpGet("orders/{id:guid}")]
+    [ProducesResponseType<OrderDetailDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetOrder(Guid id)
+    {
+        var order = await orderEngineerService.GetOrderAsync(id, UserId, IsAdmin);
+        return order is null ? NotFound(new { message = "Order not found." }) : Ok(order);
+    }
+
+    [HttpPatch("orders/{id:guid}/milestones")]
+    public async Task<IActionResult> UpdateMilestone(Guid id, [FromBody] MilestoneRequest request)
+    {
+        var result = await orderEngineerService.UpdateMilestoneAsync(id, request, UserId, IsAdmin, ClientIp);
+        return result switch
+        {
+            null => NotFound(),
+            false => BadRequest(new MessageResponse("Invalid milestone status transition.")),
+            _ => Ok(new MessageResponse("Milestone updated.")),
+        };
+    }
+
+    [HttpPost("orders/{id:guid}/shipments")]
+    public async Task<IActionResult> CreateShipment(Guid id, [FromBody] CreateShipmentRequest request)
+    {
+        var result = await orderEngineerService.CreateShipmentAsync(id, request, UserId, IsAdmin, ClientIp);
+        return result is null ? NotFound() : Ok(new MessageResponse("Shipment created."));
+    }
+
+    [HttpPut("orders/{id:guid}/shipments/{shipmentId:guid}")]
+    public async Task<IActionResult> UpdateShipment(Guid id, Guid shipmentId, [FromBody] CreateShipmentRequest request)
+    {
+        var result = await orderEngineerService.UpdateShipmentAsync(id, shipmentId, request, UserId, IsAdmin, ClientIp);
+        return result is null ? NotFound() : Ok(new MessageResponse("Shipment updated."));
+    }
+
+    [HttpDelete("orders/{id:guid}/shipments/{shipmentId:guid}")]
+    public async Task<IActionResult> DeleteShipment(Guid id, Guid shipmentId)
+    {
+        var result = await orderEngineerService.DeleteShipmentAsync(id, shipmentId, UserId, IsAdmin, ClientIp);
+        return result is null ? NotFound() : Ok(new MessageResponse("Shipment deleted."));
+    }
+
+    [HttpPost("orders/{id:guid}/documents")]
+    public async Task<IActionResult> UploadOrderDocument(Guid id, IFormFile file, [FromForm] string category = "General")
+    {
+        await orderEngineerService.UploadDocumentAsync(id, file, category, UserId, IsAdmin, ClientIp);
+        return Ok(new MessageResponse("Document uploaded."));
+    }
+
+    [HttpGet("orders/{id:guid}/comments")]
+    public async Task<IActionResult> GetOrderComments(Guid id)
+    {
+        var comments = await orderEngineerService.GetCommentsAsync(id);
+        return Ok(comments);
+    }
+
+    [HttpPost("orders/{id:guid}/comments")]
+    public async Task<IActionResult> AddOrderComment(Guid id, [FromBody] OrderCommentRequest request)
+    {
+        var result = await orderEngineerService.AddCommentAsync(id, request, UserId, UserRole, IsAdmin, ClientIp);
+        return result is null ? NotFound() : Ok(new MessageResponse("Comment added."));
     }
 }
