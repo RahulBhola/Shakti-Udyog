@@ -342,6 +342,8 @@ export function QuotationDetailPage() {
     </tr>`).join("");
 
     let discRow = q.discount > 0 ? `<tr><td style="padding:5px 0;color:#64748b;">Discount</td><td style="padding:5px 0;text-align:right;color:#ef4444;font-weight:500;">\u2212${formatItem(q.discount, q.currency)}</td></tr>` : "";
+    let freightRow = (q.freight && q.freight !== "0" && q.freight !== "string") ? `<tr><td class="lbl">Freight / Transportation</td><td class="val">${!isNaN(Number(q.freight)) && Number(q.freight) > 0 ? formatItem(Number(q.freight), q.currency) : q.freight}</td></tr>` : "";
+    let packingRow = (q.packing && q.packing !== "0" && q.packing !== "string") ? `<tr><td class="lbl">Packaging & Forwarding</td><td class="val">${!isNaN(Number(q.packing)) && Number(q.packing) > 0 ? formatItem(Number(q.packing), q.currency) : q.packing}</td></tr>` : "";
 
     w.document.write(`<!DOCTYPE html>
 <html>
@@ -388,7 +390,7 @@ export function QuotationDetailPage() {
   </div>
 
   <div class="meta-grid">
-    <div class="meta-box"><h3>Customer</h3><div class="val">Customer Name</div></div>
+    <div class="meta-box"><h3>Requirement</h3><div class="val">${q.productType || "Industrial Casting"}</div></div>
     <div class="meta-box"><h3>Issue Date</h3><div class="val">${fmtDate(q.createdAtUtc)}</div></div>
     <div class="meta-box"><h3>Valid Until</h3><div class="val">${fmtDate(q.validUntilUtc)}</div></div>
     <div class="meta-box"><h3>Revision</h3><div class="val">${q.revisionNumber}</div></div>
@@ -400,9 +402,11 @@ export function QuotationDetailPage() {
   </table>
 
   <table class="total-table">
-    <tr><td class="lbl">Subtotal</td><td class="val">${formatItem(q.subtotal, q.currency)}</td></tr>
+    <tr><td class="lbl">Subtotal (Taxable Value)</td><td class="val">${formatItem(q.subtotal, q.currency)}</td></tr>
     ${discRow}
     <tr><td class="lbl">GST</td><td class="val">${formatItem(q.tax, q.currency)}</td></tr>
+    ${freightRow}
+    ${packingRow}
     <tr class="grand"><td>Grand Total</td><td class="val">${formatItem(q.total, q.currency)}</td></tr>
   </table>
 
@@ -552,8 +556,26 @@ async function respond() {
               <PricingRow label="Subtotal" value={formatMoney(quotation.subtotal, quotation.currency)} />
               {quotation.discount > 0 && <PricingRow label="Discount" value={`−${formatMoney(quotation.discount, quotation.currency)}`} valueClass="text-red-500" />}
               <PricingRow label="GST" value={formatMoney(quotation.tax, quotation.currency)} />
-              <PricingRow label="Freight" value={quotation.freight && quotation.freight !== "0" ? `₹${quotation.freight}` : "₹0"} />
-              <PricingRow label="Packing" value={quotation.packing && quotation.packing !== "0" ? `₹${quotation.packing}` : "₹0"} />
+              <PricingRow
+                label="Freight"
+                value={
+                  quotation.freight && quotation.freight !== "0" && quotation.freight !== "string"
+                    ? !isNaN(Number(quotation.freight)) && Number(quotation.freight) > 0
+                      ? formatMoney(Number(quotation.freight), quotation.currency)
+                      : quotation.freight
+                    : "Included"
+                }
+              />
+              <PricingRow
+                label="Packing"
+                value={
+                  quotation.packing && quotation.packing !== "0" && quotation.packing !== "string"
+                    ? !isNaN(Number(quotation.packing)) && Number(quotation.packing) > 0
+                      ? formatMoney(Number(quotation.packing), quotation.currency)
+                      : quotation.packing
+                    : "Standard"
+                }
+              />
               <div className="border-t border-[var(--border-default)] pt-4 mt-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-semibold text-[var(--text-primary)]">Grand Total</span>
