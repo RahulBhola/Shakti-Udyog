@@ -85,6 +85,7 @@ export default function EnquiryNewPage() {
   const [savedAddresses, setSavedAddresses] = useState<CompanyAddress[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string>("default");
   const [profileLoading, setProfileLoading] = useState(true);
+  const deliveryLocationInputRef = useRef<HTMLInputElement>(null);
 
   // ── Form fields ────────────────────────────────────────────
   const [productType, setProductType] = useState("");
@@ -189,6 +190,10 @@ export default function EnquiryNewPage() {
   function handleSelectSavedAddress(addr: CompanyAddress | "custom") {
     if (addr === "custom") {
       setSelectedAddressId("custom");
+      setDeliveryLocation("");
+      setTimeout(() => {
+        deliveryLocationInputRef.current?.focus();
+      }, 50);
       return;
     }
     setSelectedAddressId(addr.id);
@@ -577,9 +582,41 @@ export default function EnquiryNewPage() {
             )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <Field label="Delivery Location" hint="Auto-filled from your delivery profile; editable as needed">
-                <input type="text" value={deliveryLocation} onChange={(e) => { setDeliveryLocation(e.target.value); setSelectedAddressId("custom"); }} placeholder="City, State, Full Address"
-                  className="w-full h-10 px-3 rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--color-primary)]" />
+              <Field
+                label="Delivery Location"
+                hint={
+                  selectedAddressId === "custom"
+                    ? "Enter custom delivery destination, site address or PIN code"
+                    : "Auto-filled from saved profile address; click Custom Location or type to change"
+                }
+              >
+                <div className="relative">
+                  <input
+                    ref={deliveryLocationInputRef}
+                    type="text"
+                    value={deliveryLocation}
+                    onChange={(e) => {
+                      setDeliveryLocation(e.target.value);
+                      setSelectedAddressId("custom");
+                    }}
+                    placeholder="Enter city, state, facility address or PIN code"
+                    className="w-full h-10 pl-3 pr-8 rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--color-primary)]"
+                  />
+                  {deliveryLocation && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDeliveryLocation("");
+                        setSelectedAddressId("custom");
+                        deliveryLocationInputRef.current?.focus();
+                      }}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 dark:hover:text-white cursor-pointer"
+                      title="Clear location"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
               </Field>
               <Field label="Expected Delivery Date" hint="Auto-set to standard 30-day manufacturing lead time">
                 <input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)}

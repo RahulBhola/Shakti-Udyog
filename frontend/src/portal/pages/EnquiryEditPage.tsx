@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
   customerApi,
   type EnquiryDetail,
+  type CompanyAddress,
 } from "../../api/customerApi";
 import { enquiryProductTypes } from "../../api/publicApi";
 import { config } from "../../config";
@@ -18,7 +19,9 @@ import {
   GripVertical,
   Send,
   Info,
+  MapPin,
 } from "lucide-react";
+import { cn } from "../../lib/utils";
 
 const allowedExtensions = ["pdf", "dwg", "dxf", "step", "stp", "iges", "igs", "jpg", "jpeg", "png", "zip"];
 const maxFileMb = 10;
@@ -130,10 +133,27 @@ export default function EnquiryEditPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragFileIndex, setDragFileIndex] = useState<number | null>(null);
   const dragIdxRef = useRef<number | null>(null);
+  const [savedAddresses, setSavedAddresses] = useState<CompanyAddress[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string>("custom");
+  const deliveryLocationInputRef = useRef<HTMLInputElement>(null);
   const [fileOrder, setFileOrder] = useState<string[]>([]);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [submitBusy, setSubmitBusy] = useState(false);
   useEffect(() => { if (enquiry) setFileOrder(enquiry.files.map((f) => f.id)); }, [enquiry]);
+
+  function handleSelectSavedAddress(addr: CompanyAddress | "custom") {
+    if (addr === "custom") {
+      setSelectedAddressId("custom");
+      setDeliveryLocation("");
+      setTimeout(() => {
+        deliveryLocationInputRef.current?.focus();
+      }, 50);
+      return;
+    }
+    setSelectedAddressId(addr.id);
+    const loc = [addr.address, addr.city, addr.state, addr.pinCode].filter(Boolean).join(", ");
+    setDeliveryLocation(loc);
+  }
 
   function handleFiles(list: FileList | null) {
     setFileError(null);
@@ -153,28 +173,47 @@ export default function EnquiryEditPage() {
   function handleDrop(e: React.DragEvent) { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); }
 
   useEffect(() => {
-    customerApi.enquiry(id).then((data) => {
-      setEnquiry(data);
-      setProductType(data.productType);
-      setPartName(data.partName ?? "");
-      setPartNumber(data.partNumber ?? "");
-      setApplication(data.application ?? "");
-      setRequirementDetails(data.requirementDetails ?? "");
-      setQuantity(data.quantity ?? "");
-      setIndustry(data.industry ?? "");
-      setMaterialGrade(data.materialGrade ?? "");
-      setMaterialStandard(data.materialStandard ?? "");
-      setApproxWeight(data.approxWeight != null ? String(data.approxWeight) : "");
-      setMachiningRequired(data.machiningRequired ?? "Casting Only");
-      setPatternAvailability(data.patternAvailability ?? "");
-      setPrototypeQty(data.prototypeQuantity ?? "");
-      setProductionQty(data.productionQuantity ?? data.quantity);
-      setAnnualReq(data.annualRequirement ?? "");
-      setDeliveryLocation(data.deliveryLocation ?? "");
-      setDeliveryDate(data.expectedDeliveryDate ? data.expectedDeliveryDate.slice(0, 10) : "");
-      setDeliveryTerms(data.preferredDeliveryTerms ?? "");
-      setAdditionalReqs(data.additionalRequirements ? data.additionalRequirements.split(", ").filter(Boolean) : []);
-      setRemarks(data.remarks ?? "");
+    Promise.allSettled([
+      customerApi.enquiry(id),
+      customerApi.addresses(),
+    ]).then(([enqRes, addrsRes]) => {
+      if (addrsRes.status === "fulfilled" && Array.isArray(addrsRes.value)) {
+        setSavedAddresses(addrsRes.value);
+      }
+      if (enqRes.status === "fulfilled" && enqRes.value) {
+        const data = enqRes.value;
+        setEnquiry(data);
+        setProductType(data.productType);
+        setPartName(data.partName ?? "");
+        setPartNumber(data.partNumber ?? "");
+        setApplication(data.application ?? "");
+        setRequirementDetails(data.requirementDetails ?? "");
+        setQuantity(data.quantity ?? "");
+        setIndustry(data.industry ?? "");
+        setMaterialGrade(data.materialGrade ?? "");
+        setMaterialStandard(data.materialStandard ?? "");
+        setApproxWeight(data.approxWeight != null ? String(data.approxWeight) : "");
+        setMachiningRequired(data.machiningRequired ?? "Casting Only");
+        setPatternAvailability(data.patternAvailability ?? "");
+        setPrototypeQty(data.prototypeQuantity ?? "");
+        setProductionQty(data.productionQuantity ?? data.quantity);
+        setAnnualReq(data.annualRequirement ?? "");
+        setDeliveryLocation(data.deliveryLocation ?? "");
+        setDeliveryDate(data.expectedDeliveryDate ? data.expectedDeliveryDate.slice(0, 10) : "");
+        setDeliveryTerms(data.preferredDeliveryTerms ?? "");
+        setAdditionalReqs(data.additionalRequirements ? data.additionalRequirements.split(", ").filter(Boolean) : []);
+        setRemarks(data.remarks ?? "");
+
+        if (addrsRes.status === "fulfilled" && Array.isArray(addrsRes.value) && data.deliveryLocation) {
+          const matched = addrsRes.value.find((a) => {
+            const loc = [a.address, a.city, a.state, a.pinCode].filter(Boolean).join(", ");
+            return loc.trim().toLowerCase() === data.deliveryLocation?.trim().toLowerCase();
+          });
+          if (matched) setSelectedAddressId(matched.id);
+        }
+      } else {
+        setMissing(true);
+      }
     }).catch(() => setMissing(true));
   }, [id]);
 
@@ -375,10 +414,89 @@ export default function EnquiryEditPage() {
 
         {/* Section 4: Delivery Details */}
         <Section title="4. Delivery Details">
+          {savedAddresses.length > 0 && (
+            <div className="mb-4 p-3.5 rounded-xl bg-[var(--bg-surface-hover)] border border-[var(--border-default)]">
+              <label className="text-[11px] font-bold text-[var(--text-secondary)] uppercase tracking-wider block mb-2.5">
+                Select from Saved Addresses
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {savedAddresses.map((addr) => {
+                  const isSelected = selectedAddressId === addr.id;
+                  return (
+                    <button
+                      key={addr.id}
+                      type="button"
+                      onClick={() => handleSelectSavedAddress(addr)}
+                      className={cn(
+                        "px-3.5 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1.5",
+                        isSelected
+                          ? "bg-blue-600 text-white border-blue-600 shadow-xs"
+                          : "bg-[var(--bg-card)] text-[var(--text-primary)] border-[var(--border-default)] hover:border-blue-400"
+                      )}
+                    >
+                      <MapPin size={12} className={isSelected ? "text-white" : "text-blue-500"} />
+                      <span>{addr.addressType} {addr.city ? `(${addr.city})` : ""}</span>
+                      {addr.isPrimary && (
+                        <span className={cn("text-[10px] px-1.5 py-0.2 rounded font-bold", isSelected ? "bg-white/20 text-white" : "bg-emerald-500/15 text-emerald-600")}>
+                          Primary
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+                <button
+                  type="button"
+                  onClick={() => handleSelectSavedAddress("custom")}
+                  className={cn(
+                    "px-3.5 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1.5",
+                    selectedAddressId === "custom"
+                      ? "bg-blue-600 text-white border-blue-600 shadow-xs"
+                      : "bg-[var(--bg-card)] text-[var(--text-secondary)] border-[var(--border-default)] hover:border-blue-400"
+                  )}
+                >
+                  <MapPin size={12} className={selectedAddressId === "custom" ? "text-white" : "text-neutral-400"} />
+                  <span>Custom Location</span>
+                </button>
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <Field label="Delivery Location" hint="Optional">
-              <input type="text" value={deliveryLocation} onChange={(e) => setDeliveryLocation(e.target.value)} placeholder="City, State"
-                className="w-full h-10 px-3 rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] text-[13px] text-[var(--text-primary)] outline-none focus:border-[var(--color-primary)]" />
+            <Field
+              label="Delivery Location"
+              hint={
+                selectedAddressId === "custom"
+                  ? "Enter custom delivery destination, site address or PIN code"
+                  : "Auto-filled from saved profile address; click Custom Location or type to change"
+              }
+            >
+              <div className="relative">
+                <input
+                  ref={deliveryLocationInputRef}
+                  type="text"
+                  value={deliveryLocation}
+                  onChange={(e) => {
+                    setDeliveryLocation(e.target.value);
+                    setSelectedAddressId("custom");
+                  }}
+                  placeholder="Enter city, state, facility address or PIN code"
+                  className="w-full h-10 pl-3 pr-8 rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--color-primary)]"
+                />
+                {deliveryLocation && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDeliveryLocation("");
+                      setSelectedAddressId("custom");
+                      deliveryLocationInputRef.current?.focus();
+                    }}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 dark:hover:text-white cursor-pointer"
+                    title="Clear location"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
             </Field>
             <Field label="Expected Delivery Date" hint="Optional">
               <input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)}
