@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { engineerApi, type EngineerEnquiryListItem } from "../../../api/engineerApi";
 import type { Paged } from "../../../api/customerApi";
@@ -8,16 +8,31 @@ import { config } from "../../../config";
 import { formatDate } from "../../shared";
 import {
   Search, RefreshCw, ChevronLeft, ChevronRight, X, Download,
-  Eye, MoreVertical, FileText, Clock, CheckCircle, AlertCircle,
+  Eye, FileText, Clock, CheckCircle2, AlertCircle,
   XCircle, FileEdit, Package,
 } from "lucide-react";
 import "../erpListView.css";
 
-const STATUS_FILTERS = ["All", "Draft", "Received", "Under Review", "Approved", "Quoted", "Accepted", "Rejected", "Cancelled"];
 const PRIORITY_FILTERS = ["All", "Low", "Medium", "High", "Urgent"];
 const PAGE_SIZES = [10, 20, 50];
 
-/* ---- helpers ------------------------------------------------------- */
+const AVATAR_PALETTES = [
+  { bg: "rgba(59,130,246,0.15)", fg: "#3B82F6", border: "rgba(59,130,246,0.3)" },
+  { bg: "rgba(168,85,247,0.15)", fg: "#A855F7", border: "rgba(168,85,247,0.3)" },
+  { bg: "rgba(20,184,166,0.15)", fg: "#14B8A6", border: "rgba(20,184,166,0.3)" },
+  { bg: "rgba(249,115,22,0.15)", fg: "#F97316", border: "rgba(249,115,22,0.3)" },
+  { bg: "rgba(236,72,153,0.15)", fg: "#EC4899", border: "rgba(236,72,153,0.3)" },
+  { bg: "rgba(34,197,94,0.15)", fg: "#22C55E", border: "rgba(34,197,94,0.3)" },
+];
+
+function getAvatarStyle(identifier: string) {
+  let hash = 0;
+  for (let i = 0; i < identifier.length; i++) {
+    hash = identifier.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % AVATAR_PALETTES.length;
+  return AVATAR_PALETTES[index];
+}
 
 function enquiryNo(id: string): string {
   return `Enquiry-${id.slice(0, 8).toUpperCase()}`;
@@ -55,7 +70,12 @@ function PriorityBadge({ priority }: { priority: string }) {
   return <span className={`inv-badge inv-badge--${priorityTone(priority)}`}>{priority}</span>;
 }
 
-/*  CSV export                                                        */
+function initials(name: string | null): string {
+  if (!name) return "?";
+  return name.trim().split(/\s+/).slice(0, 2).map((w) => w.charAt(0).toUpperCase()).join("") || "?";
+}
+
+/* CSV export */
 function exportToCsv(items: EngineerEnquiryListItem[]) {
   const headers = ["Enquiry No.", "Customer", "Product", "Quantity", "Status", "Date", "Files", "Assigned"];
   const rows = items.map((r) => [
@@ -70,7 +90,7 @@ function exportToCsv(items: EngineerEnquiryListItem[]) {
   ]);
   const esc = (v: string) => `"${String(v).replace(/"/g, '""')}"`;
   const csv = [headers.join(","), ...rows.map((row) => row.map(esc).join(","))].join("\n");
-  const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -81,7 +101,7 @@ function exportToCsv(items: EngineerEnquiryListItem[]) {
   URL.revokeObjectURL(url);
 }
 
-/*  Thumbnail image (auth-fetched)                                    */
+/* Thumbnail image (auth-fetched) */
 function ListEnquiryImage({
   enquiryId,
   fileId,
@@ -108,7 +128,6 @@ function ListEnquiryImage({
       try {
         let targetFileId = fileId;
 
-        // If fileId is not an image or missing, fetch enquiry details to find attached drawing image
         if ((!targetFileId || !fileContentType?.startsWith("image/")) && hasFiles) {
           const detail = await engineerApi.enquiry(enquiryId);
           const img = detail.files?.find(
@@ -116,9 +135,7 @@ function ListEnquiryImage({
               f.contentType?.startsWith("image/") ||
               /\.(png|jpg|jpeg|webp|gif|svg)$/i.test(f.fileName),
           );
-          if (img) {
-            targetFileId = img.id;
-          }
+          if (img) targetFileId = img.id;
         }
 
         if (!targetFileId) return;
@@ -151,7 +168,7 @@ function ListEnquiryImage({
   if (url) {
     return (
       <div
-        className="inv-drawing-thumb"
+        className="w-11 h-11 rounded-lg border border-neutral-200 dark:border-white/10 overflow-hidden bg-neutral-100 dark:bg-white/5 flex items-center justify-center cursor-pointer hover:border-orange-500 transition-all shadow-xs"
         title="Click to view full drawing"
         onClick={(e) => {
           if (onImageClick) {
@@ -160,27 +177,25 @@ function ListEnquiryImage({
           }
         }}
       >
-        <img src={url} alt="CAD Drawing Blueprint" />
+        <img src={url} alt="CAD Drawing Blueprint" className="w-full h-full object-cover" />
       </div>
     );
   }
 
   if (hasFiles) {
     return (
-      <div className="inv-drawing-thumb inv-drawing-thumb--empty" title="CAD Document Attached">
-        <FileText size={16} style={{ color: "var(--color-primary)" }} />
+      <div className="w-11 h-11 rounded-lg border border-neutral-200 dark:border-white/10 bg-blue-500/10 text-blue-500 flex items-center justify-center" title="CAD Document Attached">
+        <FileText size={18} />
       </div>
     );
   }
 
   return (
-    <div className="inv-drawing-thumb inv-drawing-thumb--empty" title="No Drawings">
-      <Package size={16} style={{ opacity: 0.3 }} />
+    <div className="w-11 h-11 rounded-lg border border-dashed border-neutral-200 dark:border-white/10 bg-neutral-50 dark:bg-white/[0.02] text-neutral-400 flex items-center justify-center" title="No Drawings Attached">
+      <Package size={16} className="opacity-40" />
     </div>
   );
 }
-
-/* ---- main page ----------------------------------------------------- */
 
 export default function EngineerEnquiryListPage() {
   const navigate = useNavigate();
@@ -196,7 +211,6 @@ export default function EngineerEnquiryListPage() {
   const [statusFilter, setStatusFilter] = useState("All");
   const [priorityFilter, setPriorityFilter] = useState("All");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [previewModalUrl, setPreviewModalUrl] = useState<string | null>(null);
 
   const load = useCallback(() => {
@@ -204,25 +218,17 @@ export default function EngineerEnquiryListPage() {
       .then(setData)
       .catch((e: Error) => setError(e.message));
   }, [page, pageSize, search, statusFilter, companyId]);
+
   useEffect(load, [load]);
   useEffect(() => { setPage(1); }, [search, statusFilter, pageSize]);
 
-  // Close the row menu on outside click
-  useEffect(() => {
-    if (!openMenu) return;
-    const onDown = () => setOpenMenu(null);
-    document.addEventListener("mousedown", onDown);
-    return () => document.removeEventListener("mousedown", onDown);
-  }, [openMenu]);
+  const totalCount = data?.totalCount ?? (data as any)?.total ?? 0;
+  const totalPages = data ? Math.max(1, Math.ceil(totalCount / pageSize)) : 1;
 
-  const totalPages = data ? Math.max(1, Math.ceil(data.totalCount / data.pageSize)) : 1;
+  const filteredItems = (data?.items ?? []).filter((r) => priorityFilter === "All" || r.priority === priorityFilter);
 
-  // Priority is a client-side refinement on the current page (no backend param)
-  const filteredItems = data?.items.filter((r) => priorityFilter === "All" || r.priority === priorityFilter) ?? [];
-
-  // Enquiry-specific summary from the current page (preserving existing behaviour)
   const allStatuses = data?.items.map((r) => r.status) ?? [];
-  const totalEnquiries = data?.totalCount ?? 0;
+  const totalEnquiries = totalCount;
   const newCount = allStatuses.filter((s) => s === "Received").length;
   const reviewCount = allStatuses.filter((s) => s === "Under Review").length;
   const quotedCount = allStatuses.filter((s) => s === "Quoted").length;
@@ -246,334 +252,371 @@ export default function EngineerEnquiryListPage() {
   const hasFilters = !!search || statusFilter !== "All" || priorityFilter !== "All";
 
   const kpis = [
-    { label: "Total Enquiries", value: totalEnquiries, hint: "All requests", icon: FileText, color: "var(--kpi-blue)", bg: "var(--kpi-blue-bg)", glow: "rgba(59,130,246,0.25)" },
-    { label: "Received", value: newCount, hint: "New requests", icon: Clock, color: "var(--kpi-blue)", bg: "var(--kpi-blue-bg)", glow: "rgba(59,130,246,0.22)" },
-    { label: "Under Review", value: reviewCount, hint: "In review", icon: AlertCircle, color: "var(--kpi-orange)", bg: "var(--kpi-orange-bg)", glow: "rgba(249,115,22,0.22)" },
-    { label: "Quoted", value: quotedCount, hint: "Quotes sent", icon: FileEdit, color: "var(--kpi-purple)", bg: "var(--kpi-purple-bg)", glow: "rgba(167,139,250,0.22)" },
-    { label: "Accepted", value: acceptedCount, hint: "Accepted", icon: CheckCircle, color: "var(--kpi-green)", bg: "var(--kpi-green-bg)", glow: "rgba(34,197,94,0.22)" },
-    { label: "Rejected", value: rejectedCount, hint: "Rejected", icon: XCircle, color: "var(--color-danger)", bg: "rgba(239,68,68,0.10)", glow: "rgba(239,68,68,0.22)" },
+    { label: "Total Enquiries", value: totalEnquiries, hint: "All requests", icon: FileText, bgClass: "bg-blue-500/10", textClass: "text-blue-500", glow: "rgba(59,130,246,0.18)" },
+    { label: "Received", value: newCount, hint: "New incoming", icon: Clock, bgClass: "bg-sky-500/10", textClass: "text-sky-500", glow: "rgba(14,165,233,0.18)" },
+    { label: "Under Review", value: reviewCount, hint: "In engineering review", icon: AlertCircle, bgClass: "bg-amber-500/10", textClass: "text-amber-500", glow: "rgba(245,158,11,0.18)" },
+    { label: "Quoted", value: quotedCount, hint: "Quotes issued", icon: FileEdit, bgClass: "bg-purple-500/10", textClass: "text-purple-500", glow: "rgba(168,85,247,0.18)" },
+    { label: "Accepted", value: acceptedCount, hint: "Approved & won", icon: CheckCircle2, bgClass: "bg-emerald-500/10", textClass: "text-emerald-500", glow: "rgba(16,185,129,0.18)" },
+    { label: "Rejected", value: rejectedCount, hint: "Declined requests", icon: XCircle, bgClass: "bg-rose-500/10", textClass: "text-rose-500", glow: "rgba(244,63,94,0.18)" },
   ];
 
   const openEnquiry = (r: EngineerEnquiryListItem) => navigate(`/admin/enquiries/${r.id}`);
 
-  const renderThumb = (r: EngineerEnquiryListItem) => {
-    return (
-      <ListEnquiryImage
-        enquiryId={r.id}
-        fileId={r.firstFileId}
-        fileContentType={r.firstFileContentType}
-        hasFiles={r.fileCount > 0}
-        onImageClick={(url) => setPreviewModalUrl(url)}
-      />
-    );
-  };
-
-  const renderRow = (r: EngineerEnquiryListItem) => {
-    return (
-      <tr key={r.id} onClick={() => openEnquiry(r)}>
-        <td onClick={(e) => e.stopPropagation()}>
-          <input type="checkbox" className="inv-check" checked={selectedIds.has(r.id)} onChange={() => toggleSelect(r.id)} aria-label="Select Enquiry" />
-        </td>
-        <td style={{ width: 68, padding: "8px 12px" }}>{renderThumb(r)}</td>
-        <td>
-          <span className="inv-link" role="link" tabIndex={0}
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); openEnquiry(r); } }}>
-            {enquiryNo(r.id)}
-          </span>
-          <div className="inv-sub">{formatDate(r.createdAtUtc)}</div>
-        </td>
-        <td>
-          <div className="inv-customer">
-            <span className="inv-avatar">{initials(r.companyName)}</span>
-            <div>
-              <div className="inv-customer__name" title={r.companyName ?? undefined}>{r.companyName ?? "Unknown"}</div>
-              <div className="inv-customer__contact">{r.productType}</div>
-            </div>
-          </div>
-        </td>
-        <td>
-          <div className="inv-amount__total" style={{ fontSize: 15 }}>{r.quantity}</div>
-        </td>
-        <td>
-          {r.assignedToUserId ? (
-            <div className="inv-customer__name" style={{ fontSize: 13 }}>Assigned</div>
-          ) : (
-            <span className="inv-sub">—</span>
-          )}
-        </td>
-        <td><PriorityBadge priority={r.priority} /></td>
-        <td><EnquiryBadge status={r.status} /></td>
-        <td>
-          <div className="inv-actions" onClick={(e) => e.stopPropagation()}>
-            <button className="inv-icon-btn" title="View" aria-label="View" onClick={() => openEnquiry(r)}>
-              <Eye size={16} />
-            </button>
-            <div className="inv-menu-wrap" onMouseDown={(e) => e.stopPropagation()}>
-              <button className="inv-icon-btn" title="More" aria-label="More actions"
-                aria-expanded={openMenu === r.id}
-                onClick={() => setOpenMenu((m) => (m === r.id ? null : r.id))}>
-                <MoreVertical size={16} />
-              </button>
-              {openMenu === r.id && (
-                <div className="inv-menu">
-                  <button className="inv-menu__item" onClick={() => { setOpenMenu(null); openEnquiry(r); }}>
-                    <Eye size={15} /> View Details
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </td>
-      </tr>
-    );
-  };
-
-  const renderCard = (r: EngineerEnquiryListItem) => {
-    return (
-      <div key={r.id} className="inv-card" onClick={() => openEnquiry(r)}>
-        <div className="inv-card__top">
-          <div className="inv-card__customer">
-            <span className="inv-avatar">{initials(r.companyName)}</span>
-            <div>
-              <div className="inv-customer__name">{r.companyName ?? "Unknown"}</div>
-              <div className="inv-sub inv-link">{enquiryNo(r.id)}</div>
-            </div>
-          </div>
-          <EnquiryBadge status={r.status} />
-        </div>
-        <div className="inv-card__body">
-          <div className="inv-card__cell">
-            <span className="inv-card__label">Product</span>
-            <span className="inv-card__value">{r.productType}</span>
-          </div>
-          <div className="inv-card__cell">
-            <span className="inv-card__label">Quantity</span>
-            <span className="inv-card__value">{r.quantity}</span>
-          </div>
-          <div className="inv-card__cell">
-            <span className="inv-card__label">Date</span>
-            <span className="inv-card__value">{formatDate(r.createdAtUtc)}</span>
-          </div>
-          <div className="inv-card__cell">
-            <span className="inv-card__label">Priority</span>
-            <span className="inv-card__value"><PriorityBadge priority={r.priority} /></span>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   return (
-    <div className="inv-page">
-      {/* Lightbox Drawing Modal */}
+    <div className="space-y-6 pb-12">
+      {/* ── Blueprint Preview Modal ────────────────────────── */}
       {previewModalUrl && (
-        <div
-          style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0, 0, 0, 0.82)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
-          onClick={() => setPreviewModalUrl(null)}
-        >
-          <div
-            style={{ position: "relative", maxWidth: "85vw", maxHeight: "88vh", background: "var(--bg-card)", borderRadius: 16, border: "1px solid var(--border-default)", overflow: "hidden", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)", padding: 16, display: "flex", flexDirection: "column", alignItems: "center" }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: 12, borderBottom: "1px solid var(--border-default)" }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs animate-in fade-in" onClick={() => setPreviewModalUrl(null)}>
+          <div className="relative w-full max-w-4xl bg-white dark:bg-[#121520] rounded-2xl border border-neutral-200 dark:border-white/10 shadow-2xl p-5" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between pb-3 border-b border-neutral-200 dark:border-white/10">
+              <span className="text-sm font-bold text-neutral-900 dark:text-white">
                 CAD Drawing & Blueprint Preview
               </span>
               <button
                 type="button"
                 onClick={() => setPreviewModalUrl(null)}
-                style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", padding: 4 }}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
               >
-                <X size={18} />
+                <X size={16} />
               </button>
             </div>
-            <div style={{ width: "100%", maxHeight: "72vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 12, marginTop: 8, background: "var(--bg-surface)", borderRadius: 12, overflow: "hidden" }}>
-              <img
-                src={previewModalUrl}
-                alt="Full Drawing Preview"
-                style={{ maxHeight: "68vh", maxWidth: "100%", objectFit: "contain", borderRadius: 8 }}
-              />
+            <div className="w-full max-h-[72vh] flex items-center justify-center p-3 mt-3 bg-neutral-50 dark:bg-[#0a0c12] rounded-xl overflow-hidden">
+              <img src={previewModalUrl} alt="Full Drawing Preview" className="max-h-[68vh] max-w-full object-contain rounded-lg shadow-sm" />
             </div>
           </div>
         </div>
       )}
 
-      {/* Header */}
-      <div className="inv-header">
+      {/* ── 1. Hero Header ─────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="inv-header__title">Enquiries</h1>
-          <p className="inv-header__subtitle">Manage customer Requests for Quote.</p>
+          <div className="flex items-center gap-2 text-xs font-semibold text-neutral-400 mb-1">
+            <span>Admin</span>
+            <span>/</span>
+            <span className="text-[var(--color-primary)] font-bold">Enquiries</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 dark:text-white tracking-tight">
+              Customer Enquiries
+            </h1>
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-[var(--color-primary)]/10 text-[var(--color-primary)] border border-[var(--color-primary)]/20 shadow-xs">
+              {totalEnquiries} RFQs
+            </span>
+          </div>
+          <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 mt-1">
+            Track customer RFQ requests, review technical specifications, and generate engineering quotes.
+          </p>
         </div>
-        <div className="inv-header__actions">
-          <button className="inv-btn" onClick={() => { if (data) exportToCsv(data.items); }} title="Export visible Enquiries to Excel">
-            <Download size={16} /> Export Excel
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <button
+            type="button"
+            onClick={() => { if (data) exportToCsv(data.items); }}
+            className="inline-flex items-center gap-1.5 px-3.5 h-9 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#121520] hover:bg-neutral-50 dark:hover:bg-white/5 text-xs font-bold text-neutral-700 dark:text-neutral-300 transition-all shadow-xs cursor-pointer"
+            title="Export visible Enquiries to CSV"
+          >
+            <Download size={14} />
+            <span>Export CSV</span>
+          </button>
+          <button
+            type="button"
+            onClick={load}
+            className="inline-flex items-center gap-1.5 px-3.5 h-9 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#121520] hover:bg-neutral-50 dark:hover:bg-white/5 text-xs font-bold text-neutral-700 dark:text-neutral-300 transition-all shadow-xs cursor-pointer"
+            title="Refresh Enquiries"
+          >
+            <RefreshCw size={13} />
+            <span>Refresh</span>
           </button>
         </div>
       </div>
 
-      {/* KPI cards */}
-      <div className="inv-kpi-grid">
+      {/* ── 2. Balanced 6-Card KPI Grid ────────────────────── */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
         {kpis.map((k) => (
-          <div key={k.label} className="inv-kpi"
-            style={{ "--inv-kpi-color": k.color, "--inv-kpi-bg": k.bg, "--inv-kpi-glow": k.glow } as CSSProperties}>
-            <span className="inv-kpi__icon"><k.icon size={20} /></span>
-            <span className="inv-kpi__value">{k.value.toLocaleString()}</span>
-            <span className="inv-kpi__label">{k.label}</span>
-            <span className="inv-kpi__hint">{k.hint}</span>
+          <div
+            key={k.label}
+            className="relative overflow-hidden p-4 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all before:absolute before:inset-0 before:bg-[radial-gradient(150px_110px_at_95%_0%,var(--glow),transparent)] before:pointer-events-none"
+            style={{ "--glow": k.glow } as any}
+          >
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${k.bgClass} ${k.textClass}`}>
+              <k.icon size={17} />
+            </div>
+            <div className="text-xl sm:text-2xl font-extrabold text-neutral-900 dark:text-white mt-2.5 leading-tight tracking-tight tabular-nums">
+              {k.value.toLocaleString()}
+            </div>
+            <div className="text-xs font-bold text-neutral-800 dark:text-neutral-200 mt-0.5">{k.label}</div>
+            <div className="text-[11px] text-neutral-500 dark:text-neutral-400">{k.hint}</div>
           </div>
         ))}
       </div>
 
-      {/* Search & filter bar */}
-      <div className="inv-filterbar">
-        <div className="inv-field" style={{ flex: "1 1 240px" }}>
-          <label className="inv-field__label">Search</label>
-          <div style={{ position: "relative" }}>
-            <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
+      {/* ── 3. Toolbar & Segmented Quick Filters ───────────── */}
+      <div className="rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] p-4 shadow-xs space-y-3.5">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          {/* Real-time search */}
+          <div className="relative w-full lg:w-96">
+            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" />
             <input
-              className="inv-input" style={{ paddingLeft: 32 }} type="search" value={searchInput}
-              placeholder="Search Enquiries..."
-              aria-label="Search Enquiries"
+              type="text"
+              value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") setSearch(searchInput.trim()); }}
+              placeholder="Search by Enquiry No, Company, Product..."
+              className="w-full pl-10 pr-4 h-10 text-xs rounded-xl border border-neutral-200 dark:border-white/10 bg-neutral-50 dark:bg-[#161a26] text-neutral-800 dark:text-white outline-none focus:border-orange-500 shadow-xs"
             />
+            {searchInput && (
+              <button type="button" onClick={() => { setSearchInput(""); setSearch(""); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 dark:hover:text-white cursor-pointer">
+                <X size={13} />
+              </button>
+            )}
+          </div>
+
+          {/* Segmented Quick Filter Tabs */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0">
+            {[
+              { label: "All", status: "All", count: totalEnquiries },
+              { label: "Received", status: "Received", count: newCount },
+              { label: "Under Review", status: "Under Review", count: reviewCount },
+              { label: "Quoted", status: "Quoted", count: quotedCount },
+              { label: "Accepted", status: "Accepted", count: acceptedCount },
+              { label: "Rejected", status: "Rejected", count: rejectedCount },
+            ].map((tab) => {
+              const isCurrent = statusFilter === tab.status;
+              return (
+                <button
+                  key={tab.label}
+                  type="button"
+                  onClick={() => { setStatusFilter(tab.status); setPage(1); }}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                    isCurrent
+                      ? "bg-[var(--color-primary)] text-white shadow-sm"
+                      : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-white/5"
+                  }`}
+                >
+                  <span>{tab.label}</span>
+                  <span className={`px-1.5 py-0.2 rounded-md text-[10px] font-mono ${
+                    isCurrent ? "bg-white/20 text-white" : "bg-neutral-200/70 dark:bg-white/10 text-neutral-500 dark:text-neutral-400"
+                  }`}>
+                    {tab.count}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        <div className="inv-field">
-          <label className="inv-field__label">Status</label>
-          <select className="inv-select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-            {STATUS_FILTERS.map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
-        </div>
+        {/* Priority Filter & Company Indicator */}
+        <div className="flex items-center justify-between gap-3 pt-2 border-t border-neutral-100 dark:border-white/5 flex-wrap">
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400">Priority:</span>
+            <div className="flex items-center gap-1">
+              {PRIORITY_FILTERS.map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setPriorityFilter(p)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                    priorityFilter === p
+                      ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 shadow-xs"
+                      : "text-neutral-500 hover:bg-neutral-100 dark:hover:bg-white/5"
+                  }`}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+          </div>
 
-        <div className="inv-field">
-          <label className="inv-field__label">Priority</label>
-          <select className="inv-select" value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)}>
-            {PRIORITY_FILTERS.map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
+          {hasFilters && (
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="text-xs font-bold text-neutral-500 hover:text-neutral-900 dark:hover:text-white flex items-center gap-1 cursor-pointer"
+            >
+              <X size={12} /> Clear all filters
+            </button>
+          )}
         </div>
-
-        <button className="inv-btn inv-btn--icon" title="Refresh" aria-label="Refresh" onClick={load}>
-          <RefreshCw size={16} />
-        </button>
-        <button className="inv-btn" onClick={() => { if (data) exportToCsv(data.items); }} title="Export visible Enquiries to Excel">
-          <Download size={14} /> Export
-        </button>
-        {hasFilters && (
-          <button className="inv-btn" title="Clear filters" onClick={clearFilters}>
-            <X size={14} /> Clear
-          </button>
-        )}
       </div>
 
-      {/* Company scope indicator */}
-      {companyId && (
-        <div className="inv-filterbar" style={{ padding: "10px 16px", alignItems: "center", gap: 10 }}>
-          <span className="inv-badge inv-badge--blue">Filtered by company</span>
-          <button className="inv-btn" onClick={() => navigate("/admin/enquiries")}>
-            <X size={14} /> Clear company filter
-          </button>
-        </div>
-      )}
-
-      {/* Desktop table */}
-      {data && filteredItems.length > 0 && (
-        <div className="inv-table-wrap">
-          <div className="inv-scroll">
-            <table className="inv-table">
-              <colgroup>
-                <col style={{ width: "36px" }} />
-                <col style={{ width: "68px" }} />
-                <col style={{ width: "13%" }} />
-                <col style={{ width: "21%" }} />
-                <col style={{ width: "9%" }} />
-                <col style={{ width: "11%" }} />
-                <col style={{ width: "11%" }} />
-                <col style={{ width: "18%" }} />
-                <col style={{ width: "6%" }} />
-              </colgroup>
+      {/* ── 4. Interactive High-End Table ──────────────────── */}
+      <div className="rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs overflow-hidden">
+        {error ? (
+          <div className="p-8 text-center"><EmptyState title="Enquiries unavailable" text={error} /></div>
+        ) : !data ? (
+          <div className="py-24 text-center"><Loading label="Loading Enquiries..." /></div>
+        ) : filteredItems.length === 0 ? (
+          <div className="py-24 text-center text-neutral-400 space-y-2">
+            <Package size={44} className="mx-auto opacity-30" />
+            <p className="text-sm font-medium text-neutral-500">No Enquiries match the current filters.</p>
+            {hasFilters && (
+              <button type="button" onClick={clearFilters} className="text-xs text-[var(--color-primary)] hover:underline font-bold cursor-pointer">
+                Clear all filters
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse" style={{ minWidth: 1050 }}>
               <thead>
-                <tr>
-                  <th style={{ width: 36 }}>
-                    <input type="checkbox" className="inv-check" checked={allSelected} onChange={toggleSelectAll} aria-label="Select all" />
+                <tr className="bg-neutral-50/80 dark:bg-white/[0.02] border-b border-neutral-200/80 dark:border-white/10">
+                  <th className="py-3.5 px-4 w-[40px] text-center">
+                    <input type="checkbox" className="inv-check cursor-pointer" checked={allSelected} onChange={toggleSelectAll} aria-label="Select all" />
                   </th>
-                  <th style={{ width: 68, textAlign: "center" }}>Drawing</th>
-                  <th>Enquiry No.</th>
-                  <th>Customer</th>
-                  <th>Qty</th>
-                  <th>Assigned</th>
-                  <th>Priority</th>
-                  <th>Status</th>
-                  <th style={{ textAlign: "right" }}>Actions</th>
+                  <th className="py-3.5 px-3 text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 text-center w-[60px]">
+                    Drawing
+                  </th>
+                  <th className="py-3.5 px-4 text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                    Enquiry No.
+                  </th>
+                  <th className="py-3.5 px-4 text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                    Customer & Product
+                  </th>
+                  <th className="py-3.5 px-4 text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 text-right">
+                    Quantity
+                  </th>
+                  <th className="py-3.5 px-4 text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                    Assigned
+                  </th>
+                  <th className="py-3.5 px-4 text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                    Priority
+                  </th>
+                  <th className="py-3.5 px-4 text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                    Status
+                  </th>
+                  <th className="py-3.5 px-4 text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 text-right">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                {filteredItems.map((r) => renderRow(r))}
+                {filteredItems.map((r) => {
+                  const avatar = getAvatarStyle(r.companyName || r.id);
+                  return (
+                    <tr
+                      key={r.id}
+                      onClick={() => openEnquiry(r)}
+                      className="border-b border-neutral-200/60 dark:border-white/5 hover:bg-neutral-50/70 dark:hover:bg-white/[0.02] transition-colors group cursor-pointer"
+                    >
+                      <td className="py-3.5 px-4 text-center" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          className="inv-check cursor-pointer"
+                          checked={selectedIds.has(r.id)}
+                          onChange={() => toggleSelect(r.id)}
+                          aria-label="Select Enquiry"
+                        />
+                      </td>
+                      <td className="py-3 px-3 text-center" onClick={(e) => e.stopPropagation()}>
+                        <ListEnquiryImage
+                          enquiryId={r.id}
+                          fileId={r.firstFileId}
+                          fileContentType={r.firstFileContentType}
+                          hasFiles={r.fileCount > 0}
+                          onImageClick={(url) => setPreviewModalUrl(url)}
+                        />
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <div className="font-extrabold text-neutral-900 dark:text-white group-hover:text-[var(--color-primary)] transition-colors">
+                          {enquiryNo(r.id)}
+                        </div>
+                        <div className="text-[11px] text-neutral-400 mt-0.5">{formatDate(r.createdAtUtc)}</div>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <div className="flex items-center gap-2.5">
+                          <div
+                            className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black shrink-0 border"
+                            style={{ background: avatar.bg, color: avatar.fg, borderColor: avatar.border }}
+                          >
+                            {initials(r.companyName)}
+                          </div>
+                          <div>
+                            <div className="font-semibold text-neutral-900 dark:text-white text-xs">{r.companyName ?? "Unknown Company"}</div>
+                            <div className="text-[11px] text-neutral-400">{r.productType}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4 text-right tabular-nums font-black text-neutral-900 dark:text-white text-[13.5px]">
+                        {r.quantity.toLocaleString()}
+                      </td>
+                      <td className="py-3.5 px-4 text-xs">
+                        {r.assignedToUserId ? (
+                          <span className="font-semibold text-blue-600 dark:text-blue-400">Assigned</span>
+                        ) : (
+                          <span className="text-neutral-400 font-normal">—</span>
+                        )}
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <PriorityBadge priority={r.priority} />
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <EnquiryBadge status={r.status} />
+                      </td>
+                      <td className="py-3.5 px-4 text-right" onClick={(e) => e.stopPropagation()}>
+                        <div className="inline-flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => openEnquiry(r)}
+                            className="w-8 h-8 rounded-lg border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#121520] hover:bg-neutral-50 dark:hover:bg-white/10 flex items-center justify-center text-neutral-500 hover:text-neutral-900 dark:hover:text-white transition-all shadow-xs cursor-pointer"
+                            title="View Enquiry Details"
+                          >
+                            <Eye size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Mobile cards */}
-      <div className="inv-mobile">
-        {!data && !error && <Loading label="Loading Enquiries" />}
-        {data && filteredItems.length === 0 && !error && <div className="inv-status">No Enquiries found.</div>}
-        {filteredItems.map((r) => renderCard(r))}
-      </div>
+        {/* ── 5. Standard Pagination Footer ──────────────────── */}
+        {data && totalCount > 0 && (
+          <div className="px-5 py-3.5 border-t border-neutral-200/80 dark:border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-neutral-500 bg-neutral-50/50 dark:bg-white/[0.01]">
+            <div>
+              Showing <span className="font-bold text-neutral-900 dark:text-white">{filteredItems.length}</span> of{" "}
+              <span className="font-bold text-neutral-900 dark:text-white">{totalCount}</span> Enquiries
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5">
+                <span className="text-neutral-400">Rows:</span>
+                <select
+                  value={pageSize}
+                  onChange={(e) => setPageSize(Number(e.target.value))}
+                  className="px-2 py-1 rounded-lg border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#121520] text-neutral-800 dark:text-white text-xs outline-none"
+                >
+                  {PAGE_SIZES.map((n) => (
+                    <option key={n} value={n}>{n}</option>
+                  ))}
+                </select>
+              </div>
 
-      {/* Errors / loading / empty (desktop) */}
-      {error && <EmptyState title="Enquiries unavailable" text={error} />}
-      {!data && !error && <div className="inv-status"><Loading label="Loading Enquiries" /></div>}
-      {data && filteredItems.length === 0 && !error && (
-        <div className="inv-status">
-          <Package size={40} style={{ opacity: 0.4, marginBottom: 12 }} />
-          <div>{hasFilters ? "No Enquiries match the current filters." : "No Enquiries found."}</div>
-        </div>
-      )}
-
-      {/* Pagination */}
-      <div className="inv-pagination">
-        <span className="inv-pagination__info">
-          {selectedIds.size > 0
-            ? `${selectedIds.size} selected`
-            : data ? `Showing ${data.items.length} of ${data.totalCount} Enquiries` : ""}
-        </span>
-
-        <div className="inv-field" style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-          <label className="inv-field__label" style={{ margin: 0 }}>Rows</label>
-          <select className="inv-select" style={{ width: "auto", padding: "7px 34px 7px 10px" }}
-            value={pageSize} onChange={(e) => setPageSize(Number(e.target.value))}>
-            {PAGE_SIZES.map((n) => <option key={n} value={n}>{n}</option>)}
-          </select>
-        </div>
-
-        <button className="inv-page-btn" disabled={page <= 1} onClick={() => setPage((p) => p - 1)} aria-label="Previous page">
-          <ChevronLeft size={16} />
-        </button>
-
-        {Array.from({ length: totalPages }, (_, i) => i + 1)
-          .filter((n) => n === 1 || n === totalPages || Math.abs(n - page) <= 1)
-          .reduce<ReactNode[]>((acc, n, idx, arr) => {
-            if (idx > 0 && n - arr[idx - 1] > 1) acc.push(<span key={`e${n}`} style={{ color: "var(--text-muted)", padding: "0 2px" }}>…</span>);
-            acc.push(
-              <button key={n} className={`inv-page-btn ${n === page ? "inv-page-btn--active" : ""}`}
-                onClick={() => setPage(n)}>{n}</button>,
-            );
-            return acc;
-          }, [])}
-
-        <button className="inv-page-btn" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} aria-label="Next page">
-          <ChevronRight size={16} />
-        </button>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => p - 1)}
+                  className="w-8 h-8 rounded-lg border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#121520] disabled:opacity-30 hover:bg-neutral-50 dark:hover:bg-white/5 flex items-center justify-center text-neutral-700 dark:text-neutral-300 transition-all cursor-pointer disabled:cursor-not-allowed"
+                >
+                  <ChevronLeft size={14} />
+                </button>
+                <span className="px-2.5 font-semibold text-neutral-800 dark:text-neutral-200">
+                  Page {page} of {totalPages}
+                </span>
+                <button
+                  type="button"
+                  disabled={page >= totalPages}
+                  onClick={() => setPage((p) => p + 1)}
+                  className="w-8 h-8 rounded-lg border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#121520] disabled:opacity-30 hover:bg-neutral-50 dark:hover:bg-white/5 flex items-center justify-center text-neutral-700 dark:text-neutral-300 transition-all cursor-pointer disabled:cursor-not-allowed"
+                >
+                  <ChevronRight size={14} />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
-}
-
-function initials(name: string | null): string {
-  if (!name) return "?";
-  return name.trim().split(/\s+/).slice(0, 2).map((w) => w.charAt(0).toUpperCase()).join("") || "?";
 }
