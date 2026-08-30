@@ -90,10 +90,27 @@ public class QuotationEngineerService(
 
     public async Task<Guid> CreateQuotationAsync(CreateQuotationRequest request, Guid userId, string? ip)
     {
-        var enquiry = await db.Enquiries.SingleOrDefaultAsync(r => r.Id == request.EnquiryId && r.Status == EnquiryStatuses.Approved)
+        var enquiry = await db.Enquiries.SingleOrDefaultAsync(r => r.Id == request.EnquiryId && (r.Status == EnquiryStatuses.Approved || r.Status == EnquiryStatuses.Quoted))
             ?? throw new NotFoundException("Enquiry not found or not approved.");
         var enquiryShortId = enquiry.Id.ToString("N")[..8].ToUpperInvariant();
         var number = $"QT-{DateTimeOffset.UtcNow:yyyyMMdd}-{enquiryShortId}";
+
+        if (enquiry.Status != EnquiryStatuses.Quoted)
+        {
+            var previousStatus = enquiry.Status;
+            enquiry.Status = EnquiryStatuses.Quoted;
+            db.EnquiryStatusHistories.Add(new EnquiryStatusHistory
+            {
+                Id = Guid.NewGuid(),
+                EnquiryId = enquiry.Id,
+                FromStatus = previousStatus,
+                ToStatus = EnquiryStatuses.Quoted,
+                ChangedByUserId = userId,
+                ChangedByRole = "Engineer",
+                Note = "Quotation generated",
+                CreatedAtUtc = DateTimeOffset.UtcNow,
+            });
+        }
 
         var quotation = new Quotation
         {

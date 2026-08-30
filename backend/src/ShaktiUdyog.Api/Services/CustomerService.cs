@@ -531,9 +531,16 @@ public class CustomerService(
         var enquiry = await db.Enquiries.SingleOrDefaultAsync(r => r.Id == quotation.EnquiryId);
         if (enquiry is not null)
         {
-            enquiry.Status = request.Response == "accept" ? EnquiryStatuses.Accepted
-                : request.Response == "negotiate" ? EnquiryStatuses.UnderReview
-                : EnquiryStatuses.Declined;
+            if (request.Response == "accept")
+            {
+                enquiry.Status = EnquiryStatuses.Accepted;
+            }
+            else if (request.Response == "decline")
+            {
+                enquiry.Status = EnquiryStatuses.Declined;
+            }
+            // For "negotiate" (Revision Requested), the Enquiry status is preserved as Quoted.
+            // The enquiry technical review is already complete; revision occurs on the commercial quotation.
         }
 
         await db.SaveChangesAsync();
