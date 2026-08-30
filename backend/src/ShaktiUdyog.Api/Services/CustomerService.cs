@@ -676,6 +676,7 @@ public class CustomerService(
             .Include(o => o.Items)
             .Include(o => o.Shipments)
             .Include(o => o.Milestones)
+            .Include(o => o.AssignedToUser)
             .SingleOrDefaultAsync(o => o.Id == orderId && ctx.CompanyIds.Contains(o.CompanyId));
         if (order is null)
         {
@@ -716,9 +717,10 @@ public class CustomerService(
             order.AdvancePercent, order.AdvanceAmount, order.AdvancePaid, order.AdvancePaidAtUtc,
             order.AdvancePaymentRef, order.AdvanceVerifiedAtUtc,
             order.QuotationTotal, order.PaymentTerms, order.QuotationId,
-            order.Milestones.Select(m => new OrderMilestoneDto(
+            order.Milestones.OrderBy(m => m.OccurredAtUtc).Select(m => new OrderMilestoneDto(
                 m.Id, m.StatusCode, m.CustomerMessage, m.OccurredAtUtc)).ToList(),
-            null, null,
+            order.AssignedToUserId,
+            order.AssignedToUser != null ? (order.AssignedToUser.FullName ?? order.AssignedToUser.Email) : null,
             effectiveStage,
             order.StageUpdatedAt);
     }

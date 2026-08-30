@@ -24,6 +24,7 @@ import {
   Layers,
   Flame,
   PackageCheck,
+  User,
 } from "lucide-react";
 import {
   customerApi,
@@ -43,11 +44,11 @@ const statusConfig: Record<string, { bg: string; text: string; dot: string }> = 
   awaiting_approval: { bg: "bg-purple-500/10 border-purple-500/20", text: "text-purple-600 dark:text-purple-400", dot: "bg-purple-500" },
   advance_paid: { bg: "bg-emerald-500/10 border-emerald-500/20", text: "text-emerald-600 dark:text-emerald-400", dot: "bg-emerald-500" },
   confirmed: { bg: "bg-blue-500/10 border-blue-500/20", text: "text-blue-600 dark:text-blue-400", dot: "bg-blue-500" },
-  pattern_development: { bg: "bg-amber-500/10 border-amber-500/20", text: "text-amber-600 dark:text-amber-400", dot: "bg-amber-500" },
-  production: { bg: "bg-orange-500/10 border-orange-500/20", text: "text-orange-600 dark:text-orange-400", dot: "bg-orange-500" },
-  quality_check: { bg: "bg-purple-500/10 border-purple-500/20", text: "text-purple-600 dark:text-purple-400", dot: "bg-purple-500" },
-  packed: { bg: "bg-teal-500/10 border-teal-500/20", text: "text-teal-600 dark:text-teal-400", dot: "bg-teal-500" },
-  ready_to_dispatch: { bg: "bg-amber-500/10 border-amber-500/20", text: "text-amber-600 dark:text-amber-400", dot: "bg-amber-500" },
+  pattern_development: { bg: "bg-purple-500/10 border-purple-500/20", text: "text-purple-600 dark:text-purple-400", dot: "bg-purple-500" },
+  production: { bg: "bg-blue-500/10 border-blue-500/20", text: "text-blue-600 dark:text-blue-400", dot: "bg-blue-500" },
+  quality_check: { bg: "bg-amber-500/10 border-amber-500/20", text: "text-amber-600 dark:text-amber-400", dot: "bg-amber-500" },
+  packed: { bg: "bg-emerald-500/10 border-emerald-500/20", text: "text-emerald-600 dark:text-emerald-400", dot: "bg-emerald-500" },
+  ready_to_dispatch: { bg: "bg-cyan-500/10 border-cyan-500/20", text: "text-cyan-600 dark:text-cyan-400", dot: "bg-cyan-500" },
   dispatched: { bg: "bg-indigo-500/10 border-indigo-500/20", text: "text-indigo-600 dark:text-indigo-400", dot: "bg-indigo-500" },
   delivered: { bg: "bg-emerald-500/10 border-emerald-500/20", text: "text-emerald-600 dark:text-emerald-400", dot: "bg-emerald-500" },
   on_hold: { bg: "bg-yellow-500/10 border-yellow-500/20", text: "text-yellow-600 dark:text-yellow-400", dot: "bg-yellow-500" },
@@ -73,9 +74,9 @@ function StatusBadge({ status, label }: { status: string; label?: string }) {
 /* ── Workflow stages ──────────────────────────────────────────── */
 const WORKFLOW = [
   { key: "pattern_development", label: "Pattern Dev", icon: Layers, desc: "Tooling & CAD Design" },
-  { key: "production", label: "Melting & Casting", icon: Flame, desc: "Foundry Pouring" },
-  { key: "quality_check", label: "QA & Inspection", icon: ShieldCheck, desc: "Dimensional & CMM QA" },
-  { key: "packed", label: "Packing", icon: PackageCheck, desc: "Wooden Crate Packing" },
+  { key: "production", label: "Production", icon: Flame, desc: "Foundry Pouring & Casting" },
+  { key: "quality_check", label: "Quality Check", icon: ShieldCheck, desc: "Dimensional & CMM QA" },
+  { key: "packed", label: "Packed", icon: PackageCheck, desc: "Wooden Crate Packing" },
   { key: "ready_to_dispatch", label: "Ready to Dispatch", icon: Truck, desc: "Staged for Logistics" },
 ];
 const WORKFLOW_ORDER = Object.fromEntries(WORKFLOW.map((s, i) => [s.key, i]));
@@ -154,6 +155,15 @@ export function OrderListPage() {
 
   useEffect(() => {
     loadOrders();
+    void connectRealtime();
+    const conn = getRealtimeConnection();
+    const handler = () => {
+      loadOrders();
+    };
+    conn.on("stageChanged", handler);
+    return () => {
+      conn.off("stageChanged", handler);
+    };
   }, []);
 
   const filteredOrders = (orders || []).filter((o) => {
@@ -696,7 +706,7 @@ export function OrderDetailPage() {
               <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 dark:text-white m-0 truncate">
                 {order.orderNumber}
               </h1>
-              <StatusBadge status={order.status} label={order.statusLabel} />
+              <StatusBadge status={order.manufacturingStage ?? order.status} label={order.statusLabel} />
             </div>
             {order.purchaseOrderReference && (
               <p className="text-xs text-neutral-400 m-0 mt-0.5">PO Ref: {order.purchaseOrderReference}</p>
@@ -820,11 +830,12 @@ export function OrderDetailPage() {
       </div>
 
       {/* ── Summary KPI Cards ─────────────────────────────────────── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3.5">
         <InfoCard icon={Calendar} label="Placed" value={formatDate(order.placedAtUtc)} />
         <InfoCard icon={Clock} label="Target Dispatch" value={formatDate(order.promisedDispatchDateUtc)} />
         <InfoCard icon={Clock} label="Last Updated" value={formatDate(order.lastUpdatedAtUtc)} />
         <InfoCard icon={Package} label="Line Items" value={String(order.items.length)} />
+        <InfoCard icon={User} label="Assigned Engineer" value={order.assignedToName || "Primary Staff Engineer"} />
       </div>
 
       {/* ── Two-column layout ─────────────────────────────────── */}

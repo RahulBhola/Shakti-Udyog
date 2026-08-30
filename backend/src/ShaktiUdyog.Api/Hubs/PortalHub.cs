@@ -99,8 +99,7 @@ public class PortalPushService(IHubContext<PortalHub, IPortalClient> hub) : IPor
     public async Task StageChangedAsync(Guid orderId, string orderNumber, string fromStage, string toStage)
     {
         var payload = new StageChangedPayload(orderId, orderNumber, fromStage, toStage);
-        await hub.Clients.Group("engineers").StageChanged(payload);
-        await hub.Clients.Group("admins").StageChanged(payload);
+        await hub.Clients.All.StageChanged(payload);
     }
 
     public async Task NotificationCreatedAsync(Guid userId, NotificationCreatedPayload payload) =>
