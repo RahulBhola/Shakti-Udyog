@@ -8,7 +8,7 @@ import {
   ScrollText, MessageSquareText, CheckCircle, XCircle, Loader2, Send,
   Phone, Mail, Download, Printer, Share2, Clock, MessageSquare,
   Search, RefreshCw, ChevronRight, ArrowUpRight, ArrowLeft,
-  CheckCircle2, FileCheck, ExternalLink, Check,
+  CheckCircle2, FileCheck, ExternalLink, Check, Sparkles,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 
@@ -553,46 +553,51 @@ export function QuotationDetailPage() {
 
       {/* ── 2. High-Impact Customer Response Decision Strip ── */}
       {canRespond && (
-        <div className="relative overflow-hidden rounded-2xl border border-blue-500/30 bg-gradient-to-r from-blue-500/[0.08] via-purple-500/[0.05] to-white dark:to-[#0f121a] p-5 shadow-sm space-y-4">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-blue-600 text-white">
-                  Action Required
-                </span>
-                <h2 className="text-sm sm:text-base font-extrabold text-neutral-900 dark:text-white m-0">
-                  Review & Confirm Quotation Terms
-                </h2>
+        <div className="relative overflow-hidden rounded-2xl border border-blue-500/25 dark:border-blue-500/30 bg-gradient-to-br from-blue-500/[0.06] via-indigo-500/[0.03] to-white dark:to-[#0f121a] p-5 shadow-xs space-y-4">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div className="flex items-start sm:items-center gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-md shadow-blue-500/20">
+                <Sparkles size={18} />
               </div>
-              <p className="text-xs text-neutral-600 dark:text-neutral-400 m-0">
-                Accept this commercial proposal to immediately trigger production order scheduling, or submit counter-terms.
-              </p>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wider bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30">
+                    Action Required
+                  </span>
+                  <h2 className="text-base font-extrabold text-neutral-900 dark:text-white m-0">
+                    Review & Confirm Quotation Terms
+                  </h2>
+                </div>
+                <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 m-0">
+                  Accept this commercial proposal to immediately trigger production order scheduling, or submit counter-terms.
+                </p>
+              </div>
             </div>
 
             {!responding && (
-              <div className="flex items-center gap-2.5 flex-wrap">
+              <div className="flex items-center gap-2 shrink-0 self-start lg:self-center flex-wrap sm:flex-nowrap">
                 <button
                   type="button"
                   onClick={() => setResponding("accept")}
-                  className="inline-flex items-center gap-1.5 px-4 h-10 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-sm shadow-emerald-600/20 cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-4 h-9.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-sm shadow-emerald-600/25 cursor-pointer whitespace-nowrap"
                 >
-                  <CheckCircle2 size={15} />
+                  <CheckCircle2 size={14} />
                   <span>Accept Quote & Order</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setResponding("negotiate")}
-                  className="inline-flex items-center gap-1.5 px-3.5 h-10 rounded-xl border border-amber-300 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 hover:bg-amber-100 dark:hover:bg-amber-500/20 text-amber-800 dark:text-amber-300 text-xs font-bold transition-all cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3.5 h-9.5 rounded-xl border border-amber-300 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 hover:bg-amber-100 dark:hover:bg-amber-500/20 text-amber-800 dark:text-amber-300 text-xs font-bold transition-all cursor-pointer whitespace-nowrap"
                 >
-                  <MessageSquare size={14} />
+                  <MessageSquare size={13} />
                   <span>Request Revision</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setResponding("decline")}
-                  className="inline-flex items-center gap-1.5 px-3 h-10 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#121520] hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 text-neutral-600 dark:text-neutral-400 text-xs font-bold transition-all cursor-pointer"
+                  className="inline-flex items-center gap-1 px-3 h-9.5 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#121520] hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 text-neutral-500 dark:text-neutral-400 text-xs font-semibold transition-all cursor-pointer whitespace-nowrap"
                 >
-                  <XCircle size={14} />
+                  <XCircle size={13} />
                   <span>Decline</span>
                 </button>
               </div>
