@@ -7,7 +7,8 @@ import {
   IndianRupee, Truck, Banknote, CalendarDays, FileText, Package,
   ScrollText, MessageSquareText, CheckCircle, XCircle, Loader2, Send,
   Phone, Mail, Download, Printer, Share2, Clock, MessageSquare,
-  Search, RefreshCw, ChevronRight, ArrowUpRight,
+  Search, RefreshCw, ChevronRight, ArrowUpRight, ArrowLeft,
+  CheckCircle2, FileCheck, ExternalLink, Check,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 
@@ -311,13 +312,29 @@ export function QuotationDetailPage() {
   const [comment, setComment] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     customerApi.quotation(id).then(setQuotation).catch(() => setMissing(true));
     customerApi.quotationTimeline(id).then(setTimeline).catch(() => {});
   }, [id]);
 
-  
+  const copyShareLink = async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: `Quotation ${quotation?.quotationNumber}`, url: window.location.href });
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
+    } catch {
+      await navigator.clipboard.writeText(window.location.href);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
   function printQuotationDoc() {
     if (!quotation) return;
     const q = quotation;
@@ -331,96 +348,104 @@ export function QuotationDetailPage() {
     if (!w) return;
 
     let rows = items.map((i, idx) => `<tr>
-      <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;text-align:center;">${idx + 1}</td>
-      <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;"><strong style="font-size:13px;">${i.partNumber}</strong><br><span style="font-size:11px;color:#64748b;">${i.description}</span></td>
-      <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;color:#64748b;">${i.materialGrade || "—"}</td>
-      <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;text-align:center;">${i.quantity}</td>
-      <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;text-align:center;">${i.unit}</td>
-      <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;text-align:right;font-variant-numeric:tabular-nums;">${formatItem(i.unitPrice, q.currency)}</td>
-      <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;text-align:right;">${i.taxPercent}%</td>
-      <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:600;font-variant-numeric:tabular-nums;">${formatItem(i.lineTotal, q.currency)}</td>
+      <td style="padding:10px;border-bottom:1px solid #e2e8f0;text-align:center;">${idx + 1}</td>
+      <td style="padding:10px;border-bottom:1px solid #e2e8f0;"><strong style="font-size:13px;color:#0f172a;">${i.partNumber}</strong><br><span style="font-size:11px;color:#64748b;">${i.description}</span></td>
+      <td style="padding:10px;border-bottom:1px solid #e2e8f0;color:#334155;font-weight:500;">${i.materialGrade || "—"}</td>
+      <td style="padding:10px;border-bottom:1px solid #e2e8f0;text-align:center;font-weight:600;">${i.quantity} ${i.unit}</td>
+      <td style="padding:10px;border-bottom:1px solid #e2e8f0;text-align:right;font-variant-numeric:tabular-nums;">${formatItem(i.unitPrice, q.currency)}</td>
+      <td style="padding:10px;border-bottom:1px solid #e2e8f0;text-align:right;color:#64748b;">${i.taxPercent}%</td>
+      <td style="padding:10px;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:#0f172a;">${formatItem(i.lineTotal, q.currency)}</td>
     </tr>`).join("");
 
-    let discRow = q.discount > 0 ? `<tr><td style="padding:5px 0;color:#64748b;">Discount</td><td style="padding:5px 0;text-align:right;color:#ef4444;font-weight:500;">\u2212${formatItem(q.discount, q.currency)}</td></tr>` : "";
-    let freightRow = (q.freight && q.freight !== "0" && q.freight !== "string") ? `<tr><td class="lbl">Freight / Transportation</td><td class="val">${!isNaN(Number(q.freight)) && Number(q.freight) > 0 ? formatItem(Number(q.freight), q.currency) : q.freight}</td></tr>` : "";
+    let discRow = q.discount > 0 ? `<tr><td style="padding:6px 0;color:#64748b;">Discount</td><td style="padding:6px 0;text-align:right;color:#ef4444;font-weight:600;">\u2212${formatItem(q.discount, q.currency)}</td></tr>` : "";
+    let freightRow = (q.freight && q.freight !== "0" && q.freight !== "string") ? `<tr><td class="lbl">Freight / Logistics</td><td class="val">${!isNaN(Number(q.freight)) && Number(q.freight) > 0 ? formatItem(Number(q.freight), q.currency) : q.freight}</td></tr>` : "";
     let packingRow = (q.packing && q.packing !== "0" && q.packing !== "string") ? `<tr><td class="lbl">Packaging & Forwarding</td><td class="val">${!isNaN(Number(q.packing)) && Number(q.packing) > 0 ? formatItem(Number(q.packing), q.currency) : q.packing}</td></tr>` : "";
 
     w.document.write(`<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
-<title>${q.quotationNumber}</title>
+<title>${q.quotationNumber} - Shakti Udyog</title>
 <style>
-  @page { margin: 20mm 15mm; }
-  body { font-family: "Inter", "Segoe UI", Arial, sans-serif; color: #1a1a2e; margin: 0; padding: 40px; font-size: 12px; line-height: 1.5; }
-  .header { display: flex; justify-content: space-between; align-items: start; border-bottom: 3px solid #2563eb; padding-bottom: 20px; margin-bottom: 24px; }
-  .header-left h1 { font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #2563eb; margin: 0 0 4px; }
-  .header-left h2 { font-size: 24px; font-weight: 700; margin: 0; color: #1a1a2e; }
-  .header-right { text-align: right; font-size: 11px; color: #64748b; }
-  .header-right strong { color: #1a1a2e; display: block; font-size: 13px; }
-  .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px; }
-  .meta-box { background: #f8fafc; border-radius: 8px; padding: 14px 18px; border: 1px solid #e2e8f0; }
-  .meta-box h3 { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: #64748b; margin: 0 0 4px; }
-  .meta-box .val { font-size: 15px; font-weight: 600; color: #1a1a2e; }
-  table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
-  thead th { background: #f1f5f9; text-align: left; padding: 10px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; font-weight: 600; border-bottom: 2px solid #e2e8f0; }
-  .total-table { width: 320px; margin-left: auto; }
-  .total-table td { padding: 6px 0; font-size: 12px; }
+  @page { margin: 15mm 15mm; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #0f172a; margin: 0; padding: 32px; font-size: 12px; line-height: 1.5; }
+  .header { display: flex; justify-content: space-between; align-items: start; border-bottom: 2px solid #2563eb; padding-bottom: 16px; margin-bottom: 20px; }
+  .header-left h1 { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #2563eb; margin: 0 0 2px; font-weight: 700; }
+  .header-left h2 { font-size: 24px; font-weight: 800; margin: 0; color: #0f172a; letter-spacing: -0.5px; }
+  .header-right { text-align: right; font-size: 11px; color: #64748b; line-height: 1.4; }
+  .header-right strong { color: #0f172a; display: block; font-size: 13px; font-weight: 700; }
+  .meta-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+  .meta-box { background: #f8fafc; border-radius: 8px; padding: 10px 14px; border: 1px solid #e2e8f0; }
+  .meta-box h3 { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; margin: 0 0 3px; }
+  .meta-box .val { font-size: 13px; font-weight: 700; color: #0f172a; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+  thead th { background: #f1f5f9; text-align: left; padding: 9px 10px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #475569; font-weight: 700; border-bottom: 2px solid #cbd5e1; }
+  .total-table { width: 340px; margin-left: auto; margin-bottom: 24px; }
+  .total-table td { padding: 5px 0; font-size: 12px; }
   .total-table .lbl { color: #64748b; }
-  .total-table .val { text-align: right; font-weight: 600; }
-  .grand td { padding-top: 10px; border-top: 2px solid #2563eb; font-size: 15px; font-weight: 700; color: #2563eb; }
-  .terms { margin-top: 28px; padding-top: 20px; border-top: 1px solid #e2e8f0; }
-  .terms h3 { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #64748b; margin: 0 0 8px; }
-  .terms p { font-size: 11px; color: #64748b; margin: 0 0 4px; line-height: 1.6; }
-  .footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #e2e8f0; text-align: center; font-size: 10px; color: #94a3b8; }
-  .badge { display: inline-block; padding: 3px 12px; border-radius: 12px; font-size: 10px; font-weight: 600; background: #f0fdf4; color: #16a34a; }
+  .total-table .val { text-align: right; font-weight: 600; color: #0f172a; }
+  .grand td { padding-top: 8px; border-top: 2px solid #2563eb; font-size: 16px; font-weight: 800; color: #2563eb; }
+  .terms-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; padding-top: 16px; border-top: 1px solid #e2e8f0; }
+  .terms-box h3 { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #475569; margin: 0 0 4px; font-weight: 700; }
+  .terms-box p { font-size: 11px; color: #334155; margin: 0; line-height: 1.4; }
+  .footer { margin-top: 28px; padding-top: 12px; border-top: 1px solid #e2e8f0; text-align: center; font-size: 10px; color: #94a3b8; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; background: #eff6ff; color: #1d4ed8; }
 </style>
 </head>
 <body>
   <div class="header">
     <div class="header-left">
-      <h1>Quote</h1>
+      <h1>Commercial Proposal</h1>
       <h2>${q.quotationNumber}</h2>
-      <div style="margin-top:6px;"><span class="badge">${q.status}</span></div>
+      <div style="margin-top:4px;"><span class="badge">${q.status}</span> · Revision ${q.revisionNumber}</div>
     </div>
     <div class="header-right">
-      <strong>Shakti Udyog</strong>
-      Industrial Area, Ludhiana<br>Punjab, India
+      <strong>Shakti Udyog Industrial Solutions</strong>
+      Industrial Area, Phase II, Ludhiana<br>
+      Punjab, India · contact@shaktiudyog.com
     </div>
   </div>
 
   <div class="meta-grid">
-    <div class="meta-box"><h3>Requirement</h3><div class="val">${q.productType || "Industrial Casting"}</div></div>
+    <div class="meta-box"><h3>Customer</h3><div class="val">${q.companyName || "Industrial Partner"}</div></div>
+    <div class="meta-box"><h3>Requirement</h3><div class="val">${q.productType || "Precision Casting"}</div></div>
     <div class="meta-box"><h3>Issue Date</h3><div class="val">${fmtDate(q.createdAtUtc)}</div></div>
     <div class="meta-box"><h3>Valid Until</h3><div class="val">${fmtDate(q.validUntilUtc)}</div></div>
-    <div class="meta-box"><h3>Revision</h3><div class="val">${q.revisionNumber}</div></div>
   </div>
 
   <table>
-    <thead><tr><th style="text-align:center;width:32px;">#</th><th>Part / Description</th><th>Grade</th><th style="text-align:center;">Qty</th><th style="text-align:center;">Unit</th><th style="text-align:right;">Unit Price</th><th style="text-align:right;">GST</th><th style="text-align:right;">Total</th></tr></thead>
+    <thead><tr><th style="text-align:center;width:28px;">#</th><th>Item & Part Description</th><th>Grade</th><th style="text-align:center;">Qty</th><th style="text-align:right;">Unit Price</th><th style="text-align:right;">GST</th><th style="text-align:right;">Total</th></tr></thead>
     <tbody>${rows}</tbody>
   </table>
 
   <table class="total-table">
     <tr><td class="lbl">Subtotal (Taxable Value)</td><td class="val">${formatItem(q.subtotal, q.currency)}</td></tr>
     ${discRow}
-    <tr><td class="lbl">GST</td><td class="val">${formatItem(q.tax, q.currency)}</td></tr>
+    <tr><td class="lbl">GST Tax Component</td><td class="val">${formatItem(q.tax, q.currency)}</td></tr>
     ${freightRow}
     ${packingRow}
     <tr class="grand"><td>Grand Total</td><td class="val">${formatItem(q.total, q.currency)}</td></tr>
   </table>
 
-  <div class="terms">
-    <h3>Terms &amp; Conditions</h3>
-    <p>${q.paymentTerms || "Standard payment terms apply."}</p>
-    <p>Delivery: ${q.deliveryTerms || "As per mutual agreement."}</p>
-    ${q.deliveryTime ? "<p>Delivery Time: " + q.deliveryTime + "</p>" : ""}
-    ${q.warranty ? "<p>Warranty: " + q.warranty + "</p>" : ""}
+  <div class="terms-grid">
+    <div class="terms-box">
+      <h3>Payment & Commercial Terms</h3>
+      <p>${q.paymentTerms || "100% against Proforma Invoice / Dispatch"}</p>
+    </div>
+    <div class="terms-box">
+      <h3>Delivery Terms & Lead Time</h3>
+      <p>${q.deliveryTerms || "Ex-Works Factory"} ${q.deliveryTime ? `· ${q.deliveryTime}` : ""}</p>
+    </div>
+    <div class="terms-box">
+      <h3>Quality & Warranty Standard</h3>
+      <p>${q.warranty || "12 Months against manufacturing defects."}</p>
+    </div>
+    ${q.remarks ? `<div class="terms-box"><h3>Technical Notes</h3><p>${q.remarks.replace(/\n/g, "<br>")}</p></div>` : ""}
   </div>
 
-  ${q.remarks ? '<div class="terms"><h3>Notes</h3><p>' + q.remarks.replace(/\n/g, "<br>") + "</p></div>" : ""}
-
-  <div class="footer">This is a computer-generated quotation. For any queries, contact Shakti Udyog.</div>
+  <div class="footer">
+    This is an authentic, computer-generated quotation issued by Shakti Udyog. For confirmation or questions, contact +91 82830 41140.
+  </div>
 
   <script>window.onload = function() { window.print(); window.close(); }<\/script>
 </body>
@@ -428,7 +453,7 @@ export function QuotationDetailPage() {
     w.document.close();
   }
 
-async function respond() {
+  async function respond() {
     if (!responding || !quotation) return;
     setBusy(true);
     try {
@@ -444,8 +469,8 @@ async function respond() {
     }
   }
 
-  if (missing) return <EmptyState title="Quote not found" />;
-  if (!quotation) return <Loading label="Loading quotation" />;
+  if (missing) return <EmptyState title="Quotation not found" text="The requested quotation does not exist or has been archived." />;
+  if (!quotation) return <div className="py-24 flex justify-center"><Loading label="Loading quotation details..." /></div>;
 
   const canRespond = quotation.status === "Issued" || quotation.status === "Viewed";
   const validDays = quotation.validUntilUtc
@@ -453,461 +478,609 @@ async function respond() {
     : null;
 
   return (
-    <div className="space-y-6 pb-8">
+    <div className="space-y-6 pb-12">
+      {/* ── 1. Hero Header & Breadcrumb Bar ─────────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-semibold text-neutral-400 mb-1">
+            <Link to="/customer/quotations" className="hover:text-neutral-900 dark:hover:text-white transition-colors no-underline">
+              Quotations
+            </Link>
+            <span>/</span>
+            <span className="text-[var(--color-primary)] font-bold font-mono">{quotation.quotationNumber}</span>
+          </div>
+          <div className="flex items-center gap-3 flex-wrap">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 dark:text-white tracking-tight m-0">
+              {quotation.quotationNumber}
+            </h1>
+            <StatusBadge status={quotation.status} />
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-neutral-100 dark:bg-white/10 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-white/10">
+              Revision #{quotation.revisionNumber}
+            </span>
+          </div>
+          <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 mt-1 m-0">
+            <span className="font-semibold text-neutral-800 dark:text-neutral-200">{quotation.productType || "Commercial Quote"}</span>
+            {quotation.companyName ? ` for ${quotation.companyName}` : ""} · Issued {formatDate(quotation.createdAtUtc)}
+          </p>
+        </div>
 
-      {/* ── Status message ── */}
+        {/* Action buttons */}
+        <div className="flex items-center gap-2.5 flex-wrap shrink-0">
+          <button
+            type="button"
+            onClick={printQuotationDoc}
+            className="inline-flex items-center gap-1.5 px-3.5 h-9 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+            title="Download Official PDF"
+          >
+            <Download size={14} />
+            <span>Download PDF</span>
+          </button>
+          <button
+            type="button"
+            onClick={printQuotationDoc}
+            className="inline-flex items-center gap-1.5 px-3.5 h-9 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#121520] hover:bg-neutral-50 dark:hover:bg-white/5 text-xs font-bold text-neutral-700 dark:text-neutral-300 transition-all shadow-xs cursor-pointer"
+            title="Print Quotation"
+          >
+            <Printer size={14} />
+            <span>Print</span>
+          </button>
+          <button
+            type="button"
+            onClick={copyShareLink}
+            className="inline-flex items-center gap-1.5 px-3.5 h-9 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#121520] hover:bg-neutral-50 dark:hover:bg-white/5 text-xs font-bold text-neutral-700 dark:text-neutral-300 transition-all shadow-xs cursor-pointer"
+            title="Copy Share Link"
+          >
+            {copied ? <Check size={14} className="text-emerald-500" /> : <Share2 size={14} />}
+            <span>{copied ? "Link Copied" : "Share"}</span>
+          </button>
+          <Link
+            to="/customer/quotations"
+            className="inline-flex items-center gap-1.5 px-3.5 h-9 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#121520] hover:bg-neutral-50 dark:hover:bg-white/5 text-xs font-bold text-neutral-700 dark:text-neutral-300 transition-all shadow-xs no-underline"
+          >
+            <ArrowLeft size={13} />
+            <span>All Quotes</span>
+          </Link>
+        </div>
+      </div>
+
+      {/* ── Status Toast / Banner ──────────────────────────── */}
       {message && (
-        <div className={`rounded-xl px-4 py-3 text-[13px] font-medium flex items-center gap-2 ${message.includes("Could not") ? "bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-500/20" : "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20"}`}>
-          {message.includes("Could not") ? <XCircle size={16} /> : <CheckCircle size={16} />}
-          {message}
+        <div className={`rounded-2xl p-4 text-xs font-bold flex items-center gap-3 shadow-xs ${message.includes("Could not") ? "bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-500/20" : "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20"}`}>
+          {message.includes("Could not") ? <XCircle size={18} className="shrink-0" /> : <CheckCircle2 size={18} className="shrink-0" />}
+          <span>{message}</span>
         </div>
       )}
 
-      {/* ── Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-        <div className="space-y-1">
-          <h1 className="text-[28px] font-bold tracking-tight text-[var(--text-primary)] m-0 leading-tight">
-            {quotation.quotationNumber}
-          </h1>
-          <div className="flex items-center gap-2 text-[13px] text-[var(--text-secondary)] flex-wrap">
-            <span>Customer Name</span>
-            <span className="w-1 h-1 rounded-full bg-[var(--border-default)]" />
-            <span>Issued {formatDate(quotation.createdAtUtc)}</span>
-            <span className="w-1 h-1 rounded-full bg-[var(--border-default)]" />
-            <span>Rev {quotation.revisionNumber}</span>
+      {/* ── 2. High-Impact Customer Response Decision Strip ── */}
+      {canRespond && (
+        <div className="relative overflow-hidden rounded-2xl border border-blue-500/30 bg-gradient-to-r from-blue-500/[0.08] via-purple-500/[0.05] to-white dark:to-[#0f121a] p-5 shadow-sm space-y-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-blue-600 text-white">
+                  Action Required
+                </span>
+                <h2 className="text-sm sm:text-base font-extrabold text-neutral-900 dark:text-white m-0">
+                  Review & Confirm Quotation Terms
+                </h2>
+              </div>
+              <p className="text-xs text-neutral-600 dark:text-neutral-400 m-0">
+                Accept this commercial proposal to immediately trigger production order scheduling, or submit counter-terms.
+              </p>
+            </div>
+
+            {!responding && (
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => setResponding("accept")}
+                  className="inline-flex items-center gap-1.5 px-4 h-10 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-sm shadow-emerald-600/20 cursor-pointer"
+                >
+                  <CheckCircle2 size={15} />
+                  <span>Accept Quote & Order</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setResponding("negotiate")}
+                  className="inline-flex items-center gap-1.5 px-3.5 h-10 rounded-xl border border-amber-300 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 hover:bg-amber-100 dark:hover:bg-amber-500/20 text-amber-800 dark:text-amber-300 text-xs font-bold transition-all cursor-pointer"
+                >
+                  <MessageSquare size={14} />
+                  <span>Request Revision</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setResponding("decline")}
+                  className="inline-flex items-center gap-1.5 px-3 h-10 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#121520] hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 text-neutral-600 dark:text-neutral-400 text-xs font-bold transition-all cursor-pointer"
+                >
+                  <XCircle size={14} />
+                  <span>Decline</span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Interactive Response Form Drawer */}
+          {responding && (
+            <div className="pt-4 border-t border-neutral-200/80 dark:border-white/10 space-y-3.5 animate-fadeIn">
+              <div className="flex items-center justify-between">
+                <div className="text-xs font-bold text-neutral-900 dark:text-white flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full ${responding === "accept" ? "bg-emerald-500" : responding === "negotiate" ? "bg-amber-500" : "bg-red-500"}`} />
+                  {responding === "accept" ? "Confirm Quotation Acceptance" : responding === "negotiate" ? "Submit Revision / Counter-Offer Notes" : "Decline Quotation Proposal"}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { setResponding(null); setComment(""); }}
+                  className="text-xs text-neutral-400 hover:text-neutral-700 dark:hover:text-white font-semibold cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-neutral-500 dark:text-neutral-400 mb-1.5">
+                  {responding === "negotiate" ? "Proposed Modifications / Price Terms *" : "Optional Comments / PO Reference"}
+                </label>
+                <textarea
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  rows={3}
+                  maxLength={2000}
+                  placeholder={responding === "negotiate" ? "Describe your requested changes to part quantities, target pricing, or delivery schedules..." : "Add any specific instructions, Purchase Order #, or delivery notes..."}
+                  className="w-full text-xs rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#121520] text-neutral-900 dark:text-white p-3 outline-none focus:border-blue-500 shadow-xs resize-none"
+                />
+              </div>
+
+              <div className="flex items-center gap-2.5">
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void respond()}
+                  className={`inline-flex items-center gap-2 px-5 h-10 rounded-xl text-white text-xs font-bold transition-all shadow-xs cursor-pointer disabled:opacity-50 ${
+                    responding === "accept"
+                      ? "bg-emerald-600 hover:bg-emerald-700"
+                      : responding === "negotiate"
+                      ? "bg-amber-600 hover:bg-amber-700"
+                      : "bg-red-600 hover:bg-red-700"
+                  }`}
+                >
+                  {busy ? <Loader2 size={15} className="animate-spin" /> : <Send size={14} />}
+                  <span>{busy ? "Processing..." : responding === "accept" ? "Confirm & Place Order" : responding === "negotiate" ? "Send Revision Request" : "Confirm Decline"}</span>
+                </button>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => { setResponding(null); setComment(""); }}
+                  className="px-4 h-10 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#121520] hover:bg-neutral-50 dark:hover:bg-white/5 text-neutral-700 dark:text-neutral-300 text-xs font-bold cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Generated Order Success Banner (If Accepted) */}
+      {quotation.orderId && (
+        <div className="p-4 rounded-2xl border border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-500/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+              <FileCheck size={20} />
+            </div>
+            <div>
+              <div className="text-xs font-extrabold text-emerald-800 dark:text-emerald-300">
+                Quotation Accepted & Converted to Order #{quotation.orderNumber || ""}
+              </div>
+              <div className="text-[11px] text-neutral-500 dark:text-neutral-400">
+                This quotation has been approved and moved into active manufacturing production workflow.
+              </div>
+            </div>
+          </div>
+          <Link
+            to={`/customer/orders/${quotation.orderId}`}
+            className="inline-flex items-center gap-1.5 px-4 h-9 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs no-underline shrink-0"
+          >
+            <span>Track Order Timeline</span>
+            <ExternalLink size={13} />
+          </Link>
+        </div>
+      )}
+
+      {/* ── 3. Balanced 4-Card KPI Metrics Grid ─────────────── */}
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+        {/* Quote Total */}
+        <div
+          className="relative overflow-hidden p-4 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all before:absolute before:inset-0 before:bg-[radial-gradient(150px_110px_at_95%_0%,var(--glow),transparent)] before:pointer-events-none"
+          style={{ "--glow": "rgba(16,185,129,0.18)" } as any}
+        >
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-emerald-500/10 text-emerald-500">
+            <IndianRupee size={17} />
+          </div>
+          <div className="text-xl sm:text-2xl font-extrabold text-neutral-900 dark:text-white mt-2.5 leading-tight tracking-tight tabular-nums">
+            {formatMoney(quotation.total, quotation.currency)}
+          </div>
+          <div className="text-xs font-bold text-neutral-800 dark:text-neutral-200 mt-0.5">Grand Total Value</div>
+          <div className="text-[11px] text-neutral-500 dark:text-neutral-400">Inclusive of GST & charges</div>
+        </div>
+
+        {/* Delivery Lead Time */}
+        <div
+          className="relative overflow-hidden p-4 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all before:absolute before:inset-0 before:bg-[radial-gradient(150px_110px_at_95%_0%,var(--glow),transparent)] before:pointer-events-none"
+          style={{ "--glow": "rgba(59,130,246,0.18)" } as any}
+        >
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-blue-500/10 text-blue-500">
+            <Truck size={17} />
+          </div>
+          <div className="text-xl sm:text-2xl font-extrabold text-neutral-900 dark:text-white mt-2.5 leading-tight tracking-tight">
+            {quotation.deliveryTime || "4-6 Weeks"}
+          </div>
+          <div className="text-xs font-bold text-neutral-800 dark:text-neutral-200 mt-0.5">Delivery Timeline</div>
+          <div className="text-[11px] text-neutral-500 dark:text-neutral-400">{quotation.deliveryTerms || "Ex-Works Factory"}</div>
+        </div>
+
+        {/* Payment Terms */}
+        <div
+          className="relative overflow-hidden p-4 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all before:absolute before:inset-0 before:bg-[radial-gradient(150px_110px_at_95%_0%,var(--glow),transparent)] before:pointer-events-none"
+          style={{ "--glow": "rgba(168,85,247,0.18)" } as any}
+        >
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-purple-500/10 text-purple-500">
+            <Banknote size={17} />
+          </div>
+          <div className="text-xl sm:text-2xl font-extrabold text-neutral-900 dark:text-white mt-2.5 leading-tight tracking-tight truncate" title={quotation.paymentTerms || "Standard Terms"}>
+            {quotation.paymentTerms ? quotation.paymentTerms.split("\n")[0] : "Standard Terms"}
+          </div>
+          <div className="text-xs font-bold text-neutral-800 dark:text-neutral-200 mt-0.5">Payment Terms</div>
+          <div className="text-[11px] text-neutral-500 dark:text-neutral-400">Milestone schedule</div>
+        </div>
+
+        {/* Validity */}
+        <div
+          className="relative overflow-hidden p-4 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all before:absolute before:inset-0 before:bg-[radial-gradient(150px_110px_at_95%_0%,var(--glow),transparent)] before:pointer-events-none"
+          style={{ "--glow": "rgba(245,158,11,0.18)" } as any}
+        >
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-amber-500/10 text-amber-500">
+            <CalendarDays size={17} />
+          </div>
+          <div className="text-xl sm:text-2xl font-extrabold text-neutral-900 dark:text-white mt-2.5 leading-tight tracking-tight">
+            {validDays !== null ? (validDays === 0 ? "Expires Today" : `${validDays} Days Left`) : "30 Days"}
+          </div>
+          <div className="text-xs font-bold text-neutral-800 dark:text-neutral-200 mt-0.5">Quote Validity</div>
+          <div className="text-[11px] text-neutral-500 dark:text-neutral-400">
+            Valid until {formatDate(quotation.validUntilUtc)}
           </div>
         </div>
-        <StatusBadge status={quotation.status} />
       </div>
 
-      {/* ── 4 KPI Cards ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="rounded-[16px] border border-[var(--border-default)] bg-[var(--bg-card)] p-5 shadow-sm hover:shadow-md hover:border-[var(--color-primary)]/20 transition-all duration-200">
-          <div className="flex items-center gap-3 mb-3">
-            <span className="flex items-center justify-center w-9 h-9 rounded-[10px] bg-emerald-500/10 text-emerald-500">
-              <IndianRupee size={16} />
-            </span>
-            <span className="text-[11px] font-medium uppercase tracking-wider text-[var(--text-muted)]">Quote Value</span>
-          </div>
-          <span className="text-[22px] font-bold text-[var(--text-primary)] tabular-nums">{formatMoney(quotation.total, quotation.currency)}</span>
-        </div>
-        <div className="rounded-[16px] border border-[var(--border-default)] bg-[var(--bg-card)] p-5 shadow-sm hover:shadow-md hover:border-[var(--color-primary)]/20 transition-all duration-200">
-          <div className="flex items-center gap-3 mb-3">
-            <span className="flex items-center justify-center w-9 h-9 rounded-[10px] bg-blue-500/10 text-blue-500">
-              <Truck size={16} />
-            </span>
-            <span className="text-[11px] font-medium uppercase tracking-wider text-[var(--text-muted)]">Delivery Time</span>
-          </div>
-          <span className="text-[22px] font-bold text-[var(--text-primary)]">{quotation.deliveryTime ?? "—"}</span>
-        </div>
-        <div className="rounded-[16px] border border-[var(--border-default)] bg-[var(--bg-card)] p-5 shadow-sm hover:shadow-md hover:border-[var(--color-primary)]/20 transition-all duration-200">
-          <div className="flex items-center gap-3 mb-3">
-            <span className="flex items-center justify-center w-9 h-9 rounded-[10px] bg-purple-500/10 text-purple-500">
-              <Banknote size={16} />
-            </span>
-            <span className="text-[11px] font-medium uppercase tracking-wider text-[var(--text-muted)]">Payment Terms</span>
-          </div>
-          <span className="text-[22px] font-bold text-[var(--text-primary)]">{quotation.paymentTerms ? quotation.paymentTerms.split("\n")[0] : "—"}</span>
-        </div>
-        <div className="rounded-[16px] border border-[var(--border-default)] bg-[var(--bg-card)] p-5 shadow-sm hover:shadow-md hover:border-[var(--color-primary)]/20 transition-all duration-200">
-          <div className="flex items-center gap-3 mb-3">
-            <span className="flex items-center justify-center w-9 h-9 rounded-[10px] bg-amber-500/10 text-amber-500">
-              <CalendarDays size={16} />
-            </span>
-            <span className="text-[11px] font-medium uppercase tracking-wider text-[var(--text-muted)]">Validity</span>
-          </div>
-          <span className="text-[22px] font-bold text-[var(--text-primary)]">{validDays !== null ? `${validDays} Days Left` : "—"}</span>
-        </div>
-      </div>
-
-      {/* ── 70/30 Layout ── */}
+      {/* ── 4. Main Content Layout (70% Left / 30% Right) ───── */}
       <div className="flex flex-col lg:flex-row gap-6 items-start">
-
         {/* ══ LEFT COLUMN (70%) ══ */}
         <div className="flex-1 min-w-0 space-y-6 w-full">
-
-          {/* Section 1: Quote Overview */}
-          <div className="rounded-[16px] border border-[var(--border-default)] bg-[var(--bg-card)] shadow-sm overflow-hidden">
-            <div className="px-5 py-4 border-b border-[var(--border-default)] flex items-center gap-2.5 bg-[var(--bg-surface)]/50">
-              <FileText size={15} className="text-[var(--color-primary)]" />
-              <h2 className="text-sm font-semibold text-[var(--text-primary)] m-0">Quote Overview</h2>
-            </div>
-            <div className="p-5">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
-                <OverviewField label="Requirement" value={quotation.productType} />
-                <OverviewField label="Material Grade" value={quotation.items[0]?.materialGrade ?? "—"} />
-                <OverviewField label="Quantity" value={quotation.items.length > 0 ? `${quotation.items.reduce((s, i) => s + i.quantity, 0)} ${quotation.items[0]?.unit ?? "pcs"}` : "—"} />
-                <OverviewField label="Unit Price" value={quotation.items.length > 0 ? formatMoney(quotation.items[0].unitPrice, quotation.currency) : "—"} />
-                <OverviewField label="GST" value={quotation.items.length > 0 ? `${quotation.items[0].taxPercent}%` : "—"} />
-                <OverviewField label="Delivery" value={quotation.deliveryTerms ?? "—"} />
-                <OverviewField label="Warranty" value={quotation.warranty ?? "—"} />
-                <OverviewField label="Revision" value={String(quotation.revisionNumber)} />
-              </div>
-            </div>
-          </div>
-
-          {/* Section 2: Pricing Breakdown */}
-          <div className="rounded-[16px] border border-[var(--border-default)] bg-[var(--bg-card)] shadow-sm overflow-hidden">
-            <div className="px-5 py-4 border-b border-[var(--border-default)] flex items-center gap-2.5 bg-[var(--bg-surface)]/50">
-              <IndianRupee size={15} className="text-[var(--color-primary)]" />
-              <h2 className="text-sm font-semibold text-[var(--text-primary)] m-0">Pricing Breakdown</h2>
-            </div>
-            <div className="p-5 space-y-0">
-              <PricingRow label="Subtotal" value={formatMoney(quotation.subtotal, quotation.currency)} />
-              {quotation.discount > 0 && <PricingRow label="Discount" value={`−${formatMoney(quotation.discount, quotation.currency)}`} valueClass="text-red-500" />}
-              <PricingRow label="GST" value={formatMoney(quotation.tax, quotation.currency)} />
-              <PricingRow
-                label="Freight"
-                value={
-                  quotation.freight && quotation.freight !== "0" && quotation.freight !== "string"
-                    ? !isNaN(Number(quotation.freight)) && Number(quotation.freight) > 0
-                      ? formatMoney(Number(quotation.freight), quotation.currency)
-                      : quotation.freight
-                    : "Included"
-                }
-              />
-              <PricingRow
-                label="Packing"
-                value={
-                  quotation.packing && quotation.packing !== "0" && quotation.packing !== "string"
-                    ? !isNaN(Number(quotation.packing)) && Number(quotation.packing) > 0
-                      ? formatMoney(Number(quotation.packing), quotation.currency)
-                      : quotation.packing
-                    : "Standard"
-                }
-              />
-              <div className="border-t border-[var(--border-default)] pt-4 mt-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-[var(--text-primary)]">Grand Total</span>
-                  <span className="text-xl font-bold text-[var(--color-primary)] tabular-nums">{formatMoney(quotation.total, quotation.currency)}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Section 3: Quote Items */}
-          {quotation.items.length > 0 && (
-            <div className="rounded-[16px] border border-[var(--border-default)] bg-[var(--bg-card)] shadow-sm overflow-hidden">
-              <div className="px-5 py-4 border-b border-[var(--border-default)] flex items-center gap-2.5 bg-[var(--bg-surface)]/50">
-                <Package size={15} className="text-[var(--color-primary)]" />
-                <h2 className="text-sm font-semibold text-[var(--text-primary)] m-0">Quote Items ({quotation.items.length})</h2>
-              </div>
-              <div className="p-5 space-y-3">
-                {quotation.items.map((i, idx) => (
-                  <div key={i.lineNumber}
-                    className={`rounded-[12px] border border-[var(--border-default)] p-4 transition-all duration-150 hover:border-[var(--color-primary)]/30 hover:shadow-sm ${idx % 2 === 0 ? "bg-[var(--bg-surface)]/30" : "bg-transparent"}`}>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                      <div>
-                        <span className="text-[10px] font-medium uppercase tracking-wider text-[var(--text-muted)] block mb-1">Part Name</span>
-                        <span className="text-[13px] font-medium text-[var(--text-primary)]">{i.partNumber}</span>
-                      </div>
-                      <div className="sm:col-span-2">
-                        <span className="text-[10px] font-medium uppercase tracking-wider text-[var(--text-muted)] block mb-1">Description</span>
-                        <span className="text-[13px] text-[var(--text-secondary)]">{i.description}</span>
-                      </div>
-                      <div>
-                        <span className="text-[10px] font-medium uppercase tracking-wider text-[var(--text-muted)] block mb-1">Material Grade</span>
-                        <span className="text-[13px] text-[var(--text-primary)]">{i.materialGrade ?? "—"}</span>
-                      </div>
-                      <div>
-                        <span className="text-[10px] font-medium uppercase tracking-wider text-[var(--text-muted)] block mb-1">Quantity</span>
-                        <span className="text-[13px] font-medium text-[var(--text-primary)]">{i.quantity} {i.unit}</span>
-                      </div>
-                      <div>
-                        <span className="text-[10px] font-medium uppercase tracking-wider text-[var(--text-muted)] block mb-1">Unit Price</span>
-                        <span className="text-[13px] tabular-nums text-[var(--text-primary)]">{formatMoney(i.unitPrice, quotation.currency)}</span>
-                      </div>
-                      <div>
-                        <span className="text-[10px] font-medium uppercase tracking-wider text-[var(--text-muted)] block mb-1">GST</span>
-                        <span className="text-[13px] text-[var(--text-primary)]">{i.taxPercent}%</span>
-                      </div>
-                      <div>
-                        <span className="text-[10px] font-medium uppercase tracking-wider text-[var(--text-muted)] block mb-1">Line Total</span>
-                        <span className="text-[13px] font-semibold tabular-nums text-[var(--text-primary)]">{formatMoney(i.lineTotal, quotation.currency)}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Section 4: Commercial Terms */}
-          <div className="rounded-[16px] border border-[var(--border-default)] bg-[var(--bg-card)] shadow-sm overflow-hidden">
-            <div className="px-5 py-4 border-b border-[var(--border-default)] flex items-center gap-2.5 bg-[var(--bg-surface)]/50">
-              <ScrollText size={15} className="text-[var(--color-primary)]" />
-              <h2 className="text-sm font-semibold text-[var(--text-primary)] m-0">Commercial Terms</h2>
-            </div>
-            <div className="p-5">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
-                <div>
-                  <span className="text-[10px] font-medium uppercase tracking-wider text-[var(--text-muted)] block mb-1">Payment Terms</span>
-                  <span className="text-[13px] text-[var(--text-primary)] whitespace-pre-wrap">{quotation.paymentTerms ?? "—"}</span>
-                </div>
-                <div>
-                  <span className="text-[10px] font-medium uppercase tracking-wider text-[var(--text-muted)] block mb-1">Delivery Terms</span>
-                  <span className="text-[13px] text-[var(--text-primary)]">{quotation.deliveryTerms ?? "—"}</span>
-                </div>
-                <div>
-                  <span className="text-[10px] font-medium uppercase tracking-wider text-[var(--text-muted)] block mb-1">Delivery Time</span>
-                  <span className="text-[13px] text-[var(--text-primary)]">{quotation.deliveryTime ?? "—"}</span>
-                </div>
-                <div>
-                  <span className="text-[10px] font-medium uppercase tracking-wider text-[var(--text-muted)] block mb-1">Warranty</span>
-                  <span className="text-[13px] text-[var(--text-primary)]">{quotation.warranty ?? "—"}</span>
-                </div>
-                <div>
-                  <span className="text-[10px] font-medium uppercase tracking-wider text-[var(--text-muted)] block mb-1">Validity</span>
-                  <span className="text-[13px] text-[var(--text-primary)]">{validDays !== null ? `${validDays} days from issue` : "—"}</span>
-                </div>
-                <div>
-                  <span className="text-[10px] font-medium uppercase tracking-wider text-[var(--text-muted)] block mb-1">Freight</span>
-                  <span className="text-[13px] text-[var(--text-primary)]">{quotation.freight && quotation.freight !== "0" ? `₹${quotation.freight}` : "Included"}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Section 5: Customer Notes */}
-          {quotation.remarks && (
-            <div className="rounded-[16px] border border-blue-200/60 dark:border-blue-500/20 bg-blue-50/80 dark:bg-blue-500/10 p-5">
-              <div className="flex items-start gap-3">
-                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5">
-                  <MessageSquareText size={16} />
+          {/* Section 1: Itemized Commercial Table */}
+          <div className="rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs overflow-hidden">
+            <div className="px-5 py-4 border-b border-neutral-200/80 dark:border-white/10 flex items-center justify-between bg-neutral-50/50 dark:bg-white/[0.01]">
+              <div className="flex items-center gap-2.5">
+                <span className="p-1.5 rounded-lg bg-[var(--color-primary)]/10 text-[var(--color-primary)]">
+                  <Package size={16} />
                 </span>
                 <div>
-                  <h3 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-primary)] m-0 mb-2">Customer Notes</h3>
-                  <p className="text-[13px] text-[var(--text-secondary)] leading-relaxed whitespace-pre-wrap m-0">{quotation.remarks}</p>
+                  <h2 className="text-sm font-extrabold text-neutral-900 dark:text-white m-0">
+                    Quotation Line Items ({quotation.items.length})
+                  </h2>
+                  <p className="text-[11px] text-neutral-500 dark:text-neutral-400 m-0">
+                    Industrial casting specifications, material grades, unit economics, and GST.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse" style={{ minWidth: 640 }}>
+                <thead>
+                  <tr className="bg-neutral-50/80 dark:bg-white/[0.02] border-b border-neutral-200/80 dark:border-white/10">
+                    <th className="py-3 px-4 text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 w-10 text-center">#</th>
+                    <th className="py-3 px-4 text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">Part & Description</th>
+                    <th className="py-3 px-4 text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">Material Grade</th>
+                    <th className="py-3 px-4 text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 text-center">Qty & Unit</th>
+                    <th className="py-3 px-4 text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 text-right">Unit Price</th>
+                    <th className="py-3 px-4 text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 text-right">GST</th>
+                    <th className="py-3 px-5 text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 text-right">Line Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {quotation.items.map((item, idx) => (
+                    <tr
+                      key={item.lineNumber || idx}
+                      className="border-b border-neutral-200/60 dark:border-white/5 hover:bg-neutral-50/70 dark:hover:bg-white/[0.02] transition-colors"
+                    >
+                      <td className="py-3.5 px-4 text-center text-xs font-bold text-neutral-400">
+                        {idx + 1}
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <div className="font-extrabold text-neutral-900 dark:text-white text-xs font-mono">
+                          {item.partNumber}
+                        </div>
+                        <div className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">
+                          {item.description}
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                          {item.materialGrade || "Standard Grade"}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 text-center text-xs font-bold text-neutral-800 dark:text-neutral-200">
+                        {item.quantity} <span className="text-neutral-400 font-normal">{item.unit}</span>
+                      </td>
+                      <td className="py-3.5 px-4 text-right text-xs font-semibold tabular-nums text-neutral-800 dark:text-neutral-200">
+                        {formatMoney(item.unitPrice, quotation.currency)}
+                      </td>
+                      <td className="py-3.5 px-4 text-right text-xs font-medium text-neutral-500 dark:text-neutral-400">
+                        {item.taxPercent}%
+                      </td>
+                      <td className="py-3.5 px-5 text-right text-xs font-black tabular-nums text-neutral-900 dark:text-white">
+                        {formatMoney(item.lineTotal, quotation.currency)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Section 2: Financial Ledger Breakdown & Commercial Terms */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Commercial Financial Breakdown */}
+            <div className="rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs p-5 space-y-3">
+              <div className="flex items-center gap-2 pb-3 border-b border-neutral-200/80 dark:border-white/10">
+                <IndianRupee size={16} className="text-[var(--color-primary)]" />
+                <h3 className="text-xs font-extrabold uppercase tracking-wider text-neutral-900 dark:text-white m-0">
+                  Financial Breakdown
+                </h3>
+              </div>
+
+              <div className="space-y-2 text-xs">
+                <div className="flex items-center justify-between py-1 text-neutral-600 dark:text-neutral-400">
+                  <span>Subtotal (Taxable Value)</span>
+                  <span className="font-bold text-neutral-900 dark:text-white tabular-nums">
+                    {formatMoney(quotation.subtotal, quotation.currency)}
+                  </span>
+                </div>
+
+                {quotation.discount > 0 && (
+                  <div className="flex items-center justify-between py-1 text-red-600 dark:text-red-400 font-semibold">
+                    <span>Discount Applied</span>
+                    <span className="tabular-nums">−{formatMoney(quotation.discount, quotation.currency)}</span>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between py-1 text-neutral-600 dark:text-neutral-400">
+                  <span>GST (Total Tax)</span>
+                  <span className="font-bold text-neutral-900 dark:text-white tabular-nums">
+                    {formatMoney(quotation.tax, quotation.currency)}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between py-1 text-neutral-600 dark:text-neutral-400">
+                  <span>Freight & Transportation</span>
+                  <span className="font-bold text-neutral-900 dark:text-white">
+                    {quotation.freight && quotation.freight !== "0" && quotation.freight !== "string"
+                      ? !isNaN(Number(quotation.freight)) && Number(quotation.freight) > 0
+                        ? formatMoney(Number(quotation.freight), quotation.currency)
+                        : quotation.freight
+                      : "Included"}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between py-1 text-neutral-600 dark:text-neutral-400">
+                  <span>Packaging & Forwarding</span>
+                  <span className="font-bold text-neutral-900 dark:text-white">
+                    {quotation.packing && quotation.packing !== "0" && quotation.packing !== "string"
+                      ? !isNaN(Number(quotation.packing)) && Number(quotation.packing) > 0
+                        ? formatMoney(Number(quotation.packing), quotation.currency)
+                        : quotation.packing
+                      : "Standard"}
+                  </span>
+                </div>
+
+                <div className="pt-3 mt-2 border-t-2 border-neutral-200 dark:border-white/10 flex items-center justify-between">
+                  <span className="text-sm font-extrabold text-neutral-900 dark:text-white">Grand Total</span>
+                  <span className="text-xl font-black text-[var(--color-primary)] tabular-nums">
+                    {formatMoney(quotation.total, quotation.currency)}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Commercial Terms & Scope */}
+            <div className="rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs p-5 space-y-3.5">
+              <div className="flex items-center gap-2 pb-3 border-b border-neutral-200/80 dark:border-white/10">
+                <ScrollText size={16} className="text-[var(--color-primary)]" />
+                <h3 className="text-xs font-extrabold uppercase tracking-wider text-neutral-900 dark:text-white m-0">
+                  Commercial Terms
+                </h3>
+              </div>
+
+              <div className="space-y-3 text-xs">
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block mb-0.5">Payment Terms</span>
+                  <p className="font-semibold text-neutral-800 dark:text-neutral-200 m-0 whitespace-pre-wrap">
+                    {quotation.paymentTerms || "100% against Proforma Invoice / Dispatch"}
+                  </p>
+                </div>
+
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block mb-0.5">Delivery & Transit</span>
+                  <p className="font-semibold text-neutral-800 dark:text-neutral-200 m-0">
+                    {quotation.deliveryTerms || "Ex-Works Factory"} · {quotation.deliveryTime || "4-6 Weeks from order approval"}
+                  </p>
+                </div>
+
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block mb-0.5">Quality Assurance</span>
+                  <p className="font-semibold text-neutral-800 dark:text-neutral-200 m-0">
+                    {quotation.warranty || "12 Months warranty against casting porosity & material defects."}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 3: Technical Notes / Engineer Remarks */}
+          {quotation.remarks && (
+            <div className="rounded-2xl border border-blue-500/20 bg-blue-500/[0.04] p-5">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 mt-0.5">
+                  <MessageSquareText size={16} />
+                </div>
+                <div>
+                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-neutral-900 dark:text-white m-0 mb-1">
+                    Special Engineering Notes
+                  </h3>
+                  <p className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed whitespace-pre-wrap m-0">
+                    {quotation.remarks}
+                  </p>
                 </div>
               </div>
             </div>
           )}
         </div>
 
-        {/* ══ RIGHT COLUMN (30%) — Sticky Sidebar ══ */}
-        <div className="w-full lg:w-[340px] shrink-0 space-y-5 lg:sticky lg:top-6 lg:self-start">
+        {/* ══ RIGHT COLUMN (30%) — Sticky Meta Sidebar ══ */}
+        <div className="w-full lg:w-[340px] shrink-0 space-y-4 lg:sticky lg:top-6 lg:self-start">
+          {/* Quick Summary Card */}
+          <div className="rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs p-5 space-y-3.5">
+            <h3 className="text-xs font-extrabold uppercase tracking-wider text-neutral-400 m-0">
+              Proposal Metadata
+            </h3>
 
-          {/* Status Card */}
-          <div className="rounded-[16px] border border-[var(--border-default)] bg-[var(--bg-card)] shadow-sm overflow-hidden">
-            <div className="px-5 py-4 border-b border-[var(--border-default)]">
-              <h3 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)] m-0">Status</h3>
-            </div>
-            <div className="p-5 space-y-4">
-              <div className="flex justify-center">
+            <div className="space-y-2.5 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-neutral-400">Quote ID</span>
+                <span className="font-mono font-bold text-neutral-900 dark:text-white">{quotation.quotationNumber}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-neutral-400">Issue Date</span>
+                <span className="font-semibold text-neutral-900 dark:text-white">{formatDate(quotation.createdAtUtc)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-neutral-400">Valid Until</span>
+                <span className="font-semibold text-amber-600 dark:text-amber-400">{formatDate(quotation.validUntilUtc)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-neutral-400">Status</span>
                 <StatusBadge status={quotation.status} />
               </div>
-              <div className="space-y-2.5 text-[13px]">
-                <SidebarField label="Issue Date" value={formatDate(quotation.createdAtUtc)} />
-                <SidebarField label="Revision" value={String(quotation.revisionNumber)} />
-                <SidebarField label="Expiry Date" value={formatDate(quotation.validUntilUtc)} />
-                <SidebarField label="Quote Value" value={formatMoney(quotation.total, quotation.currency)} />
-              </div>
             </div>
           </div>
 
-          {/* Response Card */}
-          {(canRespond || quotation.customerRespondedAtUtc) && (
-            <div className="rounded-[16px] border border-[var(--border-default)] bg-[var(--bg-card)] shadow-sm overflow-hidden">
-              <div className="px-5 py-4 border-b border-[var(--border-default)]">
-                <h3 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)] m-0">
-                  {quotation.customerRespondedAtUtc ? "Your Response" : "Your Response"}
-                </h3>
-              </div>
-              <div className="p-5 space-y-3">
-                {quotation.customerRespondedAtUtc && (
-                  <div className="text-[13px] text-[var(--text-secondary)]">
-                    Responded on {formatDate(quotation.customerRespondedAtUtc)}
-                    {quotation.customerResponseComment && (
-                      <p className="mt-1 text-[12px] text-[var(--text-muted)]">&ldquo;{quotation.customerResponseComment}&rdquo;</p>
-                    )}
-                  </div>
-                )}
-                {canRespond && !responding && (
-                  <div className="space-y-2.5">
-                    <button type="button" onClick={() => setResponding("accept")}
-                      className="w-full flex items-center justify-center gap-2 h-11 rounded-[12px] bg-emerald-500 text-white text-[13px] font-semibold hover:bg-emerald-600 transition-all duration-200 shadow-sm hover:shadow-md">
-                      <CheckCircle size={16} /> Accept Quote
-                    </button>
-                    <button type="button" onClick={() => setResponding("negotiate")}
-                      className="w-full flex items-center justify-center gap-2 h-11 rounded-[12px] border border-amber-300 dark:border-amber-500/40 bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 text-[13px] font-semibold hover:bg-amber-100 dark:hover:bg-amber-500/20 transition-all duration-200">
-                      <MessageSquare size={16} /> Request Revision
-                    </button>
-                    <button type="button" onClick={() => setResponding("decline")}
-                      className="w-full flex items-center justify-center gap-2 h-11 rounded-[12px] border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 text-[13px] font-semibold hover:bg-red-50 dark:hover:bg-red-500/10 transition-all duration-200">
-                      <XCircle size={16} /> Reject Quote
-                    </button>
-                  </div>
-                )}
-                {canRespond && responding && (
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-[11px] font-medium text-[var(--text-muted)] block mb-1.5">
-                        {responding === "negotiate" ? "Your counter-offer / terms *" : "Comment (optional)"}
-                      </label>
-                      <textarea value={comment} onChange={(e) => setComment(e.target.value)} rows={3} maxLength={2000}
-                        placeholder={responding === "negotiate" ? "Describe your proposed changes to pricing, terms, delivery, etc." : undefined}
-                        className="w-full rounded-[10px] border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2.5 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--color-primary)] resize-none" />
-                    </div>
-                    <button type="button" disabled={busy} onClick={() => void respond()}
-                      className="w-full flex items-center justify-center gap-2 h-11 rounded-[12px] bg-[var(--color-primary)] text-white text-[13px] font-semibold hover:bg-[var(--color-primary-hover)] disabled:opacity-50 transition-all duration-200">
-                      {busy ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-                      {busy ? "Recording…" : responding === "negotiate" ? "Send Proposal" : `Confirm ${responding}`}
-                    </button>
-                    <button type="button" disabled={busy} onClick={() => { setResponding(null); setComment(""); }}
-                      className="w-full flex items-center justify-center gap-2 h-10 rounded-[12px] border border-[var(--border-default)] text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all duration-200">
-                      Cancel
-                    </button>
-                  </div>
-                )}
-              </div>
+          {/* Quick Response Details (If already responded) */}
+          {quotation.customerRespondedAtUtc && (
+            <div className="rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs p-5 space-y-2">
+              <h3 className="text-xs font-extrabold uppercase tracking-wider text-neutral-400 m-0">
+                Your Feedback
+              </h3>
+              <p className="text-xs text-neutral-600 dark:text-neutral-300 m-0">
+                Responded on <span className="font-bold">{formatDate(quotation.customerRespondedAtUtc)}</span>
+              </p>
+              {quotation.customerResponseComment && (
+                <div className="p-3 rounded-xl bg-neutral-50 dark:bg-white/[0.02] border border-neutral-200/80 dark:border-white/5 text-xs text-neutral-700 dark:text-neutral-300 italic">
+                  &ldquo;{quotation.customerResponseComment}&rdquo;
+                </div>
+              )}
             </div>
           )}
 
-          {/* Quick Contact */}
-          <div className="rounded-[16px] border border-[var(--border-default)] bg-[var(--bg-card)] shadow-sm overflow-hidden">
-            <div className="px-5 py-4 border-b border-[var(--border-default)]">
-              <h3 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)] m-0">Quick Contact</h3>
+          {/* Originating Enquiry Card */}
+          <Link
+            to={`/customer/enquiries/${quotation.enquiryId}`}
+            className="group flex items-center justify-between p-4 rounded-2xl border border-dashed border-neutral-300 dark:border-white/15 bg-white dark:bg-[#0f121a] hover:border-[var(--color-primary)] hover:bg-neutral-50 dark:hover:bg-white/5 transition-all text-xs font-bold text-neutral-700 dark:text-neutral-300 no-underline shadow-xs"
+          >
+            <div className="flex items-center gap-2.5">
+              <FileText size={16} className="text-[var(--color-primary)]" />
+              <span>View Originating Enquiry</span>
             </div>
-            <div className="p-5 space-y-3">
-              <div className="flex items-center gap-3 text-[13px] text-[var(--text-secondary)]">
-                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-500/10 text-blue-500 shrink-0"><Phone size={14} /></span>
-                <span>+91 82830 41140</span>
-              </div>
-              <div className="flex items-center gap-3 text-[13px] text-[var(--text-secondary)]">
-                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-500/10 text-blue-500 shrink-0"><Mail size={14} /></span>
-                <span>iamrahulbhola@gmail.com</span>
-              </div>
-              <button type="button"
-                className="w-full flex items-center justify-center gap-2 h-9 rounded-[10px] border border-[var(--border-default)] text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all duration-200">
-                <Send size={14} /> Send Message
-              </button>
-            </div>
-          </div>
-
-          {/* Download */}
-          <div className="rounded-[16px] border border-[var(--border-default)] bg-[var(--bg-card)] shadow-sm overflow-hidden">
-            <div className="px-5 py-4 border-b border-[var(--border-default)]">
-              <h3 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)] m-0">Download</h3>
-            </div>
-            <div className="p-5 space-y-3">
-              <div className="flex justify-center py-2">
-                <span className="flex items-center justify-center w-14 h-14 rounded-2xl bg-[var(--color-primary)]/10 text-[var(--color-primary)]">
-                  <FileText size={28} />
-                </span>
-              </div>
-              <button type="button" onClick={printQuotationDoc}
-                className="w-full flex items-center justify-center gap-2 h-10 rounded-[10px] bg-[var(--color-primary)] text-white text-[12px] font-semibold hover:bg-[var(--color-primary-hover)] transition-all duration-200">
-                <Download size={14} /> Download PDF
-              </button>
-              <button type="button" onClick={printQuotationDoc}
-                className="w-full flex items-center justify-center gap-2 h-9 rounded-[10px] border border-[var(--border-default)] text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all duration-200">
-                <Printer size={14} /> Print Quote
-              </button>
-              <button type="button" onClick={async () => { try { await navigator.share({ title: document.title, url: window.location.href }); } catch { navigator.clipboard?.writeText(window.location.href); } }}
-                className="w-full flex items-center justify-center gap-2 h-9 rounded-[10px] border border-[var(--border-default)] text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all duration-200">
-                <Share2 size={14} /> Share
-              </button>
-            </div>
-          </div>
-
-          {/* Originating Enquiry */}
-          <Link to={`/customer/enquiries/${quotation.enquiryId}`}
-            className="flex items-center justify-center gap-2 h-11 rounded-[16px] border border-dashed border-[var(--border-default)] text-[13px] font-medium text-[var(--color-primary)] hover:bg-[var(--bg-surface-hover)] hover:border-[var(--color-primary)]/30 transition-all no-underline hover:no-underline">
-            <FileText size={15} /> View Originating Enquiry
+            <ChevronRight size={14} className="text-neutral-400 group-hover:text-[var(--color-primary)] transition-transform group-hover:translate-x-0.5" />
           </Link>
 
-          {/* Generated Order */}
-          {quotation.orderId && (
-            <Link to={`/customer/orders/${quotation.orderId}`}
-              className="flex items-center justify-center gap-2 h-11 rounded-[16px] border border-dashed border-[var(--border-default)] text-[13px] font-medium text-[var(--color-primary)] hover:bg-[var(--bg-surface-hover)] hover:border-[var(--color-primary)]/30 transition-all no-underline hover:no-underline">
-              <Package size={15} /> View Generated Order {quotation.orderNumber ? `· ${quotation.orderNumber}` : ""}
-            </Link>
-          )}
+          {/* Direct Support Card */}
+          <div className="rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs p-5 space-y-3">
+            <h3 className="text-xs font-extrabold uppercase tracking-wider text-neutral-400 m-0">
+              Account Manager Support
+            </h3>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 m-0">
+              Have technical questions regarding mold tolerances, metallurgical grades, or delivery schedules?
+            </p>
+
+            <div className="space-y-2 pt-1 text-xs">
+              <a
+                href="tel:+918283041140"
+                className="flex items-center gap-2.5 p-2 rounded-xl text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-white/5 transition-colors no-underline font-semibold"
+              >
+                <div className="w-7 h-7 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                  <Phone size={13} />
+                </div>
+                <span>+91 82830 41140</span>
+              </a>
+
+              <a
+                href="mailto:contact@shaktiudyog.com"
+                className="flex items-center gap-2.5 p-2 rounded-xl text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-white/5 transition-colors no-underline font-semibold"
+              >
+                <div className="w-7 h-7 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+                  <Mail size={13} />
+                </div>
+                <span>contact@shaktiudyog.com</span>
+              </a>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* ── Timeline ── */}
+      {/* ── 5. Status Timeline ──────────────────────────────── */}
       {timeline && timeline.length > 0 && (
-        <div className="rounded-[16px] border border-[var(--border-default)] bg-[var(--bg-card)] shadow-sm overflow-hidden">
-          <div className="px-5 py-4 border-b border-[var(--border-default)] flex items-center gap-2.5 bg-[var(--bg-surface)]/50">
-            <Clock size={15} className="text-[var(--color-primary)]" />
-            <h2 className="text-sm font-semibold text-[var(--text-primary)] m-0">Status Timeline</h2>
+        <div className="rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs p-5 space-y-4">
+          <div className="flex items-center gap-2.5">
+            <Clock size={16} className="text-[var(--color-primary)]" />
+            <h2 className="text-sm font-extrabold text-neutral-900 dark:text-white m-0">
+              Quotation Lifecycle & Activity Timeline
+            </h2>
           </div>
-          <div className="p-5">
-            <div className="hidden sm:flex items-center justify-between gap-2 overflow-x-auto pb-2">
-              {timeline.map((entry, i) => {
-                const isLast = i === timeline.length - 1;
-                return (
-                  <div key={i} className="flex items-center gap-2 flex-1 min-w-0">
-                    <div className="flex flex-col items-center gap-1.5">
-                      <div className={`w-8 h-8 rounded-[10px] flex items-center justify-center transition-all ${isLast ? "bg-[var(--color-primary)] text-white ring-2 ring-[var(--color-primary)]/30" : "bg-emerald-500/10 text-emerald-500"}`}>
-                        <CheckCircle size={15} />
-                      </div>
-                      <span className={`text-[10px] font-medium text-center leading-tight ${isLast ? "text-[var(--color-primary)]" : "text-emerald-500"}`}>
-                        {entry.toStatus}
-                      </span>
-                      <span className="text-[9px] text-[var(--text-muted)] text-center leading-tight whitespace-nowrap">{formatDate(entry.occurredAtUtc)}</span>
-                    </div>
-                    {!isLast && <div className="flex-1 h-px bg-[var(--border-default)] mt-[-32px]" />}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {timeline.map((entry, i) => {
+              const isLast = i === timeline.length - 1;
+              return (
+                <div
+                  key={i}
+                  className={`p-3.5 rounded-xl border transition-all ${
+                    isLast
+                      ? "border-blue-500/30 bg-blue-500/[0.04]"
+                      : "border-neutral-200/60 dark:border-white/5 bg-neutral-50/50 dark:bg-white/[0.01]"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 text-xs font-bold text-neutral-900 dark:text-white">
+                    <span className={`w-2 h-2 rounded-full ${isLast ? "bg-blue-500 animate-pulse" : "bg-emerald-500"}`} />
+                    <span>{entry.toStatus}</span>
                   </div>
-                );
-              })}
-            </div>
-            {/* Mobile timeline */}
-            <div className="sm:hidden space-y-0">
-              {timeline.map((entry, i) => {
-                const isLast = i === timeline.length - 1;
-                return (
-                  <div key={i} className="flex gap-3 pb-4 last:pb-0">
-                    <div className="flex flex-col items-center">
-                      <div className={`w-2.5 h-2.5 rounded-full mt-1 ${isLast ? "bg-[var(--color-primary)] ring-2 ring-[var(--color-primary)]/30" : "bg-emerald-500/70"}`} />
-                      {!isLast && <div className="flex-1 w-px bg-[var(--border-default)] mt-1" />}
+                  {entry.note && (
+                    <div className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-1 line-clamp-2">
+                      {entry.note}
                     </div>
-                    <div className="flex-1 min-w-0 pb-1">
-                      <div className="text-[13px] font-medium text-[var(--text-primary)]">{entry.fromStatus} → {entry.toStatus}</div>
-                      {entry.note && <div className="text-[12px] text-[var(--text-muted)] mt-0.5">{entry.note}</div>}
-                      <div className="text-[11px] text-[var(--text-muted)] mt-0.5">{formatDate(entry.occurredAtUtc)} · {entry.changedByRole}</div>
-                    </div>
+                  )}
+                  <div className="text-[10px] text-neutral-400 mt-2 font-medium">
+                    {formatDate(entry.occurredAtUtc)} · {entry.changedByRole}
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
-
     </div>
   );
 }
 
 /* ── Sub-components ── */
-
-function OverviewField({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="py-1">
-      <span className="text-[10px] font-medium uppercase tracking-wider text-[var(--text-muted)] block mb-1">{label}</span>
-      <span className="text-[14px] font-medium text-[var(--text-primary)]">{value}</span>
-    </div>
-  );
-}
-
-function PricingRow({ label, value, valueClass }: { label: string; value: string; valueClass?: string }) {
-  return (
-    <div className="flex items-center justify-between py-2.5 border-b border-[var(--border-default)]/50 last:border-b-0">
-      <span className="text-[13px] text-[var(--text-secondary)]">{label}</span>
-      <span className={`text-[13px] font-medium tabular-nums ${valueClass ?? "text-[var(--text-primary)]"}`}>{value}</span>
-    </div>
-  );
-}
-
-function SidebarField({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between">
-      <span className="text-[12px] text-[var(--text-muted)]">{label}</span>
-      <span className="text-[13px] font-medium text-[var(--text-primary)] text-right">{value}</span>
-    </div>
-  );
-}
 
 function StatusBadge({ status }: { status: string }) {
   const config: Record<string, { bg: string; text: string; dot: string }> = {
@@ -922,11 +1095,12 @@ function StatusBadge({ status }: { status: string }) {
   };
   const c = config[status] ?? { bg: "bg-slate-50 dark:bg-slate-500/10", text: "text-slate-600 dark:text-slate-400", dot: "bg-slate-400" };
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[12px] font-semibold ${c.bg} ${c.text}`}>
-      <span className={`w-2 h-2 rounded-full ${c.dot}`} />
+    <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${c.bg} ${c.text}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${c.dot}`} />
       {status}
     </span>
   );
 }
 
 export default QuotationListPage;
+
