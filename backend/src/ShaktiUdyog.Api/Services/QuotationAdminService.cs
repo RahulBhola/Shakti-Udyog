@@ -12,6 +12,7 @@ public interface IQuotationAdminService
 {
     Task<PagedResult<QuotationListItemDto>> GetQuotationsAsync(int page, int pageSize, string? search, string? status);
     Task<QuotationDetailDto?> GetQuotationAsync(Guid id);
+    Task<bool?> UpdateQuotationAsync(Guid id, UpdateQuotationRequest request, Guid userId, string? ip);
     Task<bool?> ApproveQuotationAsync(Guid id, Guid userId, string? ip);
     Task<bool?> RejectQuotationAsync(Guid id, string reason, Guid userId, string? ip);
     Task<bool?> IssueQuotationAsync(Guid id, Guid userId, string? ip);
@@ -57,6 +58,68 @@ public class QuotationAdminService(
             q.Status, q.CustomerResponseComment, q.CustomerRespondedAtUtc, q.ValidUntilUtc, q.DocumentId, q.CreatedAtUtc,
             order?.Id, order?.OrderNumber,
             q.Items.Select(i => new QuotationItemDto(i.LineNumber, i.PartNumber, i.Description, i.MaterialGrade, i.Quantity, i.Unit, i.UnitPrice, i.TaxPercent, i.LineTotal)).ToList());
+    }
+
+    public async Task<bool?> UpdateQuotationAsync(Guid id, UpdateQuotationRequest request, Guid userId, string? ip)
+    {
+        var q = await db.Quotations.SingleOrDefaultAsync(x => x.Id == id);
+        if (q is null) return null;
+        var allowedStatuses = new[] { QuotationStatuses.Draft, QuotationStatuses.PendingApproval, QuotationStatuses.Approved, QuotationStatuses.Negotiating };
+        if (!allowedStatuses.Contains(q.Status)) return false;
+
+        q.Subtotal = request.Subtotal ?? q.Subtotal;
+        q.Tax = request.Tax ?? q.Tax;
+        q.Discount = request.Discount ?? q.Discount;
+        q.Total = request.Total ?? q.Total;
+        if (request.PaymentTerms is not null) q.PaymentTerms = string.IsNullOrEmpty(request.PaymentTerms) ? null : request.PaymentTerms;
+        if (request.DeliveryTerms is not null) q.DeliveryTerms = string.IsNullOrEmpty(request.DeliveryTerms) ? null : request.DeliveryTerms;
+        if (request.Freight is not null) q.Freight = string.IsNullOrEmpty(request.Freight) ? null : request.Freight;
+        if (request.Packing is not null) q.Packing = string.IsNullOrEmpty(request.Packing) ? null : request.Packing;
+        if (request.Remarks is not null) q.Remarks = string.IsNullOrEmpty(request.Remarks) ? null : request.Remarks;
+        if (request.DeliveryTime is not null) q.DeliveryTime = string.IsNullOrEmpty(request.DeliveryTime) ? null : request.DeliveryTime;
+        if (request.Warranty is not null) q.Warranty = string.IsNullOrEmpty(request.Warranty) ? null : request.Warranty;
+        if (request.ValidUntilUtc.HasValue) q.ValidUntilUtc = request.ValidUntilUtc;
+
+        if (request.Items is not null)
+        {
+            await db.Database.ExecuteSqlRawAsync("DELETE FROM QuotationItems WHERE QuotationId = {0}", id);
+            foreach (var item in request.Items)
+            {
+                db.QuotationItems.Add(new QuotationItem
+                {
+                    Id = Guid.NewGuid(),
+                    QuotationId = id,
+                    LineNumber = item.LineNumber,
+                    PartNumber = item.PartNumber,
+                    Description = item.Description,
+                    MaterialGrade = item.MaterialGrade,
+                    Quantity = item.Quantity,
+                    Unit = item.Unit,
+                    UnitPrice = item.UnitPrice,
+                    TaxPercent = item.TaxPercent,
+                    LineTotal = item.Quantity * item.UnitPrice * (1 + item.TaxPercent / 100m),
+                });
+            }
+        }
+
+        q.RevisionNumber++;
+        db.QuotationRevisions.Add(new QuotationRevision
+        {
+            Id = Guid.NewGuid(),
+            QuotationId = q.Id,
+            RevisionNumber = q.RevisionNumber,
+            ChangeNotes = "Quotation updated by administrator",
+            ChangedByUserId = userId,
+        });
+
+        if (q.Status == QuotationStatuses.Negotiating)
+        {
+            q.Status = QuotationStatuses.Draft;
+        }
+
+        await db.SaveChangesAsync();
+        await audit.WriteAsync("admin.quotation.updated", userId, "Quotation", q.Id.ToString(), ip);
+        return true;
     }
 
     public async Task<bool?> ApproveQuotationAsync(Guid id, Guid userId, string? ip)

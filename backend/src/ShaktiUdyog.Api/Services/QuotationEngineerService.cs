@@ -52,7 +52,7 @@ public class QuotationEngineerService(
     IFileStorageService storage,
     IAuditWriter audit) : IQuotationEngineerService
 {
-    private static readonly string[] AllowedStatuses = [QuotationStatuses.Draft, QuotationStatuses.PendingApproval, QuotationStatuses.Negotiating];
+    private static readonly string[] AllowedStatuses = [QuotationStatuses.Draft, QuotationStatuses.PendingApproval, QuotationStatuses.Approved, QuotationStatuses.Negotiating];
 
     public async Task<PagedResult<QuotationListItemDto>> GetQuotationsAsync(
         int page = 1, int pageSize = 20, string? search = null, string? status = null)

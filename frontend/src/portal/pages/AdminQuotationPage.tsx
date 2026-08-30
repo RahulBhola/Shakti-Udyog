@@ -4,7 +4,7 @@ import { adminApi } from "../../api/adminApi";
 import { engineerApi } from "../../api/engineerApi";
 import type { QuotationDetail as QD, QuotationTimelineEntry } from "../../api/customerApi";
 import { formatDate, formatMoney } from "../shared";
-import { ArrowLeft, FileEdit, CheckCircle, Clock, Send, Eye, XCircle, Loader2, Calendar, Tag, Package } from "lucide-react";
+import { ArrowLeft, FileEdit, CheckCircle, Clock, Send, Eye, XCircle, Loader2, Calendar, Tag, Package, Info } from "lucide-react";
 
 /* ── Status colors ──────────────────────────────────────────── */
 
@@ -39,7 +39,13 @@ const WORKFLOW = [
   { key: "Viewed", label: "Viewed", icon: Eye },
 ];
 
-const WORKFLOW_ORDER = Object.fromEntries(WORKFLOW.map((s, i) => [s.key, i]));
+const WORKFLOW_ORDER: Record<string, number> = {
+  Draft: 0,
+  "Pending Approval": 1,
+  Approved: 2,
+  Issued: 3,
+  Viewed: 4,
+};
 
 /* ── Section ────────────────────────────────────────────────── */
 
@@ -79,41 +85,46 @@ function InfoCard({ icon: Icon, label, value, color }: { icon: any; label: strin
 
 /* ── Main Page ──────────────────────────────────────────────── */
 
-export default function AdminQuotationDetailPage() {
-  const { id = "" } = useParams();
+export default function AdminQuotationPage() {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [q, setQ] = useState<QD | null>(null);
   const [tl, setTl] = useState<QuotationTimelineEntry[] | null>(null);
-  const [missing, setMissing] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
-  const [cancelReason, setCancelReason] = useState("");
   const [showApproveModal, setShowApproveModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
+
+  const load = () => {
+    if (!id) return;
+    adminApi.quotation(id).then(setQ).catch(() => setMsg("Failed to load quotation."));
+    adminApi.history(id).then(setTl).catch(() => {});
+  };
 
   useEffect(() => {
-    adminApi.quotation(id).then(setQ).catch(() => setMissing(true));
-    adminApi.history(id).then(setTl).catch(() => {});
+    load();
   }, [id]);
 
-  async function doAction(action: () => Promise<{ message: string }>) {
-    setBusy(true); setMsg(null);
-    try { const r = await action(); setMsg(r.message); setQ(await adminApi.quotation(id)); setTl(await adminApi.history(id)); }
-    catch { setMsg("Action failed."); }
-    finally { setBusy(false); }
-  }
+  const doAction = async (fn: () => Promise<any>) => {
+    setBusy(true);
+    setMsg(null);
+    try {
+      await fn();
+      load();
+    } catch {
+      setMsg("Action failed.");
+    } finally {
+      setBusy(false);
+    }
+  };
 
-  if (missing) {
+  if (!id) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 px-4">
-        <div className="w-14 h-14 rounded-2xl bg-red-50 dark:bg-red-500/10 flex items-center justify-center mb-4">
-          <span className="text-red-500 text-2xl">!</span>
-        </div>
-        <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-1">Quote Not Found</h3>
-        <p className="text-[13px] text-[var(--text-muted)] mb-6">The quotation you're looking for doesn't exist or has been removed.</p>
-        <button type="button" onClick={() => navigate("/admin/quotations")}
-          className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg border border-[var(--border-default)] text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all">
-          <ArrowLeft size={14} /> Back to Quotes
+      <div className="text-center py-12">
+        <p className="text-[var(--text-muted)]">No Quotation ID provided.</p>
+        <button type="button" onClick={() => navigate("/admin/quotations")} className="mt-4 px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg text-[13px] font-medium">
+          Back to Quotations
         </button>
       </div>
     );
@@ -123,6 +134,7 @@ export default function AdminQuotationDetailPage() {
 
   const currentIdx = WORKFLOW_ORDER[q.status] ?? -1;
   const isTerminal = ["Accepted", "Converted", "Declined", "Expired", "Cancelled"].includes(q.status);
+  const canEdit = ["Draft", "Pending Approval", "Approved", "Negotiating"].includes(q.status);
 
   return (
     <div className="space-y-6 pb-8">
@@ -130,7 +142,8 @@ export default function AdminQuotationDetailPage() {
       <div className="sticky top-0 z-10 -mx-6 px-6 py-3 bg-[var(--bg-body)] border-b border-[var(--border-default)] flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0">
           <button type="button" onClick={() => navigate("/admin/quotations")}
-            className="flex items-center justify-center w-8 h-8 rounded-lg border border-[var(--border-default)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all shrink-0">
+            className="flex items-center justify-center w-8 h-8 rounded-lg border border-[var(--border-default)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all shrink-0 cursor-pointer"
+            title="Back to Quotations List">
             <ArrowLeft size={15} />
           </button>
           <div className="min-w-0">
@@ -142,51 +155,88 @@ export default function AdminQuotationDetailPage() {
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          {canEdit && (
+            <button
+              type="button"
+              onClick={() => navigate(`/admin/quotations/new?editQuotationId=${id}`)}
+              className="inline-flex items-center gap-1.5 px-3.5 h-8 rounded-lg border border-[var(--border-default)] text-[12px] font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] hover:border-orange-500/50 transition-all cursor-pointer shadow-xs"
+              title="Edit quotation pricing, items, and terms"
+            >
+              <FileEdit size={14} className="text-orange-500" /> Edit Quote
+            </button>
+          )}
           {q.status === "Draft" && (
-            <>
-              <button type="button" onClick={() => navigate(`/admin/quotations/new?editQuotationId=${id}`)}
-                className="inline-flex items-center gap-1.5 px-4 h-8 rounded-lg border border-[var(--border-default)] text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all">
-                <FileEdit size={15} /> Edit
-              </button>
-              <button type="button" disabled={busy} onClick={() => void doAction(() => engineerApi.submitQuotation(id))}
-                className="inline-flex items-center gap-1.5 px-4 h-8 rounded-lg bg-[var(--color-primary)] text-white text-[12px] font-semibold hover:bg-[var(--color-primary-hover)] disabled:opacity-50 transition-all">
-                {busy ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />} Submit
-              </button>
-            </>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void doAction(() => engineerApi.submitQuotation(id))}
+              className="inline-flex items-center gap-1.5 px-4 h-8 rounded-lg bg-[var(--color-primary)] text-white text-[12px] font-semibold hover:bg-[var(--color-primary-hover)] disabled:opacity-50 transition-all cursor-pointer"
+            >
+              {busy ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />} Submit for Approval
+            </button>
           )}
           {q.status === "Negotiating" && (
-            <button type="button" onClick={() => navigate(`/admin/quotations/new?editQuotationId=${id}`)}
-              className="inline-flex items-center gap-1.5 px-4 h-8 rounded-lg bg-amber-500 text-white text-[12px] font-semibold hover:bg-amber-600 transition-all">
-              <FileEdit size={15} /> Revise & Re-issue
+            <button
+              type="button"
+              onClick={() => navigate(`/admin/quotations/new?editQuotationId=${id}`)}
+              className="inline-flex items-center gap-1.5 px-4 h-8 rounded-lg bg-amber-500 text-white text-[12px] font-semibold hover:bg-amber-600 transition-all cursor-pointer"
+            >
+              <FileEdit size={14} /> Revise & Re-issue
             </button>
           )}
           {q.status === "Pending Approval" && (
-            <button type="button" disabled={busy} onClick={() => setShowApproveModal(true)}
-              className="inline-flex items-center gap-1.5 px-4 h-8 rounded-lg bg-emerald-500 text-white text-[12px] font-semibold hover:bg-emerald-600 disabled:opacity-50 transition-all">
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => setShowApproveModal(true)}
+              className="inline-flex items-center gap-1.5 px-4 h-8 rounded-lg bg-emerald-500 text-white text-[12px] font-semibold hover:bg-emerald-600 disabled:opacity-50 transition-all cursor-pointer"
+            >
               {busy ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle size={13} />} Approve
             </button>
           )}
           {q.status === "Approved" && (
-            <button type="button" disabled={busy} onClick={() => void doAction(() => adminApi.issueQuotation(id))}
-              className="inline-flex items-center gap-1.5 px-4 h-8 rounded-lg bg-[var(--color-primary)] text-white text-[12px] font-semibold hover:bg-[var(--color-primary-hover)] disabled:opacity-50 transition-all">
-              {busy ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />} Issue
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void doAction(() => adminApi.issueQuotation(id))}
+              className="inline-flex items-center gap-1.5 px-4 h-8 rounded-lg bg-[var(--color-primary)] text-white text-[12px] font-semibold hover:bg-[var(--color-primary-hover)] disabled:opacity-50 transition-all cursor-pointer"
+            >
+              {busy ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />} Issue to Customer
             </button>
           )}
           {q.status === "Accepted" && (
-            <button type="button" disabled={busy} onClick={async () => { try { const order: any = await adminApi.createOrder(id); if (order?.id) navigate(`/admin/orders/${order.id}`); else setMsg("Order created."); } catch { setMsg("Failed to create order."); } }}
-              className="inline-flex items-center gap-1.5 px-4 h-8 rounded-lg bg-emerald-500 text-white text-[12px] font-semibold hover:bg-emerald-600 disabled:opacity-50 transition-all">
+            <button
+              type="button"
+              disabled={busy}
+              onClick={async () => {
+                try {
+                  const order: any = await adminApi.createOrder(id);
+                  if (order?.id) navigate(`/admin/orders/${order.id}`);
+                  else setMsg("Order created.");
+                } catch {
+                  setMsg("Failed to create order.");
+                }
+              }}
+              className="inline-flex items-center gap-1.5 px-4 h-8 rounded-lg bg-emerald-500 text-white text-[12px] font-semibold hover:bg-emerald-600 disabled:opacity-50 transition-all cursor-pointer"
+            >
               {busy ? <Loader2 size={13} className="animate-spin" /> : <Package size={13} />} Create Order
             </button>
           )}
           {q.orderId && (
-            <Link to={`/admin/orders/${q.orderId}`}
-              className="inline-flex items-center gap-1.5 px-4 h-8 rounded-lg bg-emerald-500 text-white text-[12px] font-semibold hover:bg-emerald-600 transition-all no-underline hover:no-underline">
+            <Link
+              to={`/admin/orders/${q.orderId}`}
+              className="inline-flex items-center gap-1.5 px-4 h-8 rounded-lg bg-emerald-500 text-white text-[12px] font-semibold hover:bg-emerald-600 transition-all no-underline hover:no-underline"
+            >
               <Package size={13} /> View Order {q.orderNumber ? `· ${q.orderNumber}` : ""}
             </Link>
           )}
           {!isTerminal && (
-            <button type="button" disabled={busy} onClick={() => setShowCancelModal(true)}
-              className="inline-flex items-center gap-1.5 px-3.5 h-8 rounded-lg border border-red-200 text-red-600 text-[12px] font-medium hover:bg-red-50 disabled:opacity-50 transition-all">
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => setShowCancelModal(true)}
+              className="inline-flex items-center gap-1.5 px-3.5 h-8 rounded-lg border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 text-[12px] font-medium hover:bg-red-50 dark:hover:bg-red-500/10 disabled:opacity-50 transition-all cursor-pointer"
+            >
               Cancel
             </button>
           )}
@@ -231,6 +281,27 @@ export default function AdminQuotationDetailPage() {
               );
             })}
           </div>
+        </div>
+      )}
+
+      {/* ── Quotation Editability Notification Banner ── */}
+      {canEdit && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 rounded-xl border border-blue-200/80 dark:border-blue-500/20 bg-blue-50/70 dark:bg-blue-500/5 text-[12.5px] text-blue-800 dark:text-blue-200 shadow-xs">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+              <Info size={16} />
+            </div>
+            <div>
+              <span className="font-bold">Quotation Editable:</span> You can edit line items, rates, taxes, freight/packing charges, and commercial terms anytime before issuing this quote to the customer.
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => navigate(`/admin/quotations/new?editQuotationId=${id}`)}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-blue-600 text-white text-[12px] font-bold hover:bg-blue-700 active:scale-98 transition-all shrink-0 cursor-pointer shadow-xs"
+          >
+            <FileEdit size={13} /> Edit Quotation
+          </button>
         </div>
       )}
 

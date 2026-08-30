@@ -68,6 +68,7 @@ export const adminApi = {
     return apiGet<Paged<QuotationListItem>>(`${base}/quotations?${params}`);
   },
   quotation: (id: string) => apiGet<QuotationDetail>(`${base}/quotations/${id}`),
+  updateQuotation: (id: string, payload: any) => apiPut<{ message: string }>(`${base}/quotations/${id}`, payload),
   approveQuotation: (id: string) => apiPatch<{ message: string }>(`${base}/quotations/${id}/approve`, {}),
   rejectQuotation: (id: string, reason: string) => apiPatch<{ message: string }>(`${base}/quotations/${id}/reject`, reason),
   issueQuotation: (id: string) => apiPatch<{ message: string }>(`${base}/quotations/${id}/issue`, {}),

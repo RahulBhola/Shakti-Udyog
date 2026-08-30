@@ -285,8 +285,12 @@ export default function CreateQuotationPage() {
       {/* ── Header ───────────────────────────────────────────── */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <button type="button" onClick={() => navigate(`/admin/enquiries/${enquiry.id}`)}
-            className="flex items-center justify-center w-8 h-8 rounded-lg border border-[var(--border-default)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all">
+          <button
+            type="button"
+            onClick={() => (editQuotationId ? navigate(`/admin/quotations/${editQuotationId}`) : navigate(`/admin/enquiries/${enquiry.id}`))}
+            className="flex items-center justify-center w-8 h-8 rounded-lg border border-[var(--border-default)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all cursor-pointer"
+            title="Back"
+          >
             <ArrowLeft size={15} />
           </button>
           <div>
@@ -623,14 +627,22 @@ export default function CreateQuotationPage() {
 
             {/* Action buttons */}
             <div className="px-5 pb-5 space-y-2">
-              <button type="button" disabled={saving || !hasItems || (!editQuotationId && enquiry.status !== "Approved")} onClick={() => void handleSave(false)}
-                className="w-full flex items-center justify-center gap-1.5 h-10 rounded-xl bg-[var(--color-primary)] text-white text-[12px] font-semibold hover:bg-[var(--color-primary-hover)] disabled:opacity-50 transition-all">
+              <button
+                type="button"
+                disabled={saving || !hasItems || (!editQuotationId && enquiry.status !== "Approved")}
+                onClick={() => void handleSave(false)}
+                className="w-full flex items-center justify-center gap-1.5 h-10 rounded-xl bg-[var(--color-primary)] text-white text-[12px] font-semibold hover:bg-[var(--color-primary-hover)] disabled:opacity-50 transition-all cursor-pointer"
+              >
                 {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                Save Draft
+                {editQuotationId ? "Save Changes" : "Save Draft"}
               </button>
-              <button type="button" disabled={saving || !hasItems || (!editQuotationId && enquiry.status !== "Approved")} onClick={() => void handleSave(true)}
-                className="w-full flex items-center justify-center gap-1.5 h-10 rounded-xl border border-[var(--border-default)] text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] disabled:opacity-50 transition-all">
-                <Send size={14} /> Submit for Approval
+              <button
+                type="button"
+                disabled={saving || !hasItems || (!editQuotationId && enquiry.status !== "Approved")}
+                onClick={() => void handleSave(true)}
+                className="w-full flex items-center justify-center gap-1.5 h-10 rounded-xl border border-[var(--border-default)] text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] disabled:opacity-50 transition-all cursor-pointer"
+              >
+                <Send size={14} /> {editQuotationId ? "Save & Submit for Approval" : "Submit for Approval"}
               </button>
             </div>
           </div>

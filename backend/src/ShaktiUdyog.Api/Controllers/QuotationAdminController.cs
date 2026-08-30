@@ -29,6 +29,18 @@ public class QuotationAdminController(IQuotationAdminService service) : Controll
         return q is null ? NotFound() : Ok(q);
     }
 
+    [HttpPut("quotations/{id:guid}")]
+    public async Task<IActionResult> UpdateQuotation(Guid id, UpdateQuotationRequest request)
+    {
+        var result = await service.UpdateQuotationAsync(id, request, UserId, ClientIp);
+        return result switch
+        {
+            null => NotFound(),
+            false => BadRequest(new MessageResponse("Cannot edit quotation in its current status. Quotations can only be edited before being issued to the customer.")),
+            _ => Ok(new MessageResponse("Quotation updated.")),
+        };
+    }
+
     [HttpPatch("quotations/{id:guid}/approve")]
     public async Task<IActionResult> ApproveQuotation(Guid id)
     {
