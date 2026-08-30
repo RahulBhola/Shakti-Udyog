@@ -79,7 +79,56 @@ const WORKFLOW = [
   { key: "packed", label: "Packed", icon: PackageCheck, desc: "Wooden Crate Packing" },
   { key: "ready_to_dispatch", label: "Ready to Dispatch", icon: Truck, desc: "Staged for Logistics" },
 ];
-const WORKFLOW_ORDER = Object.fromEntries(WORKFLOW.map((s, i) => [s.key, i]));
+
+export function getOrderStageInfo(order: {
+  status: string;
+  statusLabel?: string;
+  manufacturingStage?: string | null;
+}) {
+  const stageKey = order.manufacturingStage || order.status || "";
+  const norm = stageKey.toLowerCase().replace(/\s+/g, "_");
+  const normLabel = (order.statusLabel || "").toLowerCase().replace(/\s+/g, "_");
+
+  let stageIndex = WORKFLOW.findIndex((s) => s.key === norm);
+  if (stageIndex === -1) {
+    if (norm === "production" || norm.includes("prod") || normLabel.includes("prod")) {
+      stageIndex = 1;
+    } else if (
+      norm === "quality_check" ||
+      norm.includes("qual") ||
+      norm.includes("qc") ||
+      normLabel.includes("qual") ||
+      normLabel.includes("qc")
+    ) {
+      stageIndex = 2;
+    } else if (norm === "packed" || norm.includes("pack") || normLabel.includes("pack")) {
+      stageIndex = 3;
+    } else if (
+      norm === "ready_to_dispatch" ||
+      norm === "dispatched" ||
+      norm === "delivered" ||
+      norm.includes("dispatch") ||
+      norm.includes("deliver") ||
+      normLabel.includes("dispatch") ||
+      normLabel.includes("deliver")
+    ) {
+      stageIndex = 4;
+    } else {
+      stageIndex = 0; // pattern_development
+    }
+  }
+
+  const stage = WORKFLOW[stageIndex] ?? WORKFLOW[0];
+  const progressPercent = Math.round(((stageIndex + 1) / WORKFLOW.length) * 100);
+
+  return {
+    stageIndex,
+    stageKey: stage.key,
+    stageLabel: stage.label,
+    stageDesc: stage.desc,
+    progressPercent,
+  };
+}
 
 const trackingFlow = [
   "pattern_development",
@@ -417,9 +466,7 @@ export function OrderListPage() {
       {!loading && !error && filteredOrders.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredOrders.map((o) => {
-            const normStatus = o.statusLabel.toLowerCase().replace(/\s+/g, "_");
-            const stageIndex = WORKFLOW_ORDER[normStatus] ?? 0;
-            const progressPercent = Math.round(((stageIndex + 1) / WORKFLOW.length) * 100);
+            const stageInfo = getOrderStageInfo(o);
 
             return (
               <div
@@ -432,7 +479,7 @@ export function OrderListPage() {
                     <span className="text-xs font-extrabold font-mono text-neutral-900 dark:text-white px-2.5 py-1 rounded-lg bg-neutral-100 dark:bg-white/5 border border-neutral-200 dark:border-white/10">
                       {o.orderNumber}
                     </span>
-                    <StatusBadge status={normStatus} label={o.statusLabel} />
+                    <StatusBadge status={stageInfo.stageKey} label={stageInfo.stageLabel} />
                   </div>
 
                   {/* Product Type / Description and Quantity */}
@@ -447,16 +494,18 @@ export function OrderListPage() {
                     </div>
                   </div>
 
-                  {/* 8-Stage Progress Bar */}
+                  {/* 5-Stage Progress Bar */}
                   <div className="space-y-1.5 p-3 rounded-2xl bg-neutral-50 dark:bg-white/[0.02] border border-neutral-100 dark:border-white/5">
                     <div className="flex items-center justify-between text-[11px]">
-                      <span className="font-bold text-neutral-600 dark:text-neutral-300">Stage: {o.statusLabel}</span>
-                      <span className="font-extrabold text-blue-600 dark:text-blue-400">{progressPercent}%</span>
+                      <span className="font-bold text-neutral-700 dark:text-neutral-300">
+                        Stage: {stageInfo.stageLabel} (Stage {stageInfo.stageIndex + 1} of 5)
+                      </span>
+                      <span className="font-extrabold text-blue-600 dark:text-blue-400">{stageInfo.progressPercent}%</span>
                     </div>
                     <div className="w-full h-2 rounded-full bg-neutral-200 dark:bg-white/10 overflow-hidden">
                       <div
                         className="h-full bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full transition-all duration-500"
-                        style={{ width: `${progressPercent}%` }}
+                        style={{ width: `${stageInfo.progressPercent}%` }}
                       />
                     </div>
                     {o.promisedDispatchDateUtc && (
@@ -685,9 +734,8 @@ export function OrderDetailPage() {
   if (missing) return <EmptyState title="Order not found" text="The requested manufacturing order could not be loaded." />;
   if (!order) return <Loading label="Loading manufacturing order..." />;
 
-  const STAGES = ["pattern_development", "production", "quality_check", "packed", "ready_to_dispatch"];
-  const currentStageKey = order.manufacturingStage ?? (STAGES.includes(order.status) ? order.status : (order.status === "dispatched" || order.status === "delivered" ? "ready_to_dispatch" : "pattern_development"));
-  const currentIndex = Math.max(0, STAGES.indexOf(currentStageKey));
+  const stageInfo = getOrderStageInfo(order);
+  const currentIndex = stageInfo.stageIndex;
 
   return (
     <div className="space-y-6 pb-8">
@@ -706,7 +754,7 @@ export function OrderDetailPage() {
               <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 dark:text-white m-0 truncate">
                 {order.orderNumber}
               </h1>
-              <StatusBadge status={order.manufacturingStage ?? order.status} label={order.statusLabel} />
+              <StatusBadge status={stageInfo.stageKey} label={stageInfo.stageLabel} />
             </div>
             {order.purchaseOrderReference && (
               <p className="text-xs text-neutral-400 m-0 mt-0.5">PO Ref: {order.purchaseOrderReference}</p>

@@ -127,6 +127,8 @@ export interface OrderListItem {
   productType: string | null;
   assignedToUserId: string | null;
   assignedToName: string | null;
+  manufacturingStage?: string | null;
+  stageUpdatedAt?: string | null;
 }
 
 export interface OrderDetail {
