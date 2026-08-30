@@ -180,9 +180,11 @@ public class CustomerService(
             || !string.IsNullOrWhiteSpace(company.DeliveryAddresses)
             || await db.CompanyAddresses.AnyAsync(a => a.CompanyId == companyId);
 
+        var compName = !string.IsNullOrWhiteSpace(company.LegalBusinessName) ? company.LegalBusinessName : company.Name;
+        var hasCompanyName = !string.IsNullOrWhiteSpace(compName);
         var isProfileComplete = !string.IsNullOrWhiteSpace(user.FullName) && user.FullName.Trim().Length >= 2
             && !string.IsNullOrWhiteSpace(user.PhoneNumber) && user.PhoneNumber.Trim().Length >= 7
-            && !string.IsNullOrWhiteSpace(company.Name)
+            && hasCompanyName
             && hasAddresses;
 
         if (!isProfileComplete)
@@ -190,7 +192,7 @@ public class CustomerService(
             var missing = new List<string>();
             if (string.IsNullOrWhiteSpace(user.FullName) || user.FullName.Trim().Length < 2) missing.Add("Full Name");
             if (string.IsNullOrWhiteSpace(user.PhoneNumber) || user.PhoneNumber.Trim().Length < 7) missing.Add("Phone Number");
-            if (string.IsNullOrWhiteSpace(company.Name)) missing.Add("Company Name");
+            if (!hasCompanyName) missing.Add("Company Name");
             if (!hasAddresses) missing.Add("Delivery / Facility Address");
 
             throw new DomainValidationException(

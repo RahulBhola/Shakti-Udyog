@@ -632,8 +632,9 @@ export default function ProfilePage() {
       setPersonalFullName(p.fullName || user?.fullName || "");
       setPersonalPhone(p.phoneNumber || "");
       await refreshUser();
-    } catch {
-      showToast("Could not update personal information.", "error");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Could not update personal information.";
+      showToast(msg, "error");
     } finally { setBusy(false); }
   }
 
@@ -681,8 +682,9 @@ export default function ProfilePage() {
       localStorage.removeItem(COMPANY_DRAFT_KEY);
       showToast("Company information updated.", "success");
       recordProfileUpdate();
-    } catch {
-      showToast("Could not update company information.", "error");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Could not update company information.";
+      showToast(msg, "error");
     } finally { setBusy(false); }
   }
 
@@ -775,8 +777,9 @@ export default function ProfilePage() {
         showToast("Contact added.", "success");
       }
       setShowContactModal(false);
-    } catch {
-      showToast("Could not save contact.", "error");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Could not save contact.";
+      showToast(msg, "error");
     } finally { setBusy(false); }
   }
 
@@ -786,8 +789,9 @@ export default function ProfilePage() {
       await customerApi.deleteContact(id);
       setContacts(prev => prev.filter(c => c.id !== id));
       showToast("Contact deleted.", "success");
-    } catch {
-      showToast("Could not delete contact.", "error");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Could not delete contact.";
+      showToast(msg, "error");
     } finally { setBusy(false); setDeleteConfirm(null); }
   }
 
@@ -842,8 +846,9 @@ export default function ProfilePage() {
         showToast("Address added.", "success");
       }
       setShowAddressModal(false);
-    } catch {
-      showToast("Could not save address.", "error");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Could not save address.";
+      showToast(msg, "error");
     } finally { setBusy(false); }
   }
 
@@ -853,8 +858,9 @@ export default function ProfilePage() {
       await customerApi.deleteAddress(id);
       setAddresses(prev => prev.filter(a => a.id !== id));
       showToast("Address deleted.", "success");
-    } catch {
-      showToast("Could not delete address.", "error");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Could not delete address.";
+      showToast(msg, "error");
     } finally { setBusy(false); setDeleteConfirm(null); }
   }
 
@@ -874,8 +880,9 @@ export default function ProfilePage() {
       const docs = await customerApi.companyDocuments();
       setDocuments(docs);
       showToast(`${result.fileName} uploaded.`, "success");
-    } catch {
-      showToast("Could not upload document.", "error");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Could not upload document.";
+      showToast(msg, "error");
     } finally { setBusy(false); if (fileInputRef.current) fileInputRef.current.value = ""; }
   }
 
@@ -885,8 +892,9 @@ export default function ProfilePage() {
       await customerApi.deleteCompanyDocument(id);
       setDocuments(prev => prev.filter(d => d.id !== id));
       showToast("Document deleted.", "success");
-    } catch {
-      showToast("Could not delete document.", "error");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Could not delete document.";
+      showToast(msg, "error");
     } finally { setBusy(false); setDeleteConfirm(null); }
   }
 
@@ -927,8 +935,9 @@ export default function ProfilePage() {
       await new Promise(r => setTimeout(r, 300));
       showToast("Preferences saved.", "success");
       recordProfileUpdate();
-    } catch {
-      showToast("Could not save preferences.", "error");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Could not save preferences.";
+      showToast(msg, "error");
     } finally { setBusy(false); }
   }
 

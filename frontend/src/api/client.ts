@@ -41,18 +41,31 @@ async function request<T>(path: string, init: RequestInit, retryOn401 = true): P
     }
   }
 
-  if (!response.ok) {
-    let traceId: string | undefined;
-    let detail: string | undefined;
-    try {
-      const problem = await response.json();
-      traceId = problem?.traceId;
-      detail = problem?.title ?? problem?.message;
-    } catch {
-      // Non-JSON error body; fall through with status only.
+    if (!response.ok) {
+      let traceId: string | undefined;
+      let detail: string | undefined;
+      try {
+        const problem = await response.json();
+        traceId = problem?.traceId;
+        if (problem?.errors && typeof problem.errors === "object") {
+          const errs = Object.entries(problem.errors)
+            .flatMap(([field, msgs]) => {
+              if (Array.isArray(msgs)) return msgs.map((m) => `${field ? field + ": " : ""}${m}`);
+              return typeof msgs === "string" ? [`${field ? field + ": " : ""}${msgs}`] : [];
+            })
+            .filter(Boolean);
+          if (errs.length > 0) {
+            detail = errs.join(" | ");
+          }
+        }
+        if (!detail) {
+          detail = problem?.detail ?? problem?.message ?? problem?.title;
+        }
+      } catch {
+        // Non-JSON error body; fall through with status only.
+      }
+      throw new ApiError(response.status, traceId, detail);
     }
-    throw new ApiError(response.status, traceId, detail);
-  }
 
   if (response.status === 204) {
     return undefined as T;
