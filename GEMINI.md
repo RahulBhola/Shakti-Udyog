@@ -13,7 +13,10 @@ Read the following core documentation files in `docs/` to understand the project
 ## Testing Guidelines & User Management
 - **Always delete new users created after testing** or **reuse the standard existing demo/test users** (e.g. `customer@demo.local`, `engineer@demo.local`, `admin@demo.local`) so that test clutter does not accumulate in the database.
 
+## Autonomous Workflow & Command Execution
+- Proactively execute terminal commands, builds, and code modifications autonomously without asking for redundant confirmations. Proceed directly with tasks to completion.
+
 ## GitHub Push Instructions
 - When asked to push changes, automatically check `git status` and `git diff`.
-- Generate a concise and proper commit message summarizing the changes.
+- Generate a short, concise, and easy commit message summarizing the changes.
 - Automatically stage all changes (`git add .`), commit (`git commit -m "..."`), and push to the remote repository (`git push`) without needing further instructions.

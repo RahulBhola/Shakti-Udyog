@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { apiGet, apiPatch } from "../../api/client";
+import { apiGet, apiPatch, apiPost } from "../../api/client";
 import { useAuth } from "../../auth/AuthContext";
 import { connectRealtime, getRealtimeConnection, type StageChangedPayload } from "../../realtime/signalR";
 import { formatDate } from "../shared";
@@ -23,6 +23,14 @@ import {
   AlertCircle,
   Package,
   Boxes,
+  MessageSquare,
+  History,
+  X,
+  Send,
+  Loader2,
+  BarChart3,
+  Kanban,
+  Clock,
 } from "lucide-react";
 
 export interface EngineerOrder {
@@ -38,6 +46,22 @@ export interface EngineerOrder {
   status?: string | null;
   advancePaid?: boolean;
   assignedToUserName?: string | null;
+}
+
+export interface OrderCommentItem {
+  id?: string;
+  authorRole: string;
+  authorName: string | null;
+  message: string;
+  createdAtUtc: string;
+}
+
+export interface OrderHistoryItem {
+  fromStatus: string;
+  toStatus: string;
+  changedByRole: string;
+  note: string | null;
+  createdAtUtc: string;
 }
 
 /* ── 5 Core Manufacturing Columns (Bidirectional Workflow) ───────────────────── */
@@ -115,7 +139,7 @@ const COLUMNS: BoardColumn[] = [
 const columnIndex = (code: string): number => COLUMNS.findIndex((c) => c.code === code);
 const columnLabel = (code: string): string => COLUMNS[columnIndex(code)]?.label ?? code;
 
-/* ── Main Manufacturing Kanban Board ────────────────────────────────────────── */
+/* ── Main Manufacturing Kanban Board & Analytics ───────────────────────────── */
 
 export default function EngineerBoardPage() {
   const { user } = useAuth();
@@ -127,9 +151,15 @@ export default function EngineerBoardPage() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [viewTab, setViewTab] = useState<"board" | "analytics">("board");
+
+  // Drag and drop state
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [movingId, setMovingId] = useState<string | null>(null);
   const dragOrder = useRef<EngineerOrder | null>(null);
+
+  // RHS Drawer state for Order Story & Comments
+  const [selectedStoryOrder, setSelectedStoryOrder] = useState<EngineerOrder | null>(null);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -241,6 +271,7 @@ export default function EngineerBoardPage() {
 
   // KPI calculations
   const totalOrders = orders?.length ?? 0;
+  const totalQuantitySum = orders?.reduce((acc, o) => acc + (o.totalQuantity || 0), 0) ?? 0;
   const inPattern = orders?.filter((o) => effectiveOrderStage(o) === "pattern_development").length ?? 0;
   const inProduction = orders?.filter((o) => effectiveOrderStage(o) === "production").length ?? 0;
   const inQC = orders?.filter((o) => effectiveOrderStage(o) === "quality_check").length ?? 0;
@@ -251,7 +282,7 @@ export default function EngineerBoardPage() {
 
   return (
     <div className="space-y-6 pb-12">
-      {/* ── Top Header & KPI Banner ────────────────────────────────────────── */}
+      {/* ── Top Header with Tab Switcher & Search ──────────────────────────── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-[#0f121a] p-6 sm:p-7 rounded-3xl border border-neutral-200/90 dark:border-white/10 shadow-xs">
         <div>
           <div className="flex items-center gap-2 mb-1.5">
@@ -260,18 +291,46 @@ export default function EngineerBoardPage() {
             </span>
             <div className="flex items-center gap-1.5 text-xs text-neutral-400">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Live Realtime Sync (Bidirectional Stages)</span>
+              <span>Live Realtime Sync</span>
             </div>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 dark:text-white tracking-tight m-0">
             {isAdmin ? "Foundry Manufacturing Pipeline" : "My Assigned Production Orders"}
           </h1>
           <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 mt-1 m-0">
-            Move orders backward or forward across 5 synchronized production stages via drag-and-drop or quick stage buttons.
+            Monitor and advance casting orders across 5 synced stages with live Order Story & discussion notes.
           </p>
         </div>
 
         <div className="flex items-center gap-3 flex-wrap shrink-0">
+          {/* View Tab Switcher (Kanban vs Pipeline Analytics) */}
+          <div className="inline-flex p-1 rounded-2xl bg-neutral-100 dark:bg-white/5 border border-neutral-200 dark:border-white/10 shadow-xs">
+            <button
+              type="button"
+              onClick={() => setViewTab("board")}
+              className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
+                viewTab === "board"
+                  ? "bg-white dark:bg-[#151926] text-blue-600 dark:text-blue-400 shadow-sm"
+                  : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
+              }`}
+            >
+              <Kanban size={14} />
+              <span>Board View</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewTab("analytics")}
+              className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
+                viewTab === "analytics"
+                  ? "bg-white dark:bg-[#151926] text-blue-600 dark:text-blue-400 shadow-sm"
+                  : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
+              }`}
+            >
+              <BarChart3 size={14} />
+              <span>Pipeline Analytics</span>
+            </button>
+          </div>
+
           <div className="relative">
             <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" />
             <input
@@ -279,7 +338,7 @@ export default function EngineerBoardPage() {
               placeholder="Search Order #, Client, Engineer..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="h-10 pl-9 pr-4 rounded-xl text-xs bg-neutral-100 dark:bg-white/5 border border-neutral-200 dark:border-white/10 text-neutral-800 dark:text-neutral-200 placeholder-neutral-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500/30 w-56 sm:w-68 font-medium"
+              className="h-10 pl-9 pr-4 rounded-xl text-xs bg-neutral-100 dark:bg-white/5 border border-neutral-200 dark:border-white/10 text-neutral-800 dark:text-neutral-200 placeholder-neutral-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500/30 w-52 sm:w-64 font-medium"
             />
             {searchTerm && (
               <button
@@ -310,7 +369,7 @@ export default function EngineerBoardPage() {
             <Boxes size={16} className="text-blue-500" />
           </div>
           <div className="text-2xl font-extrabold text-neutral-900 dark:text-white tabular-nums">{totalOrders}</div>
-          <div className="text-[10px] text-neutral-400 mt-0.5">Total Orders in Factory</div>
+          <div className="text-[10px] text-neutral-400 mt-0.5">{totalQuantitySum.toLocaleString()} total pcs</div>
         </div>
 
         <div className="p-4 rounded-2xl bg-purple-50/50 dark:bg-purple-950/20 border border-purple-500/20 shadow-xs">
@@ -365,91 +424,108 @@ export default function EngineerBoardPage() {
         </div>
       )}
 
-      {/* ── Kanban Columns Horizontal Board (Responsive with Smooth Scroll) ─────────── */}
-      <div className="overflow-x-auto pb-4 -mx-1 px-1">
-        <div className="flex gap-4 items-start min-w-[1280px]">
-          {byColumn.map(({ column, items }, colIndex) => {
-            const Icon = column.icon;
-            const droppable = draggedId !== null && canDropOn(column.code);
-            const prevColumn = colIndex > 0 ? COLUMNS[colIndex - 1] : undefined;
-            const nextColumn = colIndex < COLUMNS.length - 1 ? COLUMNS[colIndex + 1] : undefined;
+      {/* ── View Tab 1: KANBAN BOARD VIEW ──────────────────────────────────── */}
+      {viewTab === "board" && (
+        <div className="overflow-x-auto pb-4 -mx-1 px-1">
+          <div className="flex gap-4 items-start min-w-[1280px]">
+            {byColumn.map(({ column, items }, colIndex) => {
+              const Icon = column.icon;
+              const droppable = draggedId !== null && canDropOn(column.code);
+              const prevColumn = colIndex > 0 ? COLUMNS[colIndex - 1] : undefined;
+              const nextColumn = colIndex < COLUMNS.length - 1 ? COLUMNS[colIndex + 1] : undefined;
 
-            return (
-              <div
-                key={column.code}
-                onDragOver={(e) => {
-                  if (droppable) e.preventDefault();
-                }}
-                onDrop={(e) => {
-                  if (droppable) {
-                    e.preventDefault();
-                    void handleDrop(column.code);
-                  }
-                }}
-                className={`flex-1 min-w-[275px] max-w-[340px] flex flex-col rounded-3xl border bg-neutral-50/70 dark:bg-[#0c0e14] p-3 transition-all min-h-[560px] ${
-                  droppable
-                    ? "border-dashed border-2 border-blue-500 bg-blue-500/5 dark:bg-blue-500/10 shadow-md ring-2 ring-blue-500/20"
-                    : "border-neutral-200/90 dark:border-white/10"
-                }`}
-              >
-                {/* Column Header */}
-                <div className="p-3.5 mb-2.5 rounded-2xl bg-white dark:bg-[#121520] border border-neutral-200/80 dark:border-white/10 shadow-xs">
-                  <div className="flex items-center justify-between gap-2 mb-1.5">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className={`p-1.5 rounded-xl ${column.badgeBg} ${column.badgeText} shrink-0`}>
-                        <Icon size={17} className="stroke-[2.2]" />
+              return (
+                <div
+                  key={column.code}
+                  onDragOver={(e) => {
+                    if (droppable) e.preventDefault();
+                  }}
+                  onDrop={(e) => {
+                    if (droppable) {
+                      e.preventDefault();
+                      void handleDrop(column.code);
+                    }
+                  }}
+                  className={`flex-1 min-w-[275px] max-w-[340px] flex flex-col rounded-3xl border bg-neutral-50/70 dark:bg-[#0c0e14] p-3 transition-all min-h-[560px] ${
+                    droppable
+                      ? "border-dashed border-2 border-blue-500 bg-blue-500/5 dark:bg-blue-500/10 shadow-md ring-2 ring-blue-500/20"
+                      : "border-neutral-200/90 dark:border-white/10"
+                  }`}
+                >
+                  {/* Column Header */}
+                  <div className="p-3.5 mb-2.5 rounded-2xl bg-white dark:bg-[#121520] border border-neutral-200/80 dark:border-white/10 shadow-xs">
+                    <div className="flex items-center justify-between gap-2 mb-1.5">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className={`p-1.5 rounded-xl ${column.badgeBg} ${column.badgeText} shrink-0`}>
+                          <Icon size={17} className="stroke-[2.2]" />
+                        </div>
+                        <span className="text-[13px] font-extrabold text-neutral-900 dark:text-white leading-tight">
+                          {column.label}
+                        </span>
                       </div>
-                      <span className="text-[13px] font-extrabold text-neutral-900 dark:text-white leading-tight">
-                        {column.label}
+                      <span
+                        className={`inline-flex items-center justify-center min-w-6 h-6 px-1.5 rounded-full text-xs font-extrabold ${column.badgeBg} ${column.badgeText} shrink-0`}
+                      >
+                        {items.length}
                       </span>
                     </div>
-                    <span
-                      className={`inline-flex items-center justify-center min-w-6 h-6 px-1.5 rounded-full text-xs font-extrabold ${column.badgeBg} ${column.badgeText} shrink-0`}
-                    >
-                      {items.length}
-                    </span>
-                  </div>
-                  <div className="text-[11px] text-neutral-400 font-medium leading-tight">
-                    {column.description}
-                  </div>
-                </div>
-
-                {/* Order Cards Container */}
-                <div className="flex-1 space-y-3 overflow-y-auto max-h-[calc(100vh-280px)] pr-0.5">
-                  {items.map((order) => (
-                    <OrderCard
-                      key={order.id}
-                      order={order}
-                      isAdmin={isAdmin}
-                      colIndex={colIndex}
-                      prevColumn={prevColumn}
-                      nextColumn={nextColumn}
-                      isDragging={draggedId === order.id}
-                      isMoving={movingId === order.id}
-                      onDragStart={() => handleDragStart(order)}
-                      onDragEnd={handleDragEnd}
-                      onRegress={() => prevColumn && void moveOrderStage(order, prevColumn.code)}
-                      onAdvance={() => nextColumn && void moveOrderStage(order, nextColumn.code)}
-                      onView={() => navigate(isAdmin ? `/admin/orders/${order.id}` : `/engineer/orders/${order.id}`)}
-                    />
-                  ))}
-
-                  {items.length === 0 && (
-                    <div className="flex flex-col items-center justify-center py-14 px-3 text-center border border-dashed border-neutral-200 dark:border-white/10 rounded-2xl">
-                      <span className="text-xs font-medium text-neutral-400">No orders in this stage</span>
+                    <div className="text-[11px] text-neutral-400 font-medium leading-tight">
+                      {column.description}
                     </div>
-                  )}
+                  </div>
+
+                  {/* Order Cards Container */}
+                  <div className="flex-1 space-y-3 overflow-y-auto max-h-[calc(100vh-280px)] pr-0.5">
+                    {items.map((order) => (
+                      <OrderCard
+                        key={order.id}
+                        order={order}
+                        isAdmin={isAdmin}
+                        colIndex={colIndex}
+                        prevColumn={prevColumn}
+                        nextColumn={nextColumn}
+                        isDragging={draggedId === order.id}
+                        isMoving={movingId === order.id}
+                        onDragStart={() => handleDragStart(order)}
+                        onDragEnd={handleDragEnd}
+                        onRegress={() => prevColumn && void moveOrderStage(order, prevColumn.code)}
+                        onAdvance={() => nextColumn && void moveOrderStage(order, nextColumn.code)}
+                        onView={() => navigate(isAdmin ? `/admin/orders/${order.id}` : `/engineer/orders/${order.id}`)}
+                        onOpenStory={() => setSelectedStoryOrder(order)}
+                      />
+                    ))}
+
+                    {items.length === 0 && (
+                      <div className="flex flex-col items-center justify-center py-14 px-3 text-center border border-dashed border-neutral-200 dark:border-white/10 rounded-2xl">
+                        <span className="text-xs font-medium text-neutral-400">No orders in this stage</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* ── View Tab 2: PIPELINE ANALYTICS VIEW ────────────────────────────── */}
+      {viewTab === "analytics" && (
+        <PipelineAnalyticsView orders={orders ?? []} />
+      )}
+
+      {/* ── RHS Slide-Over Drawer: ORDER STORY & ALL COMMENTS ──────────────── */}
+      {selectedStoryOrder && (
+        <OrderStoryDrawer
+          order={selectedStoryOrder}
+          isAdmin={isAdmin}
+          onClose={() => setSelectedStoryOrder(null)}
+        />
+      )}
     </div>
   );
 }
 
-/* ── Modern Rich Order Card Component with Explicit Engineer Display ─────── */
+/* ── Modern Rich Order Card Component ───────────────────────────────────────── */
 
 function OrderCard({
   order,
@@ -464,6 +540,7 @@ function OrderCard({
   onRegress,
   onAdvance,
   onView,
+  onOpenStory,
 }: {
   order: EngineerOrder;
   isAdmin: boolean;
@@ -477,6 +554,7 @@ function OrderCard({
   onRegress?: () => void;
   onAdvance?: () => void;
   onView: () => void;
+  onOpenStory: () => void;
 }) {
   const detailUrl = isAdmin ? `/admin/orders/${order.id}` : `/engineer/orders/${order.id}`;
 
@@ -562,7 +640,18 @@ function OrderCard({
         </div>
       </div>
 
-      {/* 5. Responsive Stage Action Controls (No Overflow / Overflow-Safe) */}
+      {/* 5. Order Story & Comments Button (Opens RHS Drawer) */}
+      <button
+        type="button"
+        onClick={onOpenStory}
+        className="w-full py-1.5 px-2.5 rounded-xl text-[11px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50/80 dark:bg-blue-500/10 hover:bg-blue-100 dark:hover:bg-blue-500/20 border border-blue-200/60 dark:border-blue-500/20 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+      >
+        <MessageSquare size={12} />
+        <span>Order Story & Comments</span>
+        <History size={11} className="text-blue-400 ml-0.5" />
+      </button>
+
+      {/* 6. Responsive Stage Action Controls (No Overflow / Overflow-Safe) */}
       <div className="pt-2 border-t border-neutral-100 dark:border-white/5 grid grid-cols-3 gap-1.5">
         {prevColumn && colIndex > 0 ? (
           <button
@@ -602,6 +691,436 @@ function OrderCard({
         ) : (
           <div />
         )}
+      </div>
+    </div>
+  );
+}
+
+/* ── RHS Slide-Over Drawer: Order Story & Comments ──────────────────────────── */
+
+function OrderStoryDrawer({
+  order,
+  isAdmin,
+  onClose,
+}: {
+  order: EngineerOrder;
+  isAdmin: boolean;
+  onClose: () => void;
+}) {
+  const [comments, setComments] = useState<OrderCommentItem[]>([]);
+  const [history, setHistory] = useState<OrderHistoryItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [newComment, setNewComment] = useState("");
+  const [posting, setPosting] = useState(false);
+  const [activeTab, setActiveTab] = useState<"comments" | "story">("comments");
+
+  const commentsUrl = isAdmin
+    ? `/api/v1/admin/orders/${order.id}/comments`
+    : `/api/v1/engineer/orders/${order.id}/comments`;
+
+  const historyUrl = isAdmin
+    ? `/api/v1/admin/orders/${order.id}/history`
+    : `/api/v1/engineer/orders/${order.id}/history`;
+
+  const loadDetails = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [cData, hData] = await Promise.all([
+        apiGet<OrderCommentItem[]>(commentsUrl).catch(() => []),
+        apiGet<OrderHistoryItem[]>(historyUrl).catch(() => []),
+      ]);
+      setComments(Array.isArray(cData) ? cData : []);
+      setHistory(Array.isArray(hData) ? hData : []);
+    } catch {
+      // ignore
+    } finally {
+      setLoading(false);
+    }
+  }, [commentsUrl, historyUrl]);
+
+  useEffect(() => {
+    void loadDetails();
+  }, [loadDetails]);
+
+  const handlePostComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newComment.trim() || posting) return;
+
+    setPosting(true);
+    try {
+      await apiPost(commentsUrl, { message: newComment.trim() });
+      setNewComment("");
+      await loadDetails();
+    } catch (err: any) {
+      alert(err.message || "Could not post comment");
+    } finally {
+      setPosting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-hidden flex justify-end">
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 bg-neutral-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
+        onClick={onClose}
+      />
+
+      {/* RHS Panel */}
+      <div className="relative w-full max-w-lg bg-white dark:bg-[#10131d] h-full shadow-2xl border-l border-neutral-200/80 dark:border-white/10 flex flex-col z-10 animate-in slide-in-from-right duration-300">
+        {/* 1. Header */}
+        <div className="p-5 border-b border-neutral-100 dark:border-white/5 flex items-start justify-between gap-3 bg-neutral-50/50 dark:bg-white/[0.02]">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap mb-1">
+              <span className="font-mono text-sm font-extrabold text-neutral-900 dark:text-white px-2.5 py-0.5 rounded-lg bg-white dark:bg-white/10 border border-neutral-200 dark:border-white/10">
+                {order.orderNumber}
+              </span>
+              <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                {order.totalQuantity} pcs
+              </span>
+            </div>
+            <h2 className="text-base font-extrabold text-neutral-900 dark:text-white truncate m-0">
+              {order.productType || "Casting Job"}
+            </h2>
+            <div className="text-xs text-neutral-400 mt-0.5 flex items-center gap-1.5">
+              <Building2 size={12} />
+              <span>{order.companyName || "Direct Client"}</span>
+            </div>
+          </div>
+
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#161a26] text-neutral-500 hover:text-neutral-900 dark:hover:text-white flex items-center justify-center transition-colors cursor-pointer shrink-0"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* 2. Drawer Tabs: Comments & Notes vs Order Story */}
+        <div className="px-5 pt-3 pb-2 border-b border-neutral-100 dark:border-white/5 flex items-center gap-2 bg-white dark:bg-[#10131d]">
+          <button
+            type="button"
+            onClick={() => setActiveTab("comments")}
+            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              activeTab === "comments"
+                ? "bg-blue-600 text-white shadow-xs"
+                : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-white/5"
+            }`}
+          >
+            <MessageSquare size={13} />
+            <span>Comments & Notes</span>
+            <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-white/20 text-current">
+              {comments.length}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("story")}
+            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              activeTab === "story"
+                ? "bg-blue-600 text-white shadow-xs"
+                : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-white/5"
+            }`}
+          >
+            <History size={13} />
+            <span>Order Story (Timeline)</span>
+            <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-white/20 text-current">
+              {history.length}
+            </span>
+          </button>
+        </div>
+
+        {/* 3. Content Area */}
+        <div className="flex-1 overflow-y-auto p-5 space-y-4">
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-16 text-neutral-400">
+              <Loader2 size={24} className="animate-spin text-blue-600 mb-2" />
+              <span className="text-xs font-medium">Loading details...</span>
+            </div>
+          ) : activeTab === "comments" ? (
+            /* Comments & Notes Thread */
+            <div className="space-y-4">
+              <div className="space-y-3">
+                {comments.map((c, idx) => {
+                  const isAdminRole = c.authorRole?.toLowerCase() === "admin";
+                  const isEngineerRole = c.authorRole?.toLowerCase() === "engineer";
+
+                  return (
+                    <div
+                      key={idx}
+                      className="p-3.5 rounded-2xl bg-neutral-50 dark:bg-white/[0.03] border border-neutral-200/70 dark:border-white/5 space-y-1.5 shadow-2xs"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <div className={`w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold ${
+                            isAdminRole
+                              ? "bg-purple-500/15 text-purple-600 dark:text-purple-400"
+                              : isEngineerRole
+                              ? "bg-blue-500/15 text-blue-600 dark:text-blue-400"
+                              : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                          }`}>
+                            {c.authorName ? c.authorName.charAt(0).toUpperCase() : "U"}
+                          </div>
+                          <span className="text-xs font-extrabold text-neutral-900 dark:text-white truncate">
+                            {c.authorName || c.authorRole || "User"}
+                          </span>
+                          <span className={`px-1.5 py-0.2 rounded-md text-[9.5px] font-extrabold uppercase ${
+                            isAdminRole
+                              ? "bg-purple-500/10 text-purple-600 dark:text-purple-400"
+                              : isEngineerRole
+                              ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                              : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                          }`}>
+                            {c.authorRole}
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-neutral-400 shrink-0">
+                          {formatDate(c.createdAtUtc)}
+                        </span>
+                      </div>
+                      <p className="text-xs text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap leading-relaxed m-0">
+                        {c.message}
+                      </p>
+                    </div>
+                  );
+                })}
+
+                {comments.length === 0 && (
+                  <div className="text-center py-12 px-4 border border-dashed border-neutral-200 dark:border-white/10 rounded-2xl">
+                    <MessageSquare size={24} className="text-neutral-400 mx-auto mb-2" />
+                    <p className="text-xs font-bold text-neutral-800 dark:text-neutral-200 m-0">No comments recorded yet</p>
+                    <p className="text-[11px] text-neutral-400 mt-1 m-0">
+                      Post an engineering note or updates regarding tooling, casting, or dispatch.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            /* Order Story (Timeline) */
+            <div className="space-y-4">
+              <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-neutral-200 dark:before:bg-white/10">
+                {history.map((h, idx) => (
+                  <div key={idx} className="relative">
+                    <div className="absolute -left-6 top-1 w-3 h-3 rounded-full bg-blue-600 ring-4 ring-white dark:ring-[#10131d]" />
+                    <div className="p-3.5 rounded-2xl bg-neutral-50 dark:bg-white/[0.03] border border-neutral-200/70 dark:border-white/5 space-y-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-extrabold text-neutral-900 dark:text-white">
+                          {h.toStatus.replace(/_/g, " ").toUpperCase()}
+                        </span>
+                        <span className="text-[10px] text-neutral-400">
+                          {formatDate(h.createdAtUtc)}
+                        </span>
+                      </div>
+                      {h.note && (
+                        <p className="text-xs text-neutral-600 dark:text-neutral-400 m-0">
+                          {h.note}
+                        </p>
+                      )}
+                      <div className="text-[10px] font-semibold text-blue-600 dark:text-blue-400 pt-0.5">
+                        By {h.changedByRole || "System"}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                {history.length === 0 && (
+                  <div className="text-center py-12 px-4 border border-dashed border-neutral-200 dark:border-white/10 rounded-2xl">
+                    <History size={24} className="text-neutral-400 mx-auto mb-2" />
+                    <p className="text-xs font-bold text-neutral-800 dark:text-neutral-200 m-0">No timeline history recorded</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* 4. Post New Comment Box (Available on RHS) */}
+        <div className="p-4 border-t border-neutral-100 dark:border-white/5 bg-neutral-50/50 dark:bg-white/[0.02]">
+          <form onSubmit={handlePostComment} className="space-y-2">
+            <div className="relative">
+              <textarea
+                rows={2}
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder="Write an internal note or update..."
+                className="w-full p-3 rounded-xl text-xs bg-white dark:bg-[#161a26] border border-neutral-200 dark:border-white/10 text-neutral-800 dark:text-neutral-200 placeholder-neutral-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500/30 resize-none font-medium"
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-[10.5px] text-neutral-400">
+                Visible to engineers & admins
+              </span>
+              <button
+                type="submit"
+                disabled={!newComment.trim() || posting}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-xs disabled:opacity-50 cursor-pointer"
+              >
+                {posting ? (
+                  <Loader2 size={12} className="animate-spin" />
+                ) : (
+                  <Send size={12} />
+                )}
+                <span>Post Comment</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Live Pipeline Analytics View Component ─────────────────────────────────── */
+
+function PipelineAnalyticsView({ orders }: { orders: EngineerOrder[] }) {
+  const total = orders.length;
+
+  const stageCounts = COLUMNS.map((col) => {
+    const count = orders.filter((o) => {
+      const stage = o.manufacturingStage || o.status || "pattern_development";
+      return stage === col.code;
+    }).length;
+    const percent = total > 0 ? Math.round((count / total) * 100) : 0;
+    return { ...col, count, percent };
+  });
+
+  const totalPcs = orders.reduce((acc, o) => acc + (o.totalQuantity || 0), 0);
+
+  const readyOrPacked = orders.filter((o) => {
+    const s = o.manufacturingStage || o.status || "";
+    return s === "packed" || s === "ready_to_dispatch" || s === "dispatched" || s === "delivered";
+  }).length;
+
+  // Group by engineer
+  const engineerLoads = orders.reduce<Record<string, { count: number; pcs: number }>>((acc, o) => {
+    const name = o.assignedToUserName || "Unassigned";
+    if (!acc[name]) acc[name] = { count: 0, pcs: 0 };
+    acc[name].count += 1;
+    acc[name].pcs += o.totalQuantity || 0;
+    return acc;
+  }, {});
+
+  return (
+    <div className="space-y-6">
+      {/* 1. Stage Distribution Breakdown */}
+      <div className="p-6 rounded-3xl bg-white dark:bg-[#0f121a] border border-neutral-200/90 dark:border-white/10 shadow-xs space-y-5">
+        <div className="flex items-center justify-between border-b border-neutral-100 dark:border-white/5 pb-4">
+          <div>
+            <h3 className="text-base font-extrabold text-neutral-900 dark:text-white m-0">
+              Manufacturing Pipeline Stage Distribution
+            </h3>
+            <p className="text-xs text-neutral-400 mt-0.5 m-0">
+              Real-time progress and bottleneck distribution across all 5 foundry stages.
+            </p>
+          </div>
+          <span className="text-xs font-extrabold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 px-3 py-1 rounded-full">
+            {total} Active Orders ({totalPcs.toLocaleString()} Total Pcs)
+          </span>
+        </div>
+
+        {/* Progress Bars */}
+        <div className="space-y-4">
+          {stageCounts.map((col) => {
+            const Icon = col.icon;
+            return (
+              <div key={col.code} className="space-y-1.5">
+                <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2 font-bold text-neutral-900 dark:text-white">
+                    <div className={`p-1 rounded-md ${col.badgeBg} ${col.badgeText}`}>
+                      <Icon size={14} />
+                    </div>
+                    <span>{col.label}</span>
+                    <span className="text-neutral-400 text-[11px] font-medium">({col.description})</span>
+                  </div>
+                  <div className="flex items-center gap-2 font-bold">
+                    <span className="text-neutral-900 dark:text-white tabular-nums">{col.count} orders</span>
+                    <span className="text-neutral-400">({col.percent}%)</span>
+                  </div>
+                </div>
+                <div className="w-full h-3 rounded-full bg-neutral-100 dark:bg-white/5 overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{
+                      width: `${col.percent}%`,
+                      backgroundColor: col.color,
+                    }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 2. Engineer Load Distribution */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="p-6 rounded-3xl bg-white dark:bg-[#0f121a] border border-neutral-200/90 dark:border-white/10 shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-neutral-100 dark:border-white/5 pb-3">
+            <h3 className="text-sm font-bold text-neutral-900 dark:text-white m-0 flex items-center gap-2">
+              <User size={15} className="text-blue-500" />
+              <span>Engineer Workload & Allocation</span>
+            </h3>
+            <span className="text-xs text-neutral-400">Live Load</span>
+          </div>
+
+          <div className="space-y-3">
+            {Object.entries(engineerLoads).map(([name, data]) => (
+              <div
+                key={name}
+                className="p-3 rounded-2xl bg-neutral-50 dark:bg-white/[0.02] border border-neutral-200/70 dark:border-white/5 flex items-center justify-between"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xs">
+                    {name.charAt(0)}
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-neutral-900 dark:text-white">{name}</div>
+                    <div className="text-[10px] text-neutral-400">{data.pcs.toLocaleString()} pieces in casting</div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs font-extrabold text-blue-600 dark:text-blue-400">{data.count} jobs</div>
+                  <div className="text-[10px] text-neutral-400">{total > 0 ? Math.round((data.count / total) * 100) : 0}% share</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 3. Dispatch SLA Readiness */}
+        <div className="p-6 rounded-3xl bg-white dark:bg-[#0f121a] border border-neutral-200/90 dark:border-white/10 shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-neutral-100 dark:border-white/5 pb-3">
+            <h3 className="text-sm font-bold text-neutral-900 dark:text-white m-0 flex items-center gap-2">
+              <Clock size={15} className="text-amber-500" />
+              <span>Dispatch Readiness & Timelines</span>
+            </h3>
+            <span className="text-xs text-neutral-400">Schedule SLA</span>
+          </div>
+
+          <div className="space-y-3">
+            <div className="p-3.5 rounded-2xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-500/20 flex items-center justify-between">
+              <div>
+                <div className="text-xs font-bold text-emerald-800 dark:text-emerald-300">Advance Payment Verified</div>
+                <div className="text-[10px] text-emerald-600/70 dark:text-emerald-400/70">Ready for full production throughput</div>
+              </div>
+              <div className="text-lg font-extrabold text-emerald-700 dark:text-emerald-300 tabular-nums">
+                {orders.filter((o) => o.advancePaid).length}
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-cyan-50/50 dark:bg-cyan-950/20 border border-cyan-500/20 flex items-center justify-between">
+              <div>
+                <div className="text-xs font-bold text-cyan-800 dark:text-cyan-300">Ready for Dispatch / Packed</div>
+                <div className="text-[10px] text-cyan-600/70 dark:text-cyan-400/70">Staged in wooden crating / logistics bay</div>
+              </div>
+              <div className="text-lg font-extrabold text-cyan-700 dark:text-cyan-300 tabular-nums">
+                {readyOrPacked}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
