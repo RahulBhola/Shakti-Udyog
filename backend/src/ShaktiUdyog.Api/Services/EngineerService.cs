@@ -101,6 +101,12 @@ public class EngineerService(
             .Select(q => (Guid?)q.Id)
             .FirstOrDefaultAsync();
 
+        if (draftQuotationId != null && (enquiry.Status == EnquiryStatuses.UnderReview || enquiry.Status == EnquiryStatuses.Approved))
+        {
+            enquiry.Status = EnquiryStatuses.Quoted;
+            try { await db.SaveChangesAsync(); } catch { }
+        }
+
         return new EngineerEnquiryDetailDto(
             enquiry.Id, enquiry.CompanyId ?? Guid.Empty, enquiry.FullName, enquiry.CompanyName, enquiry.Email, enquiry.Phone,
             enquiry.ProductType, enquiry.MaterialGrade, enquiry.Quantity,

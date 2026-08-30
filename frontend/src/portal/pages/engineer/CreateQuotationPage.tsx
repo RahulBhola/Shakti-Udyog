@@ -93,7 +93,6 @@ export default function CreateQuotationPage() {
   const [internalNotes, setInternalNotes] = useState("");
   const [freight, setFreight] = useState(0);
   const [packing, setPacking] = useState(0);
-  const [otherCharges, setOtherCharges] = useState(0);
   const [saveMsg, setSaveMsg] = useState<string | null>(null);
 
   // Line items
@@ -161,9 +160,9 @@ export default function CreateQuotationPage() {
       return s + afterDiscount * (i.gstPercent / 100);
     }, 0);
     const lineTotal = calculatedItems.reduce((s, i) => s + i.amount, 0);
-    const grandTotal = lineTotal + freight + packing + otherCharges;
+    const grandTotal = lineTotal + freight + packing;
     return { subtotal, discountAmt, gstAmt, lineTotal, grandTotal };
-  }, [calculatedItems, freight, packing, otherCharges]);
+  }, [calculatedItems, freight, packing]);
 
   // ── Item management ───────────────────────────────────────────
   function updateItem(id: string, field: keyof QuotationLineItem, value: number | string) {
@@ -607,11 +606,6 @@ export default function CreateQuotationPage() {
                 <div className="flex items-center justify-between">
                   <span className="text-[var(--text-muted)]">Packing</span>
                   <input type="number" value={packing || ""} min="0" onChange={(e) => setPacking(Math.max(0, Number(e.target.value)))}
-                    className="w-28 h-7 px-2 rounded-md border border-[var(--border-input)] bg-[var(--bg-surface)] text-[12px] text-[var(--text-primary)] text-right outline-none focus:border-[var(--color-primary)] tabular-nums" />
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[var(--text-muted)]">Other Charges</span>
-                  <input type="number" value={otherCharges || ""} min="0" onChange={(e) => setOtherCharges(Math.max(0, Number(e.target.value)))}
                     className="w-28 h-7 px-2 rounded-md border border-[var(--border-input)] bg-[var(--bg-surface)] text-[12px] text-[var(--text-primary)] text-right outline-none focus:border-[var(--color-primary)] tabular-nums" />
                 </div>
               </div>
