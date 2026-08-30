@@ -18,6 +18,7 @@ import "./erpListView.css";
 interface Company {
   id: string;
   name: string;
+  legalBusinessName?: string | null;
   industry: string | null;
   companyEmail: string | null;
   companyPhone: string | null;
@@ -33,6 +34,11 @@ interface Company {
   panNumber: string | null;
   cinNumber: string | null;
   msmeNumber: string | null;
+}
+
+function getCompanyName(c?: Company | null): string {
+  if (!c) return "Company";
+  return (c.legalBusinessName || c.name || "Company").trim();
 }
 
 interface Filters {
@@ -173,7 +179,8 @@ function CompanyDetailsDrawer({
 }) {
   const navigate = useNavigate();
   const [copiedGst, setCopiedGst] = useState(false);
-  const palette = getAvatarStyle(company.name);
+  const compName = getCompanyName(company);
+  const palette = getAvatarStyle(compName);
 
   const copyGst = () => {
     if (!company.gstNumber) return;
@@ -198,14 +205,14 @@ function CompanyDetailsDrawer({
               style={{ background: palette.bg, color: palette.fg, borderColor: palette.border }}
             >
               {company.companyLogoUrl ? (
-                <img src={company.companyLogoUrl} alt={company.name} className="w-full h-full object-cover rounded-xl" />
+                <img src={company.companyLogoUrl} alt={compName} className="w-full h-full object-cover rounded-xl" />
               ) : (
-                initials(company.name)
+                initials(compName)
               )}
             </div>
             <div>
               <h3 className="font-extrabold text-base text-neutral-900 dark:text-white m-0">
-                {company.name}
+                {compName}
               </h3>
               <p className="text-xs text-neutral-500 dark:text-neutral-400 m-0 mt-0.5">
                 {company.industry || "Client Organization"}
@@ -495,7 +502,8 @@ export default function AdminCompaniesPage() {
     return list
       .filter((c) => {
         if (q) {
-          const match = c.name.toLowerCase().includes(q)
+          const compName = getCompanyName(c);
+          const match = compName.toLowerCase().includes(q)
             || (c.gstNumber ?? "").toLowerCase().includes(q)
             || (c.city ?? "").toLowerCase().includes(q)
             || (c.state ?? "").toLowerCase().includes(q)
@@ -510,7 +518,7 @@ export default function AdminCompaniesPage() {
         return true;
       })
       .sort((a, b) => {
-        if (filters.sort === "Company Name (A-Z)") return a.name.localeCompare(b.name);
+        if (filters.sort === "Company Name (A-Z)") return getCompanyName(a).localeCompare(getCompanyName(b));
         return new Date(b.createdAtUtc).getTime() - new Date(a.createdAtUtc).getTime();
       });
   }, [companies, filters]);
@@ -551,7 +559,7 @@ export default function AdminCompaniesPage() {
     const rows = [
       ["Company Name", "GSTIN", "Industry", "Email", "Phone", "City", "State", "Status", "Registered At"],
       ...list.map((c) => [
-        c.name,
+        getCompanyName(c),
         c.gstNumber ?? "",
         c.industry ?? "",
         c.companyEmail ?? "",
@@ -857,7 +865,8 @@ export default function AdminCompaniesPage() {
               </thead>
               <tbody className="divide-y divide-neutral-100 dark:divide-white/[0.04]">
                 {paged.map((c) => {
-                  const palette = getAvatarStyle(c.name);
+                  const compName = getCompanyName(c);
+                  const palette = getAvatarStyle(compName);
 
                   return (
                     <tr
@@ -873,14 +882,14 @@ export default function AdminCompaniesPage() {
                             style={{ background: palette.bg, color: palette.fg, borderColor: palette.border }}
                           >
                             {c.companyLogoUrl ? (
-                              <img src={c.companyLogoUrl} alt={c.name} className="w-full h-full object-cover rounded-xl" />
+                              <img src={c.companyLogoUrl} alt={compName} className="w-full h-full object-cover rounded-xl" />
                             ) : (
-                              initials(c.name)
+                              initials(compName)
                             )}
                           </div>
                           <div className="min-w-0">
                             <div className="font-bold text-sm text-neutral-900 dark:text-white truncate">
-                              {c.name}
+                              {compName}
                             </div>
                             <div className="text-xs text-neutral-500 dark:text-neutral-400 truncate mt-0.5">
                               {c.industry || "Client Organization"}

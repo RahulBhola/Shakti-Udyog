@@ -48,7 +48,15 @@ public class CustomerCompanyService(
         var company = await db.Companies.SingleOrDefaultAsync(c => c.Id == companyId);
         if (company is null) return false;
 
-        if (request.LegalBusinessName is not null) company.LegalBusinessName = request.LegalBusinessName.Trim();
+        if (request.LegalBusinessName is not null)
+        {
+            var trimmedName = request.LegalBusinessName.Trim();
+            company.LegalBusinessName = trimmedName;
+            if (!string.IsNullOrWhiteSpace(trimmedName))
+            {
+                company.Name = trimmedName;
+            }
+        }
         if (request.BusinessType is not null) company.BusinessType = request.BusinessType;
         if (request.Industry is not null) company.Industry = request.Industry;
         if (request.Website is not null) company.Website = request.Website.Trim();
@@ -72,6 +80,23 @@ public class CustomerCompanyService(
         if (request.PreferredLanguage is not null) company.PreferredLanguage = request.PreferredLanguage;
 
         company.UpdatedAtUtc = DateTimeOffset.UtcNow;
+
+        if (request.LegalBusinessName is not null && !string.IsNullOrWhiteSpace(company.Name))
+        {
+            var enqs = await db.Enquiries.Where(e => e.CompanyId == companyId).ToListAsync();
+            foreach (var enq in enqs)
+            {
+                enq.CompanyName = company.Name;
+            }
+
+            var userCompIds = await db.UserCompanies.Where(uc => uc.CompanyId == companyId).Select(uc => uc.UserId).ToListAsync();
+            var linkedUsers = await db.Users.Where(u => userCompIds.Contains(u.Id)).ToListAsync();
+            foreach (var u in linkedUsers)
+            {
+                u.CompanyName = company.Name;
+            }
+        }
+
         await db.SaveChangesAsync();
         await audit.WriteAsync("customer.company.updated", ctx.UserId, "Company", companyId.ToString(), ip);
         return true;

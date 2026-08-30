@@ -107,6 +107,7 @@ public static class DevAdminSeeder
         await PurgeProductionAndInvoiceDataAsync(dbContext, logger);
         await SeedCategoriesAsync(dbContext, logger);
         await SeedProductMastersAsync(dbContext, adminUser?.Id, logger);
+        await SyncCompanyNamesAndEnquiriesAsync(dbContext, logger);
     }
 
     private static async Task EnsureProductMasterSchemaAsync(AppDbContext db, ILogger logger)
@@ -768,6 +769,46 @@ public static class DevAdminSeeder
         catch (Exception ex)
         {
             logger.LogWarning(ex, "Could not purge production or invoice data during startup: {Message}", ex.Message);
+        }
+    }
+
+    private static async Task SyncCompanyNamesAndEnquiriesAsync(AppDbContext db, ILogger logger)
+    {
+        try
+        {
+            var desyncedCompanies = await db.Companies
+                .Where(c => !string.IsNullOrEmpty(c.LegalBusinessName) && c.Name != c.LegalBusinessName)
+                .ToListAsync();
+
+            var count = 0;
+            foreach (var comp in desyncedCompanies)
+            {
+                comp.Name = comp.LegalBusinessName!;
+                count++;
+
+                var enqs = await db.Enquiries.Where(e => e.CompanyId == comp.Id).ToListAsync();
+                foreach (var enq in enqs)
+                {
+                    enq.CompanyName = comp.Name;
+                }
+
+                var ucs = await db.UserCompanies.Where(uc => uc.CompanyId == comp.Id).Select(uc => uc.UserId).ToListAsync();
+                var users = await db.Users.Where(u => ucs.Contains(u.Id)).ToListAsync();
+                foreach (var u in users)
+                {
+                    u.CompanyName = comp.Name;
+                }
+            }
+
+            if (count > 0)
+            {
+                await db.SaveChangesAsync();
+                logger.LogInformation("Synchronized {Count} company entities and their enquiries/orders with LegalBusinessName.", count);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to synchronize company names: {Message}", ex.Message);
         }
     }
 }

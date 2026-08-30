@@ -205,7 +205,7 @@ public class CustomerService(
             CompanyId = companyId,
             SubmittedByUserId = ctx.UserId,
             FullName = user.FullName ?? user.Email ?? "Customer",
-            CompanyName = company.Name,
+            CompanyName = !string.IsNullOrWhiteSpace(company.LegalBusinessName) ? company.LegalBusinessName : company.Name,
             Email = user.Email ?? string.Empty,
             Phone = user.PhoneNumber ?? "-",
             ProductType = request.ProductType,

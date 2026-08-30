@@ -40,7 +40,7 @@ public class CustomerProfileService(
         var company = await db.Companies
             .Where(c => c.Id == ctx.CompanyIds[0])
             .Select(c => new CompanyProfileDto(
-                c.Name, c.AddressLine1, c.City, c.State, c.PostalCode, c.Country,
+                c.LegalBusinessName ?? c.Name, c.AddressLine1, c.City, c.State, c.PostalCode, c.Country,
                 c.GstNumber, c.DeliveryAddresses))
             .SingleOrDefaultAsync();
 
