@@ -293,7 +293,7 @@ export default function AdminDashboardPage() {
               </div>
               <div className="mt-2">
                 <span className="text-xl font-bold text-purple-500 tabular-nums">{kpis.quoteWinRate}%</span>
-                <span className="text-[10px] text-[var(--text-muted)] block mt-0.5 font-mono">RFQ to order</span>
+                <span className="text-[10px] text-[var(--text-muted)] block mt-0.5 font-mono">Enquiry to order</span>
               </div>
             </div>
 

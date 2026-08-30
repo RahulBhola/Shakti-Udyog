@@ -225,7 +225,7 @@ export default function NotificationsPage() {
               )}
             </div>
             <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 m-0">
-              Live alerts for RFQs, quotations, order stage progressions, invoice generation, and payment approvals.
+              Live alerts for enquiries, quotations, order stage progressions, invoice generation, and payment approvals.
             </p>
           </div>
         </div>
@@ -296,7 +296,7 @@ export default function NotificationsPage() {
           <div className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">Stage transitions</div>
         </div>
 
-        {/* Quotes & RFQs */}
+        {/* Quotes & Enquiries */}
         <div className="relative overflow-hidden p-4 sm:p-5 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-2xs hover:shadow-md hover:-translate-y-0.5 transition-all before:absolute before:inset-0 before:bg-[radial-gradient(150px_110px_at_95%_0%,rgba(99,102,241,0.15),transparent)] before:pointer-events-none">
           <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center">
             <FileText size={18} />
@@ -304,7 +304,7 @@ export default function NotificationsPage() {
           <div className="text-2xl sm:text-[26px] font-extrabold text-neutral-900 dark:text-white mt-3 leading-tight tracking-tight font-mono">
             {quotesCount}
           </div>
-          <div className="text-xs font-bold text-neutral-800 dark:text-neutral-200 mt-1">Quotes & RFQs</div>
+          <div className="text-xs font-bold text-neutral-800 dark:text-neutral-200 mt-1">Quotes & Enquiries</div>
           <div className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">Estimation requests</div>
         </div>
 

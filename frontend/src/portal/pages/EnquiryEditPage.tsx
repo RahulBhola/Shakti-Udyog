@@ -1,11 +1,24 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { customerApi, type EnquiryDetail } from "../../api/customerApi";
+import {
+  customerApi,
+  type EnquiryDetail,
+} from "../../api/customerApi";
 import { enquiryProductTypes } from "../../api/publicApi";
 import { config } from "../../config";
 import { tokenStorage } from "../../auth/tokenStorage";
 import { EmptyState, Loading } from "../../components/ui";
-import { ArrowLeft, Loader2, AlertCircle, Upload, FileText, X, GripVertical, Send } from "lucide-react";
+import {
+  ArrowLeft,
+  Loader2,
+  AlertCircle,
+  Upload,
+  FileText,
+  X,
+  GripVertical,
+  Send,
+  Info,
+} from "lucide-react";
 
 const allowedExtensions = ["pdf", "dwg", "dxf", "step", "stp", "iges", "igs", "jpg", "jpeg", "png", "zip"];
 const maxFileMb = 10;
@@ -251,6 +264,15 @@ export default function EnquiryEditPage() {
         </div>
       )}
 
+      {/* ── Policy Notice Banner ── */}
+      <div className="p-4 rounded-2xl border border-blue-500/20 bg-gradient-to-r from-blue-500/10 via-blue-500/5 to-transparent flex items-start gap-3">
+        <Info size={18} className="text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+        <div className="text-xs text-neutral-700 dark:text-neutral-300 leading-relaxed">
+          <strong className="text-blue-800 dark:text-blue-300 block mb-0.5">Draft Enquiry Management & Deletion Policy</strong>
+          You can edit, save, or delete this draft enquiry at any time. After submission, you can also delete the enquiry anytime <strong>before the Admin or Foundry Engineering team changes the enquiry progress</strong>.
+        </div>
+      </div>
+
       <form id="edit-form" onSubmit={handleSubmit} className="space-y-5">
         {/* Section 1: Basic Information */}
         <Section title="1. Basic Information">
@@ -471,7 +493,7 @@ export default function EnquiryEditPage() {
 
               {/* Message */}
               <p className="text-[13px] text-[var(--text-secondary)] leading-relaxed m-0 mb-6">
-                Once submitted, this Enquiry will be sent to our engineering team for review and quotation. You will not be able to edit it further.
+                Once submitted, this enquiry will be queued for our engineering team. You will no longer be able to edit fields, but you can still delete the enquiry before the foundry team updates its progress.
               </p>
 
               {/* Divider */}

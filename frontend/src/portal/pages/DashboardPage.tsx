@@ -137,7 +137,7 @@ export default function DashboardPage() {
 
   const quickActions = [
     {
-      title: "Submit New RFQ",
+      title: "Submit New Enquiry",
       description: "Upload CAD drawings, alloy specifications & quantities",
       icon: PlusCircle,
       href: "/customer/enquiries/new",
@@ -234,7 +234,7 @@ export default function DashboardPage() {
                 <ClipboardList size={19} />
               </div>
               <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
-                RFQs
+                Enquiries
               </span>
             </div>
             <div>

@@ -19,6 +19,7 @@ import {
   Check,
   User,
   Phone,
+  Info,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 
@@ -338,7 +339,7 @@ export default function EnquiryNewPage() {
                   </span>
                 </div>
                 <p className="text-xs text-neutral-600 dark:text-neutral-300 mt-1 max-w-2xl leading-relaxed m-0">
-                  To ensure accurate casting feasibility reviews, custom tooling estimates, and delivery logistics, all customer accounts must have a complete profile before creating RFQs.
+                  To ensure accurate casting feasibility reviews, custom tooling estimates, and delivery logistics, all customer accounts must have a complete profile before submitting enquiries.
                 </p>
               </div>
             </div>
@@ -691,6 +692,17 @@ export default function EnquiryNewPage() {
             <h4 className="text-[12px] font-semibold text-[var(--text-primary)] m-0 mb-2">Fill the required fields</h4>
             <p className="text-[12px] text-[var(--text-muted)] m-0 leading-relaxed">
               The more details you provide, the more accurate our quotation will be.
+            </p>
+          </div>
+
+          {/* Deletion Policy Card */}
+          <div className="rounded-xl border border-blue-500/20 bg-gradient-to-br from-blue-500/[0.06] via-white dark:via-[#0f121a] to-white dark:to-[#0f121a] p-4.5 space-y-2 shadow-xs">
+            <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
+              <Info size={15} />
+              <h4 className="text-[12px] font-bold text-[var(--text-primary)] m-0">Cancellation & Deletion Policy</h4>
+            </div>
+            <p className="text-[11px] text-[var(--text-muted)] m-0 leading-relaxed">
+              You can delete or modify this generated enquiry anytime while it is in <strong>Draft</strong> or <strong>Submitted</strong> status. Once the Admin/Foundry engineering team begins review and advances the enquiry progress, it will be locked to preserve technical feasibility records.
             </p>
           </div>
 

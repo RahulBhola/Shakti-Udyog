@@ -109,7 +109,7 @@ export default function RequestQuotePage() {
             {status.reference && <p>Reference: {status.reference}</p>}
             <p>
               <Link to="/">Return to home</Link> ·{" "}
-              <Link to="/resources/how-to-prepare-a-casting-rfq">Enquiry preparation guide</Link>
+              <Link to="/resources/how-to-prepare-a-casting-enquiry">Enquiry preparation guide</Link>
             </p>
           </div>
         ) : (

@@ -44,7 +44,7 @@ function catStyle(cat: string): { color: string; bg: string } {
 
 const REPORTS: ReportDef[] = [
   { name: "Customer Directory", category: "Customers", description: "Registered client companies, contact persons, tax registration, and verification status.", formats: ["PDF", "Excel", "CSV"], icon: Users, ...catStyle("Customers"), key: "customer" },
-  { name: "Enquiry Pipeline Report", category: "Sales", description: "All incoming requests for quotation (RFQs), casting product types, materials, and stage statuses.", formats: ["PDF", "Excel", "CSV"], icon: ClipboardList, ...catStyle("Sales"), key: "enquiry" },
+  { name: "Enquiry Pipeline Report", category: "Sales", description: "All incoming customer enquiries, casting product types, materials, and stage statuses.", formats: ["PDF", "Excel", "CSV"], icon: ClipboardList, ...catStyle("Sales"), key: "enquiry" },
   { name: "Quotation Summary Report", category: "Sales", description: "Formal quotes issued, pricing totals, validity dates, accepted deals, and expired proposals.", formats: ["PDF", "Excel", "CSV"], icon: FileText, ...catStyle("Sales"), key: "quotation" },
   { name: "Sales Orders Report", category: "Sales", description: "Confirmed purchase orders, target delivery dates, milestone progress, and order quantities.", formats: ["PDF", "Excel", "CSV"], icon: ShoppingCart, ...catStyle("Sales"), key: "order" },
   { name: "Production & Shop Floor Jobs", category: "Production", description: "Active foundry batch jobs, casting patterns, metallurgical grades, and stage progression.", formats: ["PDF", "Excel", "CSV"], icon: Factory, ...catStyle("Production"), key: "production" },
@@ -452,7 +452,7 @@ export default function AdminReportsPage() {
               {(counts?.enquiries ?? 0).toLocaleString()}
             </div>
             <div className="text-xs font-bold text-neutral-800 dark:text-neutral-200 mt-1">Enquiries</div>
-            <div className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">Total RFQs</div>
+            <div className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">Total Enquiries</div>
           </div>
 
           {/* Quotes */}

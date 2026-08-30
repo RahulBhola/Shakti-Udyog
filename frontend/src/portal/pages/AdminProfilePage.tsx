@@ -95,7 +95,7 @@ export default function AdminProfilePage() {
   const [passwordError, setPasswordError] = useState<string | null>(null);
 
   // Notification Preferences states
-  const [notifyRfq, setNotifyRfq] = useState(true);
+  const [notifyEnquiry, setNotifyEnquiry] = useState(true);
   const [notifyOrders, setNotifyOrders] = useState(true);
   const [notifyPayments, setNotifyPayments] = useState(true);
   const [notifyInvoices, setNotifyInvoices] = useState(true);
@@ -157,7 +157,7 @@ export default function AdminProfilePage() {
         if (s["company.state"]) setCompanyState(s["company.state"]);
         if (s["company.pin"]) setCompanyPin(s["company.pin"]);
 
-        if (s["notify.onNewEnquiry"] || s["notify.onEnquiry"]) setNotifyRfq((s["notify.onNewEnquiry"] || s["notify.onEnquiry"]) === "true");
+        if (s["notify.onNewEnquiry"] || s["notify.onEnquiry"]) setNotifyEnquiry((s["notify.onNewEnquiry"] || s["notify.onEnquiry"]) === "true");
         if (s["notify.onOrderStatus"] || s["notify.onOrderPlaced"]) setNotifyOrders((s["notify.onOrderStatus"] || s["notify.onOrderPlaced"]) === "true");
         if (s["notify.onPayment"]) setNotifyPayments(s["notify.onPayment"] === "true");
         if (s["notify.onInvoice"] || s["notify.onInvoiceGenerated"]) setNotifyInvoices((s["notify.onInvoice"] || s["notify.onInvoiceGenerated"]) === "true");
@@ -256,12 +256,12 @@ export default function AdminProfilePage() {
 
   const isNotificationsDirty = useMemo(() => {
     return (
-      String(notifyRfq) !== (originalSettings["notify.onNewEnquiry"] ?? originalSettings["notify.onEnquiry"] ?? "true") ||
+      String(notifyEnquiry) !== (originalSettings["notify.onNewEnquiry"] ?? originalSettings["notify.onEnquiry"] ?? "true") ||
       String(notifyOrders) !== (originalSettings["notify.onOrderStatus"] ?? originalSettings["notify.onOrderPlaced"] ?? "true") ||
       String(notifyPayments) !== (originalSettings["notify.onPayment"] ?? "true") ||
       String(notifyInvoices) !== (originalSettings["notify.onInvoice"] ?? originalSettings["notify.onInvoiceGenerated"] ?? "true")
     );
-  }, [notifyRfq, notifyOrders, notifyPayments, notifyInvoices, originalSettings]);
+  }, [notifyEnquiry, notifyOrders, notifyPayments, notifyInvoices, originalSettings]);
 
   const isDirty = isPersonalDirty || isCompanyDirty || isNotificationsDirty;
 
@@ -309,8 +309,8 @@ export default function AdminProfilePage() {
         "company.city": companyCity.trim(),
         "company.state": companyState.trim(),
         "company.pin": companyPin.trim(),
-        "notify.onNewEnquiry": String(notifyRfq),
-        "notify.onEnquiry": String(notifyRfq),
+        "notify.onNewEnquiry": String(notifyEnquiry),
+        "notify.onEnquiry": String(notifyEnquiry),
         "notify.onOrderStatus": String(notifyOrders),
         "notify.onOrderPlaced": String(notifyOrders),
         "notify.onPayment": String(notifyPayments),
@@ -359,7 +359,7 @@ export default function AdminProfilePage() {
     setCompanyState(s["company.state"] ?? "Punjab");
     setCompanyPin(s["company.pin"] ?? "141010");
 
-    setNotifyRfq((s["notify.onNewEnquiry"] || s["notify.onEnquiry"] || "true") === "true");
+    setNotifyEnquiry((s["notify.onNewEnquiry"] || s["notify.onEnquiry"] || "true") === "true");
     setNotifyOrders((s["notify.onOrderStatus"] || s["notify.onOrderPlaced"] || "true") === "true");
     setNotifyPayments((s["notify.onPayment"] || "true") === "true");
     setNotifyInvoices((s["notify.onInvoice"] || s["notify.onInvoiceGenerated"] || "true") === "true");
@@ -1618,7 +1618,7 @@ export default function AdminProfilePage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 pt-3">
                   {[
                     { title: "User & Role Management", desc: "Create, view, manage, and assign roles across all customer and staff accounts.", enabled: true },
-                    { title: "Enquiry & RFQ Estimation", desc: "Review customer technical drawings, approve costings, and publish formal quotes.", enabled: true },
+                    { title: "Enquiry Estimation", desc: "Review customer technical drawings, approve costings, and publish formal quotes.", enabled: true },
                     { title: "Manufacturing & Kanban Board", desc: "Track and reassign orders across 25 production and QA inspection stages.", enabled: true },
                     { title: "Invoicing & Financial Ledger", desc: "Generate tax invoices, verify payment receipts, and reconcile advances.", enabled: true },
                     { title: "Master Catalog & Taxonomies", desc: "Manage casting products, material grades, surface finishes, and HSN codes.", enabled: true },
@@ -1691,7 +1691,7 @@ export default function AdminProfilePage() {
               <div className="px-6 pb-6 pt-2 border-t border-neutral-100 dark:border-white/5 space-y-4 animate-in fade-in slide-in-from-top-1 duration-150">
                 <div className="space-y-3 pt-3">
                   {[
-                    { label: "New Customer Enquiry & RFQ Submission", desc: "Receive immediate alert when a customer uploads new casting requirements or CAD drawings.", checked: notifyRfq, set: setNotifyRfq },
+                    { label: "New Customer Enquiry Submission", desc: "Receive immediate alert when a customer uploads new casting requirements or CAD drawings.", checked: notifyEnquiry, set: setNotifyEnquiry },
                     { label: "New Purchase Order Placement", desc: "Receive notification when an approved quotation is confirmed into an active order.", checked: notifyOrders, set: setNotifyOrders },
                     { label: "Customer Payment Proof Uploaded", desc: "Notify when customer submits advance transaction reference or payment slip.", checked: notifyPayments, set: setNotifyPayments },
                     { label: "Tax Invoice Issued or Cleared", desc: "Notify when accounts issues a final tax invoice or reconciles full balance.", checked: notifyInvoices, set: setNotifyInvoices },

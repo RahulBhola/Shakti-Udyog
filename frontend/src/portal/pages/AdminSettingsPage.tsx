@@ -136,7 +136,7 @@ const SECTIONS: SectionDef[] = [
     id: "commercial",
     title: "Commercial & Quotation Policies",
     shortTitle: "Commercial",
-    description: "Default financial parameters, standard margins, quotation validity windows, and terms applied to new RFQs.",
+    description: "Default financial parameters, standard margins, quotation validity windows, and terms applied to new enquiries.",
     icon: Percent,
     badgeBg: "bg-amber-500/10",
     badgeText: "text-amber-600 dark:text-amber-400",
@@ -221,7 +221,7 @@ const SECTIONS: SectionDef[] = [
         title: "Automated Event Triggers",
         description: "Select which lifecycle events trigger automated notifications.",
         fields: [
-          { key: "notify.onNewEnquiry", label: "Trigger on New Customer RFQ / Enquiry", type: "boolean", help: "Broadcasts alerts to Engineers and Admins immediately", category: "notifications" },
+          { key: "notify.onNewEnquiry", label: "Trigger on New Customer Enquiry", type: "boolean", help: "Broadcasts alerts to Engineers and Admins immediately", category: "notifications" },
           { key: "notify.onOrderStatus", label: "Trigger on Manufacturing Stage Progressions", type: "boolean", help: "Sends realtime order tracking updates to customer portal", category: "notifications" },
           { key: "notify.onInvoice", label: "Trigger on Tax Invoice Generation", type: "boolean", help: "Notifies customer when invoice is ready for download", category: "notifications" },
           { key: "notify.onPayment", label: "Trigger on Payment Verification & Proof", type: "boolean", help: "Notifies customer upon finance clearance", category: "notifications" },
@@ -274,7 +274,7 @@ const SECTIONS: SectionDef[] = [
         title: "Operational Module Switches",
         description: "Toggle modules on or off without code deployment.",
         fields: [
-          { key: "feature.enquiry", label: "Enquiry & RFQ Management Module", type: "boolean", help: "Enables customer enquiry submission and engineering estimation", category: "features" },
+          { key: "feature.enquiry", label: "Enquiry Management Module", type: "boolean", help: "Enables customer enquiry submission and engineering estimation", category: "features" },
           { key: "feature.quotations", label: "Quotation & Costing Engine", type: "boolean", help: "Enables formal quote generation, breakdown, and negotiation", category: "features" },
           { key: "feature.orders", label: "Order Lifecycle & Assignment", type: "boolean", help: "Enables order processing and delivery milestone tracking", category: "features" },
           { key: "feature.production", label: "Shop Floor Production Kanban Board", type: "boolean", help: "Enables engineer manufacturing workflow and stage movement", category: "features" },

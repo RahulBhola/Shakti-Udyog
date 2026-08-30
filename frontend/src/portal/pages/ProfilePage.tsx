@@ -396,11 +396,14 @@ export default function ProfilePage() {
     const facAddr = (companyForm.factoryAddress || company?.factoryAddress || "").trim();
     const city = (companyForm.city || company?.city || profile?.company?.city || "").trim();
     const deliveryAddrs = (profile?.company?.deliveryAddresses || "").trim();
+    const primaryContact = contacts.find(c => c.isPrimary) || contacts[0];
+    const contactEmail = (primaryContact?.email || "").trim();
+    const contactPhone = (primaryContact?.phone || "").trim();
 
     return {
       fullName: (personalFullName || profile?.fullName || user?.fullName || "").trim(),
-      email: (profile?.email || user?.email || "").trim(),
-      phoneNumber: (personalPhone || profile?.phoneNumber || "").trim(),
+      email: (profile?.email || user?.email || companyForm.companyEmail || company?.companyEmail || contactEmail || "").trim(),
+      phoneNumber: (personalPhone || profile?.phoneNumber || companyForm.companyPhone || company?.companyPhone || contactPhone || "").trim(),
       designation: "Customer Representative",
       companyName: compName,
       company: {
@@ -411,12 +414,16 @@ export default function ProfilePage() {
         addressLine1: regAddr,
         city: city,
         deliveryAddresses: deliveryAddrs,
+        email: companyForm.companyEmail || company?.companyEmail || contactEmail || "",
+        companyEmail: companyForm.companyEmail || company?.companyEmail || "",
+        phone: companyForm.companyPhone || company?.companyPhone || contactPhone || "",
       },
+      contacts: contacts,
       addresses: addresses,
       emailConfirmed: profile?.emailConfirmed ?? true,
       roles: user?.roles || ["Customer"],
     };
-  }, [personalFullName, personalPhone, profile, user, companyForm, company, addresses]);
+  }, [personalFullName, personalPhone, profile, user, companyForm, company, contacts, addresses]);
 
   // ── Data Loading ─────────────────────────────────────────────────────────
 

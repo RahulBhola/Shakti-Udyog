@@ -49,7 +49,7 @@ public class CustomerProfileService(
         return new ProfileDto(
             user.Email ?? string.Empty, user.FullName, user.PhoneNumber, company,
             mfaEnabled, user.CreatedAtUtc, user.AvatarUrl,
-            user.EmailConfirmed, user.PhoneNumberConfirmed);
+            user.EmailConfirmed || !string.IsNullOrWhiteSpace(user.Email), user.PhoneNumberConfirmed);
     }
 
     public async Task<bool> UpdateProfileAsync(CustomerContext ctx, UpdateProfileRequest request, string? ip)

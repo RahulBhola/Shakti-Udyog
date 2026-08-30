@@ -221,7 +221,7 @@ export function OrderListPage() {
             to="/customer/enquiries/new"
             className="inline-flex items-center gap-1.5 px-4 h-9 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-sm shadow-blue-500/20 no-underline cursor-pointer transition-all"
           >
-            <span>Request New Order / RFQ</span>
+            <span>Request New Order / Enquiry</span>
           </Link>
         </div>
       </div>
@@ -352,7 +352,7 @@ export function OrderListPage() {
             <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed m-0">
               {search || statusFilter !== "All"
                 ? "Try clearing your search query or switching your active status filter tab."
-                : "Once your Request for Quotation (RFQ) is approved and confirmed, manufacturing batches and live stage tracking will appear right here."}
+                : "Once your Enquiry is approved and confirmed, manufacturing batches and live stage tracking will appear right here."}
             </p>
           </div>
 
@@ -387,7 +387,7 @@ export function OrderListPage() {
               to="/customer/enquiries/new"
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-sm shadow-blue-500/20 no-underline"
             >
-              <span>Submit RFQ to Start Order</span>
+              <span>Submit Enquiry to Start Order</span>
               <ArrowUpRight size={14} />
             </Link>
 

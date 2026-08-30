@@ -110,7 +110,7 @@ public class PublicApiTests(AuthApiFactory factory) : IClassFixture<AuthApiFacto
     }
 
     [Fact]
-    public async Task Rfq_with_valid_payload_is_accepted()
+    public async Task Enquiry_with_valid_payload_is_accepted()
     {
         var response = await _client.PostAsJsonAsync("/api/v1/public/enquiries", new
         {
@@ -130,7 +130,7 @@ public class PublicApiTests(AuthApiFactory factory) : IClassFixture<AuthApiFacto
     }
 
     [Fact]
-    public async Task Rfq_with_unknown_product_type_returns_400()
+    public async Task Enquiry_with_unknown_product_type_returns_400()
     {
         var response = await _client.PostAsJsonAsync("/api/v1/public/enquiries", new
         {

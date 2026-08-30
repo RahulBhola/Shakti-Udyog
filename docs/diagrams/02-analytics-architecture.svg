@@ -144,10 +144,10 @@
     <text x="1182" y="360" fill="#f3f4f6" font-size="12.5" font-weight="600" text-anchor="middle">Collected Cashflow</text>
   </g>
 
-  <!-- Target 4: RFQ Pipeline -->
+  <!-- Target 4: Enquiry Pipeline -->
   <g filter="url(#card-shadow)">
     <rect x="1035" y="425" width="295" height="60" rx="6" fill="#18191c" stroke="#4b5563" stroke-width="1.2"/>
-    <text x="1182" y="452" fill="#f3f4f6" font-size="12.5" font-weight="600" text-anchor="middle">12-Month RFQ -&gt; Quote -&gt;</text>
+    <text x="1182" y="452" fill="#f3f4f6" font-size="12.5" font-weight="600" text-anchor="middle">12-Month Enquiry -&gt; Quote -&gt;</text>
     <text x="1182" y="470" fill="#f3f4f6" font-size="12.5" font-weight="600" text-anchor="middle">Order Pipeline</text>
   </g>
 

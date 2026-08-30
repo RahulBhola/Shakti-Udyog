@@ -260,7 +260,7 @@ public class CustomerService(
             {
                 await notifications.NotifyAdminsAndEngineersAsync(
                     NotificationTypes.Enquiry,
-                    $"New RFQ Enquiry: {enquiry.CompanyName}",
+                    $"New Enquiry: {enquiry.CompanyName}",
                     $"Client {enquiry.FullName} submitted an enquiry for {enquiry.ProductType} (Qty: {enquiry.Quantity}).",
                     "/admin/enquiries");
             }
@@ -407,7 +407,7 @@ public class CustomerService(
         {
             await notifications.NotifyAdminsAndEngineersAsync(
                 NotificationTypes.Enquiry,
-                $"RFQ Enquiry Submitted: {enquiry.CompanyName}",
+                $"Enquiry Submitted: {enquiry.CompanyName}",
                 $"Client {enquiry.FullName} submitted an enquiry for {enquiry.ProductType} (Qty: {enquiry.Quantity}).",
                 "/admin/enquiries");
         }

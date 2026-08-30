@@ -27,6 +27,7 @@ import {
   Lock,
   AlertCircle,
   Loader2,
+  Info,
 } from "lucide-react";
 import { tokenStorage } from "../../auth/tokenStorage";
 import { config } from "../../config";
@@ -373,8 +374,8 @@ export default function EnquiryListPage() {
               <div style={{ padding: 12, borderRadius: 10, background: "rgba(245, 158, 11, 0.1)", border: "1px solid rgba(245, 158, 11, 0.25)", color: "#b45309", fontSize: 12, lineHeight: 1.5, display: "flex", alignItems: "flex-start", gap: 10 }}>
                 <AlertCircle size={16} style={{ color: "#d97706", flexShrink: 0, marginTop: 2 }} />
                 <div>
-                  <strong style={{ display: "block", marginBottom: 2, fontWeight: 700 }}>Foundry Policy Notice</strong>
-                  Enquiries can only be deleted <strong>before they are acknowledged / received</strong> by the foundry engineering team. Once acknowledged, the enquiry enters review and cannot be deleted.
+                  <strong style={{ display: "block", marginBottom: 2, fontWeight: 700 }}>Enquiry Deletion Policy</strong>
+                  You can delete this generated enquiry only <strong>before the Admin or Foundry Engineering team changes the enquiry progress</strong> (while in <em>Draft</em> or <em>Submitted</em> status). Once the team acknowledges or advances progress to <em>Received</em>, <em>Under Review</em>, or beyond, the enquiry is locked to preserve engineering evaluations.
                 </div>
               </div>
 
@@ -472,7 +473,7 @@ export default function EnquiryListPage() {
               <FileText size={18} />
             </span>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-neutral-900 dark:text-white m-0">
-              My Enquiries & RFQs
+              My Enquiries
             </h1>
           </div>
           <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 mt-1 m-0">
@@ -528,7 +529,7 @@ export default function EnquiryListPage() {
                 </span>
               </div>
               <p className="text-[11px] text-neutral-600 dark:text-neutral-300 mt-0.5 m-0">
-                Please complete 100% of your customer profile to submit new casting & machining RFQ enquiries.
+                Please complete 100% of your customer profile to submit new casting & machining enquiries.
               </p>
             </div>
           </div>
@@ -597,6 +598,22 @@ export default function EnquiryListPage() {
         </div>
       </div>
 
+      {/* ── Enquiry Deletion & Progress Policy Callout ────────────── */}
+      <div className="p-4 rounded-2xl border border-blue-500/20 bg-gradient-to-r from-blue-500/[0.08] via-blue-500/[0.03] to-transparent flex items-start gap-3 shadow-xs">
+        <div className="w-8 h-8 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 border border-blue-500/25 mt-0.5">
+          <Info size={16} />
+        </div>
+        <div className="flex-1 text-xs text-neutral-700 dark:text-neutral-300 leading-relaxed">
+          <span className="font-bold text-neutral-900 dark:text-white block mb-0.5">
+            Enquiry Cancellation & Deletion Policy
+          </span>
+          You can delete or edit your generated enquiry anytime while it is in{" "}
+          <strong className="text-blue-600 dark:text-blue-400">Draft</strong> or{" "}
+          <strong className="text-blue-600 dark:text-blue-400">Submitted</strong> status{" "}
+          <strong>before the Admin or Foundry Engineering team changes the enquiry progress</strong> (e.g. Received, Under Review). Once review begins, the enquiry is locked to maintain engineering assessment records.
+        </div>
+      </div>
+
       {/* ── Filter & Search Bar ────────────────────────────────────── */}
       <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
         {/* Filter Pills */}
@@ -648,7 +665,7 @@ export default function EnquiryListPage() {
 
       {!data && !error && (
         <div className="py-12 flex justify-center">
-          <Loading label="Fetching RFQ enquiries..." />
+          <Loading label="Fetching enquiries..." />
         </div>
       )}
 
@@ -672,7 +689,7 @@ export default function EnquiryListPage() {
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-sm shadow-blue-500/20 no-underline"
           >
             <Plus size={14} />
-            <span>Submit Your First RFQ</span>
+            <span>Submit Your First Enquiry</span>
             <ArrowUpRight size={14} />
           </Link>
         </div>
@@ -788,7 +805,7 @@ export default function EnquiryListPage() {
                           )}
 
                           {/* Allow deletion before acknowledged by foundry (Draft or Submitted status) */}
-                          {(r.isDraft || r.status === "Draft" || r.status === "Submitted") && (
+                          {r.isDraft || r.status === "Draft" || r.status === "Submitted" ? (
                             <button
                               type="button"
                               onClick={() => {
@@ -796,10 +813,17 @@ export default function EnquiryListPage() {
                                 setDeleteModalEnquiry(r);
                               }}
                               className="p-2 rounded-xl border border-rose-200/80 dark:border-rose-500/20 bg-white dark:bg-[#121520] text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all inline-flex items-center justify-center cursor-pointer"
-                              title="Delete Enquiry (Available before foundry acknowledgment)"
+                              title="Delete Enquiry (Allowed before Admin/Foundry changes progress)"
                             >
                               <Trash2 size={14} />
                             </button>
+                          ) : (
+                            <span
+                              className="p-2 rounded-xl border border-neutral-200/50 dark:border-white/5 bg-neutral-100/50 dark:bg-white/[0.02] text-neutral-400 dark:text-neutral-500 cursor-not-allowed inline-flex items-center justify-center"
+                              title="Locked: Deletion is only allowed before Admin/Foundry changes enquiry progress"
+                            >
+                              <Lock size={14} className="opacity-60" />
+                            </span>
                           )}
                         </div>
                       </td>

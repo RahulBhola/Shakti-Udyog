@@ -47,7 +47,7 @@
   <!-- 6. ApplicationUsers -> UserSessions (1 : N) -->
   <path d="M 595 340 C 595 385, 595 385, 595 425" fill="none" stroke="#3b82f6" stroke-width="2" marker-end="url(#dot-blue)"/>
 
-  <!-- 7. ApplicationUsers -> Enquiries (1 : N User RFQ / Assignee) -->
+  <!-- 7. ApplicationUsers -> Enquiries (1 : N User Enquiry / Assignee) -->
   <path d="M 750 180 C 785 180, 785 180, 820 180" fill="none" stroke="#3b82f6" stroke-width="2" marker-end="url(#dot-blue)"/>
 
   <!-- 8. ApplicationUsers -> AuditLogEntries (1 : N Actor) -->
@@ -114,8 +114,8 @@
   <g filter="url(#card-shadow)">
     <rect x="820" y="95" width="310" height="255" rx="8" fill="#18191c" stroke="#8b5cf6" stroke-width="1.8"/>
     <rect x="820" y="95" width="310" height="38" rx="8" fill="#4c1d95"/>
-    <text x="840" y="120" fill="#c084fc" font-size="14" font-weight="700">Enquiries (RFQs)</text>
-    <text x="1110" y="120" fill="#ddd6fe" font-size="11" text-anchor="end">Engineering RFQ</text>
+    <text x="840" y="120" fill="#c084fc" font-size="14" font-weight="700">Enquiries</text>
+    <text x="1110" y="120" fill="#ddd6fe" font-size="11" text-anchor="end">Engineering Enquiry</text>
     <text x="840" y="153" fill="#e2e8f0" font-size="12"><tspan fill="#f59e0b" font-weight="700">PK</tspan> Id : Guid</text>
     <text x="840" y="173" fill="#93c5fd" font-size="11.5"><tspan fill="#10b981" font-weight="700">FK</tspan> CompanyId : Guid (Companies)</text>
     <text x="840" y="193" fill="#93c5fd" font-size="11.5"><tspan fill="#3b82f6" font-weight="700">FK</tspan> UserId : Guid (ApplicationUsers)</text>

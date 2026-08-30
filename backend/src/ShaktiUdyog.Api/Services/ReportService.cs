@@ -548,7 +548,7 @@ public class ReportService(AppDbContext db) : IReportService
 
         return new ReportData("Sales Performance Funnel Report", ["Funnel Stage / Metric", "Volume / Count", "Value (₹ INR)", "Conversion / Benchmark Rate"], new[]
         {
-            new[] { "1. Client Enquiries (RFQs)", totalEnquiries.ToString(), "—", "100.0% Baseline" },
+            new[] { "1. Client Enquiries", totalEnquiries.ToString(), "—", "100.0% Baseline" },
             new[] { "2. Commercial Quotations Issued", totalQuotes.ToString(), quotationValue.ToString("0.00"), $"{enquiryToQuoteRate} from Enquiries" },
             new[] { "3. Confirmed Sales Orders", totalOrders.ToString(), orderValue.ToString("0.00"), $"{quoteToOrderRate} from Quotations" },
             new[] { "4. GST Tax Invoices Generated", totalInvoices.ToString(), invoicedValue.ToString("0.00"), $"{orderToInvoiceRate} from Orders" },
@@ -639,7 +639,7 @@ public class ReportService(AppDbContext db) : IReportService
 
         return new ReportData($"Monthly Business Executive Summary ({now:MMMM yyyy})", ["Executive KPI / Functional Area", "MTD Count / Volume", "MTD Financial Value (₹)", "Operational Status"], new[]
         {
-            new[] { "New Inbound Enquiries (RFQs)", mtdEnquiries.ToString(), "—", "Sales Pipeline Expansion" },
+            new[] { "New Inbound Enquiries", mtdEnquiries.ToString(), "—", "Sales Pipeline Expansion" },
             new[] { "Commercial Quotations Issued", mtdQuotations.ToString(), mtdQuoteVal.ToString("0.00"), "Active Deals in Negotiation" },
             new[] { "Confirmed Purchase Orders", mtdOrders.ToString(), mtdOrderVal.ToString("0.00"), "Booked Production Demand" },
             new[] { "Shop Floor Jobs Initiated", mtdJobs.ToString(), "—", "Active Foundry Operations" },

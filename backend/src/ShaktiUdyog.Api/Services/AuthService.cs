@@ -238,6 +238,7 @@ public class AuthService(
         {
             UserName = email,
             Email = email,
+            EmailConfirmed = true,
             FullName = request.FullName?.Trim(),
             PhoneNumber = request.Phone?.Trim(),
             CompanyName = request.CompanyName?.Trim(),

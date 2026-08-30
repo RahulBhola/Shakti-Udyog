@@ -15,7 +15,7 @@ public class CustomerApiTests(AuthApiFactory factory) : IClassFixture<AuthApiFac
     private readonly HttpClient _client = factory.CreateClient();
 
     private record AuthResponse(string AccessToken, string RefreshToken);
-    private record Dashboard(int OpenRfqs, int ActiveQuotations, int ActiveOrders, int UnpaidInvoices);
+    private record Dashboard(int OpenEnquiries, int ActiveQuotations, int ActiveOrders, int UnpaidInvoices);
     private record IdItem(Guid Id);
     private record TimelineEntry(string StatusCode, string? Message, string ActorType);
 
@@ -161,7 +161,7 @@ public class CustomerApiTests(AuthApiFactory factory) : IClassFixture<AuthApiFac
     }
 
     [Fact]
-    public async Task Rfq_creation_validates_product_type()
+    public async Task Enquiry_creation_validates_product_type()
     {
         var token = await LoginCustomerAsync();
         if (token is null) return;

@@ -105,7 +105,7 @@ public class PublicSubmissionService(
         {
             await notifications.NotifyAdminsAndEngineersAsync(
                 NotificationTypes.Enquiry,
-                $"New RFQ Enquiry: {enquiry.CompanyName}",
+                $"New Enquiry: {enquiry.CompanyName}",
                 $"Product: {enquiry.ProductType} • Qty: {enquiry.Quantity} • Contact: {enquiry.FullName}",
                 "/admin/enquiries");
         }

@@ -136,7 +136,7 @@ export default function ProductDetailPage() {
     <div className={`min-h-screen w-full transition-colors duration-300 pb-20 ${isLight ? "bg-[#f8f9fa] text-neutral-900" : "bg-[#06080d] text-white"}`}>
       <Seo
         title={`${title} | ${category} | Shakti Udyog Foundry`}
-        description={`${title} (${grade}) manufactured at Shakti Udyog. High precision casting with ${tolerances} tolerance class. Request RFQ.`}
+        description={`${title} (${grade}) manufactured at Shakti Udyog. High precision casting with ${tolerances} tolerance class. Request quote.`}
         path={`/products/${slug}`}
       />
 
@@ -287,7 +287,7 @@ export default function ProductDetailPage() {
           </div>
 
           {/* ──────────────────────────────────────────────────────────────────────── */}
-          {/* RIGHT: PRODUCT INFO & AMAZON BUY/RFQ BOX (Lg: 7 Cols)                   */}
+          {/* RIGHT: PRODUCT INFO & AMAZON BUY/ENQUIRY BOX (Lg: 7 Cols)              */}
           {/* ──────────────────────────────────────────────────────────────────────── */}
           <div className="lg:col-span-7 space-y-6">
             
@@ -366,7 +366,7 @@ export default function ProductDetailPage() {
                     className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-extrabold text-sm sm:text-base flex items-center justify-center gap-2.5 transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-orange-500/25 cursor-pointer"
                   >
                     <Sparkles size={18} />
-                    <span>Request Instant Quote (RFQ)</span>
+                    <span>Request Instant Quote</span>
                   </button>
 
                   <button
@@ -605,7 +605,7 @@ export default function ProductDetailPage() {
                     <FileText size={32} className="mx-auto text-neutral-400 opacity-60" />
                     <h4 className="text-xs font-bold text-neutral-700 dark:text-neutral-300">Custom Drawing Under NDA</h4>
                     <p className="text-[11px] text-neutral-500 max-w-sm mx-auto">
-                      Technical CAD files for this part are restricted to authorized clients. Request official blueprints with your RFQ submission.
+                      Technical CAD files for this part are restricted to authorized clients. Request official blueprints with your enquiry submission.
                     </p>
                     <button
                       type="button"
@@ -727,7 +727,7 @@ export default function ProductDetailPage() {
                 onClick={() => openQuoteModal(title)}
                 className="px-7 py-3.5 rounded-2xl bg-white text-neutral-900 font-extrabold text-sm hover:bg-neutral-100 transition-all shadow-lg cursor-pointer"
               >
-                Request Custom RFQ
+                Request Custom Quote
               </button>
               <button
                 type="button"

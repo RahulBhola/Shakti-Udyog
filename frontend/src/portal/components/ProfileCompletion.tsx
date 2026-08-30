@@ -60,8 +60,23 @@ export function calculateProfileCompleteness(data: any): CompletenessResult {
 
   // Extract attributes whether passed as Profile, User, AdminProfile, or AuthUser
   const fullName = (data.fullName || data.name || "").trim();
-  const email = (data.email || "").trim();
-  const phoneNumber = (data.phoneNumber || data.phone || "").trim();
+  const email = (
+    data.email ||
+    data.company?.email ||
+    data.company?.companyEmail ||
+    data.companyEmail ||
+    (Array.isArray(data.contacts) && data.contacts.find((c: any) => c.isPrimary || c.email)?.email) ||
+    ""
+  ).trim();
+  const phoneNumber = (
+    data.phoneNumber ||
+    data.phone ||
+    data.company?.phone ||
+    data.company?.companyPhone ||
+    data.companyPhone ||
+    (Array.isArray(data.contacts) && data.contacts.find((c: any) => c.isPrimary || c.phoneNumber || c.phone)?.phoneNumber) ||
+    ""
+  ).trim();
   const designation = (data.designation || data.title || (data.roles && data.roles.length > 0 ? data.roles[0] : "") || (data.company?.name ? "Customer Representative" : "Customer")).trim();
   const companyName = (data.company?.name || data.company?.legalBusinessName || data.companyName || "").trim();
   const hasAddress = Boolean(
@@ -76,7 +91,7 @@ export function calculateProfileCompleteness(data: any): CompletenessResult {
     (data.factoryAddress && String(data.factoryAddress).trim().length > 0) ||
     (Array.isArray(data.addresses) && data.addresses.length > 0)
   );
-  const isEmailVerified = data.emailConfirmed !== false && Boolean(email);
+  const isEmailVerified = Boolean(email);
 
   const items: CompletenessItem[] = [
     {
@@ -91,7 +106,7 @@ export function calculateProfileCompleteness(data: any): CompletenessResult {
     {
       key: "email",
       label: "Verified Email Address",
-      category: "contact",
+      category: "personal",
       icon: Mail,
       completed: isEmailVerified,
       points: 20,
@@ -378,10 +393,11 @@ export function ProfileCompletionCard({
                 key={item.key}
                 onClick={() => {
                   if (onNavigateTab) {
-                    if (item.category === "personal") onNavigateTab("personal");
-                    else if (item.category === "company" && item.key !== "address") onNavigateTab("company");
-                    else if (item.category === "contact") onNavigateTab("contacts");
-                    else if (item.key === "address" || item.category === "company") onNavigateTab("addresses");
+                    if (item.key === "email" || item.key === "fullName" || item.key === "designation" || item.category === "personal") onNavigateTab("personal");
+                    else if (item.key === "company" || item.category === "company") onNavigateTab("company");
+                    else if (item.key === "phoneNumber" || item.category === "contact") onNavigateTab("personal");
+                    else if (item.key === "address") onNavigateTab("addresses");
+                    else onNavigateTab(item.category);
                   }
                 }}
                 className={cn(

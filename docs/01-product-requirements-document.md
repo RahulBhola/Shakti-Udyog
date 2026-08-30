@@ -109,6 +109,7 @@ graph TD
 * **FR-2.3 Technical Assessment:** Engineers evaluate casting feasibility, pattern tooling requirements, weight estimates, alloy grade availability, and machining allowances.
 * **FR-2.4 Enquiry Status Flow:**
   $$\text{Draft} \longrightarrow \text{Submitted} \longrightarrow \text{Received} \longrightarrow \text{Under Review} \longrightarrow \text{Approved} \longrightarrow \text{Quoted} \longrightarrow \text{Accepted} / \text{Declined} / \text{Cancelled}$$
+* **FR-2.5 Enquiry Cancellation & Deletion Policy:** Authenticated customers can delete their generated enquiry at any time while it remains in `Draft` or `Submitted` status before the foundry engineering/admin team changes the enquiry progress (e.g. to `Received` or `Under Review`). Once progress is advanced, the enquiry and its technical specifications are locked to maintain engineering audit records.
 
 ### 4.3 Module 3: Quotation Estimation & Commercials
 * **FR-3.1 Quotation Drafting:** Engineers construct itemized quotations with unit casting price, tooling/pattern costs, machining rates, applicable GST, delivery timelines, and warranty terms.

@@ -26,7 +26,7 @@ export function DashboardHeader({ userName, companyName, onRefresh, refreshing }
           )}
         </div>
         <p className="text-xs sm:text-sm text-[var(--text-secondary)] mt-1 m-0">
-          Here's an overview of your active casting RFQs, quotations, foundry production, and quality test reports.
+          Here's an overview of your active casting enquiries, quotations, foundry production, and quality test reports.
         </p>
         <p className="text-[11px] font-semibold text-[var(--text-muted)] mt-1 m-0">
           {new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}

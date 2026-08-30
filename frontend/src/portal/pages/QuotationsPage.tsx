@@ -215,14 +215,14 @@ export function QuotationListPage() {
             <p className="text-xs text-neutral-500 dark:text-neutral-400">
               {search || statusFilter !== "All"
                 ? "Try clearing your search query or switching the status filter tab."
-                : "Submit a new Request for Quotation (RFQ) with your casting specifications to receive an official proposal."}
+                : "Submit a new Enquiry with your casting specifications to receive an official proposal."}
             </p>
           </div>
           <Link
             to="/customer/enquiries/new"
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-sm shadow-blue-500/20 no-underline"
           >
-            <span>Submit New RFQ</span>
+            <span>Submit New Enquiry</span>
             <ArrowUpRight size={14} />
           </Link>
         </div>

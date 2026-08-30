@@ -59,7 +59,7 @@ const TABS: TabDef[] = [
     id: "notifications",
     title: "Notification & Alert Channels",
     shortTitle: "Notifications",
-    description: "Manage real-time alerts for RFQ quotation approvals, casting production stages, dispatch waybills, and invoices.",
+    description: "Manage real-time alerts for enquiry quotation approvals, casting production stages, dispatch waybills, and invoices.",
     icon: Bell,
     badgeBg: "bg-amber-500/10",
     badgeText: "text-amber-600 dark:text-amber-400",
@@ -155,7 +155,7 @@ export default function SettingsPage() {
   const [showMetallurgyBadges, setShowMetallurgyBadges] = useState(true);
 
   // Notification State
-  const [notifyRfqReady, setNotifyRfqReady] = useState(true);
+  const [notifyQuotationReady, setNotifyQuotationReady] = useState(true);
   const [notifyProductionStages, setNotifyProductionStages] = useState(true);
   const [notifyDispatchWaybill, setNotifyDispatchWaybill] = useState(true);
   const [notifyInvoices, setNotifyInvoices] = useState(true);
@@ -193,7 +193,8 @@ export default function SettingsPage() {
         if (typeof parsed.compactTables === "boolean") setCompactTables(parsed.compactTables);
         if (typeof parsed.showMetallurgyBadges === "boolean") setShowMetallurgyBadges(parsed.showMetallurgyBadges);
 
-        if (typeof parsed.notifyRfqReady === "boolean") setNotifyRfqReady(parsed.notifyRfqReady);
+        if (typeof parsed.notifyQuotationReady === "boolean") setNotifyQuotationReady(parsed.notifyQuotationReady);
+        else if (typeof parsed.notifyRfqReady === "boolean") setNotifyQuotationReady(parsed.notifyRfqReady);
         if (typeof parsed.notifyProductionStages === "boolean") setNotifyProductionStages(parsed.notifyProductionStages);
         if (typeof parsed.notifyDispatchWaybill === "boolean") setNotifyDispatchWaybill(parsed.notifyDispatchWaybill);
         if (typeof parsed.notifyInvoices === "boolean") setNotifyInvoices(parsed.notifyInvoices);
@@ -224,7 +225,7 @@ export default function SettingsPage() {
         weightUnit,
         compactTables,
         showMetallurgyBadges,
-        notifyRfqReady,
+        notifyQuotationReady,
         notifyProductionStages,
         notifyDispatchWaybill,
         notifyInvoices,
@@ -284,7 +285,7 @@ export default function SettingsPage() {
         weightUnit,
       },
       notifications: {
-        rfqReady: notifyRfqReady,
+        quotationReady: notifyQuotationReady,
         productionStages: notifyProductionStages,
         dispatchWaybill: notifyDispatchWaybill,
         invoices: notifyInvoices,
@@ -698,13 +699,13 @@ export default function SettingsPage() {
                     Production & Order Alerts
                   </h3>
                   <p className="text-xs text-neutral-400 mt-0.5 m-0">
-                    Receive instant updates when your RFQ receives quotation or orders move through the foundry.
+                    Receive instant updates when your enquiry receives a quotation or orders move through the foundry.
                   </p>
                 </div>
 
                 <div className="space-y-3">
                   <div
-                    onClick={() => setNotifyRfqReady(!notifyRfqReady)}
+                    onClick={() => setNotifyQuotationReady(!notifyQuotationReady)}
                     className="p-4 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#0f121a] flex items-center justify-between gap-4 cursor-pointer select-none"
                   >
                     <div>
@@ -713,7 +714,7 @@ export default function SettingsPage() {
                         Email and in-portal alert when foundry engineers publish your finalized commercial quotation.
                       </p>
                     </div>
-                    <ToggleSwitch checked={notifyRfqReady} onChange={setNotifyRfqReady} />
+                    <ToggleSwitch checked={notifyQuotationReady} onChange={setNotifyQuotationReady} />
                   </div>
 
                   <div

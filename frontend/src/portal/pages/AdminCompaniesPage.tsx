@@ -267,7 +267,7 @@ function CompanyDetailsDrawer({
               >
                 <ClipboardList size={16} className="text-blue-500 mb-1.5" />
                 <div className="text-xs font-bold text-neutral-900 dark:text-white">Enquiries</div>
-                <div className="text-[11px] text-neutral-400">Client RFQs</div>
+                <div className="text-[11px] text-neutral-400">Client Enquiries</div>
               </button>
 
               <button

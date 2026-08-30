@@ -5,6 +5,8 @@ import {
   type EnquiryDetail,
   type EnquiryTimelineEntry,
   type QuotationListItem,
+  type Profile,
+  type CompanyDetail,
 } from "../../api/customerApi";
 import { config } from "../../config";
 import { tokenStorage } from "../../auth/tokenStorage";
@@ -41,6 +43,11 @@ import {
   Maximize2,
   X,
   ZoomIn,
+  Building2,
+  Sparkles,
+  User,
+  ArrowRight,
+  Lock,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import "./erpListView.css";
@@ -225,17 +232,22 @@ function SpecField({
   label,
   value,
   icon: Icon,
+  badge,
 }: {
   label: string;
   value?: string | number | null;
   icon?: any;
+  badge?: React.ReactNode;
 }) {
   return (
     <div className="flex flex-col p-3 rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)]/50">
-      <span className="text-[11px] font-medium text-[var(--text-muted)] flex items-center gap-1.5 mb-1">
-        {Icon && <Icon size={12} className="text-[var(--text-muted)]" />}
-        {label}
-      </span>
+      <div className="flex items-center justify-between gap-1 mb-1">
+        <span className="text-[11px] font-medium text-[var(--text-muted)] flex items-center gap-1.5">
+          {Icon && <Icon size={12} className="text-[var(--text-muted)]" />}
+          {label}
+        </span>
+        {badge}
+      </div>
       <span className="text-xs font-bold text-[var(--text-primary)] break-words">
         {value != null && String(value).trim() !== "" ? String(value) : "—"}
       </span>
@@ -265,6 +277,8 @@ export default function EnquiryDetailPage() {
   const [timeline, setTimeline] = useState<EnquiryTimelineEntry[] | null>(null);
   const [missing, setMissing] = useState(false);
   const [quotation, setQuotation] = useState<QuotationListItem | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [company, setCompany] = useState<CompanyDetail | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -275,22 +289,36 @@ export default function EnquiryDetailPage() {
 
   const loadData = async () => {
     try {
-      const enq = await customerApi.enquiry(id);
-      setEnquiry(enq);
+      const [enqRes, timelineRes, quotesRes, profileRes, companyRes] = await Promise.allSettled([
+        customerApi.enquiry(id),
+        customerApi.enquiryTimeline(id),
+        customerApi.quotations(),
+        customerApi.profile(),
+        customerApi.companyDetail(),
+      ]);
+
+      if (enqRes.status === "fulfilled") {
+        setEnquiry(enqRes.value);
+      } else {
+        setMissing(true);
+      }
+
+      if (timelineRes.status === "fulfilled") {
+        setTimeline(timelineRes.value);
+      }
+      if (quotesRes.status === "fulfilled") {
+        const match = quotesRes.value.find((q) => q.enquiryId === id);
+        if (match) setQuotation(match);
+      }
+      if (profileRes.status === "fulfilled") {
+        setProfile(profileRes.value);
+      }
+      if (companyRes.status === "fulfilled") {
+        setCompany(companyRes.value);
+      }
     } catch {
       setMissing(true);
     }
-
-    try {
-      const t = await customerApi.enquiryTimeline(id);
-      setTimeline(t);
-    } catch {}
-
-    try {
-      const quotes = await customerApi.quotations();
-      const match = quotes.find((q) => q.enquiryId === id);
-      if (match) setQuotation(match);
-    } catch {}
   };
 
   async function handleDeleteEnquiry() {
@@ -516,8 +544,8 @@ export default function EnquiryDetailPage() {
               <div style={{ padding: 12, borderRadius: 10, background: "rgba(245, 158, 11, 0.1)", border: "1px solid rgba(245, 158, 11, 0.25)", color: "#b45309", fontSize: 12, lineHeight: 1.5, display: "flex", alignItems: "flex-start", gap: 10 }}>
                 <AlertCircle size={16} style={{ color: "#d97706", flexShrink: 0, marginTop: 2 }} />
                 <div>
-                  <strong style={{ display: "block", marginBottom: 2, fontWeight: 700 }}>Foundry Policy Notice</strong>
-                  Enquiries can only be deleted <strong>before they are acknowledged / received</strong> by the foundry engineering team. Once acknowledged, the enquiry enters review and cannot be deleted.
+                  <strong style={{ display: "block", marginBottom: 2, fontWeight: 700 }}>Enquiry Deletion Policy</strong>
+                  You can delete this generated enquiry only <strong>before the Admin or Foundry Engineering team changes the enquiry progress</strong> (while in <em>Draft</em> or <em>Submitted</em> status). Once the team acknowledges or advances progress to <em>Received</em>, <em>Under Review</em>, or beyond, the enquiry is locked to preserve engineering evaluations.
                 </div>
               </div>
 
@@ -652,13 +680,21 @@ export default function EnquiryDetailPage() {
         </div>
       </div>
 
-      {/* ── Policy Notice Banner when Awaiting Foundry Acknowledgment ── */}
-      {(isDraft || enquiry.status === "Draft" || enquiry.status === "Submitted") && (
-        <div className="p-4 rounded-2xl border border-amber-500/20 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent flex items-start gap-3">
-          <AlertCircle size={18} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+      {/* ── Policy Notice Banner when Awaiting Foundry Progress or Locked ── */}
+      {isDraft || enquiry.status === "Draft" || enquiry.status === "Submitted" ? (
+        <div className="p-4 rounded-2xl border border-blue-500/20 bg-gradient-to-r from-blue-500/10 via-blue-500/5 to-transparent flex items-start gap-3">
+          <Info size={18} className="text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
           <div className="text-xs text-neutral-700 dark:text-neutral-300 leading-relaxed">
-            <strong className="text-amber-800 dark:text-amber-300 block mb-0.5">Foundry Acknowledgment Pending</strong>
-            This enquiry is awaiting initial review and acknowledgment by our foundry engineering team. You may delete or update this enquiry anytime <strong>before it is acknowledged / received</strong> by our team.
+            <strong className="text-blue-800 dark:text-blue-300 block mb-0.5">Foundry Acknowledgment Pending (Deletable)</strong>
+            This enquiry is awaiting initial review by our foundry engineering team. You can delete or edit this enquiry anytime <strong>before the Admin or Foundry Engineering team changes the enquiry progress</strong> (to Received, Under Review, etc.).
+          </div>
+        </div>
+      ) : (
+        <div className="p-4 rounded-2xl border border-neutral-200/80 dark:border-white/10 bg-neutral-50/50 dark:bg-white/[0.02] flex items-start gap-3">
+          <Lock size={18} className="text-neutral-500 dark:text-neutral-400 shrink-0 mt-0.5" />
+          <div className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">
+            <strong className="text-neutral-900 dark:text-white block mb-0.5">Enquiry Progress Updated (Locked)</strong>
+            Our engineering team has progressed this enquiry to <strong>{normStatus}</strong>. The technical specifications and drawings are locked and this enquiry can no longer be deleted to maintain audit traceability.
           </div>
         </div>
       )}
@@ -733,6 +769,14 @@ export default function EnquiryDetailPage() {
               })}
             </div>
 
+            {/* Deletion Policy Stepper Footnote */}
+            <div className="mt-4 p-3 rounded-xl bg-[var(--bg-surface)]/70 border border-[var(--border-default)] flex items-start gap-2 text-[11px] text-[var(--text-muted)] leading-normal">
+              <Info size={13} className="text-[var(--color-primary)] shrink-0 mt-0.5" />
+              <span>
+                <strong>Deletion Policy:</strong> Enquiries can only be deleted during <em>Draft</em> and <em>Submitted</em> stages. Once the Admin/Foundry team updates progress to <em>Received</em> or beyond, deletion is disabled.
+              </span>
+            </div>
+
             {timeline && timeline.length > 0 && (
               <div className="mt-5 pt-4 border-t border-[var(--border-default)]">
                 <span className="text-[10px] uppercase font-bold tracking-wider text-[var(--text-muted)] mb-2.5 block">
@@ -767,6 +811,18 @@ export default function EnquiryDetailPage() {
           {/* Quick Summary Card */}
           <SectionCard title="Quick Summary" icon={Layers}>
             <div className="flex flex-col gap-2.5">
+              <div className="flex justify-between items-center text-xs pb-2 border-b border-[var(--border-default)]">
+                <span className="text-[var(--text-muted)]">Enterprise Entity</span>
+                <span className="font-semibold text-[var(--text-primary)] truncate max-w-[150px] text-right" title={company?.legalBusinessName || company?.name || enquiry.companyName}>
+                  {company?.legalBusinessName || company?.name || enquiry.companyName || "Enterprise"}
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-xs pb-2 border-b border-[var(--border-default)]">
+                <span className="text-[var(--text-muted)]">Delivery Hub</span>
+                <span className="font-semibold text-emerald-600 dark:text-emerald-400 truncate max-w-[150px] text-right" title={enquiry.deliveryLocation || company?.city || "Registered Facility"}>
+                  {enquiry.deliveryLocation || company?.city || "Registered Facility"}
+                </span>
+              </div>
               <div className="flex justify-between items-center text-xs pb-2 border-b border-[var(--border-default)]">
                 <span className="text-[var(--text-muted)]">Product Type</span>
                 <span className="font-semibold text-[var(--text-primary)]">{enquiry.productType}</span>
@@ -833,6 +889,62 @@ export default function EnquiryDetailPage() {
 
         {/* ══ MAIN CONTENT COLUMN (8 Cols) ══ */}
         <div className="col-span-12 lg:col-span-8 flex flex-col gap-6">
+          {/* ── AUTO-FETCHED ENTERPRISE REQUESTER & PROFILE CARD ───────── */}
+          <div className="rounded-2xl border border-blue-500/25 bg-gradient-to-br from-blue-500/[0.08] via-white dark:via-[#0f121a] to-white dark:to-[#0f121a] p-5 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[var(--border-default)]">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold shrink-0">
+                  <Building2 size={20} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-[var(--text-primary)] m-0 flex items-center gap-2 flex-wrap">
+                    <span>{company?.legalBusinessName || company?.name || enquiry.companyName || profile?.company?.name || "Enterprise Requester"}</span>
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                      <Check size={10} /> Auto-Fetched Profile Details
+                    </span>
+                  </h3>
+                  <p className="text-xs text-[var(--text-muted)] m-0 mt-0.5">
+                    GSTIN: <span className="font-mono font-semibold text-[var(--text-secondary)]">{company?.gstNumber || profile?.company?.gstNumber || "Not specified"}</span> • {company?.city ? `${company.city}, ${company.state || "India"}` : (enquiry.deliveryLocation || "Registered Customer")}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 text-xs text-[var(--text-secondary)]">
+                <span className="flex items-center gap-1.5 font-medium"><User size={13} className="text-[var(--color-primary)]" /> {profile?.fullName || enquiry.fullName || "Representative"}</span>
+                <span className="flex items-center gap-1.5 font-medium"><Phone size={13} className="text-[var(--color-primary)]" /> {profile?.phoneNumber || company?.companyPhone || "—"}</span>
+              </div>
+            </div>
+
+            {/* Grid of Auto-Fetched Entity Details */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-3.5 pb-3">
+              <div className="p-2.5 rounded-xl bg-[var(--bg-surface)]/80 border border-[var(--border-default)]">
+                <span className="text-[10px] uppercase font-bold text-[var(--text-muted)] block mb-0.5">Operating Industry</span>
+                <span className="text-xs font-semibold text-[var(--text-primary)]">{enquiry.industry || company?.industry || "General Engineering"}</span>
+              </div>
+              <div className="p-2.5 rounded-xl bg-[var(--bg-surface)]/80 border border-[var(--border-default)]">
+                <span className="text-[10px] uppercase font-bold text-[var(--text-muted)] block mb-0.5">Primary Delivery Hub</span>
+                <span className="text-xs font-semibold text-[var(--text-primary)] truncate block" title={enquiry.deliveryLocation || company?.registeredAddress || company?.city || ""}>{enquiry.deliveryLocation || company?.city || "Registered Facility"}</span>
+              </div>
+              <div className="p-2.5 rounded-xl bg-[var(--bg-surface)]/80 border border-[var(--border-default)]">
+                <span className="text-[10px] uppercase font-bold text-[var(--text-muted)] block mb-0.5">Standard Delivery Terms</span>
+                <span className="text-xs font-semibold text-[var(--text-primary)]">{enquiry.preferredDeliveryTerms || "Ex Works"}</span>
+              </div>
+              <div className="p-2.5 rounded-xl bg-[var(--bg-surface)]/80 border border-[var(--border-default)]">
+                <span className="text-[10px] uppercase font-bold text-[var(--text-muted)] block mb-0.5">Official Email</span>
+                <span className="text-xs font-semibold text-[var(--text-primary)] truncate block" title={profile?.email || company?.companyEmail || ""}>{profile?.email || company?.companyEmail || "—"}</span>
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-[var(--border-default)]/60 flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--text-muted)]">
+              <span className="flex items-center gap-1.5">
+                <Sparkles size={14} className="text-amber-500 shrink-0" />
+                Enterprise entity credentials, delivery hub location, and corporate contact details were automatically verified from your account profile.
+              </span>
+              <Link to="/customer/profile" className="text-blue-600 dark:text-blue-400 hover:underline font-semibold text-xs shrink-0 flex items-center gap-1">
+                <span>Manage Profile & Addresses</span>
+                <ArrowRight size={12} />
+              </Link>
+            </div>
+          </div>
           {/* ── FEATURED IMAGE PREVIEW HERO (When Image Attachment Exists) ── */}
           {primaryImage && (
             <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] overflow-hidden shadow-sm">
@@ -1057,6 +1169,13 @@ export default function EnquiryDetailPage() {
                 label="Operating Industry"
                 value={enquiry.industry}
                 icon={Layers}
+                badge={
+                  enquiry.industry ? (
+                    <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                      <Check size={8} /> Auto-Fetched
+                    </span>
+                  ) : null
+                }
               />
             </div>
           </SectionCard>
@@ -1088,11 +1207,25 @@ export default function EnquiryDetailPage() {
                 label="Delivery Terms"
                 value={enquiry.preferredDeliveryTerms}
                 icon={MapPin}
+                badge={
+                  enquiry.preferredDeliveryTerms ? (
+                    <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                      <Check size={8} /> Auto-Fetched
+                    </span>
+                  ) : null
+                }
               />
               <SpecField
                 label="Destination Location"
                 value={enquiry.deliveryLocation}
                 icon={MapPin}
+                badge={
+                  enquiry.deliveryLocation ? (
+                    <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                      <Check size={8} /> Auto-Fetched
+                    </span>
+                  ) : null
+                }
               />
             </div>
           </SectionCard>
