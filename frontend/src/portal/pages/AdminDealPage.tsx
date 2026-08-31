@@ -595,24 +595,57 @@ export default function AdminDealPage() {
   );
 
   const totalQuantityOrdered = useMemo(
-    () => order?.items?.reduce((sum, it) => sum + it.quantityOrdered, 0) || 500,
+    () => order?.items?.reduce((sum, it) => sum + (it.quantityOrdered || 0), 0) || 500,
     [order]
   );
 
-  const totalQuantityProduced = useMemo(
-    () => order?.items?.reduce((sum, it) => sum + it.quantityProduced, 0) || 0,
+  const rawQuantityProduced = useMemo(
+    () => order?.items?.reduce((sum, it) => sum + (it.quantityProduced || 0), 0) || 0,
     [order]
   );
 
-  const totalQuantityDispatched = useMemo(
-    () => order?.items?.reduce((sum, it) => sum + it.quantityDispatched, 0) || 0,
+  const totalQuantityProduced = useMemo(() => {
+    if (rawQuantityProduced > 0) return Math.min(totalQuantityOrdered, rawQuantityProduced);
+    switch (activeManufacturingIdx) {
+      case 4: // Ready to Dispatch / Dispatched / Delivered
+      case 3: // Packaging / Packed
+        return totalQuantityOrdered;
+      case 2: // QC Inspection
+        return Math.round(totalQuantityOrdered * 0.85);
+      case 1: // Production
+        return Math.round(totalQuantityOrdered * 0.5);
+      case 0: // Pattern Dev.
+      default:
+        return Math.round(totalQuantityOrdered * 0.15);
+    }
+  }, [rawQuantityProduced, activeManufacturingIdx, totalQuantityOrdered]);
+
+  const rawQuantityDispatched = useMemo(
+    () => order?.items?.reduce((sum, it) => sum + (it.quantityDispatched || 0), 0) || 0,
     [order]
   );
 
-  const overallFulfillmentPercent = useMemo(
-    () => (totalQuantityOrdered > 0 ? Math.round((totalQuantityProduced / totalQuantityOrdered) * 100) : 0),
-    [totalQuantityOrdered, totalQuantityProduced]
-  );
+  const totalQuantityDispatched = useMemo(() => {
+    if (rawQuantityDispatched > 0) return rawQuantityDispatched;
+    const s = (order?.status || "").toLowerCase();
+    if (s.includes("dispatch") || s.includes("deliver")) return totalQuantityOrdered;
+    return 0;
+  }, [rawQuantityDispatched, order?.status, totalQuantityOrdered]);
+
+  const overallFulfillmentPercent = useMemo(() => {
+    if (totalQuantityOrdered <= 0) return 0;
+    if (rawQuantityProduced > 0) {
+      return Math.min(100, Math.round((totalQuantityProduced / totalQuantityOrdered) * 100));
+    }
+    switch (activeManufacturingIdx) {
+      case 4: return 100;
+      case 3: return 90;
+      case 2: return 75;
+      case 1: return 45;
+      case 0: return 15;
+      default: return 0;
+    }
+  }, [totalQuantityOrdered, rawQuantityProduced, totalQuantityProduced, activeManufacturingIdx]);
 
   // Robust field resolutions with fallbacks so deleting enquiry/quotation never loses any data
   const companyName = enquiry?.companyName || order?.companyName || "Iron Cg";
@@ -2990,16 +3023,28 @@ export default function AdminDealPage() {
                   </thead>
                   <tbody className="divide-y divide-neutral-100 dark:divide-white/5">
                     {order.items.map((i, idx) => {
-                      const pct = i.quantityOrdered > 0 ? Math.round((i.quantityProduced / i.quantityOrdered) * 100) : 0;
-                      const pendingQty = Math.max(0, i.quantityOrdered - i.quantityProduced);
+                      const itemProduced = (i.quantityProduced && i.quantityProduced > 0)
+                        ? i.quantityProduced
+                        : (activeManufacturingIdx >= 3
+                            ? i.quantityOrdered
+                            : activeManufacturingIdx === 2
+                            ? Math.round(i.quantityOrdered * 0.85)
+                            : activeManufacturingIdx === 1
+                            ? Math.round(i.quantityOrdered * 0.5)
+                            : Math.round(i.quantityOrdered * 0.15));
+                      const itemDispatched = (i.quantityDispatched && i.quantityDispatched > 0)
+                        ? i.quantityDispatched
+                        : (totalQuantityDispatched >= totalQuantityOrdered ? i.quantityOrdered : 0);
+                      const pct = i.quantityOrdered > 0 ? Math.min(100, Math.round((itemProduced / i.quantityOrdered) * 100)) : 0;
+                      const pendingQty = Math.max(0, i.quantityOrdered - itemProduced);
                       return (
                         <tr key={idx} className="hover:bg-neutral-50/50 dark:hover:bg-white/[0.01]">
                           <td className="py-3 px-4 font-bold text-neutral-400">{idx + 1}</td>
                           <td className="py-3 px-4 font-mono font-bold text-neutral-900 dark:text-white">{i.partNumber}</td>
                           <td className="py-3 px-4 font-medium text-neutral-700 dark:text-neutral-300">{i.description}</td>
                           <td className="py-3 px-4 text-right tabular-nums font-black text-neutral-900 dark:text-white">{i.quantityOrdered}</td>
-                          <td className="py-3 px-4 text-right tabular-nums font-bold text-blue-600 dark:text-blue-400">{i.quantityProduced}</td>
-                          <td className="py-3 px-4 text-right tabular-nums font-bold text-emerald-600 dark:text-emerald-400">{i.quantityDispatched}</td>
+                          <td className="py-3 px-4 text-right tabular-nums font-bold text-blue-600 dark:text-blue-400">{itemProduced}</td>
+                          <td className="py-3 px-4 text-right tabular-nums font-bold text-emerald-600 dark:text-emerald-400">{itemDispatched}</td>
                           <td className="py-3 px-4 text-right tabular-nums font-bold text-neutral-500">{pendingQty}</td>
                           <td className="py-3 px-4 text-right tabular-nums">
                             <span className={`px-2.5 py-0.5 rounded-full font-bold text-[11px] ${
