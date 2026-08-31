@@ -33,6 +33,7 @@ import {
   MoreVertical,
   Wallet,
   CreditCard,
+  FileText,
 } from "lucide-react";
 
 export interface EngineerOrder {
@@ -497,6 +498,7 @@ export default function EngineerBoardPage() {
                         onRegress={() => prevColumn && void moveOrderStage(order, prevColumn.code)}
                         onAdvance={() => nextColumn && void moveOrderStage(order, nextColumn.code)}
                         onView={() => navigate(isAdmin ? `/admin/orders/${order.id}` : `/engineer/orders/${order.id}`)}
+                        onViewInvoice={() => navigate(`/admin/invoices?search=${encodeURIComponent(order.orderNumber)}`)}
                         onOpenStory={() => setSelectedStoryOrder(order)}
                       />
                     ))}
@@ -558,6 +560,7 @@ function OrderCard({
   onRegress,
   onAdvance,
   onView,
+  onViewInvoice,
   onOpenStory,
 }: {
   order: EngineerOrder;
@@ -572,6 +575,7 @@ function OrderCard({
   onRegress?: () => void;
   onAdvance?: () => void;
   onView: () => void;
+  onViewInvoice?: () => void;
   onOpenStory: () => void;
 }) {
   const [showMenu, setShowMenu] = useState(false);
@@ -651,8 +655,21 @@ function OrderCard({
                   }}
                   className="w-full px-3 py-1.5 text-left text-neutral-700 dark:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-white/5 flex items-center gap-2 cursor-pointer font-semibold"
                 >
-                  <ExternalLink size={13} className="text-neutral-400" />
+                  <Package size={13} className="text-neutral-400" />
                   <span>Full Order Details</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowMenu(false);
+                    if (onViewInvoice) onViewInvoice();
+                    else onView();
+                  }}
+                  className="w-full px-3 py-1.5 text-left text-neutral-700 dark:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-white/5 flex items-center gap-2 cursor-pointer font-semibold"
+                >
+                  <FileText size={13} className="text-emerald-500" />
+                  <span>View Tax Invoice</span>
                 </button>
               </div>
             )}
@@ -749,14 +766,19 @@ function OrderCard({
         ) : (
           <button
             type="button"
+            title="View tax invoice for dispatched order"
             onClick={(e) => {
               e.stopPropagation();
-              onView();
+              if (onViewInvoice) {
+                onViewInvoice();
+              } else {
+                onView();
+              }
             }}
             className="flex-1 inline-flex items-center justify-center gap-1 h-7 px-2 rounded-lg text-[10.5px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors shadow-xs shadow-emerald-500/20 cursor-pointer"
           >
-            <span>View Order</span>
-            <ExternalLink size={11} />
+            <span>View Invoice</span>
+            <FileText size={11} />
           </button>
         )}
       </div>
