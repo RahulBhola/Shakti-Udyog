@@ -925,7 +925,7 @@ public class CustomerService(
             .Where(i => ctx.CompanyIds.Contains(i.CompanyId) && i.Status != InvoiceStatuses.Draft)
             .OrderByDescending(i => i.IssueDateUtc)
             .Select(i => new InvoiceListItemDto(
-                i.Id, i.Order != null ? i.Order.Id : Guid.Empty, i.InvoiceNumber, i.Order != null ? i.Order.OrderNumber : null,
+                i.Id, i.OrderId, i.InvoiceNumber, i.Order != null ? i.Order.OrderNumber : null,
                 i.IssueDateUtc, i.DueDateUtc, i.Total, i.AmountPaid, i.BalanceDue,
                 i.Currency, i.Status, i.Company != null ? i.Company.Name : null,
                 i.Company != null ? i.Company.CompanyLogoUrl : null,
@@ -936,7 +936,7 @@ public class CustomerService(
         await db.Invoices
             .Where(i => i.Id == invoiceId && ctx.CompanyIds.Contains(i.CompanyId) && i.Status != InvoiceStatuses.Draft)
             .Select(i => new InvoiceDetailDto(
-                i.Id, i.Order != null ? i.Order.Id : Guid.Empty, i.InvoiceNumber, i.Order != null ? i.Order.OrderNumber : null,
+                i.Id, i.OrderId, i.InvoiceNumber, i.Order != null ? i.Order.OrderNumber : null,
                 i.IssueDateUtc, i.DueDateUtc, i.Subtotal, i.Tax, i.Total,
                 i.AmountPaid, i.BalanceDue, i.Currency, i.Status, i.DocumentId,
                 i.Company != null ? i.Company.Name : null,

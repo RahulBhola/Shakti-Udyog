@@ -194,13 +194,13 @@ public record SupportRequestListItemDto(
 // ---- Invoices & payments ----------------------------------------------------
 
 public record InvoiceListItemDto(
-    Guid Id, Guid OrderId, string InvoiceNumber, string? OrderNumber, DateTimeOffset IssueDateUtc,
+    Guid Id, Guid? OrderId, string InvoiceNumber, string? OrderNumber, DateTimeOffset IssueDateUtc,
     DateTimeOffset? DueDateUtc, decimal Total, decimal AmountPaid, decimal BalanceDue,
     string Currency, string Status, string? CompanyName, string? CompanyLogoUrl,
     string? CompanyEmail, string? CompanyPhone);
 
 public record InvoiceDetailDto(
-    Guid Id, Guid OrderId, string InvoiceNumber, string? OrderNumber, DateTimeOffset IssueDateUtc,
+    Guid Id, Guid? OrderId, string InvoiceNumber, string? OrderNumber, DateTimeOffset IssueDateUtc,
     DateTimeOffset? DueDateUtc, decimal Subtotal, decimal Tax, decimal Total,
     decimal AmountPaid, decimal BalanceDue, string Currency, string Status,
     Guid? DocumentId, string? CompanyName,
