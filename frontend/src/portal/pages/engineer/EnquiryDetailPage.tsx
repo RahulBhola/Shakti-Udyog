@@ -1,196 +1,227 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { engineerApi, type EngineerEnquiryDetail } from "../../../api/engineerApi";
 import { tokenStorage } from "../../../auth/tokenStorage";
 import { config } from "../../../config";
-import { Loading } from "../../../components/ui";
-import { formatDate } from "../../shared";
 import {
-  ArrowLeft, Building2, Mail, Phone, Package,
+  ArrowLeft, Mail, Phone, Package,
   MapPinned, Calendar, Clock, Activity, MessageSquare, Paperclip,
   ChevronRight, FileText, Loader2,
   XCircle, AlertCircle, Download, FileEdit, User,
-  ChevronDown, ChevronUp, Factory, Truck, CreditCard,
-  ChevronLeft, CheckCircle2,
+  Factory, Truck, CreditCard,
+  CheckCircle2, Copy, Check, Shield, Wrench,
+  Layers, Flame, ShieldCheck, Tag, Hash
 } from "lucide-react";
 
-/* ------------------------------------------------------------------ */
-/*  Status Configuration & Badges                                      */
-/* ------------------------------------------------------------------ */
+/* ── Avatar Palette & Helpers ────────────────────────────────────────── */
+
+const AVATAR_PALETTES = [
+  { bg: "rgba(59,130,246,0.15)", fg: "#3B82F6", border: "rgba(59,130,246,0.3)" },
+  { bg: "rgba(168,85,247,0.15)", fg: "#A855F7", border: "rgba(168,85,247,0.3)" },
+  { bg: "rgba(20,184,166,0.15)", fg: "#14B8A6", border: "rgba(20,184,166,0.3)" },
+  { bg: "rgba(249,115,22,0.15)", fg: "#F97316", border: "rgba(249,115,22,0.3)" },
+  { bg: "rgba(236,72,153,0.15)", fg: "#EC4899", border: "rgba(236,72,153,0.3)" },
+  { bg: "rgba(34,197,94,0.15)", fg: "#22C55E", border: "rgba(34,197,94,0.3)" },
+];
+
+function getAvatarStyle(identifier: string) {
+  let hash = 0;
+  for (let i = 0; i < identifier.length; i++) {
+    hash = identifier.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % AVATAR_PALETTES.length;
+  return AVATAR_PALETTES[index];
+}
+
+function initials(name?: string | null, fallback?: string): string {
+  if (name && name.trim()) {
+    return name.trim().split(/\s+/).slice(0, 2).map((w) => w.charAt(0).toUpperCase()).join("") || "?";
+  }
+  if (fallback && fallback.trim()) {
+    return fallback.charAt(0).toUpperCase();
+  }
+  return "?";
+}
+
+/* ── Copy to Clipboard Button Component ──────────────────────────────── */
+
+function CopyButton({ text, label }: { text: string; label?: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      title={label || "Copy to clipboard"}
+      className="p-1 rounded-md text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors inline-flex items-center gap-1 cursor-pointer shrink-0"
+    >
+      {copied ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
+      {copied && <span className="text-[10px] text-emerald-500 font-bold">Copied!</span>}
+    </button>
+  );
+}
+
+/* ── Status Configuration & Badges ───────────────────────────────────── */
 
 const statusConfig: Record<string, { label: string; bg: string; text: string; dot: string; border: string; icon: any }> = {
-  Draft:           { label: "Draft",        bg: "bg-slate-100 dark:bg-slate-500/10", text: "text-slate-600 dark:text-slate-400", dot: "bg-slate-400", border: "border-slate-200 dark:border-slate-500/20", icon: FileText },
-  Submitted:       { label: "Submitted",    bg: "bg-blue-50 dark:bg-blue-500/10",    text: "text-blue-600 dark:text-blue-400",    dot: "bg-blue-500",  border: "border-blue-200 dark:border-blue-500/20",   icon: Clock },
-  Received:        { label: "Received",     bg: "bg-cyan-50 dark:bg-cyan-500/10",    text: "text-cyan-700 dark:text-cyan-400",    dot: "bg-cyan-500",  border: "border-cyan-200 dark:border-cyan-500/20",   icon: Clock },
-  "Under Review":  { label: "Under Review", bg: "bg-amber-50 dark:bg-amber-500/10",  text: "text-amber-700 dark:text-amber-400",  dot: "bg-amber-500", border: "border-amber-200 dark:border-amber-500/20", icon: AlertCircle },
-  Approved:        { label: "Approved",     bg: "bg-emerald-50 dark:bg-emerald-500/10", text: "text-emerald-700 dark:text-emerald-400", dot: "bg-emerald-500", border: "border-emerald-200 dark:border-emerald-500/20", icon: CheckCircle2 },
-  Quoted:          { label: "Quoted",       bg: "bg-indigo-50 dark:bg-indigo-500/10", text: "text-indigo-700 dark:text-indigo-400", dot: "bg-indigo-500", border: "border-indigo-200 dark:border-indigo-500/20", icon: FileEdit },
-  Accepted:        { label: "Accepted",     bg: "bg-emerald-50 dark:bg-emerald-500/10", text: "text-emerald-700 dark:text-emerald-400", dot: "bg-emerald-500", border: "border-emerald-200 dark:border-emerald-500/20", icon: CheckCircle2 },
-  Rejected:        { label: "Rejected",     bg: "bg-rose-50 dark:bg-rose-500/10",    text: "text-rose-700 dark:text-rose-400",    dot: "bg-rose-500",  border: "border-rose-200 dark:border-rose-500/20",   icon: XCircle },
-  Cancelled:       { label: "Cancelled",    bg: "bg-slate-100 dark:bg-slate-500/10", text: "text-slate-500 dark:text-slate-400", dot: "bg-slate-400", border: "border-slate-200 dark:border-slate-500/20", icon: XCircle },
-  Expired:         { label: "Expired",      bg: "bg-slate-100 dark:bg-slate-500/10", text: "text-slate-500 dark:text-slate-400", dot: "bg-slate-400", border: "border-slate-200 dark:border-slate-500/20", icon: Clock },
+  Draft: { label: "Draft", bg: "bg-slate-500/10", text: "text-slate-600 dark:text-slate-400", dot: "bg-slate-400", border: "border-slate-500/20", icon: FileText },
+  Submitted: { label: "Submitted", bg: "bg-blue-500/10", text: "text-blue-600 dark:text-blue-400", dot: "bg-blue-500", border: "border-blue-500/20", icon: Clock },
+  Received: { label: "Received", bg: "bg-cyan-500/10", text: "text-cyan-600 dark:text-cyan-400", dot: "bg-cyan-500", border: "border-cyan-500/20", icon: Clock },
+  "Under Review": { label: "Under Review", bg: "bg-amber-500/10", text: "text-amber-600 dark:text-amber-400", dot: "bg-amber-500", border: "border-amber-500/20", icon: AlertCircle },
+  Approved: { label: "Approved", bg: "bg-emerald-500/10", text: "text-emerald-600 dark:text-emerald-400", dot: "bg-emerald-500", border: "border-emerald-500/20", icon: CheckCircle2 },
+  Quoted: { label: "Quotation Generated", bg: "bg-indigo-500/10", text: "text-indigo-600 dark:text-indigo-400", dot: "bg-indigo-500", border: "border-indigo-500/20", icon: FileEdit },
+  Accepted: { label: "Accepted by Client", bg: "bg-emerald-500/10", text: "text-emerald-600 dark:text-emerald-400", dot: "bg-emerald-500", border: "border-emerald-500/20", icon: CheckCircle2 },
+  Rejected: { label: "Rejected", bg: "bg-rose-500/10", text: "text-rose-600 dark:text-rose-400", dot: "bg-rose-500", border: "border-rose-500/20", icon: XCircle },
+  Cancelled: { label: "Cancelled", bg: "bg-slate-500/10", text: "text-slate-500 dark:text-slate-400", dot: "bg-slate-400", border: "border-slate-500/20", icon: XCircle },
+  Expired: { label: "Expired", bg: "bg-slate-500/10", text: "text-slate-500 dark:text-slate-400", dot: "bg-slate-400", border: "border-slate-500/20", icon: Clock },
 };
 
 function getStatusConfig(status: string) {
   return statusConfig[status] ?? {
     label: status,
-    bg: "bg-slate-100 dark:bg-slate-500/10",
+    bg: "bg-slate-500/10",
     text: "text-slate-600 dark:text-slate-400",
     dot: "bg-slate-400",
-    border: "border-slate-200 dark:border-slate-500/20",
+    border: "border-slate-500/20",
     icon: FileText,
   };
 }
 
-function StatusBadge({ status, size = "sm" }: { status: string; size?: "sm" | "md" }) {
+function StatusBadge({ status }: { status: string }) {
   const cfg = getStatusConfig(status);
   const Icon = cfg.icon;
-  const px = size === "md" ? "px-3 py-1 text-xs" : "px-2.5 py-0.5 text-[11px]";
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full font-bold border ${cfg.bg} ${cfg.text} ${cfg.border} ${px} shadow-xs`}>
-      <Icon size={size === "md" ? 13 : 11} className="stroke-[2.2]" />
-      {cfg.label}
+    <span className={`inline-flex items-center gap-1.5 rounded-full font-black border ${cfg.bg} ${cfg.text} ${cfg.border} px-3 py-1 text-xs shadow-xs`}>
+      <Icon size={13} className="stroke-[2.2]" />
+      <span>{cfg.label}</span>
     </span>
   );
 }
 
-/* ── Priority Badge ────────────────────────────────────────────── */
+/* ── Priority Badge ──────────────────────────────────────────────────── */
 
-const priorityColors: Record<string, string> = {
-  Low: "bg-slate-100 text-slate-700 dark:bg-slate-500/10 dark:text-slate-400 border-slate-200 dark:border-slate-500/20",
-  Medium: "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 border-amber-200 dark:border-amber-500/20",
-  High: "bg-orange-50 text-orange-700 dark:bg-orange-500/10 dark:text-orange-400 border-orange-200 dark:border-orange-500/20",
-  Urgent: "bg-rose-50 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300 border-rose-300 dark:border-rose-500/30 ring-1 ring-rose-300/50",
+const priorityConfig: Record<string, { label: string; bg: string; text: string; border: string }> = {
+  Low: { label: "Low Priority", bg: "bg-slate-500/10", text: "text-slate-600 dark:text-slate-400", border: "border-slate-500/20" },
+  Medium: { label: "Medium Priority", bg: "bg-amber-500/10", text: "text-amber-700 dark:text-amber-400", border: "border-amber-500/30" },
+  High: { label: "High Priority", bg: "bg-orange-500/10", text: "text-orange-700 dark:text-orange-400", border: "border-orange-500/30" },
+  Urgent: { label: "Urgent Priority", bg: "bg-rose-500/15", text: "text-rose-700 dark:text-rose-300", border: "border-rose-500/30" },
 };
 
 function PriorityBadge({ priority }: { priority: string }) {
-  const c = priorityColors[priority] ?? priorityColors.Medium;
+  const c = priorityConfig[priority] ?? priorityConfig.Medium;
   return (
-    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold border shadow-xs ${c}`}>
-      {priority}
+    <span className={`inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-black border shadow-xs ${c.bg} ${c.text} ${c.border}`}>
+      {c.label}
     </span>
   );
 }
 
-/* ------------------------------------------------------------------ */
-/*  Summary KPI Card                                                   */
-/* ------------------------------------------------------------------ */
+/* ── Date formatting helpers ─────────────────────────────────────────── */
 
-function InfoCard({
-  icon: Icon,
+function formatDate(dateStr?: string | null) {
+  if (!dateStr) return "—";
+  return new Date(dateStr).toLocaleDateString("en-IN", {
+    year: "numeric", month: "short", day: "numeric",
+    hour: "2-digit", minute: "2-digit",
+  });
+}
+
+function formatShortDate(dateStr?: string | null) {
+  if (!dateStr) return "—";
+  return new Date(dateStr).toLocaleDateString("en-IN", {
+    year: "numeric", month: "short", day: "numeric",
+  });
+}
+
+/* ── High-Contrast Spec Item Tile Component ─────────────────────────── */
+
+function SpecTile({
   label,
   value,
-  sub,
-  gradient,
+  icon: Icon,
+  badge,
+  copyable,
+  highlight,
 }: {
-  icon: any;
   label: string;
-  value: string;
-  sub?: string;
-  gradient: string;
+  value: string | number | null | undefined | React.ReactNode;
+  icon?: any;
+  badge?: React.ReactNode;
+  copyable?: boolean;
+  highlight?: boolean;
 }) {
+  const displayVal = value == null || value === "" ? "—" : value;
+  const isString = typeof displayVal === "string";
+
   return (
-    <div className="group relative flex items-center gap-3.5 rounded-2xl border border-neutral-200/80 dark:border-white/10 bg-white dark:bg-[#0f121a] p-4 sm:p-4.5 shadow-xs hover:shadow-md hover:border-neutral-300 dark:hover:border-white/20 transition-all duration-200">
-      <div className={`w-11 h-11 rounded-2xl ${gradient} text-white flex items-center justify-center shrink-0 shadow-sm group-hover:scale-105 transition-transform duration-200`}>
-        <Icon size={20} className="stroke-[2.2]" />
+    <div className={`p-4 rounded-2xl border transition-all ${
+      highlight
+        ? "bg-blue-500/5 dark:bg-blue-500/10 border-blue-500/30 shadow-xs"
+        : "bg-white dark:bg-[#0f121a] border-neutral-200/90 dark:border-white/10 hover:border-neutral-300 dark:hover:border-white/20 shadow-xs"
+    }`}>
+      <div className="flex items-center justify-between gap-2 mb-1.5">
+        <div className="flex items-center gap-1.5">
+          {Icon && <Icon size={14} className="text-neutral-400 dark:text-neutral-500" />}
+          <span className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+            {label}
+          </span>
+        </div>
+        {badge}
       </div>
-      <div className="flex-1 min-w-0">
-        <div className="text-[10px] text-neutral-400 dark:text-neutral-400 uppercase tracking-wider font-extrabold mb-0.5">
-          {label}
+
+      <div className="flex items-center justify-between gap-2 mt-1">
+        <div className={`text-sm sm:text-[15px] font-bold text-neutral-900 dark:text-white leading-snug break-words ${
+          displayVal === "—" ? "text-neutral-400 dark:text-neutral-500 font-medium" : ""
+        }`}>
+          {displayVal}
         </div>
-        <div className="text-[14px] font-extrabold text-neutral-900 dark:text-white truncate">
-          {value}
-        </div>
-        {sub && (
-          <div className="text-[11.5px] text-neutral-500 dark:text-neutral-400 mt-0.5 truncate font-medium">
-            {sub}
-          </div>
+        {copyable && isString && displayVal !== "—" && (
+          <CopyButton text={displayVal as string} label={`Copy ${label}`} />
         )}
       </div>
     </div>
   );
 }
 
-/* ------------------------------------------------------------------ */
-/*  Collapsible Section                                                */
-/* ------------------------------------------------------------------ */
+/* ── Section Container Component ─────────────────────────────────────── */
 
-function Section({
-  icon: Icon,
+function SpecSectionCard({
   title,
-  children,
-  defaultOpen = true,
+  icon: Icon,
   badge,
+  children,
 }: {
-  icon: any;
   title: string;
+  icon: any;
+  badge?: React.ReactNode;
   children: React.ReactNode;
-  defaultOpen?: boolean;
-  badge?: string;
 }) {
-  const [open, setOpen] = useState(defaultOpen);
   return (
-    <section className="rounded-3xl border border-neutral-200/80 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs overflow-hidden transition-all">
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className="flex items-center justify-between w-full px-5 sm:px-6 py-4 hover:bg-neutral-50/70 dark:hover:bg-white/[0.02] transition-all text-left cursor-pointer border-b border-transparent"
-      >
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
-            <Icon size={16} className="stroke-[2.2]" />
+    <div className="rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-neutral-50/50 dark:bg-white/[0.01] p-5 sm:p-6 space-y-4 shadow-xs">
+      <div className="flex items-center justify-between gap-3 pb-3 border-b border-neutral-200/80 dark:border-white/10">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-[var(--color-primary)]/10 text-[var(--color-primary)] flex items-center justify-center font-bold">
+            <Icon size={17} />
           </div>
-          <div className="flex items-center gap-2.5 min-w-0">
-            <h2 className="text-[14.5px] font-bold text-neutral-900 dark:text-white m-0 tracking-tight">
-              {title}
-            </h2>
-            {badge && (
-              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-neutral-100 dark:bg-white/10 text-neutral-600 dark:text-neutral-300">
-                {badge}
-              </span>
-            )}
-          </div>
+          <h3 className="text-sm sm:text-[15px] font-black text-neutral-900 dark:text-white tracking-tight m-0">
+            {title}
+          </h3>
         </div>
-        <div className="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-neutral-600 dark:hover:text-white transition-colors">
-          {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-        </div>
-      </button>
-      {open && (
-        <div className="px-5 sm:px-6 pb-6 pt-2 border-t border-neutral-100 dark:border-white/5">
-          {children}
-        </div>
-      )}
-    </section>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  Field Tile                                                         */
-/* ------------------------------------------------------------------ */
-
-function Field({ label, value, icon: Icon }: { label: string; value: string | React.ReactNode; icon?: any }) {
-  return (
-    <div className="flex items-start gap-3 p-2.5 rounded-xl bg-neutral-50/60 dark:bg-white/[0.02] border border-neutral-100 dark:border-white/5">
-      {Icon && (
-        <div className="w-7 h-7 rounded-lg bg-neutral-200/60 dark:bg-white/5 flex items-center justify-center text-neutral-500 dark:text-neutral-400 shrink-0 mt-0.5">
-          <Icon size={14} />
-        </div>
-      )}
-      <div className="min-w-0 flex-1">
-        <div className="text-[10.5px] font-bold uppercase tracking-wide text-neutral-400 dark:text-neutral-400">
-          {label}
-        </div>
-        <div className="text-[13px] font-semibold text-neutral-800 dark:text-neutral-200 truncate mt-0.5">
-          {value || "—"}
-        </div>
+        {badge}
       </div>
+      <div>{children}</div>
     </div>
   );
 }
 
-/* ------------------------------------------------------------------ */
-/*  Workflow Steps (Connected Stepper UI)                              */
-/* ------------------------------------------------------------------ */
+/* ── 6-Step Workflow Progression ─────────────────────────────────────── */
 
 const workflowSteps = ["Draft", "Submitted", "Received", "Under Review", "Approved", "Quoted"];
 const workflowIcons: Record<string, any> = {
@@ -228,15 +259,15 @@ function WorkflowProgress({ currentStatus }: { currentStatus: string }) {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between border-b border-neutral-100 dark:border-white/5 pb-2.5">
+      <div className="flex items-center justify-between border-b border-neutral-100 dark:border-white/10 pb-3">
         <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-xs font-bold text-neutral-800 dark:text-neutral-200">
-            Enquiry Review Lifecycle (6 Steps)
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="text-xs sm:text-sm font-extrabold text-neutral-900 dark:text-white">
+            Enquiry Review Lifecycle (6 Milestones)
           </span>
         </div>
-        <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 font-mono">
-          Step {Math.min(6, Math.floor(currentIdx) + 1)} of 6 · {currentStatus}
+        <span className="text-xs font-black px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shadow-xs">
+          Stage {Math.min(6, Math.floor(currentIdx) + 1)} of 6 · {currentStatus}
         </span>
       </div>
 
@@ -251,35 +282,32 @@ function WorkflowProgress({ currentStatus }: { currentStatus: string }) {
 
           return (
             <div key={step} className="flex items-center flex-1 min-w-0 last:flex-none">
-              {/* Step Node & Label */}
-              <div className="flex flex-col items-center gap-2 min-w-[85px] sm:min-w-[100px] select-none">
-                {/* Squircle Icon Badge */}
+              <div className="flex flex-col items-center gap-2 min-w-[85px] sm:min-w-[110px] select-none">
                 <div
-                  className={`w-10 h-10 sm:w-11 sm:h-11 rounded-2xl flex items-center justify-center transition-all ${
+                  className={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center transition-all ${
                     isComplete
-                      ? "bg-emerald-500 text-white shadow-sm shadow-emerald-500/25"
+                      ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/25"
                       : isCurrent
-                      ? "bg-emerald-500 text-white ring-4 ring-emerald-500/20 shadow-md shadow-emerald-500/30 scale-105"
-                      : "bg-neutral-100 dark:bg-white/5 text-neutral-400 dark:text-neutral-400 border border-neutral-200/80 dark:border-white/10"
+                      ? "bg-gradient-to-br from-emerald-500 to-teal-600 text-white ring-4 ring-emerald-500/20 shadow-lg shadow-emerald-500/30 scale-105"
+                      : "bg-neutral-100 dark:bg-white/5 text-neutral-400 border border-neutral-200 dark:border-white/10"
                   }`}
                 >
-                  <Icon size={18} className="stroke-[2.2]" />
+                  <Icon size={19} strokeWidth={2.2} />
                 </div>
 
-                {/* Step Label */}
                 <div className="text-center">
                   <div
-                    className={`text-[11.5px] tracking-tight transition-colors leading-tight ${
+                    className={`text-xs tracking-tight transition-colors leading-tight ${
                       isPastOrCurrent
-                        ? "text-emerald-600 dark:text-emerald-400 font-bold"
-                        : "text-neutral-400 dark:text-neutral-400 font-medium"
+                        ? "text-emerald-600 dark:text-emerald-400 font-black"
+                        : "text-neutral-500 dark:text-neutral-400 font-bold"
                     }`}
                   >
                     {step}
                   </div>
-                  <div className="text-[10px] text-neutral-400 dark:text-neutral-400 mt-0.5 hidden sm:block">
+                  <div className="text-[10px] text-neutral-400 dark:text-neutral-500 mt-0.5 hidden sm:block">
                     {isCurrent ? (
-                      <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Active</span>
+                      <span className="text-emerald-600 dark:text-emerald-400 font-bold">● Active Stage</span>
                     ) : isComplete ? (
                       "Completed"
                     ) : (
@@ -289,12 +317,11 @@ function WorkflowProgress({ currentStatus }: { currentStatus: string }) {
                 </div>
               </div>
 
-              {/* Horizontal Connector Line */}
               {isNextStep && (
                 <div
-                  className={`flex-1 h-0.5 mx-1.5 sm:mx-3 mt-[-22px] rounded-full transition-colors ${
+                  className={`flex-1 h-1 mx-2 sm:mx-3 mt-[-24px] rounded-full transition-colors ${
                     isLineActive
-                      ? "bg-emerald-400 dark:bg-emerald-500/70"
+                      ? "bg-gradient-to-r from-emerald-500 to-emerald-400"
                       : "bg-neutral-200 dark:bg-white/10"
                   }`}
                 />
@@ -307,9 +334,7 @@ function WorkflowProgress({ currentStatus }: { currentStatus: string }) {
   );
 }
 
-/* ------------------------------------------------------------------ */
-/*  Auth-fetched Image Component                                       */
-/* ------------------------------------------------------------------ */
+/* ── Auth-fetched Image Component ────────────────────────────────────── */
 
 function EnquiryImage({ enquiryId, fileId, fileName }: { enquiryId: string; fileId: string; fileName: string }) {
   const [url, setUrl] = useState<string | null>(null);
@@ -317,56 +342,31 @@ function EnquiryImage({ enquiryId, fileId, fileName }: { enquiryId: string; file
     let cancelled = false;
     const token = tokenStorage.getAccessToken();
     fetch(`${config.apiBaseUrl}/api/v1/engineer/enquiries/${enquiryId}/files/${fileId}/download`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {}, credentials: "include",
-    }).then((r) => { if (!r.ok) throw new Error(); return r.blob(); })
-      .then((blob) => { if (!cancelled) setUrl(URL.createObjectURL(blob)); })
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      credentials: "include",
+    })
+      .then((r) => {
+        if (!r.ok) throw new Error();
+        return r.blob();
+      })
+      .then((blob) => {
+        if (!cancelled) setUrl(URL.createObjectURL(blob));
+      })
       .catch(() => {});
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [enquiryId, fileId]);
+
   if (!url) return <div className="w-full aspect-[4/3] rounded-2xl bg-neutral-100 dark:bg-white/5 animate-pulse" />;
   return <img src={url} alt={fileName} className="w-full h-full object-cover rounded-2xl" />;
 }
 
-/* ------------------------------------------------------------------ */
-/*  Related Record Card                                                */
-/* ------------------------------------------------------------------ */
-
-function RelatedCard({ icon: Icon, label, status, href }: { icon: any; label: string; status: string; href: string }) {
-  const isGood = status === "Generated" || status === "Approved";
-  const isPending = status === "Pending";
-  const badgeStyle = isGood
-    ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20"
-    : isPending
-    ? "text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20"
-    : "text-neutral-500 dark:text-neutral-400 bg-neutral-100 dark:bg-white/5 border-neutral-200 dark:border-white/10";
-
-  return (
-    <Link
-      to={href}
-      className="flex items-center gap-3.5 rounded-2xl border border-neutral-200/80 dark:border-white/10 bg-white dark:bg-[#0f121a] p-4 hover:border-blue-500/40 dark:hover:border-blue-500/40 hover:shadow-xs transition-all no-underline group"
-    >
-      <span className="flex items-center justify-center w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 group-hover:scale-105 transition-transform shrink-0">
-        <Icon size={18} className="stroke-[2.2]" />
-      </span>
-      <div className="flex-1 min-w-0">
-        <div className="text-[13px] font-bold text-neutral-900 dark:text-white truncate">
-          {label}
-        </div>
-        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold mt-1 border ${badgeStyle}`}>
-          {status}
-        </span>
-      </div>
-      <ChevronRight size={15} className="text-neutral-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors shrink-0" />
-    </Link>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  Main Page Component                                                */
-/* ------------------------------------------------------------------ */
+/* ── Main Enquiry Detail Page Component ──────────────────────────────── */
 
 export default function EngineerEnquiryDetailPage() {
   const { id = "" } = useParams();
+  const navigate = useNavigate();
   const [enquiry, setEnquiry] = useState<EngineerEnquiryDetail | null>(null);
   const [missing, setMissing] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -396,7 +396,10 @@ export default function EngineerEnquiryDetailPage() {
     const token = tokenStorage.getAccessToken();
     const url = `${config.apiBaseUrl}/api/v1/engineer/enquiries/${id}/files/${fileId}/download`;
     fetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {}, credentials: "include" })
-      .then((r) => { if (!r.ok) throw new Error(); return r.blob(); })
+      .then((r) => {
+        if (!r.ok) throw new Error();
+        return r.blob();
+      })
       .then((blob) => {
         const u = URL.createObjectURL(blob);
         const d = document.createElement("a");
@@ -411,10 +414,10 @@ export default function EngineerEnquiryDetailPage() {
   if (missing) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] p-6 text-center">
-        <div className="w-16 h-16 rounded-3xl bg-rose-50 dark:bg-rose-500/10 text-rose-500 flex items-center justify-center mb-4">
+        <div className="w-16 h-16 rounded-3xl bg-rose-500/10 text-rose-500 border border-rose-500/20 flex items-center justify-center mb-4 shadow-sm">
           <XCircle size={32} />
         </div>
-        <h2 className="text-xl font-extrabold text-neutral-900 dark:text-white m-0">Enquiry Not Found</h2>
+        <h2 className="text-xl font-black text-neutral-900 dark:text-white m-0">Enquiry Not Found</h2>
         <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1 mb-6 max-w-sm">
           This enquiry may have been removed or you do not have permission to view it.
         </p>
@@ -430,71 +433,58 @@ export default function EngineerEnquiryDetailPage() {
 
   if (!enquiry) {
     return (
-      <div className="py-16">
-        <Loading label="Loading Enquiry Specifications..." />
+      <div className="flex flex-col items-center justify-center py-32 space-y-4">
+        <div className="relative flex items-center justify-center">
+          <div className="w-16 h-16 rounded-3xl bg-[var(--color-primary)]/10 animate-ping absolute" />
+          <div className="w-14 h-14 rounded-2xl bg-white dark:bg-[#0f121a] border border-neutral-200 dark:border-white/10 shadow-xl flex items-center justify-center">
+            <Loader2 size={26} className="animate-spin text-[var(--color-primary)]" />
+          </div>
+        </div>
+        <p className="text-sm font-bold text-neutral-500 dark:text-neutral-400">Loading Enquiry Specifications...</p>
       </div>
     );
   }
 
   const cfg = getStatusConfig(enquiry.status);
   const currentStepIdx = getStepIndex(enquiry.status);
+  const customerPalette = getAvatarStyle(enquiry.companyName || enquiry.fullName || "Customer");
+  const enqShortId = `ENQ-${enquiry.id.slice(0, 8).toUpperCase()}`;
 
   return (
     <div className="space-y-6 pb-12">
-      {/* ── Top Navigation & Header Hero ────────────────────────────── */}
-      <div className="rounded-3xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] p-6 sm:p-7 shadow-xs space-y-6">
-        {/* Breadcrumb & Navigation */}
-        <div className="flex items-center justify-between gap-4 border-b border-neutral-100 dark:border-white/5 pb-4">
-          <div className="flex items-center gap-2">
-            <Link
-              to="/admin/enquiries"
-              className="flex items-center justify-center w-8 h-8 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#121520] text-neutral-600 dark:text-neutral-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all no-underline shadow-xs"
+      {/* ── Sticky Top Header & Control Center ───────────────────────────── */}
+      <div className="sticky top-0 z-20 -mx-6 -mt-6 px-6 py-4 bg-white/80 dark:bg-[#0c0f17]/80 backdrop-blur-xl border-b border-neutral-200/90 dark:border-white/10 shadow-xs">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          {/* Left: Identifier & Title */}
+          <div className="flex items-center gap-3 min-w-0">
+            <button
+              type="button"
+              onClick={() => navigate("/admin/enquiries")}
+              className="flex items-center justify-center w-9 h-9 rounded-xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/5 transition-all shrink-0 cursor-pointer shadow-xs"
+              title="Return to Enquiries list"
             >
-              <ChevronLeft size={16} />
-            </Link>
-            <span className="text-xs font-semibold text-neutral-400">Back to Enquiries</span>
-          </div>
+              <ArrowLeft size={16} />
+            </button>
 
-          <div className="flex items-center gap-2">
-            <span className="font-mono text-xs font-bold px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
-              ENQ-{enquiry.id.slice(0, 8).toUpperCase()}
-            </span>
-          </div>
-        </div>
-
-        {/* Title & Primary Action Controls */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-          <div className="space-y-2">
-            <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 dark:text-white tracking-tight m-0">
-                Enquiry — {enquiry.productType}
-              </h1>
-              <StatusBadge status={enquiry.status} size="md" />
-              {enquiry.isDraft && (
-                <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-extrabold bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20">
-                  DRAFT
+            <div className="min-w-0">
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <span className="font-mono text-xs font-black px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 flex items-center gap-1">
+                  <span>{enqShortId}</span>
+                  <CopyButton text={enqShortId} label="Copy Enquiry ID" />
                 </span>
-              )}
-            </div>
 
-            {/* Metadata Badges */}
-            <div className="flex items-center gap-3 text-xs text-neutral-500 dark:text-neutral-400 flex-wrap">
-              <span className="flex items-center gap-1.5 font-semibold text-neutral-700 dark:text-neutral-300">
-                <Building2 size={13} className="text-blue-500" />
-                {enquiry.companyName}
-              </span>
-              <span className="w-1 h-1 rounded-full bg-neutral-300 dark:bg-neutral-700" />
-              <span className="flex items-center gap-1.5">
-                <Calendar size={13} className="text-neutral-400" />
-                Received {formatDate(enquiry.createdAtUtc)}
-              </span>
-              <span className="w-1 h-1 rounded-full bg-neutral-300 dark:bg-neutral-700" />
-              <PriorityBadge priority={enquiry.priority} />
+                <h1 className="text-xl sm:text-2xl font-black text-neutral-900 dark:text-white tracking-tight m-0 truncate">
+                  {enquiry.partName || enquiry.productType}
+                </h1>
+
+                <StatusBadge status={enquiry.status} />
+                <PriorityBadge priority={enquiry.priority} />
+              </div>
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex items-center gap-2.5 shrink-0 self-start lg:self-center flex-wrap">
+          {/* Right: Stage Control Actions */}
+          <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
             {!["Approved", "Quoted", "Accepted", "Rejected", "Declined", "Cancelled", "Expired"].includes(enquiry.status) && (
               <button
                 type="button"
@@ -504,30 +494,34 @@ export default function EngineerEnquiryDetailPage() {
                   const idx = workflowOrder.indexOf(enquiry.status);
                   if (idx >= 0 && idx < workflowOrder.length - 1) void updateStatus(workflowOrder[idx + 1]);
                 }}
-                className="inline-flex items-center gap-2 px-5 h-10 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold shadow-md shadow-blue-600/25 disabled:opacity-50 transition-all cursor-pointer"
+                className="inline-flex items-center gap-2 px-4 h-9 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-black shadow-md shadow-blue-600/25 disabled:opacity-50 transition-all cursor-pointer"
               >
-                {busy ? <Loader2 size={14} className="animate-spin" /> : <ChevronRight size={15} />}
-                <span>Advance Stage</span>
+                {busy ? <Loader2 size={13} className="animate-spin" /> : <ChevronRight size={14} />}
+                <span>Advance to {
+                  enquiry.status === "Submitted" ? "Received" :
+                  enquiry.status === "Received" ? "Under Review" :
+                  enquiry.status === "Under Review" ? "Approved" : "Next Stage"
+                }</span>
               </button>
             )}
 
             {enquiry.status === "Approved" && !enquiry.hasDraftQuotation && (
               <button
                 type="button"
-                onClick={() => window.location.assign(`/admin/quotations/new?enquiryId=${enquiry.id}&companyName=${encodeURIComponent(enquiry.companyName)}`)}
-                className="inline-flex items-center gap-2 px-5 h-10 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold shadow-md shadow-emerald-600/25 transition-all cursor-pointer"
+                onClick={() => navigate(`/admin/quotations/new?enquiryId=${enquiry.id}&companyName=${encodeURIComponent(enquiry.companyName)}`)}
+                className="inline-flex items-center gap-2 px-4 h-9 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-black shadow-md shadow-emerald-600/25 transition-all cursor-pointer"
               >
-                <FileEdit size={15} />
-                <span>Generate Quotation</span>
+                <FileEdit size={14} />
+                <span>Generate Official Quotation</span>
               </button>
             )}
 
             {enquiry.hasDraftQuotation && (
               <Link
                 to={`/admin/quotations/${enquiry.draftQuotationId}`}
-                className="inline-flex items-center gap-2 px-4.5 h-10 rounded-xl border border-amber-300 dark:border-amber-500/40 bg-amber-50 dark:bg-amber-500/10 text-amber-800 dark:text-amber-300 text-xs font-bold hover:bg-amber-100 transition-all no-underline shadow-xs"
+                className="inline-flex items-center gap-2 px-4 h-9 rounded-xl border border-amber-300 dark:border-amber-500/40 bg-amber-50 dark:bg-amber-500/10 text-amber-800 dark:text-amber-300 text-xs font-black hover:bg-amber-100 transition-all no-underline shadow-xs"
               >
-                <FileEdit size={15} />
+                <FileEdit size={14} />
                 <span>{enquiry.status === "Approved" ? "View Draft Quote" : "View Quote"}</span>
               </Link>
             )}
@@ -537,313 +531,357 @@ export default function EngineerEnquiryDetailPage() {
                 type="button"
                 disabled={busy}
                 onClick={() => setShowRejectModal(true)}
-                className="inline-flex items-center gap-2 px-4 h-10 rounded-xl border border-rose-200 dark:border-rose-500/30 bg-rose-50/50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 text-xs font-bold hover:bg-rose-100/60 dark:hover:bg-rose-500/20 disabled:opacity-50 transition-all cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3.5 h-9 rounded-xl border border-rose-200 dark:border-rose-500/30 bg-rose-50/50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 text-xs font-bold hover:bg-rose-100/60 dark:hover:bg-rose-500/20 disabled:opacity-50 transition-all cursor-pointer"
               >
-                <XCircle size={15} />
+                <XCircle size={14} />
                 <span>Reject</span>
               </button>
             )}
           </div>
         </div>
-
-        {/* ── Connected Horizontal Stepper ────────────────────────────── */}
-        {currentStepIdx >= 0 && (
-          <div className="pt-2 border-t border-neutral-100 dark:border-white/5">
-            <WorkflowProgress currentStatus={enquiry.status} />
-          </div>
-        )}
       </div>
 
-      {/* ── Summary KPI Grid ────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-        <InfoCard
-          icon={Building2}
-          label="Customer"
-          value={enquiry.companyName}
-          sub={enquiry.fullName ? `Contact: ${enquiry.fullName}` : undefined}
-          gradient="bg-gradient-to-br from-blue-600 to-indigo-600 shadow-blue-500/20"
-        />
-        <InfoCard
-          icon={Package}
-          label="Product / Material"
-          value={enquiry.productType}
-          sub={enquiry.materialGrade ? `Grade: ${enquiry.materialGrade}` : undefined}
-          gradient="bg-gradient-to-br from-emerald-600 to-teal-600 shadow-emerald-500/20"
-        />
-        <InfoCard
-          icon={MapPinned}
-          label="Quantity / Delivery"
-          value={`${enquiry.quantity} Units`}
-          sub={enquiry.deliveryLocation ?? "No location specified"}
-          gradient="bg-gradient-to-br from-amber-500 to-orange-600 shadow-orange-500/20"
-        />
-        <InfoCard
-          icon={Activity}
-          label="Status / Priority"
-          value={cfg.label}
-          sub={`Priority: ${enquiry.priority}`}
-          gradient="bg-gradient-to-br from-violet-600 to-purple-600 shadow-purple-500/20"
-        />
-      </div>
-
-      {/* ── Status Flash Message ────────────────────────────────────── */}
+      {/* ── Status Flash Message ──────────────────────────────────────────── */}
       {msg && (
         <div
-          className={`rounded-2xl p-4 text-xs font-bold flex items-center justify-between border shadow-xs ${
+          className={`rounded-2xl p-4 text-xs font-bold flex items-center justify-between border shadow-xs animate-in fade-in slide-in-from-top-2 ${
             msg.includes("failed") || msg.includes("Fail")
-              ? "bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-500/20"
-              : "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20"
+              ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
+              : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
           }`}
         >
           <div className="flex items-center gap-2.5">
             {msg.includes("failed") ? <XCircle size={16} /> : <CheckCircle2 size={16} />}
             <span>{msg}</span>
           </div>
-          <button type="button" onClick={() => setMsg(null)} className="opacity-70 hover:opacity-100">
+          <button type="button" onClick={() => setMsg(null)} className="opacity-70 hover:opacity-100 cursor-pointer">
             <XCircle size={15} />
           </button>
         </div>
       )}
 
-      {/* ── Main Two-Column Layout ──────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 items-start">
-        {/* ══ LEFT COLUMN (Accordion Specs) ══ */}
-        <div className="space-y-5">
-          {/* Customer Information */}
-          <Section icon={Building2} title="Customer Information" badge="Verified Account">
-            <div className="space-y-4">
-              <div className="flex items-center gap-4 p-4 rounded-2xl bg-neutral-50 dark:bg-white/[0.02] border border-neutral-100 dark:border-white/5">
-                <div className="w-13 h-13 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center font-black text-xl shadow-md shadow-blue-500/20 shrink-0">
-                  {enquiry.companyName.charAt(0)}
-                </div>
-                <div>
-                  <h3 className="text-base font-extrabold text-neutral-900 dark:text-white m-0">
-                    {enquiry.companyName}
-                  </h3>
-                  <p className="text-xs text-neutral-400 m-0 mt-0.5">Commercial Industrial Account</p>
-                </div>
-              </div>
+      {/* ── 6-Step Manufacturing Review Lifecycle Stepper ─────────────────── */}
+      {currentStepIdx >= 0 && (
+        <div className="relative overflow-hidden p-5 sm:p-6 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs before:absolute before:inset-0 before:bg-[radial-gradient(280px_160px_at_95%_0%,rgba(59,130,246,0.12),transparent)] before:pointer-events-none">
+          <WorkflowProgress currentStatus={enquiry.status} />
+        </div>
+      )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Field label="Contact Person" value={enquiry.fullName} icon={User} />
-                <Field label="Phone Number" value={enquiry.phone || "—"} icon={Phone} />
-                <Field label="Email Address" value={enquiry.email} icon={Mail} />
-                <Field label="Company Name" value={enquiry.companyName} icon={Building2} />
-              </div>
+      {/* ── Top Customer & Overview Banner ───────────────────────────────── */}
+      <div className="p-5 sm:p-6 rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-5">
+        <div className="flex items-center gap-4 min-w-0">
+          <div
+            className="w-14 h-14 rounded-2xl flex items-center justify-center font-black text-xl border shadow-xs shrink-0"
+            style={{ background: customerPalette.bg, color: customerPalette.fg, borderColor: customerPalette.border }}
+          >
+            {initials(enquiry.companyName, enquiry.fullName)}
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-lg sm:text-xl font-black text-neutral-900 dark:text-white m-0 tracking-tight">
+                {enquiry.companyName}
+              </h2>
+              <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-neutral-100 dark:bg-white/5 text-neutral-600 dark:text-neutral-300">
+                Commercial Client
+              </span>
             </div>
-          </Section>
-
-          {/* Enquiry Information */}
-          <Section icon={FileText} title="Enquiry Technical Specifications">
-            <div className="space-y-6 pt-1">
-              {/* Part Details */}
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                  <h4 className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 m-0">
-                    Part & Component Details
-                  </h4>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <Field label="Part Name" value={enquiry.partName} />
-                  <Field label="Part Number" value={enquiry.partNumber} />
-                  <Field label="Target Application" value={enquiry.application} />
-                  <Field label="Industry Sector" value={enquiry.industry} />
-                </div>
-              </div>
-
-              {/* Material Details */}
-              <div className="pt-4 border-t border-neutral-100 dark:border-white/5">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  <h4 className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 m-0">
-                    Metallurgy & Tooling
-                  </h4>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <Field label="Material Standard" value={enquiry.materialStandard} />
-                  <Field label="Approx Weight" value={enquiry.approxWeight != null ? `${enquiry.approxWeight} kg` : "—"} />
-                  <Field label="Machining Required" value={enquiry.machiningRequired} />
-                  <Field label="Pattern Availability" value={enquiry.patternAvailability} />
-                </div>
-              </div>
-
-              {/* Quantity Details */}
-              <div className="pt-4 border-t border-neutral-100 dark:border-white/5">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                  <h4 className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 m-0">
-                    Volume & Production Schedule
-                  </h4>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <Field label="Prototype Qty" value={enquiry.prototypeQuantity} />
-                  <Field label="Production Qty" value={enquiry.productionQuantity ?? enquiry.quantity} />
-                  <Field label="Annual Requirement" value={enquiry.annualRequirement} />
-                </div>
-              </div>
-
-              {/* Delivery Details */}
-              <div className="pt-4 border-t border-neutral-100 dark:border-white/5">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="w-1.5 h-1.5 rounded-full bg-violet-500" />
-                  <h4 className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 m-0">
-                    Logistics & Delivery Terms
-                  </h4>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <Field label="Delivery Location" value={enquiry.deliveryLocation} />
-                  <Field label="Expected Delivery Date" value={enquiry.expectedDeliveryDate ? formatDate(enquiry.expectedDeliveryDate) : "—"} />
-                  <Field label="Preferred Terms" value={enquiry.preferredDeliveryTerms} />
-                </div>
-              </div>
-
-              {/* Additional Requirements */}
-              {enquiry.additionalRequirements && (
-                <div className="pt-4 border-t border-neutral-100 dark:border-white/5">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-500" />
-                    <h4 className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 m-0">
-                      Additional Certifications & Testing
-                    </h4>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {enquiry.additionalRequirements.split(", ").filter(Boolean).map((r: string) => (
-                      <span
-                        key={r}
-                        className="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-800 dark:text-emerald-300 shadow-xs"
-                      >
-                        <CheckCircle2 size={13} className="text-emerald-500 shrink-0" />
-                        {r}
-                      </span>
-                    ))}
-                  </div>
-                </div>
+            <div className="flex items-center gap-3 text-xs text-neutral-500 dark:text-neutral-400 mt-1 flex-wrap font-medium">
+              {enquiry.fullName && (
+                <span className="flex items-center gap-1 text-neutral-700 dark:text-neutral-300 font-bold">
+                  <User size={13} className="text-neutral-400" />
+                  {enquiry.fullName}
+                </span>
               )}
-
-              {/* Remarks */}
-              {enquiry.remarks && (
-                <div className="pt-4 border-t border-neutral-100 dark:border-white/5">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                    <h4 className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 m-0">
-                      Customer Special Remarks
-                    </h4>
-                  </div>
-                  <div className="rounded-2xl border border-neutral-200/80 dark:border-white/10 bg-neutral-50/70 dark:bg-white/[0.02] p-4">
-                    <p className="text-xs sm:text-[13px] text-neutral-800 dark:text-neutral-200 leading-relaxed m-0 whitespace-pre-wrap font-medium">
-                      {enquiry.remarks}
-                    </p>
-                  </div>
-                </div>
+              {enquiry.email && (
+                <a href={`mailto:${enquiry.email}`} className="flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline">
+                  <Mail size={13} />
+                  {enquiry.email}
+                </a>
+              )}
+              {enquiry.phone && (
+                <a href={`tel:${enquiry.phone}`} className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 hover:underline">
+                  <Phone size={13} />
+                  {enquiry.phone}
+                </a>
               )}
             </div>
-          </Section>
+          </div>
+        </div>
 
-          {/* Drawings & Attachments */}
-          <Section
+        <div className="flex items-center gap-3 border-t md:border-t-0 md:border-l border-neutral-100 dark:border-white/10 pt-4 md:pt-0 md:pl-6 shrink-0">
+          <div className="text-right">
+            <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block">Target Production Qty</span>
+            <span className="text-xl sm:text-2xl font-black text-neutral-900 dark:text-white tabular-nums">
+              {Number((enquiry.productionQuantity ?? enquiry.quantity) || 0).toLocaleString("en-IN") || enquiry.quantity} Units
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Main Two-Column Layout ────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        {/* ══ LEFT COLUMN (2 Cols wide - Technical Specs) ══ */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Group 1: Part & Component Specs */}
+          <SpecSectionCard title="Part & Component Specifications" icon={Package}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <SpecTile
+                label="Part Name"
+                value={enquiry.partName}
+                icon={Tag}
+                highlight={true}
+                copyable={true}
+              />
+              <SpecTile
+                label="Part Number"
+                value={
+                  enquiry.partNumber ? (
+                    <span className="font-mono font-black text-blue-600 dark:text-blue-400">
+                      {enquiry.partNumber}
+                    </span>
+                  ) : (
+                    "—"
+                  )
+                }
+                icon={Hash}
+                copyable={!!enquiry.partNumber}
+              />
+              <SpecTile
+                label="Target Application"
+                value={enquiry.application}
+                icon={Wrench}
+              />
+              <SpecTile
+                label="Industry Sector"
+                value={
+                  enquiry.industry ? (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold bg-neutral-100 dark:bg-white/10 text-neutral-800 dark:text-neutral-200">
+                      {enquiry.industry}
+                    </span>
+                  ) : (
+                    "—"
+                  )
+                }
+                icon={Factory}
+              />
+            </div>
+          </SpecSectionCard>
+
+          {/* Group 2: Metallurgy & Tooling */}
+          <SpecSectionCard title="Metallurgy, Tooling & Weight" icon={Flame}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <SpecTile
+                label="Material Standard / Grade"
+                value={
+                  enquiry.materialStandard ? (
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-extrabold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                      {enquiry.materialStandard}
+                    </span>
+                  ) : (
+                    "—"
+                  )
+                }
+                icon={Shield}
+                copyable={!!enquiry.materialStandard}
+              />
+              <SpecTile
+                label="Approximate Unit Weight"
+                value={enquiry.approxWeight != null ? `${enquiry.approxWeight} kg` : "—"}
+                icon={Package}
+              />
+              <SpecTile
+                label="Machining Required"
+                value={
+                  enquiry.machiningRequired ? (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
+                      {enquiry.machiningRequired}
+                    </span>
+                  ) : (
+                    "—"
+                  )
+                }
+                icon={Wrench}
+              />
+              <SpecTile
+                label="Pattern Tooling Availability"
+                value={
+                  enquiry.patternAvailability ? (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
+                      {enquiry.patternAvailability}
+                    </span>
+                  ) : (
+                    "—"
+                  )
+                }
+                icon={Layers}
+              />
+            </div>
+          </SpecSectionCard>
+
+          {/* Group 3: Volume & Logistics */}
+          <SpecSectionCard title="Production Volume & Logistics Terms" icon={Truck}>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+              <SpecTile
+                label="Prototype Quantity"
+                value={enquiry.prototypeQuantity != null ? `${enquiry.prototypeQuantity} Units` : "—"}
+                icon={Package}
+              />
+              <SpecTile
+                label="Production Batch Qty"
+                value={
+                  <span className="text-emerald-600 dark:text-emerald-400 font-black">
+                    {Number((enquiry.productionQuantity ?? enquiry.quantity) || 0).toLocaleString("en-IN") || enquiry.quantity} Units
+                  </span>
+                }
+                icon={Factory}
+                highlight={true}
+              />
+              <SpecTile
+                label="Annual Requirement"
+                value={enquiry.annualRequirement != null ? `${enquiry.annualRequirement} Units/Yr` : "—"}
+                icon={Activity}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 pt-3 border-t border-neutral-200/80 dark:border-white/10">
+              <SpecTile
+                label="Delivery Location"
+                value={enquiry.deliveryLocation}
+                icon={MapPinned}
+                copyable={!!enquiry.deliveryLocation}
+              />
+              <SpecTile
+                label="Expected Delivery Date"
+                value={enquiry.expectedDeliveryDate ? formatShortDate(enquiry.expectedDeliveryDate) : "—"}
+                icon={Calendar}
+              />
+              <SpecTile
+                label="Preferred Terms"
+                value={
+                  enquiry.preferredDeliveryTerms ? (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold bg-purple-500/10 text-purple-700 dark:text-purple-400 border border-purple-500/20">
+                      {enquiry.preferredDeliveryTerms}
+                    </span>
+                  ) : (
+                    "—"
+                  )
+                }
+                icon={CreditCard}
+              />
+            </div>
+          </SpecSectionCard>
+
+          {/* Group 4: Certifications & Special Requirements */}
+          {enquiry.additionalRequirements && (
+            <SpecSectionCard title="Testing & Quality Certifications Required" icon={ShieldCheck}>
+              <div className="flex flex-wrap gap-2.5">
+                {enquiry.additionalRequirements.split(", ").filter(Boolean).map((r: string) => (
+                  <span
+                    key={r}
+                    className="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 shadow-xs"
+                  >
+                    <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />
+                    <span>{r}</span>
+                  </span>
+                ))}
+              </div>
+            </SpecSectionCard>
+          )}
+
+          {/* Group 5: Customer Special Remarks */}
+          {enquiry.remarks && (
+            <SpecSectionCard title="Customer Special Remarks" icon={MessageSquare}>
+              <div className="p-4 rounded-2xl bg-white dark:bg-[#0f121a] border border-neutral-200/90 dark:border-white/10 shadow-xs">
+                <p className="text-xs sm:text-sm text-neutral-800 dark:text-neutral-200 leading-relaxed m-0 whitespace-pre-wrap font-medium">
+                  {enquiry.remarks}
+                </p>
+              </div>
+            </SpecSectionCard>
+          )}
+
+          {/* Group 6: Drawings & CAD Attachments */}
+          <SpecSectionCard
+            title={`Technical Drawings & CAD Files (${enquiry.files.length})`}
             icon={Paperclip}
-            title="Drawings & CAD Attachments"
-            badge={`${enquiry.files.length} Attached`}
           >
             {enquiry.files.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {enquiry.files.map((f) => {
                   const isImage = f.contentType?.startsWith("image/");
                   return (
                     <div
                       key={f.id}
-                      className="group rounded-2xl border border-neutral-200/80 dark:border-white/10 overflow-hidden bg-neutral-50/60 dark:bg-white/[0.02] hover:shadow-md hover:border-blue-500/40 transition-all duration-200"
+                      className="group rounded-2xl border border-neutral-200/90 dark:border-white/10 overflow-hidden bg-white dark:bg-[#0f121a] hover:shadow-md hover:border-blue-500/40 transition-all duration-200 flex flex-col"
                     >
-                      {/* Preview */}
-                      <div className="relative aspect-[4/3] bg-neutral-100 dark:bg-white/5">
+                      <div className="relative aspect-[4/3] bg-neutral-100 dark:bg-white/5 overflow-hidden flex items-center justify-center">
                         {isImage ? (
                           <EnquiryImage enquiryId={id} fileId={f.id} fileName={f.fileName} />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <FileText size={36} className="text-neutral-400 opacity-40" />
+                          <div className="flex flex-col items-center gap-1 text-neutral-400">
+                            <FileText size={40} className="text-blue-500/60" />
+                            <span className="text-[10px] font-bold uppercase">{f.fileName.split('.').pop()}</span>
                           </div>
                         )}
-                        {/* Download Overlay */}
                         <button
                           type="button"
                           onClick={() => downloadFile(f.id, f.fileName)}
-                          className="absolute top-2.5 right-2.5 flex items-center justify-center w-8 h-8 rounded-xl bg-black/60 backdrop-blur-xs text-white opacity-0 group-hover:opacity-100 hover:bg-blue-600 transition-all duration-200 shadow-sm cursor-pointer"
-                          title="Download"
+                          className="absolute top-2.5 right-2.5 flex items-center justify-center w-8 h-8 rounded-xl bg-black/70 backdrop-blur-xs text-white opacity-0 group-hover:opacity-100 hover:bg-blue-600 transition-all duration-200 shadow-sm cursor-pointer"
+                          title="Download File"
                         >
                           <Download size={14} />
                         </button>
                       </div>
-                      {/* Info */}
-                      <div className="p-3 border-t border-neutral-200/80 dark:border-white/10 bg-white dark:bg-[#0f121a]">
-                        <div className="text-xs font-bold text-neutral-900 dark:text-white truncate leading-tight">
-                          {f.fileName}
+
+                      <div className="p-3 border-t border-neutral-100 dark:border-white/10 flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="text-xs font-bold text-neutral-900 dark:text-white truncate">
+                            {f.fileName}
+                          </div>
+                          <div className="text-[11px] text-neutral-400 font-mono mt-0.5">
+                            {(f.sizeBytes / 1024).toFixed(1)} KB
+                          </div>
                         </div>
-                        <div className="text-[11px] text-neutral-400 font-mono mt-0.5">
-                          {(f.sizeBytes / 1024).toFixed(1)} KB
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => downloadFile(f.id, f.fileName)}
+                          className="p-1.5 rounded-lg text-neutral-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer"
+                          title="Download"
+                        >
+                          <Download size={14} />
+                        </button>
                       </div>
                     </div>
                   );
                 })}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center py-12 rounded-2xl border border-dashed border-neutral-200 dark:border-white/10 text-center">
-                <Paperclip size={36} className="text-neutral-300 dark:text-neutral-700 mb-3" />
-                <p className="text-xs text-neutral-500 font-medium m-0">No technical drawings or CAD files uploaded</p>
+              <div className="text-center py-8 rounded-2xl border border-dashed border-neutral-200 dark:border-white/10 bg-white dark:bg-[#0f121a]">
+                <Paperclip size={28} className="text-neutral-300 dark:text-neutral-600 mx-auto mb-2" />
+                <p className="text-xs font-bold text-neutral-600 dark:text-neutral-400 m-0">No files attached</p>
+                <p className="text-[11px] text-neutral-400 mt-0.5">Customer did not upload CAD drawings for this enquiry.</p>
               </div>
             )}
-          </Section>
-
-          {/* Related Records */}
-          <Section icon={Activity} title="Related Workflow Records" defaultOpen={false}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              <RelatedCard
-                icon={FileEdit}
-                label="Commercial Quotation"
-                status={enquiry.status === "Approved" ? "Pending Creation" : enquiry.hasDraftQuotation ? "Quotation Active" : "Not Started"}
-                href="/admin/quotations"
-              />
-              <RelatedCard
-                icon={Factory}
-                label="Foundry Production Board"
-                status="Awaiting Quotation"
-                href="/admin/production"
-              />
-              <RelatedCard
-                icon={Truck}
-                label="Dispatch & Logistics"
-                status="Pending Order"
-                href="/admin/orders"
-              />
-              <RelatedCard
-                icon={CreditCard}
-                label="Tax Invoicing"
-                status="Pending Delivery"
-                href="/admin/invoices"
-              />
-            </div>
-          </Section>
+          </SpecSectionCard>
         </div>
 
-        {/* ══ RIGHT COLUMN (Status & Audit Timeline) ══ */}
-        <div className="space-y-5 lg:sticky lg:top-6">
-          {/* Current Status Sidebar Card */}
-          <section className="rounded-3xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] p-5 sm:p-6 shadow-xs space-y-5">
-            <div className="flex items-center justify-between border-b border-neutral-100 dark:border-white/5 pb-3">
-              <h3 className="text-xs font-extrabold uppercase tracking-wider text-neutral-400 m-0">
+        {/* ══ RIGHT COLUMN (Sidebar with Lifecycle & Audit) ══ */}
+        <div className="space-y-6">
+          {/* Lifecycle & Status Overview Card */}
+          <div className="rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] p-5 shadow-xs space-y-4">
+            <div className="flex items-center justify-between border-b border-neutral-100 dark:border-white/10 pb-3">
+              <h3 className="text-xs font-black uppercase tracking-wider text-neutral-400 m-0">
                 Current Lifecycle State
               </h3>
               <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
             </div>
 
-            <div className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-neutral-50 dark:bg-white/[0.02] border border-neutral-100 dark:border-white/5">
-              <span className={`flex items-center justify-center w-12 h-12 rounded-2xl ${cfg.bg} ${cfg.border} border shadow-xs`}>
+            <div className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-neutral-50 dark:bg-white/[0.02] border border-neutral-200/80 dark:border-white/10">
+              <div className={`w-12 h-12 rounded-2xl ${cfg.bg} ${cfg.border} border flex items-center justify-center shrink-0 shadow-xs`}>
                 <cfg.icon size={22} className={cfg.text} />
-              </span>
-              <div>
-                <div className={`text-base font-black ${cfg.text}`}>{cfg.label}</div>
-                <div className="text-[11px] text-neutral-400 font-medium">
+              </div>
+              <div className="min-w-0">
+                <div className={`text-sm font-black ${cfg.text} truncate`}>{cfg.label}</div>
+                <div className="text-[11px] text-neutral-400 mt-0.5">
                   {enquiry.statusHistory.length > 0
                     ? `Updated ${formatDate(enquiry.statusHistory[enquiry.statusHistory.length - 1].occurredAtUtc)}`
                     : `Created ${formatDate(enquiry.createdAtUtc)}`}
@@ -851,34 +889,32 @@ export default function EngineerEnquiryDetailPage() {
               </div>
             </div>
 
-            <div className="space-y-2.5 text-xs">
-              <div className="flex items-center justify-between py-1 border-b border-neutral-100 dark:border-white/5">
-                <span className="text-neutral-500">Evaluation Priority</span>
+            <div className="space-y-2.5 text-xs pt-1">
+              <div className="flex items-center justify-between py-1.5 border-b border-neutral-100 dark:border-white/5">
+                <span className="font-bold text-neutral-500">Evaluation Priority</span>
                 <PriorityBadge priority={enquiry.priority} />
               </div>
-              <div className="flex items-center justify-between py-1 border-b border-neutral-100 dark:border-white/5">
-                <span className="text-neutral-500">Created Timestamp</span>
-                <span className="font-mono text-neutral-700 dark:text-neutral-300">
+              <div className="flex items-center justify-between py-1.5 border-b border-neutral-100 dark:border-white/5">
+                <span className="font-bold text-neutral-500">Submission Date</span>
+                <span className="font-bold text-neutral-800 dark:text-neutral-200">
                   {formatDate(enquiry.createdAtUtc)}
                 </span>
               </div>
-              <div className="flex items-center justify-between py-1">
-                <span className="text-neutral-500">Last System Update</span>
-                <span className="font-mono text-neutral-700 dark:text-neutral-300">
-                  {enquiry.statusHistory.length > 0
-                    ? formatDate(enquiry.statusHistory[enquiry.statusHistory.length - 1].occurredAtUtc)
-                    : formatDate(enquiry.createdAtUtc)}
+              <div className="flex items-center justify-between py-1.5">
+                <span className="font-bold text-neutral-500">Enquiry ID</span>
+                <span className="font-mono font-bold text-neutral-800 dark:text-neutral-200">
+                  {enquiry.id.slice(0, 8)}
                 </span>
               </div>
             </div>
-          </section>
+          </div>
 
-          {/* Audit Timeline Sidebar Card */}
+          {/* Audit Trail Timeline */}
           {enquiry.statusHistory.length > 0 && (
-            <section className="rounded-3xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] p-5 sm:p-6 shadow-xs space-y-4">
-              <div className="flex items-center gap-2 border-b border-neutral-100 dark:border-white/5 pb-3">
+            <div className="rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] p-5 shadow-xs space-y-4">
+              <div className="flex items-center gap-2 border-b border-neutral-100 dark:border-white/10 pb-3">
                 <Clock size={15} className="text-blue-500" />
-                <h3 className="text-xs font-extrabold uppercase tracking-wider text-neutral-400 m-0">
+                <h3 className="text-xs font-black uppercase tracking-wider text-neutral-400 m-0">
                   Audit Progression History
                 </h3>
               </div>
@@ -894,14 +930,14 @@ export default function EngineerEnquiryDetailPage() {
                         {!isLast && <div className="w-0.5 flex-1 bg-neutral-200 dark:bg-white/10 my-1" />}
                       </div>
                       <div className={`${isLast ? "" : "pb-4"} flex-1 min-w-0`}>
-                        <div className="text-xs font-bold text-neutral-900 dark:text-white truncate">
+                        <div className="text-xs font-black text-neutral-900 dark:text-white truncate">
                           {h.fromStatus} → {h.toStatus}
                         </div>
-                        <div className="text-[11px] text-neutral-400 font-mono mt-0.5">
-                          {formatDate(h.occurredAtUtc)} · <span className="font-sans font-bold text-neutral-500">{h.changedByRole}</span>
+                        <div className="text-[11px] text-neutral-400 mt-0.5">
+                          {formatDate(h.occurredAtUtc)} · <span className="font-bold text-neutral-600 dark:text-neutral-300">{h.changedByRole}</span>
                         </div>
                         {h.note && (
-                          <div className="mt-1.5 text-xs text-neutral-700 dark:text-neutral-300 bg-neutral-50 dark:bg-white/[0.03] border border-neutral-100 dark:border-white/5 rounded-xl p-2.5">
+                          <div className="mt-1.5 text-xs text-neutral-700 dark:text-neutral-300 bg-neutral-50 dark:bg-white/[0.03] border border-neutral-100 dark:border-white/5 rounded-xl p-2.5 font-medium leading-relaxed">
                             {h.note}
                           </div>
                         )}
@@ -910,25 +946,25 @@ export default function EngineerEnquiryDetailPage() {
                   );
                 })}
               </div>
-            </section>
+            </div>
           )}
 
-          {/* Internal Comments Sidebar Card */}
+          {/* Internal Engineering Notes */}
           {enquiry.comments.length > 0 && (
-            <section className="rounded-3xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] p-5 sm:p-6 shadow-xs space-y-4">
-              <div className="flex items-center gap-2 border-b border-neutral-100 dark:border-white/5 pb-3">
+            <div className="rounded-2xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] p-5 shadow-xs space-y-4">
+              <div className="flex items-center gap-2 border-b border-neutral-100 dark:border-white/10 pb-3">
                 <MessageSquare size={15} className="text-blue-500" />
-                <h3 className="text-xs font-extrabold uppercase tracking-wider text-neutral-400 m-0">
+                <h3 className="text-xs font-black uppercase tracking-wider text-neutral-400 m-0">
                   Engineering Notes
                 </h3>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 {enquiry.comments.map((c) => (
-                  <div key={c.id} className="p-3 rounded-2xl bg-neutral-50 dark:bg-white/[0.02] border border-neutral-100 dark:border-white/5 space-y-1.5">
+                  <div key={c.id} className="p-3 rounded-xl bg-neutral-50 dark:bg-white/[0.02] border border-neutral-100 dark:border-white/5 space-y-1">
                     <div className="flex items-center justify-between text-[11px]">
-                      <span className="font-bold text-blue-600 dark:text-blue-400">{c.authorRole}</span>
-                      <span className="text-neutral-400 font-mono">{formatDate(c.createdAtUtc)}</span>
+                      <span className="font-extrabold text-blue-600 dark:text-blue-400">{c.authorRole}</span>
+                      <span className="text-neutral-400">{formatDate(c.createdAtUtc)}</span>
                     </div>
                     <p className="text-xs text-neutral-700 dark:text-neutral-300 m-0 leading-relaxed font-medium">
                       {c.message}
@@ -936,98 +972,72 @@ export default function EngineerEnquiryDetailPage() {
                   </div>
                 ))}
               </div>
-            </section>
+            </div>
           )}
         </div>
       </div>
 
-      {/* ── Sticky Bottom Action Bar ────────────────────────────────── */}
-      <div className="rounded-3xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] p-4 sm:px-6 flex items-center justify-between shadow-xs">
-        <div className="flex items-center gap-3">
-          {enquiry.hasDraftQuotation ? (
-            <Link
-              to={`/admin/quotations/${enquiry.draftQuotationId}`}
-              className="inline-flex items-center gap-2 px-5 h-10 rounded-xl border border-amber-300 dark:border-amber-500/40 bg-amber-50 dark:bg-amber-500/10 text-amber-800 dark:text-amber-300 text-xs font-bold hover:bg-amber-100 transition-all no-underline shadow-xs"
-            >
-              <FileEdit size={15} />
-              <span>{enquiry.status === "Approved" ? "View Draft Quote" : "View Quote"}</span>
-            </Link>
-          ) : enquiry.status === "Approved" ? (
-            <button
-              type="button"
-              onClick={() => window.location.assign(`/admin/quotations/new?enquiryId=${enquiry.id}&companyName=${encodeURIComponent(enquiry.companyName)}`)}
-              className="inline-flex items-center gap-2 px-5 h-10 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold shadow-md shadow-emerald-600/25 transition-all cursor-pointer"
-            >
-              <FileEdit size={15} />
-              <span>Generate Quotation</span>
-            </button>
-          ) : null}
-        </div>
-
-        <Link
-          to="/admin/enquiries"
-          className="inline-flex items-center gap-2 px-4 h-9 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#121520] text-xs font-bold text-neutral-600 dark:text-neutral-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all no-underline shadow-xs"
-        >
-          <ArrowLeft size={14} /> Back to Enquiries
-        </Link>
-      </div>
-
-      {/* ── Reject Modal ────────────────────────────────────────────── */}
+      {/* ── Custom Reject Modal (Zero native popups) ─────────────────────── */}
       {showRejectModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150" onClick={() => { setShowRejectModal(false); setRejectReason(""); }}>
           <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
-            onClick={() => { setShowRejectModal(false); setRejectReason(""); }}
-          />
-          <div className="relative w-full max-w-md rounded-3xl border border-neutral-200/90 dark:border-white/10 bg-white dark:bg-[#0f121a] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="h-1.5 bg-gradient-to-r from-rose-500 to-rose-600" />
-            <div className="p-6 sm:p-7 space-y-5">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 border border-rose-200 dark:border-rose-500/20">
-                  <XCircle size={24} />
+            className="w-full max-w-md bg-white dark:bg-[#121520] rounded-2xl border border-neutral-200 dark:border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+          >
+            <div className="px-6 py-4 border-b border-neutral-100 dark:border-white/10 flex items-center justify-between bg-rose-500/5 text-rose-600 dark:text-rose-400">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-rose-500/10 flex items-center justify-center">
+                  <XCircle size={18} />
                 </div>
-                <div>
-                  <h3 className="text-lg font-extrabold text-neutral-900 dark:text-white m-0">Reject Enquiry</h3>
-                  <p className="text-xs text-neutral-400 m-0 mt-0.5">Please provide a clear reason for administrative record.</p>
-                </div>
+                <h3 className="font-extrabold text-sm m-0">Reject Enquiry</h3>
               </div>
+              <button onClick={() => { setShowRejectModal(false); setRejectReason(""); }} className="p-1 rounded-lg text-neutral-400 hover:text-neutral-700 dark:hover:text-white cursor-pointer">
+                <XCircle size={16} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <p className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed m-0">
+                Please provide an engineering rationale for declining this enquiry. This note will be recorded in the audit log.
+              </p>
 
               <div>
                 <label className="text-xs font-bold text-neutral-700 dark:text-neutral-300 block mb-1.5">
-                  Rejection Reason / Note
+                  Rejection Reason / Engineering Note *
                 </label>
                 <textarea
                   value={rejectReason}
                   onChange={(e) => setRejectReason(e.target.value)}
                   rows={3}
-                  placeholder="e.g. Incompatible metallurgy standard or unsupported casting dimensions..."
-                  className="w-full rounded-2xl border border-neutral-200 dark:border-white/10 bg-neutral-50 dark:bg-[#121520] p-3.5 text-xs text-neutral-900 dark:text-white placeholder:text-neutral-400 outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 resize-none font-medium"
+                  placeholder="e.g. Incompatible metallurgy grade or casting volume exceeds single-pour foundry capacity..."
+                  className="w-full rounded-xl border border-neutral-200 dark:border-white/10 bg-neutral-50 dark:bg-white/5 p-3.5 text-xs text-neutral-900 dark:text-white placeholder:text-neutral-400 outline-none focus:border-rose-500 resize-none font-medium"
                 />
               </div>
+            </div>
 
-              <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-neutral-100 dark:border-white/5">
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => { setShowRejectModal(false); setRejectReason(""); }}
-                  className="px-4.5 h-10 rounded-xl border border-neutral-200 dark:border-white/10 text-xs font-bold text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-white/5 transition-all cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  disabled={busy || !rejectReason.trim()}
-                  onClick={() => {
-                    void updateStatus("Rejected", rejectReason.trim());
-                    setShowRejectModal(false);
-                    setRejectReason("");
-                  }}
-                  className="px-5 h-10 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white text-xs font-bold disabled:opacity-50 transition-all flex items-center gap-2 shadow-sm shadow-rose-500/20 cursor-pointer"
-                >
-                  {busy ? <Loader2 size={14} className="animate-spin" /> : <XCircle size={14} />}
-                  <span>{busy ? "Rejecting..." : "Confirm Rejection"}</span>
-                </button>
-              </div>
+            <div className="px-6 py-4 bg-neutral-50 dark:bg-white/[0.02] border-t border-neutral-100 dark:border-white/10 flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => { setShowRejectModal(false); setRejectReason(""); }}
+                className="px-4 py-2 rounded-xl border border-neutral-200 dark:border-white/10 text-xs font-bold text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/5 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={busy || !rejectReason.trim()}
+                onClick={() => {
+                  void updateStatus("Rejected", rejectReason.trim());
+                  setShowRejectModal(false);
+                  setRejectReason("");
+                }}
+                className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-black disabled:opacity-50 transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
+              >
+                {busy ? <Loader2 size={13} className="animate-spin" /> : <XCircle size={13} />}
+                <span>Confirm Rejection</span>
+              </button>
             </div>
           </div>
         </div>

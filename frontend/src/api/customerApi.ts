@@ -138,9 +138,13 @@ export interface OrderDetail {
   quotationId: string | null;
   companyName?: string | null;
   manufacturingStage?: string | null;
+  stageUpdatedAt?: string | null;
   advancePaid?: boolean;
   advanceAmount?: number | null;
   advancePercent?: number;
+  advancePaidAtUtc?: string | null;
+  advancePaymentRef?: string | null;
+  advanceVerifiedAtUtc?: string | null;
   quotationTotal?: number | null;
   quotationSubtotal?: number | null;
   quotationTax?: number | null;
@@ -187,6 +191,7 @@ export interface OrderDetail {
   documents: DocumentItem[];
   assignedToUserId: string | null;
   assignedToName: string | null;
+  milestones?: { id: string; statusCode: string; customerMessage: string | null; occurredAtUtc: string }[];
 }
 
 export interface Shipment {

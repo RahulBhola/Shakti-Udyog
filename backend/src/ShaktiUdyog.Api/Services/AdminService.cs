@@ -66,7 +66,7 @@ public class AdminService : IAdminService
 
         var query = includeDeleted
             ? db.Enquiries.IgnoreQueryFilters().AsQueryable()
-            : db.Enquiries.AsQueryable();
+            : db.Enquiries.Where(r => !r.IsDeleted).AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(search))
         {

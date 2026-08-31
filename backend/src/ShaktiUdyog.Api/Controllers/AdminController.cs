@@ -898,10 +898,11 @@ public class AdminController(IAdminService adminService, IOrderAdminService orde
         var enquiry = await db.Enquiries.FindAsync(id);
         if (enquiry is null) return NotFound(new { message = "Enquiry not found." });
 
-        await DeleteEnquiriesAndRelatedDataAsync(db, [id]);
+        enquiry.IsDeleted = true;
+        enquiry.DeletedAtUtc = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync();
 
-        return Ok(new { message = "Enquiry and associated records deleted permanently." });
+        return Ok(new { message = "Enquiry removed from active queue." });
     }
 
     [HttpPost("enquiries/bulk-delete")]
@@ -914,10 +915,15 @@ public class AdminController(IAdminService adminService, IOrderAdminService orde
             return BadRequest(new { message = "No enquiry IDs provided for deletion." });
         }
 
-        await DeleteEnquiriesAndRelatedDataAsync(db, request.Ids);
+        var enquiries = await db.Enquiries.Where(e => request.Ids.Contains(e.Id)).ToListAsync();
+        foreach (var e in enquiries)
+        {
+            e.IsDeleted = true;
+            e.DeletedAtUtc = DateTimeOffset.UtcNow;
+        }
         await db.SaveChangesAsync();
 
-        return Ok(new { message = $"Successfully deleted {request.Ids.Count} enquiries.", deletedCount = request.Ids.Count });
+        return Ok(new { message = $"Successfully removed {enquiries.Count} enquiries from active queue.", deletedCount = enquiries.Count });
     }
 
     

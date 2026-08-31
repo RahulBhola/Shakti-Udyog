@@ -432,8 +432,8 @@ export default function EngineerBoardPage() {
 
       {/* ── View Tab 1: KANBAN BOARD VIEW ──────────────────────────────────── */}
       {viewTab === "board" && (
-        <div className="overflow-x-auto pb-6 -mx-1 px-1 custom-scrollbar">
-          <div className="flex gap-4 items-start w-max min-w-full">
+        <div className="overflow-x-auto pb-4 -mx-1 px-1 custom-scrollbar">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3.5 items-start min-w-[280px] xl:min-w-0">
             {byColumn.map(({ column, items }, colIndex) => {
               const Icon = column.icon;
               const droppable = draggedId !== null && canDropOn(column.code);
@@ -452,36 +452,36 @@ export default function EngineerBoardPage() {
                       void handleDrop(column.code);
                     }
                   }}
-                  className={`w-[340px] sm:w-[350px] shrink-0 flex flex-col rounded-3xl border bg-neutral-50/70 dark:bg-[#0c0e14] p-3.5 transition-all min-h-[560px] ${
+                  className={`flex flex-col rounded-2xl border bg-neutral-50/70 dark:bg-[#0c0e14] p-3 transition-all min-h-[440px] ${
                     droppable
                       ? "border-dashed border-2 border-blue-500 bg-blue-500/5 dark:bg-blue-500/10 shadow-md ring-2 ring-blue-500/20"
                       : "border-neutral-200/90 dark:border-white/10"
                   }`}
                 >
                   {/* Column Header */}
-                  <div className="p-3.5 mb-2.5 rounded-2xl bg-white dark:bg-[#121520] border border-neutral-200/80 dark:border-white/10 shadow-xs">
-                    <div className="flex items-center justify-between gap-2 mb-1.5">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className={`p-1.5 rounded-xl ${column.badgeBg} ${column.badgeText} shrink-0`}>
-                          <Icon size={17} className="stroke-[2.2]" />
+                  <div className="p-3 mb-2.5 rounded-xl bg-white dark:bg-[#121520] border border-neutral-200/80 dark:border-white/10 shadow-2xs">
+                    <div className="flex items-center justify-between gap-1.5 mb-1">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className={`p-1.5 rounded-lg ${column.badgeBg} ${column.badgeText} shrink-0`}>
+                          <Icon size={15} className="stroke-[2.2]" />
                         </div>
-                        <span className="text-[13px] font-extrabold text-neutral-900 dark:text-white leading-tight">
+                        <span className="text-xs font-black text-neutral-900 dark:text-white leading-tight truncate">
                           {column.label}
                         </span>
                       </div>
                       <span
-                        className={`inline-flex items-center justify-center min-w-6 h-6 px-1.5 rounded-full text-xs font-extrabold ${column.badgeBg} ${column.badgeText} shrink-0`}
+                        className={`inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full text-[11px] font-black ${column.badgeBg} ${column.badgeText} shrink-0`}
                       >
                         {items.length}
                       </span>
                     </div>
-                    <div className="text-[11px] text-neutral-400 font-medium leading-tight">
+                    <div className="text-[10.5px] text-neutral-400 font-medium leading-tight truncate">
                       {column.description}
                     </div>
                   </div>
 
                   {/* Order Cards Container */}
-                  <div className="flex-1 space-y-3 overflow-y-auto max-h-[calc(100vh-280px)] pr-0.5">
+                  <div className="flex-1 space-y-2.5">
                     {items.map((order) => (
                       <OrderCard
                         key={order.id}
@@ -502,8 +502,8 @@ export default function EngineerBoardPage() {
                     ))}
 
                     {items.length === 0 && (
-                      <div className="flex flex-col items-center justify-center py-14 px-3 text-center border border-dashed border-neutral-200 dark:border-white/10 rounded-2xl">
-                        <span className="text-xs font-medium text-neutral-400">No orders in this stage</span>
+                      <div className="flex flex-col items-center justify-center py-12 px-2 text-center border border-dashed border-neutral-200 dark:border-white/10 rounded-xl">
+                        <span className="text-[11px] font-medium text-neutral-400">No orders in this stage</span>
                       </div>
                     )}
                   </div>
@@ -544,7 +544,7 @@ function formatCardDate(iso?: string | null): { date: string; time: string } {
   }
 }
 
-/* ── Modern Rich Order Card Component ───────────────────────────────────────── */
+/* ── Modern High-Density Order Card Component ─────────────────────────────── */
 
 function OrderCard({
   order,
@@ -598,23 +598,20 @@ function OrderCard({
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
       onClick={onOpenStory}
-      className={`group relative rounded-2xl bg-white dark:bg-[#121520] border border-neutral-200/90 dark:border-white/10 p-4 shadow-xs hover:shadow-lg transition-all duration-200 cursor-pointer active:cursor-grabbing hover:border-blue-500/40 select-none ${
+      className={`group relative rounded-2xl bg-white dark:bg-[#121520] border border-neutral-200/90 dark:border-white/10 p-3 shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer active:cursor-grabbing hover:border-blue-500/40 select-none space-y-2.5 ${
         isDragging ? "opacity-40 scale-95 ring-2 ring-blue-500" : ""
       }`}
     >
-      {/* ── 1. Top Section: ORDER ID, Kebab Menu, and Quantity ── */}
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0 flex-1">
-          <span className="block text-[9.5px] font-extrabold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">
-            ORDER ID
-          </span>
-          <div className="text-[13.5px] font-bold text-neutral-900 dark:text-white tracking-tight leading-snug mt-0.5 font-mono">
+      {/* ── 1. Top Row: Order ID Mono Badge, Quantity Pill, Kebab Menu ── */}
+      <div className="flex items-center justify-between gap-1.5">
+        <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
+          <span className="font-mono text-[11px] font-black text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-md bg-blue-500/10 dark:bg-blue-500/15 border border-blue-500/20">
             {order.orderNumber}
-          </div>
-          <div className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 font-bold text-xs mt-1">
-            <Package size={13} className="stroke-[2.2] shrink-0" />
+          </span>
+          <span className="inline-flex items-center gap-1 text-[10.5px] font-bold text-neutral-600 dark:text-neutral-300 px-1.5 py-0.5 rounded-md bg-neutral-100 dark:bg-white/5 border border-neutral-200/80 dark:border-white/10">
+            <Package size={11} className="text-neutral-400 stroke-[2.2]" />
             <span>{order.totalQuantity} pcs</span>
-          </div>
+          </span>
         </div>
 
         {/* 3-Dots Kebab Menu */}
@@ -625,14 +622,14 @@ function OrderCard({
               e.stopPropagation();
               setShowMenu((prev) => !prev);
             }}
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-neutral-700 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
+            className="w-6 h-6 rounded-md flex items-center justify-center text-neutral-400 hover:text-neutral-700 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
             title="More Options"
           >
-            <MoreVertical size={15} />
+            <MoreVertical size={14} />
           </button>
 
           {showMenu && (
-            <div className="absolute right-0 top-8 z-30 w-44 rounded-xl bg-white dark:bg-[#161a26] border border-neutral-200 dark:border-white/10 shadow-xl py-1.5 text-xs animate-in fade-in zoom-in-95 duration-150">
+            <div className="absolute right-0 top-7 z-30 w-44 rounded-xl bg-white dark:bg-[#161a26] border border-neutral-200 dark:border-white/10 shadow-xl py-1 text-xs animate-in fade-in zoom-in-95 duration-150">
               <button
                 type="button"
                 onClick={(e) => {
@@ -640,7 +637,7 @@ function OrderCard({
                   setShowMenu(false);
                   onOpenStory();
                 }}
-                className="w-full px-3.5 py-2 text-left text-neutral-700 dark:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-white/5 flex items-center gap-2 cursor-pointer font-semibold"
+                className="w-full px-3 py-1.5 text-left text-neutral-700 dark:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-white/5 flex items-center gap-2 cursor-pointer font-semibold"
               >
                 <MessageSquare size={13} className="text-blue-500" />
                 <span>Order Story & Notes</span>
@@ -652,7 +649,7 @@ function OrderCard({
                   setShowMenu(false);
                   onView();
                 }}
-                className="w-full px-3.5 py-2 text-left text-neutral-700 dark:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-white/5 flex items-center gap-2 cursor-pointer font-semibold"
+                className="w-full px-3 py-1.5 text-left text-neutral-700 dark:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-white/5 flex items-center gap-2 cursor-pointer font-semibold"
               >
                 <ExternalLink size={13} className="text-neutral-400" />
                 <span>Full Order Details</span>
@@ -662,113 +659,78 @@ function OrderCard({
         </div>
       </div>
 
-      {/* ── Divider ── */}
-      <div className="border-t border-neutral-100 dark:border-white/5 my-2.5" />
+      {/* ── 2. Part Name & Client ── */}
+      <div className="min-w-0">
+        <h4 className="text-xs font-black text-neutral-900 dark:text-white truncate m-0 leading-tight">
+          {order.productType || "Grey Iron Casting"}
+        </h4>
+        <p className="text-[10.5px] font-medium text-neutral-500 dark:text-neutral-400 truncate mt-0.5 m-0">
+          {order.companyName || "Direct Client"}
+        </p>
+      </div>
 
-      {/* ── 2. Part Name & Company ── */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-blue-50/80 dark:bg-blue-500/10 border border-blue-100/80 dark:border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0 shadow-2xs">
-          <Boxes size={18} className="stroke-[1.8]" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <span className="block text-[9.5px] font-extrabold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">
-            PART NAME
+      {/* ── 3. Compact Info Bar: Advance Status, Assigned Avatar, Timestamp ── */}
+      <div className="flex items-center justify-between gap-1.5 pt-1.5 border-t border-neutral-100 dark:border-white/5 text-[10px]">
+        {/* Status Pill */}
+        {order.advancePaid ? (
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 whitespace-nowrap">
+            <CheckCircle2 size={10} className="stroke-[2.5]" />
+            <span>Adv. Verified</span>
           </span>
-          <div className="text-[13px] font-extrabold text-neutral-900 dark:text-white truncate leading-snug mt-0.5">
-            {order.productType || "Grey Iron Casting"}
-          </div>
-          <div className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400 truncate mt-0.5">
-            {order.companyName || "Direct Client"}
-          </div>
-        </div>
-      </div>
+        ) : (
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 whitespace-nowrap">
+            <Clock size={10} className="stroke-[2.5]" />
+            <span>Adv. Pending</span>
+          </span>
+        )}
 
-      {/* ── Divider ── */}
-      <div className="border-t border-neutral-100 dark:border-white/5 my-2.5" />
-
-      {/* ── 3. 3-Column Info Grid: STATUS, UPDATED, ASSIGNED TO ── */}
-      <div className="grid grid-cols-3 gap-1.5 items-start">
-        {/* Column 1: STATUS */}
-        <div className="min-w-0">
-          <div className="flex items-center gap-1 text-[9.5px] font-extrabold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">
-            <CheckCircle2 size={11} className="text-emerald-500 shrink-0 stroke-[2.2]" />
-            <span className="truncate">STATUS</span>
-          </div>
-          <div className="mt-1">
-            {order.advancePaid ? (
-              <span className="inline-block px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 whitespace-nowrap">
-                Advance Verified
-              </span>
-            ) : (
-              <span className="inline-block px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 whitespace-nowrap">
-                Adv. Pending
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Column 2: UPDATED */}
-        <div className="min-w-0 border-l border-neutral-100 dark:border-white/5 pl-2">
-          <div className="flex items-center gap-1 text-[9.5px] font-extrabold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">
-            <Calendar size={11} className="text-indigo-500 shrink-0" />
-            <span className="truncate">UPDATED</span>
-          </div>
-          <div className="mt-0.5">
-            <div className="text-[11px] font-extrabold text-neutral-900 dark:text-white leading-tight whitespace-nowrap">
-              {updatedDate}
-            </div>
-            {updatedTime && (
-              <div className="text-[9.5px] font-medium text-neutral-400 dark:text-neutral-500 leading-tight mt-0.5 whitespace-nowrap">
-                {updatedTime}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Column 3: ASSIGNED TO */}
-        <div className="min-w-0 border-l border-neutral-100 dark:border-white/5 pl-2">
-          <div className="flex items-center gap-1 text-[9.5px] font-extrabold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">
-            <User size={11} className="text-amber-500 shrink-0" />
-            <span className="truncate">ASSIGNED</span>
-          </div>
-          <div className="mt-1 flex items-center">
-            <div
-              className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center font-black text-[10.5px] shadow-xs"
-              title={order.assignedToUserName || "Primary Staff Engineer"}
-            >
-              {engineerInitial}
-            </div>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <span className="text-neutral-400 font-medium whitespace-nowrap" title={`${updatedDate} ${updatedTime}`}>
+            {updatedDate}
+          </span>
+          <div
+            className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center font-black text-[9px] shadow-2xs shrink-0"
+            title={order.assignedToUserName || "Primary Staff Engineer"}
+          >
+            {engineerInitial}
           </div>
         </div>
       </div>
 
-      {/* ── Divider ── */}
-      <div className="border-t border-neutral-100 dark:border-white/5 my-2.5" />
+      {/* ── 4. Compact Quick Action Stepper Buttons ── */}
+      <div className="pt-0.5 flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+        {prevColumn && colIndex > 0 && (
+          <button
+            type="button"
+            title={`Move back to ${prevColumn.label}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onRegress?.();
+            }}
+            disabled={isMoving}
+            className="flex-1 inline-flex items-center justify-center gap-1 h-7 px-2 rounded-lg text-[10.5px] font-bold text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-white/5 hover:bg-neutral-200 dark:hover:bg-white/10 border border-neutral-200/80 dark:border-white/10 transition-colors disabled:opacity-50 cursor-pointer whitespace-nowrap"
+          >
+            <ArrowLeft size={11} />
+            <span className="truncate">{prevColumn.shortLabel}</span>
+          </button>
+        )}
 
-      {/* ── 4. QUICK ACTIONS Section ── */}
-      <div onClick={(e) => e.stopPropagation()}>
-        <span className="block text-[9.5px] font-extrabold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-1.5">
-          QUICK ACTIONS
-        </span>
-
-        <div className="flex items-center gap-2">
-          {prevColumn && colIndex > 0 && (
-            <button
-              type="button"
-              title={`Move back to ${prevColumn.label}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                onRegress?.();
-              }}
-              disabled={isMoving}
-              className="flex-1 inline-flex items-center justify-center gap-1 py-2 px-2.5 rounded-xl text-[11.5px] font-bold text-neutral-700 dark:text-neutral-200 bg-white dark:bg-[#161a26] border border-neutral-200 dark:border-white/10 hover:bg-neutral-50 dark:hover:bg-white/5 transition-all shadow-2xs disabled:opacity-50 cursor-pointer whitespace-nowrap"
-            >
-              <ArrowLeft size={12} className="shrink-0" />
-              <span>{prevColumn.shortLabel}</span>
-            </button>
-          )}
-
-          {nextColumn && colIndex < 4 ? (
+        {nextColumn && colIndex < 4 ? (
+          <button
+            type="button"
+            title={`Advance to ${nextColumn.label}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onAdvance?.();
+            }}
+            disabled={isMoving}
+            className="flex-1 inline-flex items-center justify-center gap-1 h-7 px-2 rounded-lg text-[10.5px] font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-xs shadow-blue-500/20 disabled:opacity-50 cursor-pointer whitespace-nowrap"
+          >
+            <span className="truncate">{isMoving ? "Moving..." : nextColumn.shortLabel}</span>
+            <ArrowRight size={11} />
+          </button>
+        ) : !prevColumn || colIndex === 0 ? (
+          nextColumn && (
             <button
               type="button"
               title={`Advance to ${nextColumn.label}`}
@@ -777,41 +739,25 @@ function OrderCard({
                 onAdvance?.();
               }}
               disabled={isMoving}
-              className="flex-1 inline-flex items-center justify-center gap-1 py-2 px-2.5 rounded-xl text-[11.5px] font-bold text-white bg-blue-600 hover:bg-blue-700 transition-all shadow-sm shadow-blue-500/25 disabled:opacity-50 cursor-pointer whitespace-nowrap"
+              className="w-full inline-flex items-center justify-center gap-1 h-7 px-2 rounded-lg text-[10.5px] font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-xs shadow-blue-500/20 disabled:opacity-50 cursor-pointer"
             >
               <span>{isMoving ? "Moving..." : nextColumn.shortLabel}</span>
-              <ArrowRight size={12} className="shrink-0" />
+              <ArrowRight size={11} />
             </button>
-          ) : !prevColumn || colIndex === 0 ? (
-            nextColumn && (
-              <button
-                type="button"
-                title={`Advance to ${nextColumn.label}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onAdvance?.();
-                }}
-                disabled={isMoving}
-                className="w-full inline-flex items-center justify-center gap-1 py-2 px-2.5 rounded-xl text-[11.5px] font-bold text-white bg-blue-600 hover:bg-blue-700 transition-all shadow-sm shadow-blue-500/25 disabled:opacity-50 cursor-pointer"
-              >
-                <span>{isMoving ? "Moving..." : nextColumn.shortLabel}</span>
-                <ArrowRight size={12} className="shrink-0" />
-              </button>
-            )
-          ) : (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onView();
-              }}
-              className="flex-1 inline-flex items-center justify-center gap-1 py-2 px-2.5 rounded-xl text-[11.5px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-all shadow-sm shadow-emerald-500/25 cursor-pointer"
-            >
-              <span>View Order</span>
-              <ExternalLink size={12} className="shrink-0" />
-            </button>
-          )}
-        </div>
+          )
+        ) : (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onView();
+            }}
+            className="flex-1 inline-flex items-center justify-center gap-1 h-7 px-2 rounded-lg text-[10.5px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors shadow-xs shadow-emerald-500/20 cursor-pointer"
+          >
+            <span>View Order</span>
+            <ExternalLink size={11} />
+          </button>
+        )}
       </div>
     </div>
   );
@@ -876,6 +822,14 @@ function OrderStoryDrawer({
   useEffect(() => {
     void loadDetails();
   }, [loadDetails]);
+
+  useEffect(() => {
+    const orig = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = orig;
+    };
+  }, []);
 
   const handlePostComment = async (e: React.FormEvent) => {
     e.preventDefault();

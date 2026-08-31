@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
+import { Link } from "react-router-dom";
 import { apiGet } from "../../api/client";
 import { Loading } from "../../components/ui";
 import {
@@ -6,6 +8,7 @@ import {
   X, Eye, Download, Filter, FileSearch, Wrench, Building2,
   CheckCircle2, XCircle, PlusCircle, Edit3, Trash2, ArrowRightCircle, Cpu, Copy, Check,
   Layers, Package, Receipt, CreditCard, Tag, Settings as SettingsIcon, ChevronDown, ChevronUp, AlertTriangle,
+  ExternalLink,
   type LucideIcon,
 } from "lucide-react";
 import "./erpListView.css";
@@ -152,9 +155,28 @@ function formatDateTime(iso: string): { date: string; time: string } {
   };
 }
 
-/* ------------------------------------------------------------------ */
-/*  Audit Event Details RHS Drawer                                     */
-/* ------------------------------------------------------------------ */
+function getEntityLink(entityType?: string | null, entityId?: string | null): { label: string; url: string } | null {
+  if (!entityId) return null;
+  const t = (entityType || "").toLowerCase();
+  if (t === "order") return { label: "Open Order Details", url: `/admin/orders/${entityId}` };
+  if (t === "enquiry") return { label: "Open Enquiry Specs", url: `/admin/enquiries/${entityId}` };
+  if (t === "quotation" || t === "quote") return { label: "Open Quotation", url: `/admin/quotations/${entityId}` };
+  if (t === "invoice") return { label: "Open Deal & Invoice", url: `/admin/deals/${entityId}?invoice=${entityId}` };
+  if (t === "user") return { label: "Manage Users", url: `/admin/users` };
+  if (t === "company") return { label: "Manage Companies", url: `/admin/companies` };
+  if (t === "product") return { label: "Manage Products", url: `/admin/products` };
+  return null;
+}
+
+function formatJsonPayload(str: string | null): string {
+  if (!str) return "";
+  try {
+    const parsed = JSON.parse(str);
+    return JSON.stringify(parsed, null, 2);
+  } catch {
+    return str;
+  }
+}
 
 function AuditEventDrawer({
   item,
@@ -166,11 +188,13 @@ function AuditEventDrawer({
   onClose: () => void;
 }) {
   const [copiedId, setCopiedId] = useState(false);
+  const [copiedPayload, setCopiedPayload] = useState(false);
   const actionMeta = parseAction(item);
   const module = moduleOf(item);
   const ModIcon = moduleIcon(module);
   const modColors = moduleColor(module);
   const dt = formatDateTime(item.occurredAtUtc);
+  const entityLink = getEntityLink(item.entityType, item.entityId);
 
   const copyEntityId = () => {
     if (!item.entityId) return;
@@ -179,11 +203,24 @@ function AuditEventDrawer({
     setTimeout(() => setCopiedId(false), 2000);
   };
 
-  return (
+  const copyFullPayload = () => {
+    const payload = item.newValues || item.oldValues || item.action;
+    navigator.clipboard.writeText(payload);
+    setCopiedPayload(true);
+    setTimeout(() => setCopiedPayload(false), 2000);
+  };
+
+  return createPortal(
     <>
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-40 animate-in fade-in duration-200" onClick={onClose} />
+      {/* ── Clear, non-smearing backdrop overlay attached to document.body ── */}
       <div
-        className="fixed inset-y-0 right-0 z-50 w-full max-w-xl bg-white dark:bg-[#0c0f17] border-l border-neutral-200 dark:border-white/10 shadow-2xl flex flex-col h-full animate-in slide-in-from-right duration-300"
+        className="fixed inset-0 bg-black/30 dark:bg-black/60 z-[9998] animate-in fade-in duration-150 cursor-pointer"
+        onClick={onClose}
+        title="Click to dismiss drawer"
+      />
+
+      <div
+        className="fixed inset-y-0 right-0 z-[9999] w-full max-w-xl bg-white dark:bg-[#0c0f17] border-l border-neutral-200 dark:border-white/10 shadow-2xl flex flex-col h-full animate-in slide-in-from-right duration-250"
         role="dialog"
         onClick={(e) => e.stopPropagation()}
       >
@@ -195,30 +232,33 @@ function AuditEventDrawer({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-extrabold text-base text-neutral-900 dark:text-white m-0">
+                <h3 className="font-black text-base text-neutral-900 dark:text-white m-0">
                   {actionMeta.label}
                 </h3>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-neutral-100 dark:bg-white/10 text-neutral-600 dark:text-neutral-300">
                   #{item.id}
                 </span>
               </div>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400 m-0 mt-0.5">
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 m-0 mt-0.5 font-medium">
                 {dt.date} at {dt.time}
               </p>
             </div>
           </div>
+
           <button
+            type="button"
             onClick={onClose}
             className="w-9 h-9 rounded-xl border border-neutral-200 dark:border-white/10 flex items-center justify-center text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
+            title="Close Drawer"
           >
             <X size={16} />
           </button>
         </div>
 
         {/* Drawer Content */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div className="flex-1 overflow-y-auto p-6 space-y-5">
           {/* Actor Profile Card */}
-          <div className="rounded-2xl border border-neutral-200/80 dark:border-white/10 bg-neutral-50/70 dark:bg-white/[0.02] p-4 space-y-3">
+          <div className="rounded-2xl border border-neutral-200/80 dark:border-white/10 bg-neutral-50/70 dark:bg-white/[0.02] p-4 space-y-3 shadow-xs">
             <div className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-400">
               Triggered By (Actor)
             </div>
@@ -226,17 +266,17 @@ function AuditEventDrawer({
               {userInfo ? (
                 <>
                   <div
-                    className="w-11 h-11 rounded-xl flex items-center justify-center font-extrabold text-sm border shadow-xs"
+                    className="w-11 h-11 rounded-xl flex items-center justify-center font-black text-sm border shadow-xs shrink-0"
                     style={{ ...getAvatarStyle(userInfo.name) }}
                   >
                     {initials(userInfo.name)}
                   </div>
-                  <div>
-                    <div className="font-extrabold text-sm text-neutral-900 dark:text-white">
+                  <div className="min-w-0">
+                    <div className="font-extrabold text-sm text-neutral-900 dark:text-white truncate">
                       {userInfo.name}
                     </div>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-xs text-neutral-500 font-mono">
+                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                      <span className="text-xs text-neutral-500 font-mono font-bold">
                         {userInfo.role === "Admin" ? "Administrator" : userInfo.role}
                       </span>
                       {item.ipAddress && (
@@ -249,15 +289,15 @@ function AuditEventDrawer({
                 </>
               ) : (
                 <>
-                  <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-blue-500/15 text-blue-500 border border-blue-500/30">
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-blue-500/15 text-blue-500 border border-blue-500/30 shrink-0">
                     <Cpu size={20} />
                   </div>
                   <div>
                     <div className="font-extrabold text-sm text-neutral-900 dark:text-white">
                       System Automated Engine
                     </div>
-                    <div className="text-xs text-neutral-500 mt-0.5">
-                      Background event / automated trigger
+                    <div className="text-xs text-neutral-500 mt-0.5 font-medium">
+                      Background event / automated transaction trigger
                     </div>
                   </div>
                 </>
@@ -268,7 +308,7 @@ function AuditEventDrawer({
           {/* Module & Entity Meta */}
           <div className="grid grid-cols-2 gap-3">
             <div className="p-4 rounded-2xl border border-neutral-200/80 dark:border-white/10 bg-white dark:bg-[#121520] shadow-xs">
-              <div className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Module</div>
+              <div className="text-[11px] font-extrabold text-neutral-400 uppercase tracking-wider">Module</div>
               <div className="flex items-center gap-2 mt-2">
                 <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border ${modColors.bg} ${modColors.text} ${modColors.border}`}>
                   <ModIcon size={13} />
@@ -278,56 +318,88 @@ function AuditEventDrawer({
             </div>
 
             <div className="p-4 rounded-2xl border border-neutral-200/80 dark:border-white/10 bg-white dark:bg-[#121520] shadow-xs">
-              <div className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Entity Type</div>
+              <div className="text-[11px] font-extrabold text-neutral-400 uppercase tracking-wider">Entity Type</div>
               <div className="font-mono font-bold text-sm text-neutral-900 dark:text-white mt-2">
                 {item.entityType || "General System"}
               </div>
             </div>
           </div>
 
-          {/* Entity GUID with 1-Click Copy */}
+          {/* Entity GUID with 1-Click Copy & Direct Page Link */}
           {item.entityId && (
-            <div className="p-4 rounded-2xl border border-neutral-200/80 dark:border-white/10 bg-white dark:bg-[#121520] shadow-xs flex items-center justify-between gap-3">
-              <div>
-                <div className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Target Entity ID</div>
-                <div className="font-mono font-bold text-xs text-neutral-800 dark:text-neutral-200 mt-1 select-all break-all">
+            <div className="p-4 rounded-2xl border border-neutral-200/80 dark:border-white/10 bg-white dark:bg-[#121520] shadow-xs space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-[11px] font-extrabold text-neutral-400 uppercase tracking-wider">
+                  Target Entity ID & Quick Navigation
+                </div>
+                {entityLink && (
+                  <Link
+                    to={entityLink.url}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold transition-all shadow-xs no-underline"
+                  >
+                    <ExternalLink size={12} />
+                    <span>{entityLink.label}</span>
+                  </Link>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between gap-3 p-2.5 rounded-xl bg-neutral-50 dark:bg-black/30 border border-neutral-200/70 dark:border-white/5">
+                <div className="font-mono font-bold text-xs text-neutral-900 dark:text-neutral-100 select-all break-all">
                   {item.entityId}
                 </div>
+                <button
+                  type="button"
+                  onClick={copyEntityId}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#0c0f17] hover:bg-neutral-100 dark:hover:bg-white/5 text-xs font-bold text-neutral-700 dark:text-neutral-300 transition-colors shrink-0 cursor-pointer shadow-xs"
+                >
+                  {copiedId ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
+                  <span>{copiedId ? "Copied" : "Copy"}</span>
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={copyEntityId}
-                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-neutral-200 dark:border-white/10 hover:bg-neutral-100 dark:hover:bg-white/5 text-xs font-bold text-neutral-700 dark:text-neutral-300 transition-colors shrink-0 cursor-pointer"
-              >
-                {copiedId ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
-                <span>{copiedId ? "Copied" : "Copy"}</span>
-              </button>
             </div>
           )}
 
           {/* Detailed Changes / Payload Inspection */}
           <div className="rounded-2xl border border-neutral-200/80 dark:border-white/10 bg-white dark:bg-[#121520] p-4 space-y-3 shadow-xs">
-            <div className="text-xs font-extrabold uppercase tracking-wider text-neutral-400 pb-2 border-b border-neutral-100 dark:border-white/5">
-              Event Payload & Changes
+            <div className="flex items-center justify-between pb-2 border-b border-neutral-100 dark:border-white/5">
+              <div className="text-xs font-extrabold uppercase tracking-wider text-neutral-400">
+                Event Payload & Changes
+              </div>
+              {(item.newValues || item.oldValues) && (
+                <button
+                  type="button"
+                  onClick={copyFullPayload}
+                  className="text-xs text-neutral-500 hover:text-orange-500 font-bold inline-flex items-center gap-1 cursor-pointer"
+                >
+                  {copiedPayload ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
+                  <span>{copiedPayload ? "Copied Payload" : "Copy JSON"}</span>
+                </button>
+              )}
             </div>
 
-            {item.newValues ? (
+            {item.newValues && (
               <div>
-                <div className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 mb-1">New State / Payload:</div>
-                <pre className="p-3 rounded-xl bg-neutral-50 dark:bg-black/40 border border-neutral-200/70 dark:border-white/5 text-xs font-mono text-neutral-800 dark:text-neutral-200 overflow-x-auto whitespace-pre-wrap">
-                  {item.newValues}
+                <div className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 mb-1 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  <span>New State / Recorded Payload:</span>
+                </div>
+                <pre className="p-3.5 rounded-xl bg-neutral-50 dark:bg-black/40 border border-neutral-200/70 dark:border-white/5 text-xs font-mono text-neutral-800 dark:text-neutral-200 overflow-x-auto whitespace-pre-wrap leading-relaxed">
+                  {formatJsonPayload(item.newValues)}
                 </pre>
               </div>
-            ) : null}
+            )}
 
-            {item.oldValues ? (
+            {item.oldValues && (
               <div>
-                <div className="text-[11px] font-bold text-amber-600 dark:text-amber-400 mb-1">Previous State:</div>
-                <pre className="p-3 rounded-xl bg-neutral-50 dark:bg-black/40 border border-neutral-200/70 dark:border-white/5 text-xs font-mono text-neutral-800 dark:text-neutral-200 overflow-x-auto whitespace-pre-wrap">
-                  {item.oldValues}
+                <div className="text-[11px] font-bold text-amber-600 dark:text-amber-400 mb-1 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                  <span>Previous State:</span>
+                </div>
+                <pre className="p-3.5 rounded-xl bg-neutral-50 dark:bg-black/40 border border-neutral-200/70 dark:border-white/5 text-xs font-mono text-neutral-800 dark:text-neutral-200 overflow-x-auto whitespace-pre-wrap leading-relaxed">
+                  {formatJsonPayload(item.oldValues)}
                 </pre>
               </div>
-            ) : null}
+            )}
 
             {!item.newValues && !item.oldValues && (
               <p className="text-xs text-neutral-400 italic m-0">
@@ -338,17 +410,21 @@ function AuditEventDrawer({
         </div>
 
         {/* Drawer Footer */}
-        <div className="p-4 border-t border-neutral-200/80 dark:border-white/10 bg-neutral-50/70 dark:bg-[#0f121a] flex items-center justify-end">
+        <div className="p-4 border-t border-neutral-200/80 dark:border-white/10 bg-neutral-50/70 dark:bg-[#0f121a] flex items-center justify-between">
+          <span className="text-xs text-neutral-400 font-mono">
+            {item.ipAddress ? `IP: ${item.ipAddress}` : "System event"}
+          </span>
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-xl bg-neutral-200/80 dark:bg-white/10 text-neutral-800 dark:text-neutral-200 text-xs font-bold hover:bg-neutral-300 dark:hover:bg-white/20 transition-colors cursor-pointer"
+            className="px-5 py-2 rounded-xl bg-neutral-200/80 dark:bg-white/10 text-neutral-800 dark:text-neutral-200 text-xs font-bold hover:bg-neutral-300 dark:hover:bg-white/20 transition-colors cursor-pointer"
           >
             Close
           </button>
         </div>
       </div>
-    </>
+    </>,
+    document.body
   );
 }
 
@@ -830,11 +906,16 @@ export default function AdminAuditLogsPage() {
                   const modColors = moduleColor(module);
                   const ModIcon = moduleIcon(module);
 
+                  const isSelected = viewing?.id === it.id;
                   return (
                     <tr
                       key={it.id}
                       onClick={() => setViewing(it)}
-                      className="group hover:bg-orange-500/[0.03] dark:hover:bg-white/[0.02] transition-colors cursor-pointer"
+                      className={`group transition-all cursor-pointer ${
+                        isSelected
+                          ? "bg-orange-500/10 dark:bg-orange-500/15 ring-1 ring-inset ring-orange-500/30"
+                          : "hover:bg-orange-500/[0.03] dark:hover:bg-white/[0.02]"
+                      }`}
                     >
                       {/* Timestamp */}
                       <td className="py-3.5 px-5 align-middle">

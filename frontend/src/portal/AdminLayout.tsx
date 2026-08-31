@@ -61,7 +61,19 @@ export function AdminBreadcrumb() {
           const href = "/" + parts.slice(0, i + 1).join("/");
           const isGuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(part)
             || /^[0-9a-f]{32}$/i.test(part);
-          const label = isGuid ? "Product Details" : (part.charAt(0).toUpperCase() + part.slice(1).replaceAll("-", " "));
+          const prevPart = i > 0 ? parts[i - 1].toLowerCase() : "";
+          let label = part.charAt(0).toUpperCase() + part.slice(1).replaceAll("-", " ");
+          if (isGuid) {
+            if (prevPart === "orders") label = "Order Details";
+            else if (prevPart === "enquiries") label = "Enquiry Details";
+            else if (prevPart === "quotations" || prevPart === "quotes") label = "Quotation Details";
+            else if (prevPart === "products") label = "Product Details";
+            else if (prevPart === "companies") label = "Company Details";
+            else if (prevPart === "users") label = "User Details";
+            else if (prevPart === "engineers") label = "Engineer Details";
+            else if (prevPart === "invoices") label = "Invoice Details";
+            else label = "Details";
+          }
           return (
             <li key={href}>
               {i === parts.length - 1 ? (

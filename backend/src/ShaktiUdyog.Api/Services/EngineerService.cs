@@ -46,7 +46,7 @@ public class EngineerService(
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, 100);
 
-        var query = db.Enquiries.AsQueryable();
+        var query = db.Enquiries.Where(r => !r.IsDeleted).AsQueryable();
 
         if (companyId.HasValue)
             query = query.Where(r => r.CompanyId == companyId);

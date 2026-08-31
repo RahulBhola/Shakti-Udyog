@@ -46,6 +46,7 @@ export interface EngineerEnquiryDetail {
   preferredDeliveryTerms: string | null;
   additionalRequirements: string | null;
   remarks: string | null;
+  statusHistory?: { fromStatus: string; toStatus: string; changedByRole: string; note: string | null; occurredAtUtc: string }[];
 }
 
 export interface CreateShipmentPayload {
