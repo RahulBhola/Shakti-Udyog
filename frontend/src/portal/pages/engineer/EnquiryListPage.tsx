@@ -337,11 +337,11 @@ export default function EngineerEnquiryListPage() {
               Customer Enquiries
             </h1>
             <span className="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-[var(--color-primary)]/10 text-[var(--color-primary)] border border-[var(--color-primary)]/20 shadow-xs">
-              {totalEnquiries} RFQs
+              {totalEnquiries} Enquiries
             </span>
           </div>
           <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 mt-1">
-            Track customer RFQ requests, review technical specifications, and generate engineering quotes.
+            Track customer enquiry requests, review technical specifications, and generate engineering quotes.
           </p>
         </div>
         <div className="flex items-center gap-2.5 flex-wrap">

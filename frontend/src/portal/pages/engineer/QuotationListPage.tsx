@@ -345,7 +345,7 @@ export default function QuotationListPage() {
                           {q.quotationNumber}
                         </div>
                         <div className="text-[11px] text-neutral-400 mt-0.5">
-                          Rev.{q.revisionNumber}{q.enquiryId ? " · linked to RFQ" : ""}
+                          Rev.{q.revisionNumber}{q.enquiryId ? " · linked to Enquiry" : ""}
                         </div>
                       </td>
                       <td className="py-3.5 px-4">
