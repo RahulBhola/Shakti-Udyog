@@ -452,7 +452,7 @@ export default function EngineerBoardPage() {
                       void handleDrop(column.code);
                     }
                   }}
-                  className={`flex flex-col rounded-2xl border bg-neutral-50/70 dark:bg-[#0c0e14] p-3 transition-all min-h-[440px] ${
+                  className={`flex flex-col rounded-2xl border bg-neutral-50/70 dark:bg-[#0c0e14] p-3 transition-all h-fit self-start ${
                     droppable
                       ? "border-dashed border-2 border-blue-500 bg-blue-500/5 dark:bg-blue-500/10 shadow-md ring-2 ring-blue-500/20"
                       : "border-neutral-200/90 dark:border-white/10"
@@ -502,8 +502,16 @@ export default function EngineerBoardPage() {
                     ))}
 
                     {items.length === 0 && (
-                      <div className="flex flex-col items-center justify-center py-12 px-2 text-center border border-dashed border-neutral-200 dark:border-white/10 rounded-xl">
-                        <span className="text-[11px] font-medium text-neutral-400">No orders in this stage</span>
+                      <div
+                        className={`flex flex-col items-center justify-center py-5 px-2 text-center border border-dashed rounded-xl transition-all ${
+                          droppable
+                            ? "border-blue-500 bg-blue-500/10 text-blue-500 font-bold"
+                            : "border-neutral-200 dark:border-white/10 text-neutral-400"
+                        }`}
+                      >
+                        <span className="text-[11px] font-medium">
+                          {droppable ? "Drop here to move" : "No orders in this stage"}
+                        </span>
                       </div>
                     )}
                   </div>
