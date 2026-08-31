@@ -991,6 +991,15 @@ public class AdminController(IAdminService adminService, IOrderAdminService orde
         };
     }
 
+    [HttpDelete("orders/{id:guid}")]
+    [ProducesResponseType<MessageResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteOrder(Guid id)
+    {
+        var result = await orderAdminService.DeleteOrderAsync(id, UserId, ClientIp);
+        return result is null ? NotFound(new MessageResponse("Order not found.")) : Ok(new MessageResponse("Order deleted."));
+    }
+
     [HttpGet("orders/{id:guid}/history")]
     [ProducesResponseType<IReadOnlyList<OrderStatusHistoryEntryDto>>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetOrderHistory(Guid id)

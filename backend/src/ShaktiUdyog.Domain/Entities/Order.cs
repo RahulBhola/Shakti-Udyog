@@ -45,6 +45,10 @@ public class Order
     public Guid? AssignedToUserId { get; set; }
     public ApplicationUser? AssignedToUser { get; set; }
 
+    // Soft delete
+    public bool IsDeleted { get; set; }
+    public DateTimeOffset? DeletedAtUtc { get; set; }
+
     public List<OrderItem> Items { get; set; } = [];
     public List<OrderMilestone> Milestones { get; set; } = [];
     public List<Shipment> Shipments { get; set; } = [];

@@ -9,7 +9,7 @@ import { EmptyState, Loading } from "../../../components/ui";
 import { formatDate } from "../../shared";
 import {
   Search, RefreshCw, ChevronLeft, ChevronRight, X, Download, Clock,
-  Eye, Loader2,
+  Eye, Loader2, Trash2,
   Package, CheckCircle2, Cog, ShieldCheck, Truck, PackageCheck, UserCog,
 } from "lucide-react";
 import "../erpListView.css";
@@ -100,6 +100,8 @@ export default function EngineerOrderListPage() {
   const isAdmin = !!user?.roles.includes(Roles.Admin);
   const [engineers, setEngineers] = useState<{ id: string; fullName: string | null; email: string; role: string }[]>([]);
   const [assigningId, setAssigningId] = useState<string | null>(null);
+  const [deleteModalOrder, setDeleteModalOrder] = useState<OrderListItem | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const [stats, setStats] = useState<{
     total: number; confirmed: number; production: number;
@@ -138,6 +140,25 @@ export default function EngineerOrderListPage() {
       // Stats fail silently
     }
   }, []);
+
+  const handleDeleteOrder = async () => {
+    if (!deleteModalOrder) return;
+    setDeleting(true);
+    try {
+      if (isAdmin) {
+        await adminApi.deleteOrder(deleteModalOrder.id);
+      } else {
+        await engineerApi.deleteOrder(deleteModalOrder.id);
+      }
+      setDeleteModalOrder(null);
+      await load(page, search, statusFilter, companyId, assignedFilter);
+      await loadStats();
+    } catch (err: any) {
+      alert(err.message || "Failed to delete order.");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   useEffect(() => { load(page, search, statusFilter, companyId, assignedFilter); }, [page, search, statusFilter, companyId, assignedFilter, load]);
   useEffect(() => { loadStats(); }, [loadStats]);
@@ -478,6 +499,14 @@ export default function EngineerOrderListPage() {
                           >
                             <Eye size={14} />
                           </button>
+                          <button
+                            type="button"
+                            onClick={() => setDeleteModalOrder(o)}
+                            className="w-8 h-8 rounded-lg border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#121520] hover:bg-rose-500/10 text-neutral-400 hover:text-rose-600 dark:hover:text-rose-400 hover:border-rose-500/20 flex items-center justify-center transition-all shadow-xs cursor-pointer"
+                            title="Delete Order"
+                          >
+                            <Trash2 size={13} />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -534,6 +563,46 @@ export default function EngineerOrderListPage() {
           </div>
         )}
       </div>
+
+      {/* ── Delete Confirmation Modal ──────────────────────── */}
+      {deleteModalOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-[#121520] border border-neutral-200 dark:border-white/10 shadow-2xl p-6 space-y-4 animate-in zoom-in-95 duration-150">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
+                <Trash2 size={20} />
+              </div>
+              <div>
+                <h3 className="text-base font-extrabold text-neutral-900 dark:text-white m-0">Delete Order</h3>
+                <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 m-0">This removes the order and clears it from the manufacturing board.</p>
+              </div>
+            </div>
+            <p className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed m-0">
+              Are you sure you want to remove order <strong className="font-mono text-neutral-900 dark:text-white">{deleteModalOrder.orderNumber}</strong>?
+              {deleteModalOrder.companyName ? ` (${deleteModalOrder.companyName})` : ""}
+            </p>
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={() => setDeleteModalOrder(null)}
+                className="px-4 py-2 rounded-xl border border-neutral-200 dark:border-white/10 text-xs font-bold text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={handleDeleteOrder}
+                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-all shadow-sm shadow-rose-500/25 disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
+              >
+                {deleting ? <RefreshCw size={13} className="animate-spin" /> : <Trash2 size={13} />}
+                <span>{deleting ? "Deleting..." : "Delete Order"}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

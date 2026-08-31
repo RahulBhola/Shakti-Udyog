@@ -279,6 +279,26 @@ export default function AdminOrderDetailPage() {
   });
   const [editingShipment, setEditingShipment] = useState<Shipment | null>(null);
   const [deletingShipment, setDeletingShipment] = useState<Shipment | null>(null);
+  const [showDeleteOrderModal, setShowDeleteOrderModal] = useState(false);
+  const [deletingOrder, setDeletingOrder] = useState(false);
+
+  const handleDeleteOrder = async () => {
+    if (!order) return;
+    setDeletingOrder(true);
+    try {
+      if (isAdmin) {
+        await adminApi.deleteOrder(order.id);
+      } else {
+        await engineerApi.deleteOrder(order.id);
+      }
+      setShowDeleteOrderModal(false);
+      navigate(isAdmin ? "/admin/orders" : "/engineer/orders");
+    } catch (err: any) {
+      setActionMsg(err.message || "Failed to delete order.");
+    } finally {
+      setDeletingOrder(false);
+    }
+  };
 
   // ── Auto-fetch quotation details for invoice ──
   async function openSendInvoiceModal() {
@@ -759,6 +779,15 @@ export default function AdminOrderDetailPage() {
             >
               <Sparkles size={14} className="text-emerald-500" />
               <span>Send Invoice</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowDeleteOrderModal(true)}
+              className="inline-flex items-center gap-1.5 px-3.5 h-9 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-400 text-xs font-bold hover:bg-rose-500/20 transition-all shadow-xs cursor-pointer"
+            >
+              <Trash2 size={14} className="text-rose-500" />
+              <span>Delete Order</span>
             </button>
 
             {!isTerminal && currentIndex > 0 && (
@@ -2115,6 +2144,55 @@ export default function AdminOrderDetailPage() {
               >
                 {invoiceBusy ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
                 <span>Delete Invoice</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Delete Order Confirmation Modal ── */}
+      {showDeleteOrderModal && order && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-[#121520] border border-neutral-200 dark:border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
+            <div className="px-6 py-4 border-b border-neutral-100 dark:border-white/10 flex items-center justify-between bg-rose-500/5 text-rose-600 dark:text-rose-400">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-rose-500/10 flex items-center justify-center">
+                  <Trash2 size={17} />
+                </div>
+                <h3 className="font-extrabold text-sm m-0">Delete Order {order.orderNumber}?</h3>
+              </div>
+              <button onClick={() => setShowDeleteOrderModal(false)} className="p-1 rounded-lg text-neutral-400 hover:text-neutral-700 dark:hover:text-white cursor-pointer">
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-3">
+              <p className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed m-0">
+                Are you sure you want to permanently delete order <strong className="font-mono text-neutral-900 dark:text-white">{order.orderNumber}</strong>?
+                {order.companyName ? ` (${order.companyName})` : ""}
+              </p>
+              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-700 dark:text-rose-300 font-medium">
+                This order will be removed and cleared from the manufacturing board. Any generated invoices remain archived in the invoices section.
+              </div>
+            </div>
+
+            <div className="px-6 py-4 bg-neutral-50 dark:bg-white/[0.02] border-t border-neutral-100 dark:border-white/10 flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                disabled={deletingOrder}
+                onClick={() => setShowDeleteOrderModal(false)}
+                className="px-4 py-2 rounded-xl border border-neutral-200 dark:border-white/10 text-xs font-bold text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/5 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={deletingOrder}
+                onClick={handleDeleteOrder}
+                className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-black disabled:opacity-50 transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
+              >
+                {deletingOrder ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+                <span>Delete Order</span>
               </button>
             </div>
           </div>

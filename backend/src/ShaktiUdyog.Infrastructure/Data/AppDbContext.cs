@@ -498,6 +498,7 @@ public DbSet<KanbanTask> KanbanTasks => Set<KanbanTask>();
                 .HasForeignKey(o => o.QuotationId).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(o => o.AssignedToUser).WithMany()
                 .HasForeignKey(o => o.AssignedToUserId).OnDelete(DeleteBehavior.SetNull);
+            entity.HasQueryFilter(o => !o.IsDeleted);
         });
 
         builder.Entity<OrderAssignment>(entity =>
@@ -507,6 +508,7 @@ public DbSet<KanbanTask> KanbanTasks => Set<KanbanTask>();
             entity.HasIndex(a => a.AssignedToUserId);
             entity.HasOne(a => a.Order).WithMany(o => o.Assignments)
                 .HasForeignKey(a => a.OrderId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasQueryFilter(a => !a.Order.IsDeleted);
         });
 
         builder.Entity<OrderItem>(entity =>
@@ -520,6 +522,7 @@ public DbSet<KanbanTask> KanbanTasks => Set<KanbanTask>();
             entity.Property(i => i.UnitRate).HasPrecision(18, 2);
             entity.HasOne(i => i.Order).WithMany(o => o.Items)
                 .HasForeignKey(i => i.OrderId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasQueryFilter(i => !i.Order.IsDeleted);
         });
 
         builder.Entity<OrderMilestone>(entity =>
@@ -532,6 +535,7 @@ public DbSet<KanbanTask> KanbanTasks => Set<KanbanTask>();
             entity.HasIndex(m => new { m.OrderId, m.OccurredAtUtc });
             entity.HasOne(m => m.Order).WithMany(o => o.Milestones)
                 .HasForeignKey(m => m.OrderId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasQueryFilter(m => !m.Order.IsDeleted);
         });
 
         builder.Entity<Shipment>(entity =>
@@ -543,6 +547,7 @@ public DbSet<KanbanTask> KanbanTasks => Set<KanbanTask>();
             entity.Property(s => s.PhoneNumber).HasMaxLength(30);
             entity.HasOne(s => s.Order).WithMany(o => o.Shipments)
                 .HasForeignKey(s => s.OrderId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasQueryFilter(s => !s.Order.IsDeleted);
         });
 
         builder.Entity<ShipmentTrackingEvent>(entity =>
@@ -552,6 +557,7 @@ public DbSet<KanbanTask> KanbanTasks => Set<KanbanTask>();
             entity.Property(e => e.Description).HasMaxLength(1000).IsRequired();
             entity.HasOne(e => e.Shipment).WithMany()
                 .HasForeignKey(e => e.ShipmentId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasQueryFilter(e => !e.Shipment.Order.IsDeleted);
         });
 
         builder.Entity<OrderComment>(entity =>
@@ -561,6 +567,7 @@ public DbSet<KanbanTask> KanbanTasks => Set<KanbanTask>();
             entity.Property(c => c.Message).HasMaxLength(4000).IsRequired();
             entity.HasOne(c => c.Order).WithMany()
                 .HasForeignKey(c => c.OrderId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasQueryFilter(c => !c.Order.IsDeleted);
         });
 
         builder.Entity<OrderStatusHistory>(entity =>
@@ -572,6 +579,7 @@ public DbSet<KanbanTask> KanbanTasks => Set<KanbanTask>();
             entity.Property(h => h.Note).HasMaxLength(2000);
             entity.HasOne(h => h.Order).WithMany()
                 .HasForeignKey(h => h.OrderId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasQueryFilter(h => !h.Order.IsDeleted);
         });
 
         builder.Entity<Invoice>(entity =>

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { apiGet, apiPatch, apiPost } from "../../api/client";
+import { apiGet, apiPatch, apiPost, apiDelete } from "../../api/client";
 import { useAuth } from "../../auth/AuthContext";
 import { connectRealtime, getRealtimeConnection, type StageChangedPayload } from "../../realtime/signalR";
 import { formatDateTime } from "../shared";
@@ -34,6 +34,7 @@ import {
   Wallet,
   CreditCard,
   FileText,
+  Trash2,
 } from "lucide-react";
 
 export interface EngineerOrder {
@@ -169,6 +170,8 @@ export default function EngineerBoardPage() {
 
   // RHS Drawer state for Order Story & Comments
   const [selectedStoryOrder, setSelectedStoryOrder] = useState<EngineerOrder | null>(null);
+  const [deleteModalOrder, setDeleteModalOrder] = useState<EngineerOrder | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -184,6 +187,23 @@ export default function EngineerBoardPage() {
       })
       .finally(() => setLoading(false));
   }, []);
+
+  const handleDeleteOrder = async () => {
+    if (!deleteModalOrder) return;
+    setDeleting(true);
+    try {
+      await apiDelete(`/api/v1/admin/orders/${deleteModalOrder.id}`);
+      if (selectedStoryOrder?.id === deleteModalOrder.id) {
+        setSelectedStoryOrder(null);
+      }
+      setDeleteModalOrder(null);
+      load();
+    } catch (err: any) {
+      setNotice(err.message || "Failed to delete order.");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   useEffect(load, [load]);
 
@@ -500,6 +520,7 @@ export default function EngineerBoardPage() {
                         onView={() => navigate(isAdmin ? `/admin/orders/${order.id}` : `/engineer/orders/${order.id}`)}
                         onViewInvoice={() => navigate(`/admin/invoices?search=${encodeURIComponent(order.orderNumber)}`)}
                         onOpenStory={() => setSelectedStoryOrder(order)}
+                        onDelete={() => setDeleteModalOrder(order)}
                       />
                     ))}
 
@@ -528,6 +549,55 @@ export default function EngineerBoardPage() {
           isAdmin={isAdmin}
           onClose={() => setSelectedStoryOrder(null)}
         />
+      )}
+
+      {/* ── Delete Order Confirmation Modal ── */}
+      {deleteModalOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-[#121520] border border-neutral-200 dark:border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
+            <div className="px-6 py-4 border-b border-neutral-100 dark:border-white/10 flex items-center justify-between bg-rose-500/5 text-rose-600 dark:text-rose-400">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-rose-500/10 flex items-center justify-center">
+                  <Trash2 size={17} />
+                </div>
+                <h3 className="font-extrabold text-sm m-0">Delete Order {deleteModalOrder.orderNumber}?</h3>
+              </div>
+              <button onClick={() => setDeleteModalOrder(null)} className="p-1 rounded-lg text-neutral-400 hover:text-neutral-700 dark:hover:text-white cursor-pointer">
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-3">
+              <p className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed m-0">
+                Are you sure you want to permanently delete order <strong className="font-mono text-neutral-900 dark:text-white">{deleteModalOrder.orderNumber}</strong>?
+                {deleteModalOrder.companyName ? ` (${deleteModalOrder.companyName})` : ""}
+              </p>
+              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-700 dark:text-rose-300 font-medium">
+                This will delete the story from the Kanban board and remove the order from active manufacturing. Invoices will remain accessible in the invoices section.
+              </div>
+            </div>
+
+            <div className="px-6 py-4 bg-neutral-50 dark:bg-white/[0.02] border-t border-neutral-100 dark:border-white/10 flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={() => setDeleteModalOrder(null)}
+                className="px-4 py-2 rounded-xl border border-neutral-200 dark:border-white/10 text-xs font-bold text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/5 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={handleDeleteOrder}
+                className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-black disabled:opacity-50 transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
+              >
+                {deleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+                <span>Delete Order</span>
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -562,6 +632,7 @@ function OrderCard({
   onView,
   onViewInvoice,
   onOpenStory,
+  onDelete,
 }: {
   order: EngineerOrder;
   isAdmin?: boolean;
@@ -577,6 +648,7 @@ function OrderCard({
   onView: () => void;
   onViewInvoice?: () => void;
   onOpenStory: () => void;
+  onDelete?: () => void;
 }) {
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -670,6 +742,18 @@ function OrderCard({
                 >
                   <FileText size={13} className="text-emerald-500" />
                   <span>View Tax Invoice</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowMenu(false);
+                    onDelete?.();
+                  }}
+                  className="w-full px-3 py-1.5 text-left text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 flex items-center gap-2 cursor-pointer font-semibold border-t border-neutral-100 dark:border-white/5"
+                >
+                  <Trash2 size={13} className="text-rose-500" />
+                  <span>Delete Order</span>
                 </button>
               </div>
             )}

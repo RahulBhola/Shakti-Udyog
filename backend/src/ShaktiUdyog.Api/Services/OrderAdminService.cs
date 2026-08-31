@@ -15,6 +15,7 @@ public interface IOrderAdminService
     Task<bool?> ApproveCustomerUpdateAsync(Guid id, Guid userId, string? ip);
     Task<bool?> OverrideStatusAsync(Guid id, string newStatus, string? note, Guid userId, string? ip);
     Task<bool?> CancelOrderAsync(Guid id, string reason, Guid userId, string? ip);
+    Task<bool?> DeleteOrderAsync(Guid id, Guid userId, string? ip);
     Task<IReadOnlyList<OrderStatusHistoryEntryDto>> GetHistoryAsync(Guid id);
     Task<bool?> CreateShipmentAsync(Guid orderId, CreateShipmentRequest request, Guid userId, string? ip);
     Task<bool?> UpdateShipmentAsync(Guid orderId, Guid shipmentId, CreateShipmentRequest request, Guid userId, string? ip);
@@ -28,7 +29,7 @@ public class OrderAdminService(AppDbContext db, IAuditWriter audit, IPortalPush 
     public async Task<PagedResult<OrderListItemDto>> GetOrdersAsync(int page, int pageSize, string? search, string? status)
     {
         page = Math.Max(1, page); pageSize = Math.Clamp(pageSize, 1, 100);
-        var query = db.Orders.IgnoreQueryFilters().AsQueryable();
+        var query = db.Orders.Where(o => !o.IsDeleted).AsQueryable();
         if (!string.IsNullOrWhiteSpace(search))
             query = query.Where(o => o.OrderNumber.Contains(search.Trim()));
         if (!string.IsNullOrWhiteSpace(status))
@@ -201,6 +202,31 @@ public class OrderAdminService(AppDbContext db, IAuditWriter audit, IPortalPush 
 
         await db.SaveChangesAsync();
         await audit.WriteAsync("admin.order.shipment_deleted", userId, "Shipment", shipmentId.ToString(), ip);
+        return true;
+    }
+
+    public async Task<bool?> DeleteOrderAsync(Guid id, Guid userId, string? ip)
+    {
+        var o = await db.Orders.IgnoreQueryFilters().SingleOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
+        if (o is null) return null;
+
+        o.IsDeleted = true;
+        o.DeletedAtUtc = DateTimeOffset.UtcNow;
+        o.LastUpdatedAtUtc = DateTimeOffset.UtcNow;
+
+        db.OrderStatusHistories.Add(new OrderStatusHistory
+        {
+            Id = Guid.NewGuid(),
+            OrderId = o.Id,
+            FromStatus = o.Status,
+            ToStatus = "Deleted",
+            ChangedByUserId = userId,
+            ChangedByRole = "Admin",
+            Note = "Order deleted by Administrator"
+        });
+
+        await db.SaveChangesAsync();
+        await audit.WriteAsync("admin.order.deleted", userId, "Order", o.Id.ToString(), ip);
         return true;
     }
 }

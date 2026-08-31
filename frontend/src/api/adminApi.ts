@@ -94,6 +94,7 @@ export const adminApi = {
   approveOrderUpdate: (id: string) => apiPatch<{ message: string }>(`${base}/orders/${id}/approve-update`, {}),
   overrideOrderStatus: (id: string, newStatus: string, note?: string) => apiPatch<{ message: string }>(`${base}/orders/${id}/override-status`, { newStatus, note }),
   cancelOrder: (id: string, reason: string) => apiPatch<{ message: string }>(`${base}/orders/${id}/cancel`, reason),
+  deleteOrder: (id: string) => apiDelete<{ message: string }>(`${base}/orders/${id}`),
   orderHistory: (id: string) => apiGet<{ fromStatus: string; toStatus: string; changedByRole: string; note: string | null; occurredAtUtc: string }[]>(`${base}/orders/${id}/history`),
 
   // ---- Users & Engineers ---------------------------------------------------

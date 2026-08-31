@@ -131,6 +131,7 @@ export const engineerApi = {
     return apiGet<Paged<OrderListItem>>(`${base}/orders?${params}`);
   },
   order: (id: string) => apiGet<OrderDetail>(`${base}/orders/${id}`),
+  deleteOrder: (id: string) => apiDelete<{ message: string }>(`/api/v1/admin/orders/${id}`),
   updateMilestone: (id: string, statusCode: string, customerMessage?: string) =>
     apiPatch<{ message: string }>(`${base}/orders/${id}/milestones`, { statusCode, customerMessage }),
   createShipment: (id: string, transporter?: string, vehicleNumber?: string, phoneNumber?: string, dispatchDateUtc?: string, estimatedArrivalUtc?: string) =>

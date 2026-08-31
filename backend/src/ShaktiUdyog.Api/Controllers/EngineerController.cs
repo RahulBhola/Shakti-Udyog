@@ -148,6 +148,15 @@ public class EngineerController(
         return order is null ? NotFound(new { message = "Order not found." }) : Ok(order);
     }
 
+    [HttpDelete("orders/{id:guid}")]
+    [ProducesResponseType<MessageResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteOrder(Guid id)
+    {
+        var result = await orderEngineerService.DeleteOrderAsync(id, UserId, IsAdmin, ClientIp);
+        return result is null ? NotFound(new MessageResponse("Order not found.")) : Ok(new MessageResponse("Order deleted."));
+    }
+
     [HttpPatch("orders/{id:guid}/milestones")]
     public async Task<IActionResult> UpdateMilestone(Guid id, [FromBody] MilestoneRequest request)
     {

@@ -25,6 +25,7 @@ public interface IOrderEngineerService
     Task<bool?> CreateShipmentAsync(Guid id, CreateShipmentRequest request, Guid userId, bool callerIsAdmin, string? ip);
     Task<bool?> UpdateShipmentAsync(Guid orderId, Guid shipmentId, CreateShipmentRequest request, Guid userId, bool callerIsAdmin, string? ip);
     Task<bool?> DeleteShipmentAsync(Guid orderId, Guid shipmentId, Guid userId, bool callerIsAdmin, string? ip);
+    Task<bool?> DeleteOrderAsync(Guid id, Guid userId, bool callerIsAdmin, string? ip);
     Task UploadDocumentAsync(Guid id, IFormFile file, string category, Guid userId, bool callerIsAdmin, string? ip);
     Task<bool?> AddCommentAsync(Guid id, OrderCommentRequest request, Guid userId, string role, bool callerIsAdmin, string? ip);
     Task<IReadOnlyList<OrderCommentResponseDto>> GetCommentsAsync(Guid id);
@@ -250,6 +251,32 @@ public class OrderEngineerService(
         db.OrderComments.Add(new OrderComment { Id = Guid.NewGuid(), OrderId = id, AuthorUserId = userId, AuthorRole = role, IsCustomerVisible = request.IsCustomerVisible, Message = request.Message.Trim() });
         await db.SaveChangesAsync();
         await audit.WriteAsync("engineer.order.comment_added", userId, "OrderComment", id.ToString(), ip);
+        return true;
+    }
+
+    public async Task<bool?> DeleteOrderAsync(Guid id, Guid userId, bool callerIsAdmin, string? ip)
+    {
+        var o = await db.Orders.IgnoreQueryFilters().SingleOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
+        if (o is null) return null;
+        if (!CanManage(o, userId, callerIsAdmin)) throw new OrderAccessException();
+
+        o.IsDeleted = true;
+        o.DeletedAtUtc = DateTimeOffset.UtcNow;
+        o.LastUpdatedAtUtc = DateTimeOffset.UtcNow;
+
+        db.OrderStatusHistories.Add(new OrderStatusHistory
+        {
+            Id = Guid.NewGuid(),
+            OrderId = o.Id,
+            FromStatus = o.Status,
+            ToStatus = "Deleted",
+            ChangedByUserId = userId,
+            ChangedByRole = callerIsAdmin ? "Admin" : "Engineer",
+            Note = $"Order deleted by {(callerIsAdmin ? "Administrator" : "Engineer")}"
+        });
+
+        await db.SaveChangesAsync();
+        await audit.WriteAsync("engineer.order.deleted", userId, "Order", o.Id.ToString(), ip);
         return true;
     }
 }
