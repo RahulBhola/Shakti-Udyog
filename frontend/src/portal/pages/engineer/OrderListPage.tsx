@@ -467,14 +467,14 @@ export default function EngineerOrderListPage() {
                             )}
                             <select
                               aria-label="Assign engineer"
-                              className="px-2 py-1 text-xs rounded-lg border border-neutral-200 dark:border-white/10 bg-neutral-50 dark:bg-[#161a26] text-neutral-800 dark:text-white outline-none focus:border-orange-500 max-w-[150px]"
+                              className="px-2 py-1 text-xs rounded-lg border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#161a26] text-neutral-800 dark:text-white outline-none focus:border-blue-500 max-w-[150px] cursor-pointer"
                               value={o.assignedToUserId ?? ""}
                               disabled={assigningId === o.id}
                               onChange={(e) => handleAssignOrder(o.id, e.target.value)}
                             >
-                              <option value="">Unassigned</option>
+                              <option value="" className="bg-white dark:bg-[#161a26] text-neutral-500 dark:text-neutral-400">Unassigned</option>
                               {engineers.map((eng) => (
-                                <option key={eng.id} value={eng.id}>{eng.fullName || eng.email}</option>
+                                <option key={eng.id} value={eng.id} className="bg-white dark:bg-[#161a26] text-neutral-900 dark:text-white">{eng.fullName || eng.email}</option>
                               ))}
                             </select>
                           </div>

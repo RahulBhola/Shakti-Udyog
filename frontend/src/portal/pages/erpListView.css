@@ -179,7 +179,11 @@
   background-position: right 12px center;
   padding-right: 34px;
 }
-.inv-select option { background: var(--bg-surface); color: var(--text-primary); }
+.inv-select option {
+  background-color: var(--bg-surface, #161a26);
+  color: var(--text-primary, #f8fafc);
+  padding: 8px 12px;
+}
 .inv-filterbar .inv-btn { margin-top: 16px; }
 
 /* ---- Table --------------------------------------------------------- */

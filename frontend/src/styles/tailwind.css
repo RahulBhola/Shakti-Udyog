@@ -70,3 +70,39 @@
 .animate-marquee-rtl:hover {
   animation-play-state: paused;
 }
+
+/* ── Select Dropdowns & Options in Dark / Light Modes ── */
+select {
+  color-scheme: light dark;
+}
+
+.dark select,
+[data-theme="dark"] select {
+  color-scheme: dark;
+  background-color: #121520;
+  color: #f8fafc;
+}
+
+.dark select option,
+[data-theme="dark"] select option,
+.dark datalist option,
+[data-theme="dark"] datalist option {
+  background-color: #161a26 !important;
+  color: #f8fafc !important;
+  padding: 8px 12px;
+}
+
+.dark select option:hover,
+[data-theme="dark"] select option:hover,
+.dark select option:focus,
+[data-theme="dark"] select option:focus,
+.dark select option:checked,
+[data-theme="dark"] select option:checked {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+}
+
+select option {
+  background-color: #ffffff;
+  color: #0f172a;
+}

@@ -1542,11 +1542,13 @@ export default function AdminOrderDetailPage() {
                     value={order.assignedToUserId || ""}
                     onChange={(e) => handleAssign(e.target.value ? e.target.value : null)}
                     disabled={assignBusy}
-                    className="w-full h-10 px-3 rounded-xl border border-neutral-200 dark:border-white/10 bg-neutral-50 dark:bg-white/5 text-xs font-bold text-neutral-800 dark:text-neutral-200 outline-none focus:border-[var(--color-primary)] disabled:opacity-50 cursor-pointer"
+                    className="w-full h-10 px-3 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#121520] text-xs font-bold text-neutral-800 dark:text-white outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 cursor-pointer shadow-xs transition-all"
                   >
-                    <option value="">-- Select Engineer / Staff --</option>
+                    <option value="" className="bg-white dark:bg-[#161a26] text-neutral-500 dark:text-neutral-400">
+                      -- Select Engineer / Staff --
+                    </option>
                     {engineers.map((eng) => (
-                      <option key={eng.id} value={eng.id}>
+                      <option key={eng.id} value={eng.id} className="bg-white dark:bg-[#161a26] text-neutral-900 dark:text-white">
                         {eng.fullName || eng.email} ({eng.role})
                       </option>
                     ))}
