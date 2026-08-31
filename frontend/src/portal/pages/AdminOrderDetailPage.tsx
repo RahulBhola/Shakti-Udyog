@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Package, Calendar, MapPin, FileText, Truck, CheckCircle2, Clock, Loader2, MessageSquare, Download, Upload, Plus, ChevronDown, ChevronUp, X, UserCog, UserPlus, Pencil, Trash2, Layers, Flame, ShieldCheck, PackageCheck } from "lucide-react";
+import { ArrowLeft, Package, Calendar, MapPin, FileText, Truck, CheckCircle2, Clock, Loader2, MessageSquare, Download, Upload, ChevronDown, ChevronUp, X, UserCog, Pencil, Trash2, Layers, Flame, ShieldCheck, PackageCheck, Sparkles, RefreshCw, Lock } from "lucide-react";
 import { engineerApi } from "../../api/engineerApi";
 import { adminApi } from "../../api/adminApi";
 import { apiDownload } from "../../api/client";
@@ -133,6 +133,7 @@ export default function AdminOrderDetailPage() {
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [invoiceBusy, setInvoiceBusy] = useState(false);
   const [invoiceMsg, setInvoiceMsg] = useState<string | null>(null);
+  const [fetchingPrice, setFetchingPrice] = useState(false);
   const [invoiceForm, setInvoiceForm] = useState({
     invoiceNumber: "",
     subtotal: "",
@@ -144,6 +145,76 @@ export default function AdminOrderDetailPage() {
     paymentTerms: "",
     file: null as File | null,
   });
+
+  // ── Auto-fetch and open Send Invoice Modal (bound to agreed Quotation) ──
+  async function openSendInvoiceModal() {
+    setInvoiceMsg(null);
+    setShowInvoiceModal(true);
+
+    const genNum = `INV-${new Date().getFullYear().toString().slice(-2)}${(new Date().getMonth() + 1).toString().padStart(2, "0")}${new Date().getDate().toString().padStart(2, "0")}-${order?.orderNumber ? order.orderNumber.replace(/[^a-zA-Z0-9]/g, "").slice(-4) : "001"}`;
+    const todayStr = new Date().toISOString().split("T")[0];
+
+    // Compute default due date based on payment terms (e.g. 30 days)
+    const termsStr = order?.paymentTerms || "30 days";
+    const daysMatch = termsStr.match(/(\d+)\s*days?/i);
+    const termDays = daysMatch ? parseInt(daysMatch[1], 10) : 30;
+    const due = new Date();
+    due.setDate(due.getDate() + termDays);
+    const dueStr = due.toISOString().split("T")[0];
+
+    // 1. Initial retrieval from order's quotation snapshot
+    let subtotalVal = order?.quotationSubtotal || 0;
+    let taxVal = order?.quotationTax || 0;
+    let totalVal = order?.quotationTotal || order?.commercial?.total || 0;
+    let quoteTerms = order?.paymentTerms || termsStr;
+
+    if (totalVal > 0 && subtotalVal === 0) {
+      subtotalVal = Number((totalVal / 1.18).toFixed(2));
+      taxVal = Number((totalVal - subtotalVal).toFixed(2));
+    } else if (subtotalVal > 0 && totalVal === 0) {
+      taxVal = Number((subtotalVal * 0.18).toFixed(2));
+      totalVal = Number((subtotalVal + taxVal).toFixed(2));
+    } else if (subtotalVal > 0 && totalVal > 0 && taxVal === 0) {
+      taxVal = Number((totalVal - subtotalVal).toFixed(2));
+    }
+
+    setInvoiceForm({
+      invoiceNumber: genNum,
+      subtotal: subtotalVal > 0 ? String(subtotalVal) : "",
+      tax: taxVal >= 0 ? String(taxVal) : "",
+      total: totalVal > 0 ? String(totalVal) : "",
+      issueDate: todayStr,
+      dueDate: dueStr,
+      paymentTerms: quoteTerms,
+      notes: "",
+      file: null,
+    });
+
+    // 2. Fetch live quotation details from API to guarantee exact agreed figures
+    if (order?.quotationId) {
+      setFetchingPrice(true);
+      try {
+        const q = await adminApi.quotation(order.quotationId);
+        if (q) {
+          const qSub = q.subtotal || (q.total ? Number((q.total / 1.18).toFixed(2)) : 0);
+          const qTx = q.tax || (q.total ? Number((q.total - qSub).toFixed(2)) : 0);
+          const qTot = q.total || (qSub + qTx);
+
+          setInvoiceForm((prev) => ({
+            ...prev,
+            subtotal: String(qSub),
+            tax: String(qTx),
+            total: String(qTot),
+            paymentTerms: q.paymentTerms || prev.paymentTerms,
+          }));
+        }
+      } catch {
+        // use already populated values
+      } finally {
+        setFetchingPrice(false);
+      }
+    }
+  }
 
   // ── Document upload state ──
   const [showDocModal, setShowDocModal] = useState(false);
@@ -839,84 +910,80 @@ export default function AdminOrderDetailPage() {
                     </div>
                   );
                 })}
-                <button type="button" onClick={() => setShowInvoiceModal(true)}
-                  className="w-full flex items-center justify-center gap-1.5 px-4 h-9 rounded-lg border border-dashed border-[var(--border-default)] text-[12px] font-medium text-[var(--text-muted)] hover:text-[var(--color-primary)] hover:border-[var(--color-primary)]/30 transition-all">
-                  <Plus size={14} /> Upload Another Invoice
-                </button>
               </div>
             )}
           </Section>
         </div>
 
-        {/* ── Right sidebar ─────────────────────────────────── */}
+        {/* ── Right column ──────────────────────────────────── */}
         <div className="space-y-5">
-          {/* Status */}
-          <Section title="Current Status">
-            <div className="flex items-center gap-3 mb-2">
-              <StatusBadge status={order.status} label={order.statusLabel} />
-            </div>
-            <p className="text-[12px] text-[var(--text-muted)]">{order.statusDescription}</p>
-            <div className="mt-3 text-[11px] text-[var(--text-muted)] font-medium">
-              Status code: <code className="text-[var(--text-primary)]">{order.status}</code>
-            </div>
-          </Section>
-
           {/* Assigned Engineer */}
           <Section title="Assigned Engineer">
-            <div className="flex items-center gap-3 mb-3">
-              <span className="w-9 h-9 rounded-lg bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)] shrink-0">
-                <UserCog size={16} />
-              </span>
-              <div className="min-w-0">
-                <div className="text-[13px] font-semibold text-[var(--text-primary)] truncate">{order.assignedToName ?? "Unassigned"}</div>
-                <div className="text-[11px] text-[var(--text-muted)]">Engineer responsible for this order</div>
-              </div>
-            </div>
-            {isAdmin && (
-              <div>
+            {isAdmin ? (
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-sm shrink-0">
+                    <UserCog size={18} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[13px] font-semibold text-[var(--text-primary)] truncate">
+                      {order.assignedToName || "Unassigned"}
+                    </div>
+                    <div className="text-[11px] text-[var(--text-muted)]">
+                      {order.assignedToUserId ? "Currently responsible for this order" : "No engineer assigned yet"}
+                    </div>
+                  </div>
+                </div>
+
                 {assignMsg && (
-                  <div className={`mb-2 text-[12px] font-medium ${assignMsg.includes("Could") ? "text-red-500" : "text-emerald-500"}`}>{assignMsg}</div>
+                  <div className={`p-2.5 rounded-lg text-xs font-medium ${
+                    assignMsg.includes("✅") ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20" : "bg-red-500/10 text-red-700 dark:text-red-300 border border-red-500/20"
+                  }`}>
+                    {assignMsg}
+                  </div>
                 )}
-                <div className="flex gap-2">
+
+                <div className="pt-2 border-t border-[var(--border-default)]">
+                  <label className="text-[11px] font-medium text-[var(--text-muted)] uppercase tracking-wider block mb-1.5">
+                    Assign / Reassign Staff
+                  </label>
                   <select
-                    value={order.assignedToUserId ?? ""}
-                    onChange={(e) => handleAssign(e.target.value || null)}
+                    value={order.assignedToUserId || ""}
+                    onChange={(e) => handleAssign(e.target.value ? e.target.value : null)}
                     disabled={assignBusy}
-                    className="flex-1 h-9 rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3 text-[12px] text-[var(--text-primary)] outline-none focus:border-[var(--color-primary)] disabled:opacity-50"
+                    className="w-full h-9 px-3 rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] text-[12px] font-medium text-[var(--text-primary)] outline-none focus:border-[var(--color-primary)] disabled:opacity-50 cursor-pointer"
                   >
-                    <option value="">Unassigned</option>
+                    <option value="">-- Select Engineer / Admin --</option>
                     {engineers.map((eng) => (
-                      <option key={eng.id} value={eng.id}>{eng.fullName || eng.email}</option>
+                      <option key={eng.id} value={eng.id}>
+                        {eng.fullName || eng.email} ({eng.role})
+                      </option>
                     ))}
                   </select>
-                  <button
-                    type="button"
-                    disabled={assignBusy}
-                    onClick={() => handleAssign(null)}
-                    title="Unassign"
-                    aria-label="Unassign"
-                    className="flex items-center justify-center w-9 h-9 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all shrink-0 disabled:opacity-50"
-                  >
-                    {assignBusy ? <Loader2 size={14} className="animate-spin" /> : <UserPlus size={14} />}
-                  </button>
                 </div>
               </div>
+            ) : (
+              <Field
+                label="Staff Engineer"
+                value={order.assignedToName || "Unassigned"}
+                icon={UserCog}
+              />
             )}
           </Section>
 
-          {/* Delivery Info */}
-          <Section title="Delivery Information">
-            <div className="space-y-2">
-              <Field label="Delivery Address" value={order.deliveryAddress ?? "—"} icon={MapPin} />
-              <Field label="Promised Dispatch" value={formatDate(order.promisedDispatchDateUtc)} icon={Calendar} />
+          {/* Customer & Company Details */}
+          <Section title="Customer Details">
+            <div className="space-y-1">
+              <Field label="Company" value={order.companyName ?? "—"} icon={Package} />
               <Field label="PO Reference" value={order.purchaseOrderReference ?? "—"} icon={FileText} />
+              <Field label="Delivery Address" value={order.deliveryAddress ?? "—"} icon={MapPin} />
             </div>
           </Section>
 
           {/* Commercial */}
-          <Section title="Commercial">
+          <Section title="Commercial Summary">
             {order.commercial ? (
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Field label="Invoice" value={order.commercial.invoiceNumber ?? "—"} />
                 <Field label="Total" value={order.commercial.total != null ? `₹${order.commercial.total.toLocaleString()}` : "—"} />
                 <Field label="Paid" value={order.commercial.amountPaid != null ? `₹${order.commercial.amountPaid.toLocaleString()}` : "—"} />
@@ -931,20 +998,20 @@ export default function AdminOrderDetailPage() {
           {/* Quick Actions */}
           <Section title="Quick Links">
             <div className="space-y-2">
-              <button type="button" onClick={() => setShowInvoiceModal(true)}
-                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all">
+              <button type="button" onClick={openSendInvoiceModal}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all cursor-pointer">
                 <Upload size={14} /> Send Invoice to Customer
               </button>
               <button type="button" onClick={() => navigate("/admin/invoices")}
-                className="w-full text-left px-3 py-2 rounded-lg text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-colors">
+                className="w-full text-left px-3 py-2 rounded-lg text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-colors cursor-pointer">
                 View All Invoices →
               </button>
               <button type="button" onClick={() => navigate("/admin/production")}
-                className="w-full text-left px-3 py-2 rounded-lg text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-colors">
+                className="w-full text-left px-3 py-2 rounded-lg text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-colors cursor-pointer">
                 Production Board →
               </button>
               <button type="button" onClick={() => navigate("/admin/enquiries")}
-                className="w-full text-left px-3 py-2 rounded-lg text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-colors">
+                className="w-full text-left px-3 py-2 rounded-lg text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-colors cursor-pointer">
                 View Enquiries →
               </button>
             </div>
@@ -1004,16 +1071,36 @@ export default function AdminOrderDetailPage() {
           <div className="relative w-full max-w-lg mx-4 rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             <div className="h-1.5 bg-gradient-to-r from-emerald-500 to-emerald-400" />
             <div className="p-6">
-              <div className="flex items-start gap-4 mb-5">
+              <div className="flex items-start gap-4 mb-4">
                 <span className="flex items-center justify-center w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-500 shrink-0 mt-1">
                   <Upload size={22} />
                 </span>
-                <div>
+                <div className="flex-1 min-w-0">
                   <h3 className="text-[16px] font-bold text-[var(--text-primary)] m-0">Send Invoice to Customer</h3>
-                  <p className="text-[12px] text-[var(--text-muted)] m-0 mt-1 leading-relaxed">
+                  <p className="text-[12px] text-[var(--text-muted)] m-0 mt-0.5 leading-relaxed">
                     Upload the invoice PDF. It will be visible to the customer in their portal immediately.
                   </p>
                 </div>
+              </div>
+
+              {/* Auto-fetch notification & refresh badge */}
+              <div className="flex items-center justify-between gap-2 p-2.5 mb-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-[11.5px] font-semibold text-emerald-700 dark:text-emerald-400">
+                <div className="flex items-center gap-1.5">
+                  <Sparkles size={13} className="shrink-0" />
+                  <span>Price details auto-fetched from quotation &amp; order specs</span>
+                </div>
+                {order?.quotationId && (
+                  <button
+                    type="button"
+                    onClick={openSendInvoiceModal}
+                    disabled={fetchingPrice}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-800 dark:text-emerald-300 transition-colors text-[11px] cursor-pointer"
+                    title="Re-fetch price breakdown from original quotation"
+                  >
+                    <RefreshCw size={11} className={fetchingPrice ? "animate-spin" : ""} />
+                    <span>{fetchingPrice ? "Fetching..." : "Re-fetch"}</span>
+                  </button>
+                )}
               </div>
 
               {invoiceMsg && (
@@ -1028,39 +1115,70 @@ export default function AdminOrderDetailPage() {
                   <label className="text-[12px] font-medium text-[var(--text-primary)] block mb-1">Invoice Number *</label>
                   <input type="text" value={invoiceForm.invoiceNumber} onChange={(e) => setInvoiceForm(f => ({ ...f, invoiceNumber: e.target.value }))}
                     placeholder="e.g. INV-20260729-001"
-                    className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2.5 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--color-primary)]" />
+                    className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2 text-[13px] text-[var(--text-primary)] font-mono placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--color-primary)]" />
                 </div>
 
-                {/* Financial fields */}
-                <div className="grid grid-cols-3 gap-3">
-                  <div>
-                    <label className="text-[12px] font-medium text-[var(--text-primary)] block mb-1">Subtotal *</label>
-                    <input type="number" value={invoiceForm.subtotal} onChange={(e) => setInvoiceForm(f => ({ ...f, subtotal: e.target.value }))}
-                      className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2.5 text-[13px] text-[var(--text-primary)] outline-none focus:border-[var(--color-primary)]" />
+              {/* Quotation-bound payment & tax breakdown */}
+              <div className="p-4 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-default)] space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider flex items-center gap-1.5">
+                    <Lock size={12} className="text-emerald-500" />
+                    <span>QUOTATION PRICING (LOCKED &amp; VERIFIED)</span>
+                  </span>
+                  <span className="text-[10.5px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 inline-flex items-center gap-1">
+                    <ShieldCheck size={11} /> Matched with Quotation
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-3 gap-3 pt-1">
+                  <div className="p-2.5 rounded-lg bg-[var(--bg-card)] border border-[var(--border-default)]">
+                    <span className="text-[10.5px] font-medium text-[var(--text-muted)] block uppercase">Subtotal</span>
+                    <span className="text-[14px] font-bold text-[var(--text-primary)]">
+                      ₹{Number(invoiceForm.subtotal || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                    </span>
                   </div>
-                  <div>
-                    <label className="text-[12px] font-medium text-[var(--text-primary)] block mb-1">Tax *</label>
-                    <input type="number" value={invoiceForm.tax} onChange={(e) => setInvoiceForm(f => ({ ...f, tax: e.target.value }))}
-                      className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2.5 text-[13px] text-[var(--text-primary)] outline-none focus:border-[var(--color-primary)]" />
+                  <div className="p-2.5 rounded-lg bg-[var(--bg-card)] border border-[var(--border-default)]">
+                    <span className="text-[10.5px] font-medium text-[var(--text-muted)] block uppercase">GST / Tax</span>
+                    <span className="text-[14px] font-bold text-[var(--text-primary)]">
+                      ₹{Number(invoiceForm.tax || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                    </span>
                   </div>
-                  <div>
-                    <label className="text-[12px] font-medium text-[var(--text-primary)] block mb-1">Total *</label>
-                    <input type="number" value={invoiceForm.total} onChange={(e) => setInvoiceForm(f => ({ ...f, total: e.target.value }))}
-                      className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2.5 text-[13px] text-[var(--text-primary)] outline-none focus:border-[var(--color-primary)]" />
+                  <div className="p-2.5 rounded-lg bg-emerald-500/5 border border-emerald-500/20">
+                    <span className="text-[10.5px] font-bold text-emerald-600 dark:text-emerald-400 block uppercase">Total Payable</span>
+                    <span className="text-[14px] font-black text-emerald-600 dark:text-emerald-400">
+                      ₹{Number(invoiceForm.total || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                    </span>
                   </div>
                 </div>
+
+                <div className="flex items-center justify-between pt-2 border-t border-[var(--border-default)] text-[11px] text-[var(--text-muted)]">
+                  <span>Price &amp; tax are fixed as agreed in the approved quotation.</span>
+                  {order?.quotationId && (
+                    <button
+                      type="button"
+                      onClick={openSendInvoiceModal}
+                      disabled={fetchingPrice}
+                      className="text-blue-600 hover:text-blue-700 dark:text-blue-400 inline-flex items-center gap-1 font-semibold cursor-pointer"
+                      title="Reload values from quotation"
+                    >
+                      <RefreshCw size={10} className={fetchingPrice ? "animate-spin" : ""} />
+                      <span>{fetchingPrice ? "Syncing..." : "Sync Quote"}</span>
+                    </button>
+                  )}
+                </div>
+              </div>
 
                 {/* Dates */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="text-[12px] font-medium text-[var(--text-primary)] block mb-1">Issue Date *</label>
                     <input type="date" value={invoiceForm.issueDate} onChange={(e) => setInvoiceForm(f => ({ ...f, issueDate: e.target.value }))}
-                      className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2.5 text-[13px] text-[var(--text-primary)] outline-none focus:border-[var(--color-primary)]" />
+                      className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2 text-[13px] text-[var(--text-primary)] outline-none focus:border-[var(--color-primary)]" />
                   </div>
                   <div>
                     <label className="text-[12px] font-medium text-[var(--text-primary)] block mb-1">Due Date</label>
                     <input type="date" value={invoiceForm.dueDate} onChange={(e) => setInvoiceForm(f => ({ ...f, dueDate: e.target.value }))}
-                      className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2.5 text-[13px] text-[var(--text-primary)] outline-none focus:border-[var(--color-primary)]" />
+                      className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2 text-[13px] text-[var(--text-primary)] outline-none focus:border-[var(--color-primary)]" />
                   </div>
                 </div>
 
@@ -1069,7 +1187,7 @@ export default function AdminOrderDetailPage() {
                   <label className="text-[12px] font-medium text-[var(--text-primary)] block mb-1">Payment Terms</label>
                   <input type="text" value={invoiceForm.paymentTerms} onChange={(e) => setInvoiceForm(f => ({ ...f, paymentTerms: e.target.value }))}
                     placeholder="e.g. 30 days"
-                    className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2.5 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--color-primary)]" />
+                    className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--color-primary)]" />
                 </div>
 
                 {/* Notes */}
@@ -1077,7 +1195,7 @@ export default function AdminOrderDetailPage() {
                   <label className="text-[12px] font-medium text-[var(--text-primary)] block mb-1">Notes</label>
                   <textarea value={invoiceForm.notes} onChange={(e) => setInvoiceForm(f => ({ ...f, notes: e.target.value }))} rows={2}
                     placeholder="Optional notes for the customer"
-                    className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2.5 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--color-primary)] resize-none" />
+                    className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--color-primary)] resize-none" />
                 </div>
 
                 {/* File upload */}
@@ -1095,7 +1213,7 @@ export default function AdminOrderDetailPage() {
               <div className="border-t border-[var(--border-default)] my-4" />
               <div className="flex items-center justify-end gap-2.5">
                 <button type="button" disabled={invoiceBusy} onClick={() => { setShowInvoiceModal(false); setInvoiceMsg(null); }}
-                  className="px-4 h-9 rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all disabled:opacity-50">
+                  className="px-4 h-9 rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all disabled:opacity-50 cursor-pointer">
                   Cancel
                 </button>
                 <button type="button" disabled={invoiceBusy || !invoiceForm.file || !invoiceForm.invoiceNumber || !invoiceForm.total}

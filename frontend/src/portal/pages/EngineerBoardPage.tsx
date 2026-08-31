@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { apiGet, apiPatch, apiPost } from "../../api/client";
 import { useAuth } from "../../auth/AuthContext";
 import { connectRealtime, getRealtimeConnection, type StageChangedPayload } from "../../realtime/signalR";
-import { formatDate, formatDateTime } from "../shared";
+import { formatDateTime } from "../shared";
 import {
   Layers,
   Flame,
@@ -17,7 +17,6 @@ import {
   ArrowLeft,
   Search,
   RefreshCw,
-  GripVertical,
   ExternalLink,
   CheckCircle2,
   AlertCircle,
@@ -31,6 +30,9 @@ import {
   BarChart3,
   Kanban,
   Clock,
+  MoreVertical,
+  Wallet,
+  CreditCard,
 } from "lucide-react";
 
 export interface EngineerOrder {
@@ -46,6 +48,12 @@ export interface EngineerOrder {
   status?: string | null;
   advancePaid?: boolean;
   assignedToUserName?: string | null;
+  quotationTotal?: number | null;
+  advanceAmount?: number | null;
+  advancePercent?: number;
+  paidAmount?: number | null;
+  pendingAmount?: number | null;
+  paymentTerms?: string | null;
 }
 
 export interface OrderCommentItem {
@@ -308,11 +316,10 @@ export default function EngineerBoardPage() {
             <button
               type="button"
               onClick={() => setViewTab("board")}
-              className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
-                viewTab === "board"
+              className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${viewTab === "board"
                   ? "bg-white dark:bg-[#151926] text-blue-600 dark:text-blue-400 shadow-sm"
                   : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
-              }`}
+                }`}
             >
               <Kanban size={14} />
               <span>Board View</span>
@@ -320,11 +327,10 @@ export default function EngineerBoardPage() {
             <button
               type="button"
               onClick={() => setViewTab("analytics")}
-              className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
-                viewTab === "analytics"
+              className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${viewTab === "analytics"
                   ? "bg-white dark:bg-[#151926] text-blue-600 dark:text-blue-400 shadow-sm"
                   : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
-              }`}
+                }`}
             >
               <BarChart3 size={14} />
               <span>Pipeline Analytics</span>
@@ -426,8 +432,8 @@ export default function EngineerBoardPage() {
 
       {/* ── View Tab 1: KANBAN BOARD VIEW ──────────────────────────────────── */}
       {viewTab === "board" && (
-        <div className="overflow-x-auto pb-4 -mx-1 px-1">
-          <div className="flex gap-4 items-start min-w-[1280px]">
+        <div className="overflow-x-auto pb-6 -mx-1 px-1 custom-scrollbar">
+          <div className="flex gap-4 items-start w-max min-w-full">
             {byColumn.map(({ column, items }, colIndex) => {
               const Icon = column.icon;
               const droppable = draggedId !== null && canDropOn(column.code);
@@ -446,7 +452,7 @@ export default function EngineerBoardPage() {
                       void handleDrop(column.code);
                     }
                   }}
-                  className={`flex-1 min-w-[275px] max-w-[340px] flex flex-col rounded-3xl border bg-neutral-50/70 dark:bg-[#0c0e14] p-3 transition-all min-h-[560px] ${
+                  className={`w-[340px] sm:w-[350px] shrink-0 flex flex-col rounded-3xl border bg-neutral-50/70 dark:bg-[#0c0e14] p-3.5 transition-all min-h-[560px] ${
                     droppable
                       ? "border-dashed border-2 border-blue-500 bg-blue-500/5 dark:bg-blue-500/10 shadow-md ring-2 ring-blue-500/20"
                       : "border-neutral-200/90 dark:border-white/10"
@@ -525,11 +531,23 @@ export default function EngineerBoardPage() {
   );
 }
 
+function formatCardDate(iso?: string | null): { date: string; time: string } {
+  if (!iso) return { date: "—", time: "" };
+  try {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return { date: "—", time: "" };
+    const date = d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+    const time = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+    return { date, time };
+  } catch {
+    return { date: "—", time: "" };
+  }
+}
+
 /* ── Modern Rich Order Card Component ───────────────────────────────────────── */
 
 function OrderCard({
   order,
-  isAdmin,
   colIndex,
   prevColumn,
   nextColumn,
@@ -543,7 +561,7 @@ function OrderCard({
   onOpenStory,
 }: {
   order: EngineerOrder;
-  isAdmin: boolean;
+  isAdmin?: boolean;
   colIndex: number;
   prevColumn?: BoardColumn;
   nextColumn?: BoardColumn;
@@ -556,143 +574,251 @@ function OrderCard({
   onView: () => void;
   onOpenStory: () => void;
 }) {
-  const detailUrl = isAdmin ? `/admin/orders/${order.id}` : `/engineer/orders/${order.id}`;
+  const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  const { date: updatedDate, time: updatedTime } = formatCardDate(order.stageUpdatedAt || order.placedAtUtc);
+  const engineerInitial = (order.assignedToUserName || "P").charAt(0).toUpperCase();
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!showMenu) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showMenu]);
 
   return (
     <div
       draggable
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
-      className={`group relative rounded-2xl bg-white dark:bg-[#121520] border border-neutral-200/90 dark:border-white/10 p-4 shadow-xs hover:shadow-md transition-all cursor-grab active:cursor-grabbing hover:border-blue-500/50 space-y-3 ${
+      onClick={onOpenStory}
+      className={`group relative rounded-2xl bg-white dark:bg-[#121520] border border-neutral-200/90 dark:border-white/10 p-4 shadow-xs hover:shadow-lg transition-all duration-200 cursor-pointer active:cursor-grabbing hover:border-blue-500/40 select-none ${
         isDragging ? "opacity-40 scale-95 ring-2 ring-blue-500" : ""
       }`}
     >
-      {/* 1. Top Row: Order Number Monospace Chip + Quantity Pill */}
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5 min-w-0">
-          <GripVertical size={14} className="text-neutral-300 dark:text-neutral-600 group-hover:text-neutral-500 shrink-0" />
-          <Link
-            to={detailUrl}
-            className="font-mono text-xs font-bold text-neutral-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors truncate no-underline"
-            title={order.orderNumber}
-          >
-            {order.orderNumber}
-          </Link>
-        </div>
-
-        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-neutral-100 dark:bg-white/10 text-neutral-700 dark:text-neutral-300 shrink-0 border border-neutral-200/60 dark:border-white/10">
-          {order.totalQuantity} pcs
-        </span>
-      </div>
-
-      {/* 2. Product Name & Client Details */}
-      <div className="space-y-1">
-        <div className="flex items-center gap-2 text-xs font-bold text-neutral-900 dark:text-white">
-          <Package size={14} className="text-blue-500 shrink-0" />
-          <span className="truncate">{order.productType || "Commercial Casting Job"}</span>
-        </div>
-
-        <div className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
-          <Building2 size={13} className="shrink-0 text-neutral-400" />
-          <span className="truncate">{order.companyName || "Direct Client"}</span>
-        </div>
-      </div>
-
-      {/* 3. Unique Engineer Avatar & Name Tag */}
-      <div className="flex items-center justify-between gap-2 p-2 rounded-xl bg-neutral-50 dark:bg-white/[0.03] border border-neutral-200/70 dark:border-white/10">
-        <div className="flex items-center gap-2 min-w-0">
-          <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-extrabold text-[10.5px] shadow-2xs shrink-0">
-            {(order.assignedToUserName || "E").charAt(0).toUpperCase()}
-          </div>
-          <span className="text-xs font-bold text-neutral-900 dark:text-neutral-100 truncate">
-            {order.assignedToUserName || "Primary Staff Engineer"}
+      {/* ── 1. Top Section: ORDER ID, Kebab Menu, and Quantity ── */}
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <span className="block text-[9.5px] font-extrabold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">
+            ORDER ID
           </span>
+          <div className="text-[13.5px] font-bold text-neutral-900 dark:text-white tracking-tight leading-snug mt-0.5 font-mono">
+            {order.orderNumber}
+          </div>
+          <div className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 font-bold text-xs mt-1">
+            <Package size={13} className="stroke-[2.2] shrink-0" />
+            <span>{order.totalQuantity} pcs</span>
+          </div>
         </div>
-        <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-md shrink-0">
-          Engineer
+
+        {/* 3-Dots Kebab Menu */}
+        <div className="relative shrink-0" ref={menuRef} onClick={(e) => e.stopPropagation()}>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowMenu((prev) => !prev);
+            }}
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-neutral-700 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
+            title="More Options"
+          >
+            <MoreVertical size={15} />
+          </button>
+
+          {showMenu && (
+            <div className="absolute right-0 top-8 z-30 w-44 rounded-xl bg-white dark:bg-[#161a26] border border-neutral-200 dark:border-white/10 shadow-xl py-1.5 text-xs animate-in fade-in zoom-in-95 duration-150">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowMenu(false);
+                  onOpenStory();
+                }}
+                className="w-full px-3.5 py-2 text-left text-neutral-700 dark:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-white/5 flex items-center gap-2 cursor-pointer font-semibold"
+              >
+                <MessageSquare size={13} className="text-blue-500" />
+                <span>Order Story & Notes</span>
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowMenu(false);
+                  onView();
+                }}
+                className="w-full px-3.5 py-2 text-left text-neutral-700 dark:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-white/5 flex items-center gap-2 cursor-pointer font-semibold"
+              >
+                <ExternalLink size={13} className="text-neutral-400" />
+                <span>Full Order Details</span>
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Divider ── */}
+      <div className="border-t border-neutral-100 dark:border-white/5 my-2.5" />
+
+      {/* ── 2. Part Name & Company ── */}
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-blue-50/80 dark:bg-blue-500/10 border border-blue-100/80 dark:border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0 shadow-2xs">
+          <Boxes size={18} className="stroke-[1.8]" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <span className="block text-[9.5px] font-extrabold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">
+            PART NAME
+          </span>
+          <div className="text-[13px] font-extrabold text-neutral-900 dark:text-white truncate leading-snug mt-0.5">
+            {order.productType || "Grey Iron Casting"}
+          </div>
+          <div className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400 truncate mt-0.5">
+            {order.companyName || "Direct Client"}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Divider ── */}
+      <div className="border-t border-neutral-100 dark:border-white/5 my-2.5" />
+
+      {/* ── 3. 3-Column Info Grid: STATUS, UPDATED, ASSIGNED TO ── */}
+      <div className="grid grid-cols-3 gap-1.5 items-start">
+        {/* Column 1: STATUS */}
+        <div className="min-w-0">
+          <div className="flex items-center gap-1 text-[9.5px] font-extrabold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">
+            <CheckCircle2 size={11} className="text-emerald-500 shrink-0 stroke-[2.2]" />
+            <span className="truncate">STATUS</span>
+          </div>
+          <div className="mt-1">
+            {order.advancePaid ? (
+              <span className="inline-block px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 whitespace-nowrap">
+                Advance Verified
+              </span>
+            ) : (
+              <span className="inline-block px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 whitespace-nowrap">
+                Adv. Pending
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Column 2: UPDATED */}
+        <div className="min-w-0 border-l border-neutral-100 dark:border-white/5 pl-2">
+          <div className="flex items-center gap-1 text-[9.5px] font-extrabold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">
+            <Calendar size={11} className="text-indigo-500 shrink-0" />
+            <span className="truncate">UPDATED</span>
+          </div>
+          <div className="mt-0.5">
+            <div className="text-[11px] font-extrabold text-neutral-900 dark:text-white leading-tight whitespace-nowrap">
+              {updatedDate}
+            </div>
+            {updatedTime && (
+              <div className="text-[9.5px] font-medium text-neutral-400 dark:text-neutral-500 leading-tight mt-0.5 whitespace-nowrap">
+                {updatedTime}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Column 3: ASSIGNED TO */}
+        <div className="min-w-0 border-l border-neutral-100 dark:border-white/5 pl-2">
+          <div className="flex items-center gap-1 text-[9.5px] font-extrabold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">
+            <User size={11} className="text-amber-500 shrink-0" />
+            <span className="truncate">ASSIGNED</span>
+          </div>
+          <div className="mt-1 flex items-center">
+            <div
+              className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center font-black text-[10.5px] shadow-xs"
+              title={order.assignedToUserName || "Primary Staff Engineer"}
+            >
+              {engineerInitial}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Divider ── */}
+      <div className="border-t border-neutral-100 dark:border-white/5 my-2.5" />
+
+      {/* ── 4. QUICK ACTIONS Section ── */}
+      <div onClick={(e) => e.stopPropagation()}>
+        <span className="block text-[9.5px] font-extrabold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-1.5">
+          QUICK ACTIONS
         </span>
-      </div>
 
-      {/* 4. Milestone & Logistics Metadata */}
-      <div className="space-y-1.5 pt-0.5 text-[11px]">
-        {order.advancePaid && (
-          <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10.5px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-            <CheckCircle2 size={12} className="stroke-[2.2]" />
-            <span>Advance Verified</span>
-          </div>
-        )}
-
-        {order.promisedDispatchDateUtc && (
-          <div className="flex items-center justify-between text-neutral-500 dark:text-neutral-400 text-[10.5px]">
-            <span className="flex items-center gap-1">
-              <Calendar size={11} className="text-neutral-400" /> Target Dispatch:
-            </span>
-            <span className="font-bold text-neutral-800 dark:text-neutral-200">
-              {formatDate(order.promisedDispatchDateUtc)}
-            </span>
-          </div>
-        )}
-
-        <div className="text-[10px] text-neutral-400">
-          {order.stageUpdatedAt ? `Updated ${formatDateTime(order.stageUpdatedAt)}` : `Placed ${formatDateTime(order.placedAtUtc)}`}
-        </div>
-      </div>
-
-      {/* 5. Stage Movement Actions: Dedicated Full-Width Row to Prevent Truncation */}
-      {(prevColumn || nextColumn) && (
-        <div className="pt-1 flex items-center gap-2">
+        <div className="flex items-center gap-2">
           {prevColumn && colIndex > 0 && (
             <button
               type="button"
               title={`Move back to ${prevColumn.label}`}
-              onClick={onRegress}
+              onClick={(e) => {
+                e.stopPropagation();
+                onRegress?.();
+              }}
               disabled={isMoving}
-              className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl text-xs font-bold text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-white/5 hover:bg-amber-500/10 hover:text-amber-600 dark:hover:text-amber-400 transition-colors shadow-xs disabled:opacity-50 cursor-pointer whitespace-nowrap"
+              className="flex-1 inline-flex items-center justify-center gap-1 py-2 px-2.5 rounded-xl text-[11.5px] font-bold text-neutral-700 dark:text-neutral-200 bg-white dark:bg-[#161a26] border border-neutral-200 dark:border-white/10 hover:bg-neutral-50 dark:hover:bg-white/5 transition-all shadow-2xs disabled:opacity-50 cursor-pointer whitespace-nowrap"
             >
               <ArrowLeft size={12} className="shrink-0" />
               <span>{prevColumn.shortLabel}</span>
             </button>
           )}
 
-          {nextColumn && colIndex < 4 && (
+          {nextColumn && colIndex < 4 ? (
             <button
               type="button"
               title={`Advance to ${nextColumn.label}`}
-              onClick={onAdvance}
+              onClick={(e) => {
+                e.stopPropagation();
+                onAdvance?.();
+              }}
               disabled={isMoving}
-              className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-xs disabled:opacity-50 cursor-pointer whitespace-nowrap"
+              className="flex-1 inline-flex items-center justify-center gap-1 py-2 px-2.5 rounded-xl text-[11.5px] font-bold text-white bg-blue-600 hover:bg-blue-700 transition-all shadow-sm shadow-blue-500/25 disabled:opacity-50 cursor-pointer whitespace-nowrap"
             >
               <span>{isMoving ? "Moving..." : nextColumn.shortLabel}</span>
               <ArrowRight size={12} className="shrink-0" />
             </button>
+          ) : !prevColumn || colIndex === 0 ? (
+            nextColumn && (
+              <button
+                type="button"
+                title={`Advance to ${nextColumn.label}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAdvance?.();
+                }}
+                disabled={isMoving}
+                className="w-full inline-flex items-center justify-center gap-1 py-2 px-2.5 rounded-xl text-[11.5px] font-bold text-white bg-blue-600 hover:bg-blue-700 transition-all shadow-sm shadow-blue-500/25 disabled:opacity-50 cursor-pointer"
+              >
+                <span>{isMoving ? "Moving..." : nextColumn.shortLabel}</span>
+                <ArrowRight size={12} className="shrink-0" />
+              </button>
+            )
+          ) : (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onView();
+              }}
+              className="flex-1 inline-flex items-center justify-center gap-1 py-2 px-2.5 rounded-xl text-[11.5px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-all shadow-sm shadow-emerald-500/25 cursor-pointer"
+            >
+              <span>View Order</span>
+              <ExternalLink size={12} className="shrink-0" />
+            </button>
           )}
         </div>
-      )}
-
-      {/* 6. Secondary Actions: Order Story & Full Details */}
-      <div className="pt-2 border-t border-neutral-100 dark:border-white/5 flex items-center justify-between gap-2">
-        <button
-          type="button"
-          onClick={onOpenStory}
-          className="flex-1 py-2 px-2.5 rounded-xl text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50/80 dark:bg-blue-500/10 hover:bg-blue-100 dark:hover:bg-blue-500/20 border border-blue-200/60 dark:border-blue-500/20 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
-        >
-          <MessageSquare size={13} />
-          <span>Order Story & Notes</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={onView}
-          className="px-3 py-2 rounded-xl text-xs font-bold text-neutral-600 dark:text-neutral-400 bg-neutral-100 dark:bg-white/5 hover:bg-neutral-200 dark:hover:bg-white/10 transition-colors cursor-pointer flex items-center gap-1 shrink-0"
-          title="View Full Order"
-        >
-          <span>Details</span>
-          <ExternalLink size={12} />
-        </button>
       </div>
     </div>
   );
 }
+
+
+
 
 /* ── RHS Slide-Over Drawer: Order Story & Comments ──────────────────────────── */
 
@@ -705,12 +831,23 @@ function OrderStoryDrawer({
   isAdmin: boolean;
   onClose: () => void;
 }) {
+  const navigate = useNavigate();
   const [comments, setComments] = useState<OrderCommentItem[]>([]);
   const [history, setHistory] = useState<OrderHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [newComment, setNewComment] = useState("");
   const [posting, setPosting] = useState(false);
   const [activeTab, setActiveTab] = useState<"comments" | "story">("comments");
+
+  const detailUrl = isAdmin ? `/admin/orders/${order.id}` : `/engineer/orders/${order.id}`;
+
+  const totalVal = order.quotationTotal ?? order.advanceAmount ?? 0;
+  const paidVal =
+    order.paidAmount ??
+    (order.advancePaid
+      ? (order.advanceAmount ?? (order.quotationTotal ? order.quotationTotal * ((order.advancePercent || 30) / 100) : 0))
+      : 0);
+  const pendingVal = order.pendingAmount ?? (totalVal > paidVal ? totalVal - paidVal : 0);
 
   const commentsUrl = isAdmin
     ? `/api/v1/admin/orders/${order.id}/comments`
@@ -766,44 +903,133 @@ function OrderStoryDrawer({
 
       {/* RHS Panel */}
       <div className="relative w-full max-w-lg bg-white dark:bg-[#10131d] h-full shadow-2xl border-l border-neutral-200/80 dark:border-white/10 flex flex-col z-10 animate-in slide-in-from-right duration-300">
-        {/* 1. Header */}
-        <div className="p-5 border-b border-neutral-100 dark:border-white/5 flex items-start justify-between gap-3 bg-neutral-50/50 dark:bg-white/[0.02]">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 flex-wrap mb-1">
-              <span className="font-mono text-sm font-extrabold text-neutral-900 dark:text-white px-2.5 py-0.5 rounded-lg bg-white dark:bg-white/10 border border-neutral-200 dark:border-white/10">
-                {order.orderNumber}
-              </span>
-              <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
-                {order.totalQuantity} pcs
-              </span>
+        {/* 1. Header with Full Details Button */}
+        <div className="p-5 border-b border-neutral-100 dark:border-white/5 bg-neutral-50/50 dark:bg-white/[0.02] space-y-3.5">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap mb-1.5">
+                <span className="font-mono text-xs font-black text-neutral-900 dark:text-white px-2.5 py-0.5 rounded-lg bg-white dark:bg-white/10 border border-neutral-200 dark:border-white/10 shadow-2xs">
+                  {order.orderNumber}
+                </span>
+                <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                  {order.totalQuantity} pcs
+                </span>
+                {order.advancePaid ? (
+                  <span className="px-2 py-0.5 rounded-full text-[10.5px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                    Advance Verified
+                  </span>
+                ) : (
+                  <span className="px-2 py-0.5 rounded-full text-[10.5px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                    Payment Pending
+                  </span>
+                )}
+              </div>
+              <h2 className="text-lg font-black text-neutral-900 dark:text-white truncate m-0">
+                {order.productType || "Casting Job"}
+              </h2>
+              <div className="text-xs text-neutral-400 mt-1 flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-1 font-medium text-neutral-600 dark:text-neutral-300">
+                  <Building2 size={12} className="text-neutral-400" />
+                  <span>{order.companyName || "Direct Client"}</span>
+                </div>
+                <span>•</span>
+                <div className="flex items-center gap-1 text-[11px]">
+                  <Calendar size={12} className="text-neutral-400" />
+                  <span>Placed {formatDateTime(order.placedAtUtc)}</span>
+                </div>
+              </div>
             </div>
-            <h2 className="text-base font-extrabold text-neutral-900 dark:text-white truncate m-0">
-              {order.productType || "Casting Job"}
-            </h2>
-            <div className="text-xs text-neutral-400 mt-0.5 flex items-center gap-1.5">
-              <Building2 size={12} />
-              <span>{order.companyName || "Direct Client"}</span>
-            </div>
+
+            <button
+              onClick={onClose}
+              className="w-8 h-8 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#161a26] text-neutral-500 hover:text-neutral-900 dark:hover:text-white flex items-center justify-center transition-colors cursor-pointer shrink-0 shadow-2xs"
+            >
+              <X size={16} />
+            </button>
           </div>
 
+          {/* View Full Order Details CTA Button */}
           <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#161a26] text-neutral-500 hover:text-neutral-900 dark:hover:text-white flex items-center justify-center transition-colors cursor-pointer shrink-0"
+            type="button"
+            onClick={() => {
+              onClose();
+              navigate(detailUrl);
+            }}
+            className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-extrabold text-blue-600 dark:text-blue-400 bg-blue-500/10 hover:bg-blue-500/15 border border-blue-500/25 transition-all cursor-pointer shadow-xs active:scale-[0.99]"
           >
-            <X size={16} />
+            <ExternalLink size={14} className="stroke-[2.2]" />
+            <span>View Full Order Details</span>
           </button>
         </div>
 
-        {/* 2. Drawer Tabs: Comments & Notes vs Order Story */}
-        <div className="px-5 pt-3 pb-2 border-b border-neutral-100 dark:border-white/5 flex items-center gap-2 bg-white dark:bg-[#10131d]">
+        {/* 2. Financial & Payment Summary Cards */}
+        <div className="p-4 mx-5 my-3.5 rounded-2xl bg-neutral-50/80 dark:bg-[#151924] border border-neutral-200/80 dark:border-white/10 space-y-3 shadow-2xs">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 flex items-center gap-1.5">
+              <Wallet size={12} className="text-blue-500" />
+              <span>PAYMENT & FINANCIAL OVERVIEW</span>
+            </span>
+            {order.paymentTerms && (
+              <span className="text-[10.5px] font-semibold text-neutral-500 dark:text-neutral-400">
+                {order.paymentTerms}
+              </span>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+            {/* Paid Amount */}
+            <div className="p-3 rounded-xl bg-white dark:bg-[#121520] border border-emerald-500/20 shadow-2xs">
+              <div className="flex items-center justify-between gap-1 text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+                <span>PAID</span>
+                <CheckCircle2 size={12} className="stroke-[2.2]" />
+              </div>
+              <div className="text-sm font-black text-neutral-900 dark:text-white mt-1">
+                {paidVal > 0 ? `₹${paidVal.toLocaleString("en-IN")}` : "₹0.00"}
+              </div>
+              <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
+                {order.advancePaid ? "Advance Received" : "Unpaid"}
+              </div>
+            </div>
+
+            {/* Pending Payment */}
+            <div className="p-3 rounded-xl bg-white dark:bg-[#121520] border border-amber-500/20 shadow-2xs">
+              <div className="flex items-center justify-between gap-1 text-[10px] font-extrabold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+                <span>PENDING</span>
+                <Clock size={12} className="stroke-[2.2]" />
+              </div>
+              <div className="text-sm font-black text-neutral-900 dark:text-white mt-1">
+                {pendingVal > 0 ? `₹${pendingVal.toLocaleString("en-IN")}` : (totalVal > 0 && paidVal >= totalVal ? "₹0.00" : "Pending Quote")}
+              </div>
+              <div className="text-[10px] font-bold text-amber-600 dark:text-amber-400 mt-0.5">
+                {pendingVal > 0 ? "Balance Due" : "No Dues"}
+              </div>
+            </div>
+
+            {/* Total Order Value */}
+            <div className="p-3 rounded-xl bg-white dark:bg-[#121520] border border-neutral-200 dark:border-white/10 shadow-2xs col-span-2 sm:col-span-1">
+              <div className="flex items-center justify-between gap-1 text-[10px] font-extrabold text-neutral-500 uppercase tracking-wider">
+                <span>TOTAL VALUE</span>
+                <CreditCard size={12} />
+              </div>
+              <div className="text-sm font-black text-neutral-900 dark:text-white mt-1">
+                {totalVal > 0 ? `₹${totalVal.toLocaleString("en-IN")}` : "On Request"}
+              </div>
+              <div className="text-[10px] font-medium text-neutral-400 mt-0.5">
+                {order.advancePercent ? `${order.advancePercent}% Advance Term` : "Standard Terms"}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 3. Drawer Tabs: Comments & Notes vs Order Story */}
+        <div className="px-5 pt-1 pb-2 border-b border-neutral-100 dark:border-white/5 flex items-center gap-2 bg-white dark:bg-[#10131d]">
           <button
             type="button"
             onClick={() => setActiveTab("comments")}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              activeTab === "comments"
+            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeTab === "comments"
                 ? "bg-blue-600 text-white shadow-xs"
                 : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-white/5"
-            }`}
+              }`}
           >
             <MessageSquare size={13} />
             <span>Comments & Notes</span>
@@ -815,11 +1041,10 @@ function OrderStoryDrawer({
           <button
             type="button"
             onClick={() => setActiveTab("story")}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              activeTab === "story"
+            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeTab === "story"
                 ? "bg-blue-600 text-white shadow-xs"
                 : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-white/5"
-            }`}
+              }`}
           >
             <History size={13} />
             <span>Order Story (Timeline)</span>
@@ -851,25 +1076,23 @@ function OrderStoryDrawer({
                     >
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 min-w-0">
-                          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-extrabold text-white shadow-2xs shrink-0 ${
-                            isAdminRole
+                          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-extrabold text-white shadow-2xs shrink-0 ${isAdminRole
                               ? "bg-gradient-to-tr from-purple-600 to-indigo-600"
                               : isEngineerRole
-                              ? "bg-gradient-to-tr from-blue-600 to-cyan-600"
-                              : "bg-gradient-to-tr from-emerald-600 to-teal-600"
-                          }`}>
+                                ? "bg-gradient-to-tr from-blue-600 to-cyan-600"
+                                : "bg-gradient-to-tr from-emerald-600 to-teal-600"
+                            }`}>
                             {(c.authorName || c.authorRole || "U").charAt(0).toUpperCase()}
                           </div>
                           <span className="text-xs font-extrabold text-neutral-900 dark:text-white truncate">
                             {c.authorName || c.authorRole || "User"}
                           </span>
-                          <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-extrabold uppercase ${
-                            isAdminRole
+                          <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-extrabold uppercase ${isAdminRole
                               ? "bg-purple-500/10 text-purple-600 dark:text-purple-400"
                               : isEngineerRole
-                              ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
-                              : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                          }`}>
+                                ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                                : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                            }`}>
                             {c.authorRole}
                           </span>
                         </div>

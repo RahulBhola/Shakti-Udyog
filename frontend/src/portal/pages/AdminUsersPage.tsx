@@ -356,7 +356,7 @@ function DeleteConfirmModal({
           </p>
 
           <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-xs text-red-600 dark:text-red-400 leading-relaxed font-medium">
-            <strong>Warning:</strong> This action is irreversible. All sessions, refresh tokens, and direct permissions will be terminated immediately.
+            <strong>Warning:</strong> This action is permanent and irreversible. Deleting this user will automatically purge all their associated enquiries, quotations, orders, invoices, support requests, and organization mappings.
           </div>
 
           <div className="space-y-1.5">

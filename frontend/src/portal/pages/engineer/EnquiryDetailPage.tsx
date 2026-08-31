@@ -490,14 +490,6 @@ export default function EngineerEnquiryDetailPage() {
               </span>
               <span className="w-1 h-1 rounded-full bg-neutral-300 dark:bg-neutral-700" />
               <PriorityBadge priority={enquiry.priority} />
-              {enquiry.assignedToUserId && (
-                <>
-                  <span className="w-1 h-1 rounded-full bg-neutral-300 dark:bg-neutral-700" />
-                  <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-neutral-100 dark:bg-white/5 text-neutral-600 dark:text-neutral-300 font-medium">
-                    <User size={11} /> Assigned
-                  </span>
-                </>
-              )}
             </div>
           </div>
 
@@ -863,12 +855,6 @@ export default function EngineerEnquiryDetailPage() {
               <div className="flex items-center justify-between py-1 border-b border-neutral-100 dark:border-white/5">
                 <span className="text-neutral-500">Evaluation Priority</span>
                 <PriorityBadge priority={enquiry.priority} />
-              </div>
-              <div className="flex items-center justify-between py-1 border-b border-neutral-100 dark:border-white/5">
-                <span className="text-neutral-500">Assigned Engineer</span>
-                <span className="font-bold text-neutral-900 dark:text-white">
-                  {enquiry.assignedToUserId ? "Staff Engineer Assigned" : "Unassigned"}
-                </span>
               </div>
               <div className="flex items-center justify-between py-1 border-b border-neutral-100 dark:border-white/5">
                 <span className="text-neutral-500">Created Timestamp</span>

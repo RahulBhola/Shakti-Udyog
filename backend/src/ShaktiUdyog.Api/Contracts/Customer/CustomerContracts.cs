@@ -142,7 +142,9 @@ public record OrderDetailDto(
     IReadOnlyList<OrderMilestoneDto> Milestones,
     Guid? AssignedToUserId, string? AssignedToName,
     string? ManufacturingStage = null,
-    DateTimeOffset? StageUpdatedAt = null);
+    DateTimeOffset? StageUpdatedAt = null,
+    decimal? QuotationSubtotal = null,
+    decimal? QuotationTax = null);
 
 public record OrderItemDto(
     Guid Id, string PartNumber, string Description, string? MaterialGrade, string? DrawingRevision,

@@ -9,7 +9,7 @@ import { formatDate } from "../../shared";
 import {
   Search, RefreshCw, ChevronLeft, ChevronRight, X, Download,
   Eye, FileText, Clock, CheckCircle2, AlertCircle,
-  XCircle, FileEdit, Package,
+  XCircle, FileEdit, Package, Trash2, AlertTriangle,
 } from "lucide-react";
 import "../erpListView.css";
 
@@ -77,7 +77,7 @@ function initials(name: string | null): string {
 
 /* CSV export */
 function exportToCsv(items: EngineerEnquiryListItem[]) {
-  const headers = ["Enquiry No.", "Customer", "Product", "Quantity", "Status", "Date", "Files", "Assigned"];
+  const headers = ["Enquiry No.", "Customer", "Product", "Quantity", "Status", "Date", "Files"];
   const rows = items.map((r) => [
     enquiryNo(r.id),
     r.companyName ?? "Unknown",
@@ -86,7 +86,6 @@ function exportToCsv(items: EngineerEnquiryListItem[]) {
     r.status,
     formatDate(r.createdAtUtc),
     String(r.fileCount),
-    r.assignedToUserId ? "Yes" : "No",
   ]);
   const esc = (v: string) => `"${String(v).replace(/"/g, '""')}"`;
   const csv = [headers.join(","), ...rows.map((row) => row.map(esc).join(","))].join("\n");
@@ -212,6 +211,10 @@ export default function EngineerEnquiryListPage() {
   const [priorityFilter, setPriorityFilter] = useState("All");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [previewModalUrl, setPreviewModalUrl] = useState<string | null>(null);
+  const [deletingItem, setDeletingItem] = useState<EngineerEnquiryListItem | null>(null);
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [feedbackNotice, setFeedbackNotice] = useState<string | null>(null);
 
   const load = useCallback(() => {
     engineerApi.enquiries(page, pageSize, search || undefined, statusFilter === "All" ? undefined : statusFilter, companyId || undefined)
@@ -221,6 +224,45 @@ export default function EngineerEnquiryListPage() {
 
   useEffect(load, [load]);
   useEffect(() => { setPage(1); }, [search, statusFilter, pageSize]);
+
+  const handleDeleteSingle = async () => {
+    if (!deletingItem) return;
+    setActionLoading(true);
+    try {
+      await engineerApi.deleteEnquiry(deletingItem.id);
+      setFeedbackNotice(`Enquiry ${enquiryNo(deletingItem.id)} deleted successfully.`);
+      setTimeout(() => setFeedbackNotice(null), 3000);
+      setDeletingItem(null);
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(deletingItem.id);
+        return next;
+      });
+      load();
+    } catch (e: any) {
+      window.alert(e instanceof Error ? e.message : "Failed to delete enquiry.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    setActionLoading(true);
+    try {
+      const ids = Array.from(selectedIds);
+      await engineerApi.bulkDeleteEnquiries(ids);
+      setFeedbackNotice(`Successfully deleted ${ids.length} enquiries.`);
+      setTimeout(() => setFeedbackNotice(null), 3000);
+      setShowBulkDeleteModal(false);
+      setSelectedIds(new Set());
+      load();
+    } catch (e: any) {
+      window.alert(e instanceof Error ? e.message : "Failed to delete selected enquiries.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   const totalCount = data?.totalCount ?? (data as any)?.total ?? 0;
   const totalPages = data ? Math.max(1, Math.ceil(totalCount / pageSize)) : 1;
@@ -328,6 +370,14 @@ export default function EngineerEnquiryListPage() {
           </button>
         </div>
       </div>
+
+      {/* Toast Notice */}
+      {feedbackNotice && (
+        <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+          <CheckCircle2 size={16} />
+          <span>{feedbackNotice}</span>
+        </div>
+      )}
 
       {/* ── 2. Balanced 6-Card KPI Grid ────────────────────── */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
@@ -475,9 +525,6 @@ export default function EngineerEnquiryListPage() {
                     Quantity
                   </th>
                   <th className="py-3.5 px-4 text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
-                    Assigned
-                  </th>
-                  <th className="py-3.5 px-4 text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
                     Priority
                   </th>
                   <th className="py-3.5 px-4 text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
@@ -538,13 +585,6 @@ export default function EngineerEnquiryListPage() {
                       <td className="py-3.5 px-4 text-right tabular-nums font-black text-neutral-900 dark:text-white text-[13.5px]">
                         {r.quantity.toLocaleString()}
                       </td>
-                      <td className="py-3.5 px-4 text-xs">
-                        {r.assignedToUserId ? (
-                          <span className="font-semibold text-blue-600 dark:text-blue-400">Assigned</span>
-                        ) : (
-                          <span className="text-neutral-400 font-normal">—</span>
-                        )}
-                      </td>
                       <td className="py-3.5 px-4">
                         <PriorityBadge priority={r.priority} />
                       </td>
@@ -560,6 +600,14 @@ export default function EngineerEnquiryListPage() {
                             title="View Enquiry Details"
                           >
                             <Eye size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDeletingItem(r)}
+                            className="w-8 h-8 rounded-lg border border-red-500/20 dark:border-red-500/20 bg-red-500/5 hover:bg-red-500/15 flex items-center justify-center text-red-500 hover:text-red-600 dark:hover:text-red-400 transition-all shadow-xs cursor-pointer"
+                            title="Delete Enquiry"
+                          >
+                            <Trash2 size={13} />
                           </button>
                         </div>
                       </td>
@@ -617,6 +665,138 @@ export default function EngineerEnquiryListPage() {
           </div>
         )}
       </div>
+
+      {/* ── Floating Bulk Action Bar ─────────────────────────── */}
+      {selectedIds.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-neutral-900/95 dark:bg-[#151926]/95 backdrop-blur-md text-white px-5 py-3 rounded-2xl border border-white/15 shadow-2xl flex items-center gap-4 animate-in slide-in-from-bottom-5 duration-200">
+          <div className="flex items-center gap-2">
+            <span className="w-6 h-6 rounded-full bg-[var(--color-primary)] text-white text-xs font-black flex items-center justify-center">
+              {selectedIds.size}
+            </span>
+            <span className="text-xs font-bold text-neutral-200">
+              {selectedIds.size === 1 ? "1 enquiry selected" : `${selectedIds.size} enquiries selected`}
+            </span>
+          </div>
+
+          <div className="h-4 w-px bg-white/20" />
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowBulkDeleteModal(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+            >
+              <Trash2 size={13} />
+              <span>Delete Selected</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedIds(new Set())}
+              className="px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-neutral-300 hover:text-white text-xs font-bold transition-all cursor-pointer"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Single Delete Confirm Modal ────────────────────── */}
+      {deletingItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150" onClick={() => setDeletingItem(null)}>
+          <div className="w-full max-w-md bg-white dark:bg-[#121520] rounded-2xl border border-neutral-200 dark:border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()} role="dialog">
+            <div className="px-6 py-4 border-b border-neutral-100 dark:border-white/10 flex items-center justify-between bg-red-500/5">
+              <div className="flex items-center gap-2.5 text-red-600 dark:text-red-400">
+                <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center">
+                  <AlertTriangle size={17} />
+                </div>
+                <h3 className="font-extrabold text-sm m-0">Delete Enquiry</h3>
+              </div>
+              <button onClick={() => setDeletingItem(null)} className="p-1 rounded-lg text-neutral-400 hover:text-neutral-700 dark:hover:text-white cursor-pointer">
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <p className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed m-0">
+                Are you sure you want to permanently delete enquiry <strong className="text-neutral-900 dark:text-white font-mono">{enquiryNo(deletingItem.id)}</strong> from <strong className="text-neutral-900 dark:text-white">{deletingItem.companyName || "Unknown Customer"}</strong>?
+              </p>
+
+              <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-xs text-red-600 dark:text-red-400 leading-relaxed font-medium">
+                <strong>Warning:</strong> This action cannot be undone. All linked drawings, items, status logs, and quotations will be deleted permanently.
+              </div>
+            </div>
+
+            <div className="px-6 py-4 bg-neutral-50 dark:bg-white/[0.02] border-t border-neutral-100 dark:border-white/10 flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                className="px-4 py-2 rounded-xl border border-neutral-200 dark:border-white/10 text-xs font-bold text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                onClick={() => setDeletingItem(null)}
+                disabled={actionLoading}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={actionLoading}
+                onClick={handleDeleteSingle}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-xs font-bold transition-all shadow-sm shadow-red-500/20 cursor-pointer"
+              >
+                <Trash2 size={13} />
+                <span>{actionLoading ? "Deleting..." : "Permanently Delete"}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Bulk Delete Confirm Modal ──────────────────────── */}
+      {showBulkDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150" onClick={() => setShowBulkDeleteModal(false)}>
+          <div className="w-full max-w-md bg-white dark:bg-[#121520] rounded-2xl border border-neutral-200 dark:border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()} role="dialog">
+            <div className="px-6 py-4 border-b border-neutral-100 dark:border-white/10 flex items-center justify-between bg-red-500/5">
+              <div className="flex items-center gap-2.5 text-red-600 dark:text-red-400">
+                <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center">
+                  <AlertTriangle size={17} />
+                </div>
+                <h3 className="font-extrabold text-sm m-0">Bulk Delete Enquiries</h3>
+              </div>
+              <button onClick={() => setShowBulkDeleteModal(false)} className="p-1 rounded-lg text-neutral-400 hover:text-neutral-700 dark:hover:text-white cursor-pointer">
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <p className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed m-0">
+                Are you sure you want to permanently delete <strong className="text-red-500 font-bold">{selectedIds.size} selected enquiries</strong>?
+              </p>
+
+              <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-xs text-red-600 dark:text-red-400 leading-relaxed font-medium">
+                <strong>Warning:</strong> All drawings, quotations, and activity timelines attached to these {selectedIds.size} enquiries will be removed permanently.
+              </div>
+            </div>
+
+            <div className="px-6 py-4 bg-neutral-50 dark:bg-white/[0.02] border-t border-neutral-100 dark:border-white/10 flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                className="px-4 py-2 rounded-xl border border-neutral-200 dark:border-white/10 text-xs font-bold text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                onClick={() => setShowBulkDeleteModal(false)}
+                disabled={actionLoading}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={actionLoading}
+                onClick={handleBulkDelete}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-xs font-bold transition-all shadow-sm shadow-red-500/20 cursor-pointer"
+              >
+                <Trash2 size={13} />
+                <span>{actionLoading ? "Deleting..." : `Delete ${selectedIds.size} Enquiries`}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

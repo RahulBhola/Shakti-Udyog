@@ -699,6 +699,13 @@ public class CustomerService(
 
         var effectiveStage = order.ManufacturingStage ?? (ManufacturingStages.Workflow.Contains(order.Status) ? order.Status : (order.Status == OrderStatuses.Dispatched || order.Status == OrderStatuses.Delivered ? ManufacturingStages.ReadyToDispatch : ManufacturingStages.PatternDevelopment));
 
+        var quotation = order.QuotationId.HasValue
+            ? await db.Quotations.Select(q => new { q.Id, q.Subtotal, q.Tax, q.Total, q.PaymentTerms }).FirstOrDefaultAsync(q => q.Id == order.QuotationId.Value)
+            : null;
+
+        var quoteSubtotal = quotation?.Subtotal ?? (order.QuotationTotal.HasValue ? Math.Round(order.QuotationTotal.Value / 1.18m, 2) : (decimal?)null);
+        var quoteTax = quotation?.Tax ?? (order.QuotationTotal.HasValue && quoteSubtotal.HasValue ? Math.Round(order.QuotationTotal.Value - quoteSubtotal.Value, 2) : (decimal?)null);
+
         return new OrderDetailDto(
             order.Id, order.OrderNumber, order.PurchaseOrderReference,
             order.Status, label, description,
@@ -716,13 +723,15 @@ public class CustomerService(
             documents,
             order.AdvancePercent, order.AdvanceAmount, order.AdvancePaid, order.AdvancePaidAtUtc,
             order.AdvancePaymentRef, order.AdvanceVerifiedAtUtc,
-            order.QuotationTotal, order.PaymentTerms, order.QuotationId,
+            quotation?.Total ?? order.QuotationTotal, quotation?.PaymentTerms ?? order.PaymentTerms, order.QuotationId,
             order.Milestones.OrderBy(m => m.OccurredAtUtc).Select(m => new OrderMilestoneDto(
                 m.Id, m.StatusCode, m.CustomerMessage, m.OccurredAtUtc)).ToList(),
             order.AssignedToUserId,
             order.AssignedToUser != null ? (order.AssignedToUser.FullName ?? order.AssignedToUser.Email) : null,
             effectiveStage,
-            order.StageUpdatedAt);
+            order.StageUpdatedAt,
+            quoteSubtotal,
+            quoteTax);
     }
 
     public async Task<IReadOnlyList<TimelineEntryDto>?> GetOrderTimelineAsync(CustomerContext ctx, Guid orderId)

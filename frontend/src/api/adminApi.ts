@@ -60,6 +60,8 @@ export interface CreateShipmentPayload {
 export const adminApi = {
   // ---- Enquiries ---------------------------------------------------------------
   enquiry: (id: string) => apiGet<EngineerEnquiryDetail>(`${base}/enquiries/${id}`),
+  deleteEnquiry: (id: string) => apiDelete<{ message: string }>(`${base}/enquiries/${id}`),
+  bulkDeleteEnquiries: (ids: string[]) => apiPost<{ message: string; deletedCount: number }>(`${base}/enquiries/bulk-delete`, { ids }),
 
   // ---- Quotes ---------------------------------------------------------
   quotations: (page = 1, pageSize = 20, search?: string, status?: string) => {

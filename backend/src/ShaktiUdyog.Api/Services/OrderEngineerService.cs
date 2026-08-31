@@ -100,6 +100,13 @@ public class OrderEngineerService(
 
         var effectiveStage = o.ManufacturingStage ?? (ManufacturingStages.Workflow.Contains(o.Status) ? o.Status : (o.Status == OrderStatuses.Dispatched || o.Status == OrderStatuses.Delivered ? ManufacturingStages.ReadyToDispatch : ManufacturingStages.PatternDevelopment));
 
+        var quotation = o.QuotationId.HasValue
+            ? await db.Quotations.Select(q => new { q.Id, q.Subtotal, q.Tax, q.Total, q.PaymentTerms }).FirstOrDefaultAsync(q => q.Id == o.QuotationId.Value)
+            : null;
+
+        var quoteSubtotal = quotation?.Subtotal ?? (o.QuotationTotal.HasValue ? Math.Round(o.QuotationTotal.Value / 1.18m, 2) : (decimal?)null);
+        var quoteTax = quotation?.Tax ?? (o.QuotationTotal.HasValue && quoteSubtotal.HasValue ? Math.Round(o.QuotationTotal.Value - quoteSubtotal.Value, 2) : (decimal?)null);
+
         return new OrderDetailDto(o.Id, o.OrderNumber, o.PurchaseOrderReference, o.Status, label, desc,
             o.PlacedAtUtc, o.PromisedDispatchDateUtc, o.DeliveryAddress, o.LastUpdatedAtUtc,
             o.Items.Select(i => new OrderItemDto(i.Id, i.PartNumber, i.Description, i.MaterialGrade,
@@ -110,11 +117,13 @@ public class OrderEngineerService(
             latestInvoice, documents,
             o.AdvancePercent, o.AdvanceAmount, o.AdvancePaid, o.AdvancePaidAtUtc,
             o.AdvancePaymentRef, o.AdvanceVerifiedAtUtc,
-            o.QuotationTotal, o.PaymentTerms, o.QuotationId,
+            quotation?.Total ?? o.QuotationTotal, quotation?.PaymentTerms ?? o.PaymentTerms, o.QuotationId,
             o.Milestones.Select(m => new OrderMilestoneDto(m.Id, m.StatusCode, m.CustomerMessage, m.OccurredAtUtc)).ToList(),
             o.AssignedToUserId, o.AssignedToUser != null ? o.AssignedToUser.FullName : null,
             effectiveStage,
-            o.StageUpdatedAt);
+            o.StageUpdatedAt,
+            quoteSubtotal,
+            quoteTax);
     }
 
     public async Task<bool?> UpdateMilestoneAsync(Guid id, MilestoneRequest request, Guid userId, bool callerIsAdmin, string? ip)

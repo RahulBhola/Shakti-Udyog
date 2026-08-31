@@ -20,7 +20,13 @@ public record EngineerOrderDto(
     DateTimeOffset? PromisedDispatchDateUtc = null,
     string? Status = null,
     bool AdvancePaid = false,
-    string? AssignedToUserName = null);
+    string? AssignedToUserName = null,
+    decimal? QuotationTotal = null,
+    decimal? AdvanceAmount = null,
+    int AdvancePercent = 30,
+    decimal? PaidAmount = null,
+    decimal? PendingAmount = null,
+    string? PaymentTerms = null);
 
 /// <summary>Body for the engineer stage-move endpoint.</summary>
 public record EngineerStageRequest(string Stage);
@@ -66,7 +72,15 @@ public class EngineerManufacturingService(
                 o.PromisedDispatchDateUtc,
                 o.Status,
                 o.AdvancePaid,
-                o.AssignedToUser != null ? (o.AssignedToUser.FullName ?? o.AssignedToUser.Email) : null))
+                o.AssignedToUser != null ? (o.AssignedToUser.FullName ?? o.AssignedToUser.Email) : null,
+                o.QuotationTotal,
+                o.AdvanceAmount,
+                o.AdvancePercent,
+                o.AdvancePaid ? (o.AdvanceAmount ?? (o.QuotationTotal != null ? (o.QuotationTotal.Value * (decimal)o.AdvancePercent / 100m) : 0m)) : 0m,
+                (o.QuotationTotal ?? o.AdvanceAmount ?? 0m) > 0m
+                    ? ((o.QuotationTotal ?? o.AdvanceAmount ?? 0m) - (o.AdvancePaid ? (o.AdvanceAmount ?? (o.QuotationTotal != null ? (o.QuotationTotal.Value * (decimal)o.AdvancePercent / 100m) : 0m)) : 0m))
+                    : 0m,
+                o.PaymentTerms))
             .ToListAsync();
     }
 

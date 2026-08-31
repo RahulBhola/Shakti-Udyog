@@ -95,23 +95,26 @@ public class AdminController(IAdminService adminService, IOrderAdminService orde
     public async Task<IActionResult> CleanTestUsers()
     {
         var testUsers = await userManager.Users
-            .Where(u => u.Email != null && (u.Email.StartsWith("sessiontest_") || u.Email.StartsWith("rotatetest_") || u.Email.Contains(".test.local")))
+            .Where(u => u.Email != null && (u.Email.StartsWith("sessiontest_") || u.Email.StartsWith("rotatetest_") || u.Email.Contains(".test.local") || u.Email == "test@example.com"))
             .ToListAsync();
 
         int deletedCount = 0;
         foreach (var u in testUsers)
         {
-            var sessions = await db.UserSessions.Where(s => s.UserId == u.Id).ToListAsync();
-            if (sessions.Count > 0) db.UserSessions.RemoveRange(sessions);
-            var tokens = await db.RefreshTokens.Where(t => t.UserId == u.Id).ToListAsync();
-            if (tokens.Count > 0) db.RefreshTokens.RemoveRange(tokens);
-            var userCompanies = await db.UserCompanies.Where(uc => uc.UserId == u.Id).ToListAsync();
-            if (userCompanies.Count > 0) db.UserCompanies.RemoveRange(userCompanies);
-            await db.SaveChangesAsync();
-            await userManager.DeleteAsync(u);
+            await DeleteUserAndAssociatedDataAsync(db, userManager, u);
             deletedCount++;
         }
-        return Ok(new { message = $"Cleaned up {deletedCount} test accounts.", deletedCount });
+
+        // Also clean up any orphaned enquiries or companies with test domains
+        var orphanedEnquiries = await db.Enquiries
+            .Where(e => e.Email.Contains("test.local") || e.Email == "test@example.com" || e.CompanyName.Contains("Test Engineering"))
+            .ToListAsync();
+        if (orphanedEnquiries.Count > 0)
+        {
+            await DeleteEnquiriesAndRelatedDataAsync(db, orphanedEnquiries.Select(e => e.Id).ToList());
+        }
+
+        return Ok(new { message = $"Cleaned up {deletedCount} test accounts and associated data.", deletedCount });
     }
 
     [HttpDelete("users/{id:guid}")]
@@ -138,70 +141,8 @@ public class AdminController(IAdminService adminService, IOrderAdminService orde
 
         try
         {
-            // 1. Remove refresh tokens, sessions, and password reset tokens
-            var sessions = await db.UserSessions.Where(s => s.UserId == id).ToListAsync();
-            if (sessions.Count > 0) db.UserSessions.RemoveRange(sessions);
-
-            var tokens = await db.RefreshTokens.Where(t => t.UserId == id).ToListAsync();
-            if (tokens.Count > 0) db.RefreshTokens.RemoveRange(tokens);
-
-            var resetTokens = await db.PasswordResetTokens.Where(t => t.UserId == id).ToListAsync();
-            if (resetTokens.Count > 0) db.PasswordResetTokens.RemoveRange(resetTokens);
-
-            // 2. Identify candidate associated companies for this user
-            var userCompanies = await db.UserCompanies.Where(uc => uc.UserId == id).ToListAsync();
-            var companyIdsToCheck = userCompanies.Select(uc => uc.CompanyId).Distinct().ToList();
-
-            if (!string.IsNullOrWhiteSpace(user.CompanyName))
-            {
-                var compByName = await db.Companies.FirstOrDefaultAsync(c => c.Name == user.CompanyName);
-                if (compByName != null && !companyIdsToCheck.Contains(compByName.Id))
-                {
-                    companyIdsToCheck.Add(compByName.Id);
-                }
-            }
-
-            if (!string.IsNullOrWhiteSpace(user.Email))
-            {
-                var compByEmail = await db.Companies.FirstOrDefaultAsync(c => c.CompanyEmail == user.Email);
-                if (compByEmail != null && !companyIdsToCheck.Contains(compByEmail.Id))
-                {
-                    companyIdsToCheck.Add(compByEmail.Id);
-                }
-            }
-
-            if (userCompanies.Count > 0) db.UserCompanies.RemoveRange(userCompanies);
-
-            // 3. Remove user board preferences
-            var boardPrefs = await db.UserBoardPreferences.Where(p => p.UserId == id).ToListAsync();
-            if (boardPrefs.Count > 0) db.UserBoardPreferences.RemoveRange(boardPrefs);
-
-            // 4. Remove user roles
-            var userRoles = await db.UserRoles.Where(ur => ur.UserId == id).ToListAsync();
-            if (userRoles.Count > 0) db.UserRoles.RemoveRange(userRoles);
-
-            await db.SaveChangesAsync();
-
-            // 5. Delete the user
-            var result = await userManager.DeleteAsync(user);
-            if (!result.Succeeded)
-            {
-                db.Users.Remove(user);
-                await db.SaveChangesAsync();
-            }
-
-            // 6. Automatically delete company and all associated records if no other users are mapped
-            foreach (var compId in companyIdsToCheck)
-            {
-                var hasOtherUsers = await db.UserCompanies.AnyAsync(uc => uc.CompanyId == compId && uc.UserId != id);
-                if (!hasOtherUsers)
-                {
-                    await DeleteCompanyAndRelatedDataAsync(db, compId);
-                }
-            }
-            await db.SaveChangesAsync();
-
-            return Ok(new { message = $"User {user.Email} and associated company data have been permanently deleted." });
+            await DeleteUserAndAssociatedDataAsync(db, userManager, user);
+            return Ok(new { message = $"User {user.Email} and all associated enquiries, quotations, orders, and company data have been permanently deleted." });
         }
         catch (Exception ex)
         {
@@ -361,6 +302,268 @@ public class AdminController(IAdminService adminService, IOrderAdminService orde
         }
     }
 
+    private static async Task DeleteUserAndAssociatedDataAsync(
+        AppDbContext db,
+        UserManager<ApplicationUser> userManager,
+        ApplicationUser user)
+    {
+        var userId = user.Id;
+        var userEmail = user.Email?.Trim();
+        var userCompany = user.CompanyName?.Trim();
+
+        // 1. Identify companies associated with this user
+        var userCompanyRows = await db.UserCompanies.Where(uc => uc.UserId == userId).ToListAsync();
+        var candidateCompanyIds = userCompanyRows.Select(uc => uc.CompanyId).Distinct().ToList();
+
+        if (!string.IsNullOrWhiteSpace(userCompany))
+        {
+            var matchedCompanies = await db.Companies
+                .Where(c => c.Name == userCompany || c.LegalBusinessName == userCompany)
+                .Select(c => c.Id)
+                .ToListAsync();
+            foreach (var cId in matchedCompanies)
+            {
+                if (!candidateCompanyIds.Contains(cId)) candidateCompanyIds.Add(cId);
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(userEmail))
+        {
+            var matchedCompanies = await db.Companies
+                .Where(c => c.CompanyEmail == userEmail)
+                .Select(c => c.Id)
+                .ToListAsync();
+            foreach (var cId in matchedCompanies)
+            {
+                if (!candidateCompanyIds.Contains(cId)) candidateCompanyIds.Add(cId);
+            }
+        }
+
+        // Also include companies linked to enquiries submitted by this user
+        var enquiryCompanyIds = await db.Enquiries
+            .Where(e => e.SubmittedByUserId == userId || (!string.IsNullOrWhiteSpace(userEmail) && e.Email == userEmail))
+            .Where(e => e.CompanyId != null)
+            .Select(e => e.CompanyId!.Value)
+            .Distinct()
+            .ToListAsync();
+        foreach (var cId in enquiryCompanyIds)
+        {
+            if (!candidateCompanyIds.Contains(cId)) candidateCompanyIds.Add(cId);
+        }
+
+        // Determine which companies should be deleted (only if no other users are mapped to them)
+        var companiesToDelete = new List<Guid>();
+        foreach (var compId in candidateCompanyIds)
+        {
+            var hasOtherUsers = await db.UserCompanies.AnyAsync(uc => uc.CompanyId == compId && uc.UserId != userId);
+            if (!hasOtherUsers)
+            {
+                companiesToDelete.Add(compId);
+            }
+        }
+
+        // 2. For each company being deleted, invoke DeleteCompanyAndRelatedDataAsync
+        foreach (var compId in companiesToDelete)
+        {
+            await DeleteCompanyAndRelatedDataAsync(db, compId);
+        }
+
+        // 3. Delete any remaining standalone Enquiries submitted by this user (including public / company-less RFQs)
+        var userEnquiries = await db.Enquiries
+            .Where(e => e.SubmittedByUserId == userId
+                || (!string.IsNullOrWhiteSpace(userEmail) && e.Email == userEmail)
+                || (!string.IsNullOrWhiteSpace(userCompany) && e.CompanyName == userCompany && (e.CompanyId == null || companiesToDelete.Contains(e.CompanyId.Value))))
+            .ToListAsync();
+
+        if (userEnquiries.Count > 0)
+        {
+            var enqIds = userEnquiries.Select(e => e.Id).ToList();
+            await DeleteEnquiriesAndRelatedDataAsync(db, enqIds);
+        }
+
+        // 4. Delete user sessions, tokens, notifications, support requests, preferences
+        var sessions = await db.UserSessions.Where(s => s.UserId == userId).ToListAsync();
+        if (sessions.Count > 0) db.UserSessions.RemoveRange(sessions);
+
+        var tokens = await db.RefreshTokens.Where(t => t.UserId == userId).ToListAsync();
+        if (tokens.Count > 0) db.RefreshTokens.RemoveRange(tokens);
+
+        var resetTokens = await db.PasswordResetTokens.Where(t => t.UserId == userId).ToListAsync();
+        if (resetTokens.Count > 0) db.PasswordResetTokens.RemoveRange(resetTokens);
+
+        var notifications = await db.Notifications.Where(n => n.UserId == userId).ToListAsync();
+        if (notifications.Count > 0) db.Notifications.RemoveRange(notifications);
+
+        var supportReqs = await db.SupportRequests.Where(sr => sr.RaisedByUserId == userId).ToListAsync();
+        if (supportReqs.Count > 0) db.SupportRequests.RemoveRange(supportReqs);
+
+        var boardPrefs = await db.UserBoardPreferences.Where(p => p.UserId == userId).ToListAsync();
+        if (boardPrefs.Count > 0) db.UserBoardPreferences.RemoveRange(boardPrefs);
+
+        var remainingUserCompanies = await db.UserCompanies.Where(uc => uc.UserId == userId).ToListAsync();
+        if (remainingUserCompanies.Count > 0) db.UserCompanies.RemoveRange(remainingUserCompanies);
+
+        // 5. Clean comments / assignments authored by user across remaining entities
+        var enqComments = await db.EnquiryComments.Where(ec => ec.AuthorUserId == userId).ToListAsync();
+        if (enqComments.Count > 0) db.EnquiryComments.RemoveRange(enqComments);
+
+        var enqAssigns = await db.EnquiryAssignments.Where(ea => ea.AssignedToUserId == userId || ea.AssignedByUserId == userId).ToListAsync();
+        if (enqAssigns.Count > 0) db.EnquiryAssignments.RemoveRange(enqAssigns);
+
+        var qComments = await db.QuotationComments.Where(qc => qc.AuthorUserId == userId).ToListAsync();
+        if (qComments.Count > 0) db.QuotationComments.RemoveRange(qComments);
+
+        var ordComments = await db.OrderComments.Where(oc => oc.AuthorUserId == userId).ToListAsync();
+        if (ordComments.Count > 0) db.OrderComments.RemoveRange(ordComments);
+
+        var ordAssigns = await db.OrderAssignments.Where(oa => oa.AssignedToUserId == userId || oa.AssignedByUserId == userId).ToListAsync();
+        if (ordAssigns.Count > 0) db.OrderAssignments.RemoveRange(ordAssigns);
+
+        // Unassign staff from any remaining active orders
+        var assignedOrders = await db.Orders.Where(o => o.AssignedToUserId == userId).ToListAsync();
+        foreach (var o in assignedOrders) o.AssignedToUserId = null;
+
+        var userRoles = await db.UserRoles.Where(ur => ur.UserId == userId).ToListAsync();
+        if (userRoles.Count > 0) db.UserRoles.RemoveRange(userRoles);
+
+        await db.SaveChangesAsync();
+
+        var result = await userManager.DeleteAsync(user);
+        if (!result.Succeeded)
+        {
+            db.Users.Remove(user);
+            await db.SaveChangesAsync();
+        }
+    }
+
+    private static async Task DeleteEnquiriesAndRelatedDataAsync(AppDbContext db, List<Guid> enqIds)
+    {
+        if (enqIds.Count == 0) return;
+
+        // 1. Find quotations linked to these enquiries
+        var quotes = await db.Quotations.Where(q => enqIds.Contains(q.EnquiryId)).ToListAsync();
+        var quoteIds = quotes.Select(q => q.Id).ToList();
+        if (quoteIds.Count > 0)
+        {
+            // Delete orders linked to these quotations
+            var orders = await db.Orders.Where(o => o.QuotationId != null && quoteIds.Contains(o.QuotationId.Value)).ToListAsync();
+            var orderIds = orders.Select(o => o.Id).ToList();
+            if (orderIds.Count > 0)
+            {
+                var invoices = await db.Invoices.Where(i => i.OrderId != null && orderIds.Contains(i.OrderId.Value)).ToListAsync();
+                var invoiceIds = invoices.Select(i => i.Id).ToList();
+                if (invoiceIds.Count > 0)
+                {
+                    var invItems = await db.InvoiceItems.Where(ii => invoiceIds.Contains(ii.InvoiceId)).ToListAsync();
+                    if (invItems.Count > 0) db.InvoiceItems.RemoveRange(invItems);
+
+                    var invHist = await db.InvoiceStatusHistories.Where(h => invoiceIds.Contains(h.InvoiceId)).ToListAsync();
+                    if (invHist.Count > 0) db.InvoiceStatusHistories.RemoveRange(invHist);
+
+                    var invAtt = await db.InvoiceAttachments.Where(a => invoiceIds.Contains(a.InvoiceId)).ToListAsync();
+                    if (invAtt.Count > 0) db.InvoiceAttachments.RemoveRange(invAtt);
+
+                    var cn = await db.CreditNotes.Where(c => invoiceIds.Contains(c.InvoiceId)).ToListAsync();
+                    if (cn.Count > 0) db.CreditNotes.RemoveRange(cn);
+
+                    var dn = await db.DebitNotes.Where(d => invoiceIds.Contains(d.InvoiceId)).ToListAsync();
+                    if (dn.Count > 0) db.DebitNotes.RemoveRange(dn);
+
+                    var payments = await db.Payments.Where(p => invoiceIds.Contains(p.InvoiceId)).ToListAsync();
+                    if (payments.Count > 0) db.Payments.RemoveRange(payments);
+
+                    db.Invoices.RemoveRange(invoices);
+                }
+
+                var orderItems = await db.OrderItems.Where(oi => orderIds.Contains(oi.OrderId)).ToListAsync();
+                if (orderItems.Count > 0) db.OrderItems.RemoveRange(orderItems);
+
+                var milestones = await db.OrderMilestones.Where(m => orderIds.Contains(m.OrderId)).ToListAsync();
+                if (milestones.Count > 0) db.OrderMilestones.RemoveRange(milestones);
+
+                var orderComments = await db.OrderComments.Where(c => orderIds.Contains(c.OrderId)).ToListAsync();
+                if (orderComments.Count > 0) db.OrderComments.RemoveRange(orderComments);
+
+                var orderAssigns = await db.OrderAssignments.Where(a => orderIds.Contains(a.OrderId)).ToListAsync();
+                if (orderAssigns.Count > 0) db.OrderAssignments.RemoveRange(orderAssigns);
+
+                var orderHistories = await db.OrderStatusHistories.Where(h => orderIds.Contains(h.OrderId)).ToListAsync();
+                if (orderHistories.Count > 0) db.OrderStatusHistories.RemoveRange(orderHistories);
+
+                var shipments = await db.Shipments.Where(s => orderIds.Contains(s.OrderId)).ToListAsync();
+                var shipmentIds = shipments.Select(s => s.Id).ToList();
+                if (shipmentIds.Count > 0)
+                {
+                    var trackingEvents = await db.ShipmentTrackingEvents.Where(te => shipmentIds.Contains(te.ShipmentId)).ToListAsync();
+                    if (trackingEvents.Count > 0) db.ShipmentTrackingEvents.RemoveRange(trackingEvents);
+                    db.Shipments.RemoveRange(shipments);
+                }
+
+                var prodJobs = await db.ProductionJobs.Where(pj => pj.OrderId != null && orderIds.Contains(pj.OrderId.Value)).ToListAsync();
+                var jobIds = prodJobs.Select(j => j.Id).ToList();
+                if (jobIds.Count > 0)
+                {
+                    var jobQualities = await db.ProductionQualities.Where(pq => jobIds.Contains(pq.JobId)).ToListAsync();
+                    if (jobQualities.Count > 0) db.ProductionQualities.RemoveRange(jobQualities);
+
+                    var jobComments = await db.ProductionComments.Where(pc => jobIds.Contains(pc.JobId)).ToListAsync();
+                    if (jobComments.Count > 0) db.ProductionComments.RemoveRange(jobComments);
+
+                    var jobHistories = await db.ProductionStageHistories.Where(ph => jobIds.Contains(ph.JobId)).ToListAsync();
+                    if (jobHistories.Count > 0) db.ProductionStageHistories.RemoveRange(jobHistories);
+
+                    var jobTimelines = await db.ProductionTimelines.Where(pt => jobIds.Contains(pt.JobId)).ToListAsync();
+                    if (jobTimelines.Count > 0) db.ProductionTimelines.RemoveRange(jobTimelines);
+
+                    db.ProductionJobs.RemoveRange(prodJobs);
+                }
+
+                db.Orders.RemoveRange(orders);
+            }
+
+            var qApprovals = await db.QuotationApprovals.Where(qa => quoteIds.Contains(qa.QuotationId)).ToListAsync();
+            if (qApprovals.Count > 0) db.QuotationApprovals.RemoveRange(qApprovals);
+
+            var qAttach = await db.QuotationAttachments.Where(qa => quoteIds.Contains(qa.QuotationId)).ToListAsync();
+            if (qAttach.Count > 0) db.QuotationAttachments.RemoveRange(qAttach);
+
+            var qComments = await db.QuotationComments.Where(qc => quoteIds.Contains(qc.QuotationId)).ToListAsync();
+            if (qComments.Count > 0) db.QuotationComments.RemoveRange(qComments);
+
+            var qItems = await db.QuotationItems.Where(qi => quoteIds.Contains(qi.QuotationId)).ToListAsync();
+            if (qItems.Count > 0) db.QuotationItems.RemoveRange(qItems);
+
+            var qRevisions = await db.QuotationRevisions.Where(qr => quoteIds.Contains(qr.QuotationId)).ToListAsync();
+            if (qRevisions.Count > 0) db.QuotationRevisions.RemoveRange(qRevisions);
+
+            var qHistories = await db.QuotationStatusHistories.Where(qh => quoteIds.Contains(qh.QuotationId)).ToListAsync();
+            if (qHistories.Count > 0) db.QuotationStatusHistories.RemoveRange(qHistories);
+
+            db.Quotations.RemoveRange(quotes);
+        }
+
+        // 2. Delete enquiry children
+        var enqAssigns = await db.EnquiryAssignments.Where(ea => enqIds.Contains(ea.EnquiryId)).ToListAsync();
+        if (enqAssigns.Count > 0) db.EnquiryAssignments.RemoveRange(enqAssigns);
+
+        var enqComments = await db.EnquiryComments.Where(ec => enqIds.Contains(ec.EnquiryId)).ToListAsync();
+        if (enqComments.Count > 0) db.EnquiryComments.RemoveRange(enqComments);
+
+        var enqFiles = await db.EnquiryFiles.Where(ef => enqIds.Contains(ef.EnquiryId)).ToListAsync();
+        if (enqFiles.Count > 0) db.EnquiryFiles.RemoveRange(enqFiles);
+
+        var enqItems = await db.EnquiryItems.Where(ei => enqIds.Contains(ei.EnquiryId)).ToListAsync();
+        if (enqItems.Count > 0) db.EnquiryItems.RemoveRange(enqItems);
+
+        var enqHistories = await db.EnquiryStatusHistories.Where(eh => enqIds.Contains(eh.EnquiryId)).ToListAsync();
+        if (enqHistories.Count > 0) db.EnquiryStatusHistories.RemoveRange(enqHistories);
+
+        var enquiries = await db.Enquiries.Where(e => enqIds.Contains(e.Id)).ToListAsync();
+        db.Enquiries.RemoveRange(enquiries);
+
+        await db.SaveChangesAsync();
+    }
+
     private static async Task DeleteCompanyAndRelatedDataAsync(AppDbContext db, Guid compId)
     {
         var comp = await db.Companies.FindAsync(compId);
@@ -485,22 +688,7 @@ public class AdminController(IAdminService adminService, IOrderAdminService orde
         var enqIds = enquiries.Select(e => e.Id).ToList();
         if (enqIds.Count > 0)
         {
-            var enqAssigns = await db.EnquiryAssignments.Where(ea => enqIds.Contains(ea.EnquiryId)).ToListAsync();
-            if (enqAssigns.Count > 0) db.EnquiryAssignments.RemoveRange(enqAssigns);
-
-            var enqComments = await db.EnquiryComments.Where(ec => enqIds.Contains(ec.EnquiryId)).ToListAsync();
-            if (enqComments.Count > 0) db.EnquiryComments.RemoveRange(enqComments);
-
-            var enqFiles = await db.EnquiryFiles.Where(ef => enqIds.Contains(ef.EnquiryId)).ToListAsync();
-            if (enqFiles.Count > 0) db.EnquiryFiles.RemoveRange(enqFiles);
-
-            var enqItems = await db.EnquiryItems.Where(ei => enqIds.Contains(ei.EnquiryId)).ToListAsync();
-            if (enqItems.Count > 0) db.EnquiryItems.RemoveRange(enqItems);
-
-            var enqHistories = await db.EnquiryStatusHistories.Where(eh => enqIds.Contains(eh.EnquiryId)).ToListAsync();
-            if (enqHistories.Count > 0) db.EnquiryStatusHistories.RemoveRange(enqHistories);
-
-            db.Enquiries.RemoveRange(enquiries);
+            await DeleteEnquiriesAndRelatedDataAsync(db, enqIds);
         }
 
         // 8. Company metadata (contacts, addresses, documents, user-companies)
@@ -700,6 +888,36 @@ public class AdminController(IAdminService adminService, IOrderAdminService orde
 
         var history = await adminService.GetEnquiryHistoryAsync(id);
         return Ok(history);
+    }
+
+    [HttpDelete("enquiries/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteEnquiry(Guid id)
+    {
+        var enquiry = await db.Enquiries.FindAsync(id);
+        if (enquiry is null) return NotFound(new { message = "Enquiry not found." });
+
+        await DeleteEnquiriesAndRelatedDataAsync(db, [id]);
+        await db.SaveChangesAsync();
+
+        return Ok(new { message = "Enquiry and associated records deleted permanently." });
+    }
+
+    [HttpPost("enquiries/bulk-delete")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> BulkDeleteEnquiries([FromBody] BulkDeleteEnquiriesRequest request)
+    {
+        if (request?.Ids == null || request.Ids.Count == 0)
+        {
+            return BadRequest(new { message = "No enquiry IDs provided for deletion." });
+        }
+
+        await DeleteEnquiriesAndRelatedDataAsync(db, request.Ids);
+        await db.SaveChangesAsync();
+
+        return Ok(new { message = $"Successfully deleted {request.Ids.Count} enquiries.", deletedCount = request.Ids.Count });
     }
 
     
@@ -1044,3 +1262,5 @@ public record AssignOrderRequest(Guid? AssignedToUserId);
 public record UpdateAdminProfileRequest(string? FullName, string? PhoneNumber);
 
 public record ChangeAdminPasswordRequest(string CurrentPassword, string NewPassword);
+
+public record BulkDeleteEnquiriesRequest(List<Guid> Ids);

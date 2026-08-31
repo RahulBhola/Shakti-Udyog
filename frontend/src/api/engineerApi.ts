@@ -97,6 +97,8 @@ export const engineerApi = {
     apiPatch<{ message: string }>(`${base}/enquiries/${id}/assign`, { assignedToUserId }),
   addEnquiryComment: (id: string, message: string, isCustomerVisible = true) =>
     apiPost<{ id: string }>(`${base}/enquiries/${id}/comments`, { message, isCustomerVisible }),
+  deleteEnquiry: (id: string) => apiDelete<{ message: string }>(`/api/v1/admin/enquiries/${id}`),
+  bulkDeleteEnquiries: (ids: string[]) => apiPost<{ message: string; deletedCount: number }>(`/api/v1/admin/enquiries/bulk-delete`, { ids }),
 
   // ---- Quotes ---------------------------------------------------------
   quotations: (page = 1, pageSize = 20, search?: string, status?: string) => {

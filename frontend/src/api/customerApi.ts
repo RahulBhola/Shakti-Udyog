@@ -140,6 +140,11 @@ export interface OrderDetail {
   manufacturingStage?: string | null;
   advancePaid?: boolean;
   advanceAmount?: number | null;
+  advancePercent?: number;
+  quotationTotal?: number | null;
+  quotationSubtotal?: number | null;
+  quotationTax?: number | null;
+  paymentTerms?: string | null;
   status: string;
   statusLabel: string;
   statusDescription: string;
@@ -148,6 +153,7 @@ export interface OrderDetail {
   deliveryAddress: string | null;
   lastUpdatedAtUtc: string;
   items: {
+    id?: string;
     partNumber: string;
     description: string;
     materialGrade: string | null;
@@ -156,8 +162,19 @@ export interface OrderDetail {
     quantityOrdered: number;
     quantityProduced: number;
     quantityDispatched: number;
+    unitRate?: number | null;
   }[];
   shipments: Shipment[];
+  latestInvoice?: {
+    id?: string;
+    invoiceNumber: string;
+    subtotal: number;
+    tax: number;
+    total: number;
+    issueDateUtc?: string;
+    dueDateUtc?: string | null;
+    status?: string;
+  } | null;
   commercial: {
     invoiceNumber: string | null;
     invoiceDateUtc: string | null;
