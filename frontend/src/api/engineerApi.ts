@@ -119,6 +119,7 @@ export const engineerApi = {
   },
   addComment: (id: string, message: string, isCustomerVisible = true) =>
     apiPost<{ id: string; message: string }>(`${base}/quotations/${id}/comments`, { message, isCustomerVisible }),
+  deleteQuotation: (id: string) => apiDelete<{ message: string }>(`${base}/quotations/${id}`),
 
   // ---- Orders -------------------------------------------------------------
   orders: (page = 1, pageSize = 20, search?: string, status?: string, companyId?: string, assigned?: string) => {

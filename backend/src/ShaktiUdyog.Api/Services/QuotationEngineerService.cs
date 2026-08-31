@@ -16,6 +16,7 @@ public interface IQuotationEngineerService
     Task<Guid> CreateQuotationAsync(CreateQuotationRequest request, Guid userId, string? ip);
     Task<bool?> UpdateQuotationAsync(Guid id, UpdateQuotationRequest request, Guid userId, string? ip);
     Task<bool?> SubmitQuotationAsync(Guid id, Guid userId, string? ip);
+    Task<bool?> DeleteQuotationAsync(Guid id, Guid userId, string? ip);
     Task<QuotationAttachmentDto?> AttachFileAsync(Guid id, IFormFile file, string? description, Guid userId, string? ip);
     Task<QuotationCommentDto?> AddCommentAsync(Guid id, AddCommentRequest request, Guid userId, string role, string? ip);
 }
@@ -60,7 +61,7 @@ public class QuotationEngineerService(
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, 100);
 
-        var query = db.Quotations.AsQueryable();
+        var query = db.Quotations.Where(q => !q.IsDeleted).AsQueryable();
         if (!string.IsNullOrWhiteSpace(search))
         {
             var term = search.Trim();
@@ -83,7 +84,7 @@ public class QuotationEngineerService(
 
     public async Task<QuotationDetailDto?> GetQuotationAsync(Guid id)
     {
-        var q = await db.Quotations.Include(x => x.Items.OrderBy(i => i.LineNumber)).SingleOrDefaultAsync(x => x.Id == id);
+        var q = await db.Quotations.Include(x => x.Items.OrderBy(i => i.LineNumber)).SingleOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
         if (q is null) return null;
         return await MapDetailAsync(q);
     }
@@ -277,6 +278,19 @@ public class QuotationEngineerService(
         await db.SaveChangesAsync();
         await audit.WriteAsync("engineer.quotation.comment_added", userId, "QuotationComment", comment.Id.ToString(), ip);
         return new QuotationCommentDto(comment.Id, comment.Message, comment.AuthorRole, comment.IsCustomerVisible, comment.CreatedAtUtc);
+    }
+
+    public async Task<bool?> DeleteQuotationAsync(Guid id, Guid userId, string? ip)
+    {
+        var quotation = await db.Quotations.SingleOrDefaultAsync(q => q.Id == id && !q.IsDeleted);
+        if (quotation is null) return null;
+
+        quotation.IsDeleted = true;
+        quotation.DeletedAtUtc = DateTimeOffset.UtcNow;
+        await db.SaveChangesAsync();
+
+        await audit.WriteAsync("engineer.quotation.deleted", userId, "Quotation", quotation.Id.ToString(), ip);
+        return true;
     }
 
     private async Task<QuotationDetailDto> MapDetailAsync(Quotation q)

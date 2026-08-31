@@ -6,7 +6,7 @@ import { EmptyState, Loading } from "../../../components/ui";
 import { formatDate } from "../../shared";
 import {
   FileText, Search, RefreshCw, ChevronLeft, ChevronRight, X,
-  ClipboardList, CheckCircle2, Clock, XCircle, Download, Eye,
+  ClipboardList, CheckCircle2, Clock, XCircle, Download, Eye, Trash2,
 } from "lucide-react";
 import "../erpListView.css";
 
@@ -95,11 +95,16 @@ export default function QuotationListPage() {
 
   const [data, setData] = useState<Paged<QuotationListItem> | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+
+  // Deletion modal state
+  const [deleteModalQuotation, setDeleteModalQuotation] = useState<QuotationListItem | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const load = useCallback(() => {
     engineerApi.quotations(page, pageSize, search || undefined, statusFilter === "All" ? undefined : statusFilter)
@@ -108,6 +113,21 @@ export default function QuotationListPage() {
 
   useEffect(load, [load]);
   useEffect(() => { setPage(1); }, [search, statusFilter, pageSize]);
+
+  const handleDeleteQuotation = async () => {
+    if (!deleteModalQuotation) return;
+    setDeleting(true);
+    try {
+      await engineerApi.deleteQuotation(deleteModalQuotation.id);
+      setNotice(`Quotation "${deleteModalQuotation.quotationNumber}" removed successfully.`);
+      setDeleteModalQuotation(null);
+      load();
+    } catch (e: any) {
+      setError(e.message || "Failed to delete quotation");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const totalCount = data?.totalCount ?? (data as any)?.total ?? 0;
   const totalPages = data ? Math.max(1, Math.ceil(totalCount / pageSize)) : 1;
@@ -137,11 +157,6 @@ export default function QuotationListPage() {
       {/* ── 1. Hero Header ─────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-xs font-semibold text-neutral-400 mb-1">
-            <span>Admin</span>
-            <span>/</span>
-            <span className="text-[var(--color-primary)] font-bold">Quotations</span>
-          </div>
           <div className="flex items-center gap-3">
             <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 dark:text-white tracking-tight">
               Quotes & Estimates
@@ -175,6 +190,16 @@ export default function QuotationListPage() {
           </button>
         </div>
       </div>
+
+      {notice && (
+        <div className="flex items-center justify-between gap-2 p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-xs font-semibold shadow-xs animate-in fade-in duration-150">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 size={16} className="shrink-0" />
+            <span>{notice}</span>
+          </div>
+          <button type="button" onClick={() => setNotice(null)} className="text-emerald-500 hover:text-emerald-700 cursor-pointer">✕</button>
+        </div>
+      )}
 
       {/* ── 2. Balanced 4-Card KPI Grid ────────────────────── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
@@ -374,6 +399,14 @@ export default function QuotationListPage() {
                           >
                             <Eye size={14} />
                           </button>
+                          <button
+                            type="button"
+                            onClick={() => setDeleteModalQuotation(q)}
+                            className="w-8 h-8 rounded-lg border border-rose-200/80 dark:border-rose-500/20 bg-white dark:bg-[#121520] hover:bg-rose-50 dark:hover:bg-rose-500/10 flex items-center justify-center text-rose-500 hover:text-rose-700 dark:hover:text-rose-400 transition-all shadow-xs cursor-pointer"
+                            title="Delete Quotation"
+                          >
+                            <Trash2 size={13} />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -430,6 +463,46 @@ export default function QuotationListPage() {
           </div>
         )}
       </div>
+
+      {/* ── Delete Confirmation Modal ──────────────────────── */}
+      {deleteModalQuotation && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-[#121520] border border-neutral-200 dark:border-white/10 shadow-2xl p-6 space-y-4 animate-in zoom-in-95 duration-150">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
+                <Trash2 size={20} />
+              </div>
+              <div>
+                <h3 className="text-base font-extrabold text-neutral-900 dark:text-white m-0">Delete Quotation</h3>
+                <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 m-0">This action cannot be undone.</p>
+              </div>
+            </div>
+            <p className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed m-0">
+              Are you sure you want to remove quotation <strong className="font-mono text-neutral-900 dark:text-white">{deleteModalQuotation.quotationNumber}</strong>?
+              {deleteModalQuotation.companyName ? ` (${deleteModalQuotation.companyName})` : ""}
+            </p>
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={() => setDeleteModalQuotation(null)}
+                className="px-4 py-2 rounded-xl border border-neutral-200 dark:border-white/10 text-xs font-bold text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={handleDeleteQuotation}
+                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-all shadow-sm shadow-rose-500/25 disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
+              >
+                {deleting ? <RefreshCw size={13} className="animate-spin" /> : <Trash2 size={13} />}
+                <span>{deleting ? "Deleting..." : "Delete Quotation"}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

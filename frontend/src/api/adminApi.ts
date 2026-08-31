@@ -81,6 +81,7 @@ export const adminApi = {
   updateOrderStage: (orderId: string, statusCode: string, note?: string) =>
     apiPatch<{ message: string }>(`${base}/orders/${orderId}/stage`, { statusCode, note }),
   overrideStatus: (id: string, newStatus: string, note?: string) => apiPatch<{ message: string }>(`${base}/quotations/${id}/override-status`, { newStatus, note }),
+  deleteQuotation: (id: string) => apiDelete<{ message: string }>(`${base}/quotations/${id}`),
   history: (id: string) => apiGet<QuotationTimelineEntry[]>(`${base}/quotations/${id}/history`),
 
   // ---- Orders -------------------------------------------------------------

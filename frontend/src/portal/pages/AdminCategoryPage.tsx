@@ -311,7 +311,6 @@ export default function AdminCategoryPage() {
       {/* Header */}
       <div className="inv-header">
         <div>
-          <div className="breadcrumb"><span>Admin / Categories</span></div>
           <h1 className="inv-header__title">Categories</h1>
           <p className="inv-header__subtitle">Manage product categories used throughout the casting catalog.</p>
         </div>

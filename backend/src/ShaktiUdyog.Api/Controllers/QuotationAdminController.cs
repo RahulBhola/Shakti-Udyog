@@ -76,6 +76,17 @@ public class QuotationAdminController(IQuotationAdminService service) : Controll
         return result switch { null => NotFound(), _ => Ok(new MessageResponse("Status overridden.")) };
     }
 
+    [HttpDelete("quotations/{id:guid}")]
+    public async Task<IActionResult> DeleteQuotation(Guid id)
+    {
+        var result = await service.DeleteQuotationAsync(id, UserId, ClientIp);
+        return result switch
+        {
+            null => NotFound(new MessageResponse("Quotation not found.")),
+            _ => Ok(new MessageResponse("Quotation removed successfully."))
+        };
+    }
+
     [HttpGet("quotations/{id:guid}/history")]
     public async Task<IActionResult> GetHistory(Guid id)
     {

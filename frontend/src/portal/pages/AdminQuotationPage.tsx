@@ -4,7 +4,7 @@ import { adminApi } from "../../api/adminApi";
 import { engineerApi } from "../../api/engineerApi";
 import type { QuotationDetail as QD, QuotationTimelineEntry } from "../../api/customerApi";
 import { formatDate, formatMoney } from "../shared";
-import { ArrowLeft, FileEdit, CheckCircle, Clock, Send, Eye, XCircle, Loader2, Calendar, Tag, Package, Info, IndianRupee } from "lucide-react";
+import { ArrowLeft, FileEdit, CheckCircle, Clock, Send, Eye, XCircle, Loader2, Calendar, Tag, Package, Info, IndianRupee, Trash2 } from "lucide-react";
 import { extractAdvancePercent, calculateAdvanceAmount } from "../../utils/paymentTerms";
 
 /* ── Status colors ──────────────────────────────────────────── */
@@ -86,6 +86,7 @@ export default function AdminQuotationPage() {
   const [msg, setMsg] = useState<string | null>(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showApproveModal, setShowApproveModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
 
   const load = () => {
@@ -97,6 +98,19 @@ export default function AdminQuotationPage() {
   useEffect(() => {
     load();
   }, [id]);
+
+  const handleDeleteQuotation = async () => {
+    if (!id) return;
+    setBusy(true);
+    try {
+      await adminApi.deleteQuotation(id);
+      navigate("/admin/quotations");
+    } catch (err: any) {
+      setMsg(err?.message ?? "Failed to delete quotation.");
+      setBusy(false);
+      setShowDeleteModal(false);
+    }
+  };
 
   const doAction = async (fn: () => Promise<any>) => {
     setBusy(true);
@@ -241,6 +255,15 @@ export default function AdminQuotationPage() {
               Cancel
             </button>
           )}
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => setShowDeleteModal(true)}
+            className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg border border-rose-200 dark:border-rose-500/30 text-rose-600 dark:text-rose-400 text-[12px] font-medium hover:bg-rose-50 dark:hover:bg-rose-500/10 disabled:opacity-50 transition-all cursor-pointer"
+            title="Delete this quotation"
+          >
+            <Trash2 size={13} /> Delete Quote
+          </button>
         </div>
       </div>
 
@@ -728,6 +751,42 @@ export default function AdminQuotationPage() {
                   className="px-5 h-9 rounded-xl bg-red-500 text-white text-[12px] font-semibold hover:bg-red-600 disabled:opacity-50 transition-all flex items-center gap-1.5 shadow-sm">
                   {busy ? <Loader2 size={14} className="animate-spin" /> : <XCircle size={14} />}
                   {busy ? "Cancelling..." : "Cancel Quote"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Delete Modal ── */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-md" onClick={() => setShowDeleteModal(false)} />
+          <div className="relative w-full max-w-sm mx-4 rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="h-1.5 bg-gradient-to-r from-rose-600 to-rose-400" />
+            <div className="p-6">
+              <div className="flex items-center gap-4 mb-4">
+                <span className="flex items-center justify-center w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-500/10 text-rose-500 shrink-0">
+                  <Trash2 size={22} />
+                </span>
+                <div>
+                  <h3 className="text-[16px] font-bold text-[var(--text-primary)] m-0">Delete Quotation</h3>
+                  <p className="text-[12px] text-[var(--text-muted)] m-0 mt-0.5">This action cannot be undone.</p>
+                </div>
+              </div>
+              <p className="text-xs text-[var(--text-secondary)] leading-relaxed mb-5">
+                Are you sure you want to permanently delete quotation <strong className="font-mono text-[var(--text-primary)]">{q.quotationNumber}</strong>?
+              </p>
+              <div className="border-t border-[var(--border-default)] mb-4" />
+              <div className="flex items-center justify-end gap-2.5">
+                <button type="button" disabled={busy} onClick={() => setShowDeleteModal(false)}
+                  className="px-4 h-9 rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all disabled:opacity-50 cursor-pointer">
+                  Cancel
+                </button>
+                <button type="button" disabled={busy} onClick={handleDeleteQuotation}
+                  className="px-5 h-9 rounded-xl bg-rose-600 text-white text-[12px] font-semibold hover:bg-rose-700 disabled:opacity-50 transition-all flex items-center gap-1.5 shadow-sm cursor-pointer">
+                  {busy ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                  {busy ? "Deleting..." : "Delete Quotation"}
                 </button>
               </div>
             </div>

@@ -17,6 +17,7 @@ public interface IQuotationAdminService
     Task<bool?> RejectQuotationAsync(Guid id, string reason, Guid userId, string? ip);
     Task<bool?> IssueQuotationAsync(Guid id, Guid userId, string? ip);
     Task<bool?> CancelQuotationAsync(Guid id, string? reason, Guid userId, string? ip);
+    Task<bool?> DeleteQuotationAsync(Guid id, Guid userId, string? ip);
     Task<bool?> OverrideStatusAsync(Guid id, string newStatus, string? note, Guid userId, string? ip);
     Task<IReadOnlyList<QuotationTimelineEntryDto>> GetHistoryAsync(Guid id);
 }
@@ -28,7 +29,7 @@ public class QuotationAdminService(
     public async Task<PagedResult<QuotationListItemDto>> GetQuotationsAsync(int page = 1, int pageSize = 20, string? search = null, string? status = null)
     {
         page = Math.Max(1, page); pageSize = Math.Clamp(pageSize, 1, 100);
-        var query = db.Quotations.IgnoreQueryFilters().AsQueryable();
+        var query = db.Quotations.Where(q => !q.IsDeleted).AsQueryable();
         if (!string.IsNullOrWhiteSpace(search))
         {
             var term = search.Trim();
@@ -44,7 +45,7 @@ public class QuotationAdminService(
 
     public async Task<QuotationDetailDto?> GetQuotationAsync(Guid id)
     {
-        var q = await db.Quotations.IgnoreQueryFilters().Include(x => x.Items.OrderBy(i => i.LineNumber)).SingleOrDefaultAsync(x => x.Id == id);
+        var q = await db.Quotations.Include(x => x.Items.OrderBy(i => i.LineNumber)).SingleOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
         if (q is null) return null;
 
         var order = await db.Orders
@@ -198,6 +199,19 @@ public class QuotationAdminService(
         AddHistory(q.Id, from, QuotationStatuses.Cancelled, userId, "Admin", reason ?? "Quotation cancelled");
         await db.SaveChangesAsync();
         await audit.WriteAsync("admin.quotation.cancelled", userId, "Quotation", q.Id.ToString(), ip);
+        return true;
+    }
+
+    public async Task<bool?> DeleteQuotationAsync(Guid id, Guid userId, string? ip)
+    {
+        var q = await db.Quotations.SingleOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
+        if (q is null) return null;
+
+        q.IsDeleted = true;
+        q.DeletedAtUtc = DateTimeOffset.UtcNow;
+        AddHistory(q.Id, q.Status, "Deleted", userId, "Admin", "Quotation deleted by Admin.");
+        await db.SaveChangesAsync();
+        await audit.WriteAsync("admin.quotation.deleted", userId, "Quotation", q.Id.ToString(), ip);
         return true;
     }
 

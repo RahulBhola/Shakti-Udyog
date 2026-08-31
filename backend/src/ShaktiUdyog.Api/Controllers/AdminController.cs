@@ -926,7 +926,21 @@ public class AdminController(IAdminService adminService, IOrderAdminService orde
         return Ok(new { message = $"Successfully removed {enquiries.Count} enquiries from active queue.", deletedCount = enquiries.Count });
     }
 
-    
+    [HttpDelete("quotations/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteQuotation(Guid id)
+    {
+        var quotation = await db.Quotations.FindAsync(id);
+        if (quotation is null) return NotFound(new { message = "Quotation not found." });
+
+        quotation.IsDeleted = true;
+        quotation.DeletedAtUtc = DateTimeOffset.UtcNow;
+        await db.SaveChangesAsync();
+
+        return Ok(new { message = "Quotation removed from active queue." });
+    }
+
     // ---- Orders -------------------------------------------------------------
 
     [HttpGet("orders")]
