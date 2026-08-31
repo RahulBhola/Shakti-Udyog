@@ -433,7 +433,7 @@ export default function EngineerBoardPage() {
       {/* ── View Tab 1: KANBAN BOARD VIEW ──────────────────────────────────── */}
       {viewTab === "board" && (
         <div className="overflow-x-auto pb-4 -mx-1 px-1 custom-scrollbar">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3.5 items-start min-w-[280px] xl:min-w-0">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3.5 items-stretch min-w-[280px] xl:min-w-0">
             {byColumn.map(({ column, items }, colIndex) => {
               const Icon = column.icon;
               const droppable = draggedId !== null && canDropOn(column.code);
@@ -452,7 +452,7 @@ export default function EngineerBoardPage() {
                       void handleDrop(column.code);
                     }
                   }}
-                  className={`flex flex-col rounded-2xl border bg-neutral-50/70 dark:bg-[#0c0e14] p-3 transition-all h-fit self-start ${
+                  className={`flex flex-col h-full rounded-2xl border bg-neutral-50/70 dark:bg-[#0c0e14] p-3 transition-all ${
                     droppable
                       ? "border-dashed border-2 border-blue-500 bg-blue-500/5 dark:bg-blue-500/10 shadow-md ring-2 ring-blue-500/20"
                       : "border-neutral-200/90 dark:border-white/10"
@@ -480,8 +480,8 @@ export default function EngineerBoardPage() {
                     </div>
                   </div>
 
-                  {/* Order Cards Container */}
-                  <div className="flex-1 space-y-2.5">
+                  {/* Order Cards Container - expands dynamically */}
+                  <div className="flex-1 flex flex-col space-y-2.5">
                     {items.map((order) => (
                       <OrderCard
                         key={order.id}
@@ -502,16 +502,8 @@ export default function EngineerBoardPage() {
                     ))}
 
                     {items.length === 0 && (
-                      <div
-                        className={`flex flex-col items-center justify-center py-5 px-2 text-center border border-dashed rounded-xl transition-all ${
-                          droppable
-                            ? "border-blue-500 bg-blue-500/10 text-blue-500 font-bold"
-                            : "border-neutral-200 dark:border-white/10 text-neutral-400"
-                        }`}
-                      >
-                        <span className="text-[11px] font-medium">
-                          {droppable ? "Drop here to move" : "No orders in this stage"}
-                        </span>
+                      <div className="flex-1 flex flex-col items-center justify-center py-6 px-2 text-center border border-dashed border-neutral-200 dark:border-white/10 rounded-xl min-h-[90px]">
+                        <span className="text-[11px] font-medium text-neutral-400">No orders in this stage</span>
                       </div>
                     )}
                   </div>
@@ -612,58 +604,59 @@ function OrderCard({
     >
       {/* ── 1. Top Row: Order ID Mono Badge, Quantity Pill, Kebab Menu ── */}
       <div className="flex items-center justify-between gap-1.5">
-        <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
-          <span className="font-mono text-[11px] font-black text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-md bg-blue-500/10 dark:bg-blue-500/15 border border-blue-500/20">
-            {order.orderNumber}
-          </span>
-          <span className="inline-flex items-center gap-1 text-[10.5px] font-bold text-neutral-600 dark:text-neutral-300 px-1.5 py-0.5 rounded-md bg-neutral-100 dark:bg-white/5 border border-neutral-200/80 dark:border-white/10">
+        <span className="font-mono text-[11px] font-black text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-md bg-blue-500/10 dark:bg-blue-500/15 border border-blue-500/20 truncate">
+          {order.orderNumber}
+        </span>
+
+        <div className="flex items-center gap-1 shrink-0">
+          <span className="inline-flex items-center gap-1 text-[10.5px] font-bold text-neutral-600 dark:text-neutral-300 px-1.5 py-0.5 rounded-md bg-neutral-100 dark:bg-white/5 border border-neutral-200/80 dark:border-white/10 whitespace-nowrap">
             <Package size={11} className="text-neutral-400 stroke-[2.2]" />
             <span>{order.totalQuantity} pcs</span>
           </span>
-        </div>
 
-        {/* 3-Dots Kebab Menu */}
-        <div className="relative shrink-0" ref={menuRef} onClick={(e) => e.stopPropagation()}>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowMenu((prev) => !prev);
-            }}
-            className="w-6 h-6 rounded-md flex items-center justify-center text-neutral-400 hover:text-neutral-700 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
-            title="More Options"
-          >
-            <MoreVertical size={14} />
-          </button>
+          {/* 3-Dots Kebab Menu */}
+          <div className="relative shrink-0" ref={menuRef} onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowMenu((prev) => !prev);
+              }}
+              className="w-6 h-6 rounded-md flex items-center justify-center text-neutral-400 hover:text-neutral-700 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
+              title="More Options"
+            >
+              <MoreVertical size={14} />
+            </button>
 
-          {showMenu && (
-            <div className="absolute right-0 top-7 z-30 w-44 rounded-xl bg-white dark:bg-[#161a26] border border-neutral-200 dark:border-white/10 shadow-xl py-1 text-xs animate-in fade-in zoom-in-95 duration-150">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowMenu(false);
-                  onOpenStory();
-                }}
-                className="w-full px-3 py-1.5 text-left text-neutral-700 dark:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-white/5 flex items-center gap-2 cursor-pointer font-semibold"
-              >
-                <MessageSquare size={13} className="text-blue-500" />
-                <span>Order Story & Notes</span>
-              </button>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowMenu(false);
-                  onView();
-                }}
-                className="w-full px-3 py-1.5 text-left text-neutral-700 dark:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-white/5 flex items-center gap-2 cursor-pointer font-semibold"
-              >
-                <ExternalLink size={13} className="text-neutral-400" />
-                <span>Full Order Details</span>
-              </button>
-            </div>
-          )}
+            {showMenu && (
+              <div className="absolute right-0 top-7 z-30 w-44 rounded-xl bg-white dark:bg-[#161a26] border border-neutral-200 dark:border-white/10 shadow-xl py-1 text-xs animate-in fade-in zoom-in-95 duration-150">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowMenu(false);
+                    onOpenStory();
+                  }}
+                  className="w-full px-3 py-1.5 text-left text-neutral-700 dark:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-white/5 flex items-center gap-2 cursor-pointer font-semibold"
+                >
+                  <MessageSquare size={13} className="text-blue-500" />
+                  <span>Order Story & Notes</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowMenu(false);
+                    onView();
+                  }}
+                  className="w-full px-3 py-1.5 text-left text-neutral-700 dark:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-white/5 flex items-center gap-2 cursor-pointer font-semibold"
+                >
+                  <ExternalLink size={13} className="text-neutral-400" />
+                  <span>Full Order Details</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
