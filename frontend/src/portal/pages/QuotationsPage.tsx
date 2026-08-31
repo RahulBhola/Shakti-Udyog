@@ -524,13 +524,6 @@ export function QuotationDetailPage() {
       {/* ── 1. Hero Header & Breadcrumb Bar ─────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-xs font-semibold text-neutral-400 mb-1">
-            <Link to="/customer/quotations" className="hover:text-neutral-900 dark:hover:text-white transition-colors no-underline">
-              Quotations
-            </Link>
-            <span>/</span>
-            <span className="text-[var(--color-primary)] font-bold font-mono">{quotation.quotationNumber}</span>
-          </div>
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 dark:text-white tracking-tight m-0">
               {quotation.quotationNumber}
